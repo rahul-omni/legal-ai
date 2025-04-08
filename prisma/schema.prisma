@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Define User first since it's referenced by Project
+model User {
+  id        String    @id @default(cuid())
+  name      String?
+  email     String    @unique
+  projects  Project[]
+}
+
+model Project {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  userId       String
+  createdAt    DateTime @default(now())
+  lastModified DateTime @updatedAt
+  files        File[]
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model File {
+  id        String   @id @default(cuid())
+  name      String
+  content   String   @db.Text
+  projectId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  name         String
+  content      String   @db.Text
+  type         String   // file or folder
+  parentId     String?  // for folder structure
+  summary      String?  @db.Text
+  lastModified DateTime @default(now()) @updatedAt
+  createdAt    DateTime @default(now())
+  
+  // Relations
+  parent    Document?  @relation("DocumentTree", fields: [parentId], references: [id])
+  children  Document[] @relation("DocumentTree")
+} 
