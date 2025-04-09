@@ -25,15 +25,6 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-<<<<<<< HEAD
-=======
-    if (!prompt || typeof prompt !== 'string') {
-      return NextResponse.json({ 
-        error: `Invalid or missing prompt. Received: ${typeof prompt}` 
-      }, { status: 400 });
-    }
-
->>>>>>> 00613f9186d6c959b7499dd9ae8159274b6e58c0
     // Check if this is a chronology request
     const isChronologyRequest = prompt.toLowerCase().includes('chronology');
     
