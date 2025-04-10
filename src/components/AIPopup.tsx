@@ -6,6 +6,13 @@ import { AIWaveform } from './AIWaveform'
 import { X, ArrowUpCircle, FilePlus } from 'lucide-react'
 // add this import
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
+import mammoth from 'mammoth';
+
+const extractTextFromDocx = async (file: File): Promise<string> => {
+  const arrayBuffer = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({ arrayBuffer });
+  return result.value;
+};
 
 GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
 
@@ -72,11 +79,20 @@ export function AIPopup({ position, onClose, onGenerate, currentContent, selecte
       let fileText = '';
 
       if (uploadedFiles.length > 0) {
-        const fileReadPromises = uploadedFiles.map((file) =>
-          file.type === "application/pdf"
-            ? extractTextFromPDF(file)
-            : file.text() // fallback for .txt or other formats
-        );
+        // const fileReadPromises = uploadedFiles.map((file) =>
+        //   file.type === "application/pdf"
+        //     ? extractTextFromPDF(file)
+        //     : file.text() // fallback for .txt or other formats
+        // );
+        const fileReadPromises = uploadedFiles.map((file) => {
+          if (file.type === "application/pdf") {
+            return extractTextFromPDF(file);
+          } else if (file.name.endsWith(".docx")) {
+            return extractTextFromDocx(file);
+          } else {
+            return file.text(); // fallback
+          }
+        });
         const fileContents = await Promise.all(fileReadPromises);
         fileText = fileContents.join('\n\n');
       }
@@ -118,7 +134,10 @@ export function AIPopup({ position, onClose, onGenerate, currentContent, selecte
       setIsLoading(false)
     }
   }
-
+  const handleRemoveFile = (index: number) => {
+    setUploadedFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
+  };
+  
   return (
     <div
       className="absolute z-50 bg-white rounded-lg shadow-xl w-72 p-[1px] overflow-hidden"
@@ -182,13 +201,26 @@ export function AIPopup({ position, onClose, onGenerate, currentContent, selecte
 )}
 
             {/* Show uploaded files */}
-            {uploadedFiles.length > 0 && (
+            {/* {uploadedFiles.length > 0 && (
             <div className="mt-1 max-h-20 overflow-y-auto text-xs text-gray-600 space-y-1">
               {uploadedFiles.map((file, idx) => (
                 <div key={idx} className="truncate">{file.name}</div>
               ))}
             </div>
-          )}
+          )} */}
+
+{uploadedFiles.map((file, idx) => (
+  <div
+    key={idx}
+    className="flex items-center justify-between bg-gray-100 px-2 py-1 rounded text-xs text-gray-700"
+  >
+    <span className="truncate max-w-[160px]">{file.name}</span>
+    <button onClick={() => handleRemoveFile(idx)} className="text-red-500 hover:text-red-700">
+      ❌
+    </button>
+  </div>
+))}
+
         </form>
       </div>
     </div>

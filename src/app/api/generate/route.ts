@@ -24,6 +24,11 @@ export async function POST(request: Request) {
         error: `Invalid or missing text. Received: ${typeof text}` 
       }, { status: 400 });
     }
+    if (!prompt || typeof prompt !== 'string') {
+      return NextResponse.json({ 
+        error: `Invalid or missing prompt. Received: ${typeof prompt}` 
+      }, { status: 400 });
+    }
 
     // Check if this is a chronology request
     const isChronologyRequest = prompt.toLowerCase().includes('chronology');
