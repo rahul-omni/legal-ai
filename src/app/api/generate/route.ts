@@ -24,7 +24,6 @@ export async function POST(request: Request) {
         error: `Invalid or missing text. Received: ${typeof text}` 
       }, { status: 400 });
     }
-
     if (!prompt || typeof prompt !== 'string') {
       return NextResponse.json({ 
         error: `Invalid or missing prompt. Received: ${typeof prompt}` 

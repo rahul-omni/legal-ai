@@ -8,7 +8,6 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// Define User first since it's referenced by Project
 model User {
   id       String    @id @default(cuid())
   name     String?
@@ -33,11 +32,10 @@ model Project {
 }
 
 model File {
-  id        String @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
-  content   String @db.Text
-  projectId String @map("project_id")
-
+  content   String   @db.Text
+  projectId String   @map("project_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -46,33 +44,22 @@ model File {
   @@map("file")
 }
 
-// 3. File System Node Model (Main Table)
-// - Stores both files and folders in a hierarchical structure
 model FileSystemNode {
-  // 3.1 Core Fields
-  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  // ^ Unique identifier using Supabase's UUID generator
+  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  type      FileType
+  content   String?         @db.Text
+  parentId  String?         @map("parent_id") @db.Uuid
+  parent    FileSystemNode? @relation("FileSystemNodeHierarchy", fields: [parentId], references: [id])
+  children  FileSystemNode[] @relation("FileSystemNodeHierarchy")
+  isExpanded Boolean        @default(false) @map("is_expanded")
+  userId     String         @map("user_id")
+  createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  name String // Display name (e.g., "index.js")
-  type FileType // FILE or FOLDER (from enum below)
-
-  // 3.2 Content & Relationships
-  content  String?          @db.Text // File content (NULL for folders)
-  parentId String?          @map("parent_id") @db.Uuid // Parent folder ID
-  parent   FileSystemNode?  @relation("FileSystemNodeHierarchy", fields: [parentId], references: [id])
-  children FileSystemNode[] @relation("FileSystemNodeHierarchy")
-  // ^ Self-referential relationship for parent/child hierarchy
-
-  // 3.3 Metadata
-  isExpanded Boolean  @default(false) @map("is_expanded") // UI state (for folders)
-  userId     String   @map("user_id") // Owner reference (tied to Supabase auth)
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@index([userId], name: "file_system_nodes_user_id_idx") // Faster user queries
-  @@index([parentId], name: "file_system_nodes_parent_id_idx") // Faster parent/child lookups
-  // 3.4 Table Configuration
-  @@map("file_system_nodes") // Maps to "file_system_nodes" table in DB
+  @@index([userId], name: "file_system_nodes_user_id_idx")
+  @@index([parentId], name: "file_system_nodes_parent_id_idx")
+  @@map("file_system_nodes")
 }
 
 enum FileType {
@@ -84,15 +71,13 @@ model Document {
   id           String   @id @default(cuid())
   name         String
   content      String   @db.Text
-  type         String // file or folder
+  type         String
   parentId     String?  @map("parent_id")
   summary      String?  @db.Text
   lastModified DateTime @default(now()) @updatedAt @map("last_modified")
   createdAt    DateTime @default(now()) @map("created_at")
-
-  // Relations
-  parent   Document?  @relation("DocumentTree", fields: [parentId], references: [id])
-  children Document[] @relation("DocumentTree")
+  parent       Document?  @relation("DocumentTree", fields: [parentId], references: [id])
+  children     Document[] @relation("DocumentTree")
 
   @@map("document")
 }

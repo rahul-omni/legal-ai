@@ -1,5 +1,4 @@
 "use client";
-
 import type { FileData } from "@/lib/fileService";
 import { RiskAnalyzer, RiskFinding } from "@/lib/riskAnalyzer";
 import { FileSystemNode } from "@/types/fileSystem";
@@ -7,8 +6,6 @@ import { useEffect, useState } from "react";
 import { DocumentPane } from "./DocumentPane";
 import { FileExplorerV2 } from "./FileExplorerV2";
 import { RightPanel } from "./RightPanel";
-
-// import { toast } from '@/components/ui/toast';
 
 // Add this type for language options
 type LanguageOption = {
