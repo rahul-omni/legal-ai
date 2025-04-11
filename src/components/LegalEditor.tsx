@@ -1,7 +1,7 @@
 "use client";
 import type { FileData } from "@/lib/fileService";
 import { RiskAnalyzer, RiskFinding } from "@/lib/riskAnalyzer";
-import { FileSystemNode } from "@/types/fileSystem";
+import { FileSystemNodeProps } from "@/types/fileSystem";
 import { useEffect, useState } from "react";
 import { DocumentPane } from "./DocumentPane";
 import { FileExplorerV2 } from "./FileExplorerV2";
@@ -28,7 +28,7 @@ const indianLanguages: LanguageOption[] = [
 
 export default function LegalEditor() {
   const [files, setFiles] = useState<FileData[]>([]);
-  const [selectedFile, setSelectedFile] = useState<FileSystemNode>();
+  const [selectedFile, setSelectedFile] = useState<FileSystemNodeProps>();
   const [documentContent, setDocumentContent] = useState(
     "This Agreement is made between..."
   );
@@ -54,7 +54,7 @@ export default function LegalEditor() {
     }
   };
 
-  const handleFileSelect = (file: FileSystemNode) => {
+  const handleFileSelect = (file: FileSystemNodeProps) => {
     setSelectedFile(file);
     if (file.content) {
       setDocumentContent(file.content);

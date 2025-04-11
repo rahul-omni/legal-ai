@@ -6,7 +6,7 @@ import {
 } from "@/app/apiServices/nodeServices";
 import { handleApiError } from "@/helper/handleApiError";
 import { FileService } from "@/lib/fileService";
-import { FileSystemNode } from "@/types/fileSystem";
+import { FileSystemNodeProps } from "@/types/fileSystem";
 import {
   FileIcon,
   FilePlus,
@@ -20,8 +20,8 @@ import { useToast } from "./ui/toast";
 
 interface FileExplorerProps {
   userId: string;
-  selectedDocument?: FileSystemNode;
-  onDocumentSelect: (file: FileSystemNode) => void;
+  selectedDocument?: FileSystemNodeProps;
+  onDocumentSelect: (file: FileSystemNodeProps) => void;
 }
 
 export const FileExplorerV2: FC<FileExplorerProps> = ({
@@ -29,7 +29,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
   selectedDocument,
   onDocumentSelect,
 }) => {
-  const [nodes, setNodes] = useState<FileSystemNode[]>([]);
+  const [nodes, setNodes] = useState<FileSystemNodeProps[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
@@ -50,7 +50,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
   }, [userId]);
 
   // Toggle folder expand/collapse
-  const toggleExpand = async (node: FileSystemNode) => {
+  const toggleExpand = async (node: FileSystemNodeProps) => {
     if (node.type !== "FOLDER") return;
 
     // Optimistic UI update
@@ -66,11 +66,11 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
 
   // Helper: Update node properties immutably
   const updateNodeProperty = (
-    nodes: FileSystemNode[],
+    nodes: FileSystemNodeProps[],
     nodeId: string,
-    key: keyof FileSystemNode,
+    key: keyof FileSystemNodeProps,
     value: any
-  ): FileSystemNode[] => {
+  ): FileSystemNodeProps[] => {
     return nodes.map((node) => {
       if (node.id === nodeId) return { ...node, [key]: value };
       if (node.children) {
@@ -85,10 +85,10 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
 
   // Helper functions to update state immutably
   const updateNodeChildren = (
-    nodes: FileSystemNode[],
-    children: FileSystemNode[],
+    nodes: FileSystemNodeProps[],
+    children: FileSystemNodeProps[],
     parentId: string
-  ): FileSystemNode[] => {
+  ): FileSystemNodeProps[] => {
     return nodes.map((node) => {
       if (node.id === parentId) {
         return { ...node, children };
@@ -156,7 +156,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
     }
   };
 
-  const renderNode = (node: FileSystemNode) => (
+  const renderNode = (node: FileSystemNodeProps) => (
     <div key={node.id} className="pl-2">
       <div
         className={`
