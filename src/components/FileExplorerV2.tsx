@@ -14,7 +14,6 @@ import {
   FolderOpenIcon,
   FolderPlusIcon,
   Search,
-  Upload,
 } from "lucide-react";
 import { FC, useEffect, useState } from "react";
 import { useToast } from "./ui/toast";
@@ -246,7 +245,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
               htmlFor="file-upload"
               className="p-1.5 rounded-md bg-gray-900 text-white hover:bg-gray-800 transition-colors cursor-pointer"
             >
-              <Upload className="h-4 w-4" />
+              <FilePlus className="h-4 w-4" />
             </label>
             <input
               id="file-upload"
