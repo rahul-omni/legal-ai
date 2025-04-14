@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-// GET: Fetch a single node by ID
+
+//api/nodes/id
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -15,14 +16,47 @@ export async function GET(
       return NextResponse.json({ error: "Node not found" }, { status: 404 });
     }
 
+    if (!node.content) {
+      return NextResponse.json({ error: "File content is missing" }, { status: 500 });
+    }
+    
+
+    // If it's a binary file, return base64 encoded content
+    const extension = node.name.split(".").pop()?.toLowerCase();
+    const isBinary = ["pdf", "docx"].includes(extension ?? "");
+
+    if (isBinary && node.content !== null) {
+      const base64Content = Buffer.from(node.content, "utf-8").toString("base64");
+      return NextResponse.json({ ...node, base64Content });
+    }
+
     return NextResponse.json(node);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch node" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch node" }, { status: 500 });
   }
 }
+// GET: Fetch a single node by ID
+// export async function GET(
+//   request: NextRequest,
+//   { params }: { params: { id: string } }
+// ) {
+//   try {
+//     const node = await db.fileSystemNode.findUnique({
+//       where: { id: params.id },
+//     });
+
+//     if (!node) {
+//       return NextResponse.json({ error: "Node not found" }, { status: 404 });
+//     }
+
+//     return NextResponse.json(node);
+//   } catch (error) {
+//     return NextResponse.json(
+//       { error: "Failed to fetch node" },
+//       { status: 500 }
+//     );
+//   }
+// }
 
 // PUT: Update a node (rename, move, etc.)
 export async function PUT(

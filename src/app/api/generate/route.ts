@@ -17,6 +17,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
+    console.log("📦 Request body received:", body);
     const { text, prompt } = body;
     
     if (!text || typeof text !== 'string') {
@@ -53,18 +54,50 @@ export async function POST(request: Request) {
       max_tokens: 1000
     });
 
-    const summary = completion.choices[0].message.content;
+    //const summary = completion.choices[0].message.content?.trim()
     
-    if (!summary) {
-      throw new Error('No content generated');
-    }
+    // if (!summary) {
+    //   throw new Error('No content generated');
+    // }
 
-    return NextResponse.json({ summary });
 
-  } catch (error) {
-    console.error('OpenAI API error:', error);
-    return NextResponse.json({ 
-      error: "Failed to generate content: " + (error as Error).message 
-    }, { status: 500 });
+    const rawSummary = completion.choices?.[0]?.message?.content?.trim() || "";
+    console.log("🧠 OpenAI Response:", completion.choices?.[0]?.message?.content);
+
+if (!rawSummary || rawSummary === "" || rawSummary === "\n") {
+  console.warn("⚠️ Model returned empty or useless output");
+  return new Response("Model returned no usable content", { status: 500 });
+}
+
+    // return NextResponse.json({ summary });
+    return new Response(rawSummary, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8"
+      }
+    });
+
+  }catch (error: any) {
+    console.error('❌ OpenAI API error:', error?.message || error);
+  
+    return new Response(
+      "Something went wrong while processing files.\n\n" +
+      (error?.message || JSON.stringify(error)),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8"
+        }
+      }
+    );
   }
+  
+  
+  // catch (error:any) {
+  //   console.error('OpenAI API error:', error);
+  //   return NextResponse.json({ 
+  //     error: "Failed to generate content: " + (error as Error).message 
+  //   }, { status: 500 });
+  // }
+ 
 } 

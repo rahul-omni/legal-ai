@@ -23,12 +23,14 @@ interface FileExplorerProps {
   userId: string;
   selectedDocument?: FileSystemNode;
   onDocumentSelect: (file: FileSystemNode) => void;
+  setDocuments:(file: FileSystemNode) => void;
 }
 
 export const FileExplorerV2: FC<FileExplorerProps> = ({
   userId,
   selectedDocument,
   onDocumentSelect,
+  setDocuments
 }) => {
   const [nodes, setNodes] = useState<FileSystemNode[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,7 +66,8 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
       await refreshNodes(node.id);
     }
   };
-
+  console.log("nodes",nodes);
+  
   // Helper: Update node properties immutably
   const updateNodeProperty = (
     nodes: FileSystemNode[],

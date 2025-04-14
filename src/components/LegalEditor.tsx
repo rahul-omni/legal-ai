@@ -27,7 +27,7 @@ const indianLanguages: LanguageOption[] = [
 ];
 
 export default function LegalEditor() {
-  const [files, setFiles] = useState<FileData[]>([]);
+  const [files, setFiles] = useState<FileSystemNode[]>([]);
   const [selectedFile, setSelectedFile] = useState<FileSystemNode>();
   const [documentContent, setDocumentContent] = useState(
     "This Agreement is made between..."
@@ -38,11 +38,16 @@ export default function LegalEditor() {
   const [risks, setRisks] = useState<RiskFinding[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showAIPopup, setShowAIPopup] = useState(false);
 
-  useEffect(() => {
-    loadDocuments();
-  }, []);
-
+  
+  const [selectedText, setSelectedText] = useState('')
+  const [popupPosition, setPopupPosition] = useState({ x: 900, y: 100 })
+  const [editorContent, setEditorContent] = useState('')
+   
+   
+ 
+   
   const loadDocuments = async () => {
     try {
       const response = await fetch("/api/documents");
@@ -53,7 +58,42 @@ export default function LegalEditor() {
       console.error("Failed to load documents:", error);
     }
   };
+  useEffect(() => {
+    loadDocuments(); // Only load documents, don't show popup
+  }, []);
+  
 
+  const openPopupWithSelection = () => {
+    const selection = window.getSelection();
+    const selectedText = selection?.toString() || '';
+    const position = selection?.getRangeAt(0)?.getBoundingClientRect();
+  
+    if (selectedText) {
+      setSelectedText(selectedText);
+      setPopupPosition({
+        x: position?.x ?? 900,
+        y: position?.y ?? 100,
+      });
+      setEditorContent(documentContent);
+      setShowAIPopup(true);
+      
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.code === 'Space') {
+        e.preventDefault();
+        openPopupWithSelection();  // 👈 Just one call here
+      }
+    };
+  
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [documentContent]);
+  
+ 
+  
   const handleFileSelect = (file: FileSystemNode) => {
     setSelectedFile(file);
     if (file.content) {
@@ -230,6 +270,20 @@ export default function LegalEditor() {
     // showToast('Template loaded successfully');
   };
 
+  useEffect(() => {
+  if (showAIPopup) {
+    console.log('Documents loaded and passed to AIPopup:', files);
+  }
+}, [showAIPopup, files]);
+
+  useEffect(() => {
+    if (files.length > 0) {
+      console.log("Documents loaded and passed to AIPopup:", files);
+      
+    }
+  }, [files]);
+  
+  
   return (
     <div className="h-screen flex">
       {/* Left Panel - File Explorer */}
@@ -238,6 +292,8 @@ export default function LegalEditor() {
           userId={"1"}
           selectedDocument={selectedFile}
           onDocumentSelect={handleFileSelect}
+          setDocuments={setFiles}
+          
         />
       </div>
 
@@ -253,7 +309,7 @@ export default function LegalEditor() {
           isAnalyzing={isAnalyzing}
         />
       </div>
-
+        
       {/* Right Panel */}
       <RightPanel
         risks={risks}
