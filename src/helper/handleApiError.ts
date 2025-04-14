@@ -1,4 +1,7 @@
-export const handleApiError = (error: unknown, showToast: (message: string, type?: "success" | "error") => void) => {
+export const handleApiError = (
+  error: unknown,
+  showToast?: (message: string, type?: "success" | "error") => void
+) => {
   console.error("API Error:", error);
 
   const errorMessage =
@@ -6,5 +9,5 @@ export const handleApiError = (error: unknown, showToast: (message: string, type
       ? error.message
       : "An unexpected error occurred. Please try again.";
 
-  showToast(errorMessage, "error");
+  showToast && showToast(errorMessage, "error");
 };

@@ -9,10 +9,11 @@ datasource db {
 }
 
 model User {
-  id       String    @id @default(cuid())
-  name     String?
-  email    String    @unique
-  projects Project[]
+  id             String           @id @default(cuid())
+  name           String?
+  email          String           @unique
+  projects       Project[]
+  FileSystemNode FileSystemNode[] @relation("file_system_nodes_user_id_idx")
 
   @@map("user")
 }
@@ -45,17 +46,18 @@ model File {
 }
 
 model FileSystemNode {
-  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name      String
-  type      FileType
-  content   String?         @db.Text
-  parentId  String?         @map("parent_id") @db.Uuid
-  parent    FileSystemNode? @relation("FileSystemNodeHierarchy", fields: [parentId], references: [id])
-  children  FileSystemNode[] @relation("FileSystemNodeHierarchy")
-  isExpanded Boolean        @default(false) @map("is_expanded")
-  userId     String         @map("user_id")
-  createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id         String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  type       FileType
+  content    String?          @db.Text
+  parentId   String?          @map("parent_id") @db.Uuid
+  parent     FileSystemNode?  @relation("FileSystemNodeHierarchy", fields: [parentId], references: [id])
+  children   FileSystemNode[] @relation("FileSystemNodeHierarchy")
+  isExpanded Boolean          @default(false) @map("is_expanded")
+  userId     String           @map("user_id")
+  user       User             @relation("file_system_nodes_user_id_idx", fields: [userId], references: [id])
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([userId], name: "file_system_nodes_user_id_idx")
   @@index([parentId], name: "file_system_nodes_parent_id_idx")
@@ -68,14 +70,14 @@ enum FileType {
 }
 
 model Document {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   name         String
-  content      String   @db.Text
+  content      String     @db.Text
   type         String
-  parentId     String?  @map("parent_id")
-  summary      String?  @db.Text
-  lastModified DateTime @default(now()) @updatedAt @map("last_modified")
-  createdAt    DateTime @default(now()) @map("created_at")
+  parentId     String?    @map("parent_id")
+  summary      String?    @db.Text
+  lastModified DateTime   @default(now()) @updatedAt @map("last_modified")
+  createdAt    DateTime   @default(now()) @map("created_at")
   parent       Document?  @relation("DocumentTree", fields: [parentId], references: [id])
   children     Document[] @relation("DocumentTree")
 
