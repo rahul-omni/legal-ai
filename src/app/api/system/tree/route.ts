@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { FileSystemNode } from "@/types/fileSystem";
+import { FileSystemNodeProps } from "@/types/fileSystem";
 
 // Recursive function to build a nested tree structure
 async function buildTree(parentId: string | null, userId: string) {
@@ -11,7 +11,7 @@ async function buildTree(parentId: string | null, userId: string) {
       userId,
     },
     orderBy: { type: "desc" }, // Folders first
-  })) as unknown as FileSystemNode[]; // Type assertion
+  })) as unknown as FileSystemNodeProps[]; // Type assertion
 
   // 2. For each folder, recursively fetch its children
   for (const node of nodes) {

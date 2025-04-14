@@ -1,5 +1,5 @@
 
-export type FileSystemNode = {
+export type FileSystemNodeProps = {
   id: string
   name: string
   type: 'FILE' | 'FOLDER'
@@ -9,5 +9,5 @@ export type FileSystemNode = {
   userId: string
   createdAt: Date
   updatedAt: Date
-  children?: FileSystemNode[] // For frontend use
+  children?: FileSystemNodeProps[] // For frontend use
 }

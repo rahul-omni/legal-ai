@@ -1,15 +1,15 @@
-import { FileSystemNode } from "@/types/fileSystem";
+import { FileSystemNodeProps } from "@/types/fileSystem";
 
 export interface FileHandlingStateProps {
-  nodes: FileSystemNode[];
+  nodes: FileSystemNodeProps[];
   fileLoading: boolean;
-  selectedFile?: FileSystemNode | null;
+  selectedFile?: FileSystemNodeProps | null;
 }
 
 export type ActionType =
   | {
       type: "ADD_FILE" | "UPDATE_FILE";
-      payload: FileSystemNode;
+      payload: FileSystemNodeProps;
     }
   | {
       type: "REMOVE_FILE";

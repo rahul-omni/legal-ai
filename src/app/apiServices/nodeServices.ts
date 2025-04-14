@@ -1,7 +1,6 @@
+import {  FileSystemNodeProps } from "@/types/fileSystem";
 import { FileType } from "@prisma/client";
 import { apiClient } from ".";
-import { FileSystemNode } from "@/types/fileSystem";
-import { log } from "console";
 
 export interface CreateNodePayload {
   name: string;
@@ -14,7 +13,7 @@ export interface CreateNodePayload {
 export const fetchNodes = async (
   userId: string,
   parentId?: string
-): Promise<FileSystemNode[]> => {
+): Promise<FileSystemNodeProps[]> => {
   try {
     const url = `/nodes?parentId=${parentId || ""}&userId=${userId}`;
     const response = await apiClient.get(url);
@@ -37,7 +36,7 @@ export const createNode = async (node: CreateNodePayload) => {
 };
 
 
-export const fetchAllNodes = async (): Promise<FileSystemNode[]> => {
+export const fetchAllNodes = async (): Promise<FileSystemNodeProps[]> => {
   try {
     const response = await apiClient.get("/system/tree?userId=1");
     console.log("response",response);
