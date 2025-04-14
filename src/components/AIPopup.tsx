@@ -10,7 +10,7 @@ import mammoth from "mammoth";
 import { FileData } from "@/lib/fileService";
 import { fetchAllNodes, fetchNodes, readFile } from "@/app/apiServices/nodeServices";
 
-import { FileSystemNode } from "@/types/fileSystem";
+import {   FileSystemNodeProps } from "@/types/fileSystem";
  
 import TreeNode from "./TreeNode";
  
@@ -30,7 +30,7 @@ interface AIPopupProps {
   currentContent: string;
   selectedText: string;
   documents: any[]; // new prop
-  files: FileSystemNode[];
+  files: FileSystemNodeProps[];
 }
 const MAX_TOKENS = 16000;
 
@@ -59,18 +59,18 @@ export function AIPopup({
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [error, setError] = useState("");
-  const [tree, setTree] = useState<FileSystemNode[]>([]);
+  const [tree, setTree] = useState<FileSystemNodeProps[]>([]);
   const [loading, setLoading] = useState(true);
-  const [fileNodes, setFileNodes] = useState<FileSystemNode[]>([]);
+  const [fileNodes, setFileNodes] = useState<FileSystemNodeProps[]>([]);
   const [showContext, setShowContext] = useState(false);
-  const [nodes, setNodes] = useState<FileSystemNode[]>([]);
+  const [nodes, setNodes] = useState<FileSystemNodeProps[]>([]);
   
   
    const [isPopupOpen, setIsPopupOpen] = useState(false);
   // const [document, setDocument] = useState<FileSystemNode | null>(null);
-  const [document, setDocument] = useState<FileSystemNode[]>([]); // Array to store multiple files
+  const [document, setDocument] = useState<FileSystemNodeProps[]>([]); // Array to store multiple files
 
-  const handleDocumentSelect = (file: FileSystemNode) => {
+  const handleDocumentSelect = (file: FileSystemNodeProps) => {
     // setDocument(file); // Do something with the selected document
     setDocument((prevDocuments) => [...prevDocuments, file]); // Adds selected file to the array
   };
@@ -114,9 +114,9 @@ export function AIPopup({
   };
   
   
-  const buildTree = (flatNodes: FileSystemNode[]): FileSystemNode[] => {
-    const map = new Map<string, FileSystemNode>();
-    const roots: FileSystemNode[] = [];
+  const buildTree = (flatNodes: FileSystemNodeProps[]): FileSystemNodeProps[] => {
+    const map = new Map<string, FileSystemNodeProps>();
+    const roots: FileSystemNodeProps[] = [];
   
     flatNodes.forEach(node => {
       map.set(node.id, { ...node, children: node.children ?? [] }); // ✅ preserve existing children
@@ -136,8 +136,8 @@ export function AIPopup({
     return roots;
   };
   
-  const getAllFiles = (nodes: FileSystemNode[]): FileSystemNode[] => {
-    let result: FileSystemNode[] = [];
+  const getAllFiles = (nodes: FileSystemNodeProps[]): FileSystemNodeProps[] => {
+    let result: FileSystemNodeProps[] = [];
   
     for (const node of nodes) {
       if (node.type === "FILE") {
