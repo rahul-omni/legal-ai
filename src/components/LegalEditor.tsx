@@ -40,14 +40,10 @@ export default function LegalEditor() {
   const [isLoading, setIsLoading] = useState(false);
   const [showAIPopup, setShowAIPopup] = useState(false);
 
-  
-  const [selectedText, setSelectedText] = useState('')
-  const [popupPosition, setPopupPosition] = useState({ x: 900, y: 100 })
-  const [editorContent, setEditorContent] = useState('')
-   
-   
- 
-   
+  const [selectedText, setSelectedText] = useState("");
+  const [popupPosition, setPopupPosition] = useState({ x: 900, y: 100 });
+  const [editorContent, setEditorContent] = useState("");
+
   const loadDocuments = async () => {
     try {
       const response = await fetch("/api/documents");
@@ -61,13 +57,12 @@ export default function LegalEditor() {
   useEffect(() => {
     loadDocuments(); // Only load documents, don't show popup
   }, []);
-  
 
   const openPopupWithSelection = () => {
     const selection = window.getSelection();
-    const selectedText = selection?.toString() || '';
+    const selectedText = selection?.toString() || "";
     const position = selection?.getRangeAt(0)?.getBoundingClientRect();
-  
+
     if (selectedText) {
       setSelectedText(selectedText);
       setPopupPosition({
@@ -76,24 +71,21 @@ export default function LegalEditor() {
       });
       setEditorContent(documentContent);
       setShowAIPopup(true);
-      
     }
   };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.code === 'Space') {
+      if (e.ctrlKey && e.code === "Space") {
         e.preventDefault();
-        openPopupWithSelection();  // 👈 Just one call here
+        openPopupWithSelection(); // 👈 Just one call here
       }
     };
-  
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [documentContent]);
-  
- 
-  
+
   const handleFileSelect = (file: FileSystemNodeProps) => {
     setSelectedFile(file);
     if (file.content) {
@@ -271,19 +263,17 @@ export default function LegalEditor() {
   };
 
   useEffect(() => {
-  if (showAIPopup) {
-    console.log('Documents loaded and passed to AIPopup:', files);
-  }
-}, [showAIPopup, files]);
+    if (showAIPopup) {
+      console.log("Documents loaded and passed to AIPopup:", files);
+    }
+  }, [showAIPopup, files]);
 
   useEffect(() => {
     if (files.length > 0) {
       console.log("Documents loaded and passed to AIPopup:", files);
-      
     }
   }, [files]);
-  
-  
+
   return (
     <div className="h-screen flex">
       {/* Left Panel - File Explorer */}
@@ -292,8 +282,6 @@ export default function LegalEditor() {
           userId={"1"}
           selectedDocument={selectedFile}
           onDocumentSelect={handleFileSelect}
-           
-          
         />
       </div>
 
@@ -309,7 +297,7 @@ export default function LegalEditor() {
           isAnalyzing={isAnalyzing}
         />
       </div>
-        
+
       {/* Right Panel */}
       <RightPanel
         risks={risks}

@@ -15,6 +15,7 @@ import {
   FolderPlusIcon,
   Search,
 } from "lucide-react";
+import { useParams } from "next/navigation";
 import { FC, useEffect, useState } from "react";
 import { useToast } from "./ui/toast";
 
@@ -28,30 +29,51 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
   userId,
   selectedDocument,
   onDocumentSelect,
-   
 }) => {
+  const params = useParams();
   const [nodes, setNodes] = useState<FileSystemNodeProps[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  // const [paramChecked, setParamChecked] = useState(false);
   const { showToast } = useToast();
 
   // Fetch root nodes on mount
   useEffect(() => {
-    const fetchRootNodes = async () => {
-      try {
-        const node = await fetchNodes(userId);
-        setNodes(node);
-      } catch (error) {
-        handleApiError(error, showToast);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchRootNodes();
-  }, [userId]);
+  }, []);
+
+  const handleParams = (nodes: FileSystemNodeProps[]) => {
+    const { filePath } = params;
+    if (!filePath) return;
+    if (filePath.length === 1) {
+      const file = nodes.find((node) => node.id === filePath[0]);
+      if (file) {
+        onDocumentSelect(file);
+      }
+      return;
+    }
+    if (filePath.length === 2) {
+      const folder = nodes.find((node) => node.id === filePath[0]);
+      if (folder) {
+        toggleExpand(folder, filePath[1]);
+      }
+    }
+  };
+
+  const fetchRootNodes = async () => {
+    try {
+      const node = await fetchNodes(userId);
+      setNodes(() => node);
+      handleParams(node);
+    } catch (error) {
+      handleApiError(error, showToast);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Toggle folder expand/collapse
-  const toggleExpand = async (node: FileSystemNodeProps) => {
+  const toggleExpand = async (node: FileSystemNodeProps, fileId?: string) => {
     if (node.type !== "FOLDER") return;
 
     // Optimistic UI update
@@ -61,11 +83,10 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
 
     // Fetch children if expanding for the first time
     if (!node.isExpanded && (!node.children || node.children.length === 0)) {
-      await refreshNodes(node.id);
+      await refreshNodes(node.id, fileId);
     }
   };
-  console.log("nodes",nodes);
-  
+
   // Helper: Update node properties immutably
   const updateNodeProperty = (
     nodes: FileSystemNodeProps[],
@@ -130,12 +151,20 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
     }
   };
 
-  const refreshNodes = async (parentId?: string) => {
+  const refreshNodes = async (parentId?: string, fileId?: string) => {
     const children = await fetchNodes(userId, parentId);
     if (!parentId) {
       setNodes(children);
       return;
     }
+
+    if (fileId && children.length >= 0) {
+      const file = children.find((node) => node.id === fileId);
+      if (file) {
+        onDocumentSelect(file);
+      }
+    }
+
     setNodes((prevNodes) => updateNodeChildren(prevNodes, children, parentId));
   };
 
