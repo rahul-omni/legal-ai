@@ -7,6 +7,10 @@ import { useEffect, useState } from "react";
 import { DocumentPane } from "./DocumentPane";
 import { FileExplorerV2 } from "./FileExplorerV2";
 import { RightPanel } from "./RightPanel";
+import { 
+  PanelLeft, 
+  PanelRightOpen, 
+} from "lucide-react";
 
 // Add this type for language options
 type LanguageOption = {
@@ -44,6 +48,10 @@ export default function LegalEditor() {
   const [selectedText, setSelectedText] = useState("");
   const [popupPosition, setPopupPosition] = useState({ x: 900, y: 100 });
   const [editorContent, setEditorContent] = useState("");
+
+  // Add state for panel visibility
+  const [showLeftPanel, setShowLeftPanel] = useState(true);
+  const [showRightPanel, setShowRightPanel] = useState(true);
 
   const loadDocuments = async () => {
     try {
@@ -281,35 +289,64 @@ export default function LegalEditor() {
   }, [files]);
 
   return (
-    <div className="h-screen flex">
-      {/* Left Panel - File Explorer */}
-      <div className="w-64 border-r">
-        <FileExplorerV2
-          userId={"1"}
-          selectedDocument={selectedFile}
-          onDocumentSelect={handleFileSelect}
-          onPdfParsed={handlePdfParsed}
-        />
+    <div className="h-screen flex flex-col bg-[#f9f9f9]">
+      {/* Toolbar */}
+      <div className="absolute top-0 right-0 z-50 flex gap-1 p-2">
+        <div className="flex gap-1 bg-[#f9f9f9] shadow-sm rounded p-1">
+          <button
+            onClick={() => setShowLeftPanel(!showLeftPanel)}
+            className={`p-1.5 rounded ${showLeftPanel ? 'bg-white shadow-sm' : 'bg-transparent'} 
+                       hover:bg-white hover:shadow-sm transition-all`}
+          >
+            <PanelLeft className="w-4 h-4 text-gray-600/80" />
+          </button>
+          <button
+            onClick={() => setShowRightPanel(!showRightPanel)}
+            className={`p-1.5 rounded ${showRightPanel ? 'bg-white shadow-sm' : 'bg-transparent'} 
+                       hover:bg-white hover:shadow-sm transition-all`}
+          >
+            <PanelRightOpen className="w-4 h-4 text-gray-600/80" />
+          </button>
+        </div>
       </div>
 
-      {/* Middle Panel - Document Editor */}
-      <div className="flex-1">
-        <DocumentPane
-          content={documentContent}
-          onContentChange={setDocumentContent}
-          fileName={selectedFile?.name || "New Document"}
-          onSave={handleSave}
-          onSaveAs={handleSaveAs}
-          onAnalyzeRisks={handleAnalyzeRisks}
-        />
-      </div>
+      {/* Main content */}
+      <div className="flex flex-1">
+        {/* Left Panel - File Explorer */}
+        <div className={`${showLeftPanel ? 'w-72' : 'w-0'} transition-all duration-200`}>
+          <div className={`h-full overflow-hidden ${!showLeftPanel && 'invisible'}`}>
+            <FileExplorerV2
+              userId={"1"}
+              selectedDocument={selectedFile}
+              onDocumentSelect={handleFileSelect}
+              onPdfParsed={handlePdfParsed}
+            />
+          </div>
+        </div>
 
-      {/* Right Panel */}
-      <RightPanel
-        risks={risks}
-        onRiskClick={handleRiskClick}
-        onSelectTemplate={handleTemplateSelect}
-      />
+        {/* Middle Panel - Document Editor */}
+        <div className="flex-1 bg-white">
+          <DocumentPane
+            content={documentContent}
+            onContentChange={setDocumentContent}
+            fileName={selectedFile?.name || "New Document"}
+            onSave={handleSave}
+            onSaveAs={handleSaveAs}
+            onAnalyzeRisks={handleAnalyzeRisks}
+          />
+        </div>
+
+        {/* Right Panel */}
+        <div className={`${showRightPanel ? 'w-80' : 'w-0'} transition-all duration-200`}>
+          <div className={`h-full overflow-hidden ${!showRightPanel && 'invisible'}`}>
+            <RightPanel
+              risks={risks}
+              onRiskClick={handleRiskClick}
+              onSelectTemplate={handleTemplateSelect}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

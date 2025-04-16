@@ -7,8 +7,12 @@ import {
   SARVAM_LANGUAGES,
   TranslationVendor,
 } from "@/lib/translation/types";
-import { AlertOctagon, Save, SaveAll } from "lucide-react";
-import React, { useRef, useState } from "react";
+import {
+  AlertOctagon,
+  Save,
+  ChevronDown
+} from "lucide-react";
+import React, { useRef, useState, useEffect } from "react";
 import { AIPopup } from "./AIPopup";
 
 interface DocumentPaneProps {
@@ -31,8 +35,10 @@ export function DocumentPane({
   const [showAIPopup, setShowAIPopup] = useState(false);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [selectedText, setSelectedText] = useState("");
+  const [showSaveDropdown, setShowSaveDropdown] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const saveDropdownRef = useRef<HTMLDivElement>(null);
   const [highlightRange, setHighlightRange] = useState<{
     start: number;
     end: number;
@@ -43,6 +49,18 @@ export function DocumentPane({
     useState<TranslationVendor>("openai");
   const [selectedLanguage, setSelectedLanguage] = useState("en-IN");
   const { isLoading, startLoading, stopLoading } = useLoading();
+
+  // Handle click outside for save dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (saveDropdownRef.current && !saveDropdownRef.current.contains(event.target as Node)) {
+        setShowSaveDropdown(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Show popup on Ctrl+Space
@@ -151,84 +169,161 @@ export function DocumentPane({
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 border-b flex items-center justify-between">
-        <h2 className="text-lg font-medium">{fileName}</h2>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onAnalyzeRisks}
-            className="px-3 py-1.5 text-sm border border-gray-200 rounded inline-flex items-center gap-2 hover:bg-gray-50"
-            disabled={isLoading("RISK_ANALYZE")}
-          >
-            <AlertOctagon className="w-4 h-4" />
-            {isLoading("RISK_ANALYZE") ? "Analyzing..." : "Analyze Risks"}
-          </button>
-          <button
-            onClick={onSave}
-            className="px-3 py-1.5 text-sm border border-gray-200 rounded inline-flex items-center gap-2 hover:bg-gray-50"
-          >
-            <Save className="w-4 h-4" />
-            Save
-          </button>
-          <button
-            onClick={onSaveAs}
-            className="px-3 py-1.5 text-sm border border-gray-200 rounded inline-flex items-center gap-2 hover:bg-gray-50"
-          >
-            <SaveAll className="w-4 h-4" />
-            Save As
-          </button>
-          <select
-            value={translationVendor}
-            onChange={(e) =>
-              setTranslationVendor(e.target.value as TranslationVendor)
-            }
-            className="px-2 py-1 border rounded text-sm"
-          >
-            <option value="openai">OpenAI</option>
-            <option value="sarvam">Sarvam AI</option>
-          </select>
-          <select
-            value={selectedLanguage}
-            onChange={(e) => setSelectedLanguage(e.target.value)}
-            className="px-2 py-1 border rounded text-sm"
-          >
-            {translationVendor === "sarvam"
-              ? SARVAM_LANGUAGES.map((lang) => (
-                  <option key={lang.code} value={lang.code}>
-                    {lang.name}
-                  </option>
-                ))
-              : OPENAI_LANGUAGES.map((lang) => (
-                  <option key={lang.value} value={lang.value}>
-                    {lang.label}
-                  </option>
-                ))}
-          </select>
-          <button
-            onClick={handleTranslate}
-            disabled={isLoading("TRANSLATE_TEXT")}
-          >
-            {isLoading("TRANSLATE_TEXT") ? "Translating..." : "Translate"}
-          </button>
+    <div className="h-full flex flex-col bg-[#f9f9f9]">
+      {/* Header */}
+      <div className="p-4 bg-[#f9f9f9]">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-800/80">
+                {fileName || "New Document"}
+              </h1>
+              <p className="text-sm text-gray-500/80">
+                Last edited: {new Date().toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+
+          {/* Controls Row */}
+          <div className="flex items-center gap-3">
+            {/* Translation Controls */}
+            <div className="flex items-center gap-2">
+              <select
+                value={translationVendor}
+                onChange={(e) => setTranslationVendor(e.target.value as TranslationVendor)}
+                className="px-3 py-2 text-sm border rounded-lg bg-white
+                         focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="openai">OpenAI</option>
+                <option value="sarvam">Sarvam AI</option>
+              </select>
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+                className="px-3 py-2 text-sm border rounded-lg bg-white
+                         focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {translationVendor === "sarvam"
+                  ? SARVAM_LANGUAGES.map((lang) => (
+                      <option key={lang.code} value={lang.code}>
+                        {lang.name}
+                      </option>
+                    ))
+                  : OPENAI_LANGUAGES.map((lang) => (
+                      <option key={lang.value} value={lang.value}>
+                        {lang.label}
+                      </option>
+                    ))}
+              </select>
+              <button
+                onClick={handleTranslate}
+                disabled={isLoading("TRANSLATE_TEXT")}
+                className="px-4 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg
+                         hover:bg-blue-100 transition-colors disabled:opacity-50
+                         flex items-center gap-2"
+              >
+                <span>Translate</span>
+                {isLoading("TRANSLATE_TEXT") && (
+                  <div className="animate-spin">⏳</div>
+                )}
+              </button>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                onClick={onAnalyzeRisks}
+                className="px-4 py-2 text-sm bg-amber-50 text-amber-600 rounded-lg
+                         hover:bg-amber-100 transition-colors flex items-center gap-2"
+              >
+                <AlertOctagon className="w-4 h-4" />
+                Analyze Risks
+              </button>
+
+              {/* Save Dropdown Button */}
+              <div className="relative" ref={saveDropdownRef}>
+                <div className="flex">
+                  <button
+                    onClick={onSave}
+                    className="px-4 py-2 text-sm bg-green-50 text-green-600 rounded-l-lg
+                             hover:bg-green-100 transition-colors flex items-center gap-2
+                             border-r border-green-200"
+                  >
+                    <Save className="w-4 h-4" />
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setShowSaveDropdown(!showSaveDropdown)}
+                    className="px-2 py-2 text-sm bg-green-50 text-green-600 rounded-r-lg
+                             hover:bg-green-100 transition-colors"
+                    aria-label="Show save options"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Improved Dropdown Menu */}
+                {showSaveDropdown && (
+                  <div className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg ring-1 ring-black 
+                                ring-opacity-5 bg-white transform origin-top-right z-50">
+                    <div className="py-1 divide-y divide-gray-100">
+                      <div className="px-4 py-3 bg-gray-50 rounded-t-lg">
+                        <p className="text-sm font-medium text-gray-900">Save Options</p>
+                        <p className="text-xs text-gray-500 mt-1">Choose how to save your document</p>
+                      </div>
+                      
+                      <div className="py-1">
+                        <button
+                          onClick={() => {
+                            onSave();
+                            setShowSaveDropdown(false);
+                          }}
+                          className="group flex w-full items-center px-4 py-2.5 text-sm text-gray-700
+                                   hover:bg-green-50 hover:text-green-700 transition-colors"
+                        >
+                          <Save className="w-4 h-4 mr-3 text-gray-400 group-hover:text-green-500" />
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">Save</span>
+                            <span className="text-xs text-gray-500">Save changes to current file</span>
+                          </div>
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            onSaveAs();
+                            setShowSaveDropdown(false);
+                          }}
+                          className="group flex w-full items-center px-4 py-2.5 text-sm text-gray-700
+                                   hover:bg-green-50 hover:text-green-700 transition-colors"
+                        >
+                          <Save className="w-4 h-4 mr-3 text-gray-400 group-hover:text-green-500" />
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">Save As...</span>
+                            <span className="text-xs text-gray-500">Save as a new file</span>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div className="flex-1 relative" ref={containerRef}>
-        {highlightRange ? (
-          <div
-            className="w-full h-full p-4 border rounded"
-            style={{ whiteSpace: "pre-wrap" }}
-          >
-            {renderContent()}
-          </div>
-        ) : (
-          <textarea
-            ref={textareaRef}
-            value={content}
-            onChange={(e) => onContentChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="w-full h-full p-4 border rounded resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        )}
+
+      {/* Editor */}
+      <div className="flex-1 relative p-6 bg-white" ref={containerRef}>
+        <textarea
+          ref={textareaRef}
+          value={content}
+          onChange={(e) => onContentChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="w-full h-full p-6 text-gray-800 bg-white rounded-lg 
+                   border-2 border-gray-300 resize-none focus:outline-none focus:ring-2 
+                   focus:ring-blue-500 focus:border-transparent"
+          style={{ fontSize: '15px', lineHeight: '1.6' }}
+        />
         {showAIPopup && (
           <AIPopup
             position={popupPosition}
@@ -236,6 +331,9 @@ export function DocumentPane({
             onGenerate={handleGeneratedText}
             currentContent={content}
             selectedText={selectedText}
+            userId="1"
+            documents={[]}
+            files={[]}
           />
         )}
       </div>
@@ -263,7 +361,10 @@ function getCaretCoordinates(element: HTMLTextAreaElement, position: number) {
   ];
 
   properties.forEach((prop) => {
-    div.style[prop as any] = styles[prop];
+    const key = prop as keyof CSSStyleDeclaration;
+    if (styles[key]) {
+      div.style[key] = styles[key] as string;
+    }
   });
 
   div.textContent = element.value.slice(0, position);

@@ -110,37 +110,71 @@ interface LegalTemplatesProps {
 }
 
 export function LegalTemplates({ onSelectTemplate }: LegalTemplatesProps) {
-  // Group templates by category
-  const groupedTemplates = LEGAL_TEMPLATES.reduce((acc, template) => {
-    if (!acc[template.category]) {
-      acc[template.category] = [];
-    }
-    acc[template.category].push(template);
-    return acc;
-  }, {} as Record<string, Template[]>);
-
   return (
-    <div className="h-full flex flex-col bg-white border border-gray-200">
-      <div className="p-3 border-b border-gray-200">
-        <h3 className="text-sm font-medium text-gray-900">Legal Templates</h3>
-      </div>
-      <div className="flex-1 overflow-auto p-2">
-        {Object.entries(groupedTemplates).map(([category, templates]) => (
-          <div key={category} className="mb-4">
-            <h4 className="text-xs font-medium text-gray-500 mb-2 px-2">{category}</h4>
-            <div className="space-y-1">
-              {templates.map((template) => (
-                <button
-                  key={template.id}
-                  onClick={() => onSelectTemplate(template.content)}
-                  className="w-full text-left p-2.5 text-sm rounded border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="font-medium text-gray-900">{template.name}</div>
-                </button>
-              ))}
-            </div>
+    <div className="space-y-6">
+      {/* Categories */}
+      <div className="space-y-4">
+        {/* Agreements Section */}
+        <div>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500/80 mb-3">
+            Agreements
+          </h3>
+          <div className="space-y-2">
+            <button
+              onClick={() => onSelectTemplate("Share Purchase Agreement template...")}
+              className="w-full text-left p-3 rounded-lg bg-white hover:bg-gray-200/70
+                       transition-colors duration-150 ease-in-out"
+            >
+              <span className="text-sm text-gray-800/80">Share Purchase Agreement</span>
+            </button>
+            <button
+              onClick={() => onSelectTemplate("Non-Disclosure Agreement template...")}
+              className="w-full text-left p-3 rounded-lg bg-white hover:bg-gray-200/70
+                       transition-colors duration-150 ease-in-out"
+            >
+              <span className="text-sm text-gray-800/80">Non-Disclosure Agreement</span>
+            </button>
+            <button
+              onClick={() => onSelectTemplate("Employment Agreement template...")}
+              className="w-full text-left p-3 rounded-lg bg-white hover:bg-gray-200/70
+                       transition-colors duration-150 ease-in-out"
+            >
+              <span className="text-sm text-gray-800">Employment Agreement</span>
+            </button>
           </div>
-        ))}
+        </div>
+
+        {/* Opinions Section */}
+        <div>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500/80 mb-3">
+            Opinions
+          </h3>
+          <div className="space-y-2">
+            <button
+              onClick={() => onSelectTemplate("Legal Opinion template...")}
+              className="w-full text-left p-3 rounded-lg bg-white hover:bg-gray-200/70
+                       transition-colors duration-150 ease-in-out"
+            >
+              <span className="text-sm text-gray-800">Legal Opinion - Corporate</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Reports Section */}
+        <div>
+          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500/80 mb-3">
+            Reports
+          </h3>
+          <div className="space-y-2">
+            <button
+              onClick={() => onSelectTemplate("Due Diligence Report template...")}
+              className="w-full text-left p-3 rounded-lg bg-white hover:bg-gray-200/70
+                       transition-colors duration-150 ease-in-out"
+            >
+              <span className="text-sm text-gray-800">Due Diligence Report</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
