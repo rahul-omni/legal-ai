@@ -15,7 +15,7 @@ import {
   FolderPlusIcon,
   Search,
 } from "lucide-react";
-import { FC, useEffect, useState } from "react";
+import { FC, SetStateAction, useEffect, useState } from "react";
 import { useToast } from "./ui/toast";
 
 interface FileExplorerProps {
@@ -104,8 +104,137 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
       return node;
     });
   };
+     
+  const checkDuplicateInTree = (
+    nodes: FileSystemNodeProps[],
+    name: string,
+    type: string
+  ): boolean => {
+    for (const node of nodes) {
+      if (node.name === name && node.type === type) return true;
+      if (node.children && checkDuplicateInTree(node.children, name, type)) {
+        return true;
+      }
+    }
+    return false;
+  };
+  
+  const handleAddDocument = (newDoc: FileSystemNodeProps, parentId: string | null) => {
+    // Check the entire tree for a duplicate before adding
+    if (checkDuplicateInTree(nodes, newDoc.name, newDoc.type)) {
+      console.log("Duplicate found, showing alert and skipping addition.");
+      alert(`A document named "${newDoc.name}" already exists somewhere in your tree.`);
+      return; // Exit early – don't add duplicate
+    }
+    console.log("Not duplicate, proceeding to add.");
+    const addRecursively = (nodes: FileSystemNodeProps[]): FileSystemNodeProps[] => {
+      return nodes.map((node) => {
+        if (node.id === parentId && node.type === "FOLDER") {
+          const children = node.children || [];
+          return {
+            ...node,
+            children: [...children, newDoc],
+          };
+        }
+        if (node.type === "FOLDER" && node.children?.length) {
+          return {
+            ...node,
+            children: addRecursively(node.children),
+          };
+        }
+        return node;
+      });
+    };
+  
+    // Add at root level if no parent
+    if (!parentId) {
+      setNodes([...nodes, newDoc]);
+    } else {
+      setNodes(addRecursively(nodes));
+    }
+  };
+  
+   
+// Then use debugSetNodes everywhere instead of setNodes temporarily
 
-  const handleFileUpload = async (
+
+const handleFileUpload = async (
+  event: React.ChangeEvent<HTMLInputElement>,
+  parentId: string | null = null
+) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const content = e.target?.result as string;
+
+    const newFile: CreateNodePayload = {
+      name: file.name,
+      type: "FILE",
+      userId,
+      parentId,
+      content,
+    };
+
+    try {
+      const uploadedNode = await createNode(newFile);
+     // if (uploadedNode) {
+        setNodes((prev) => [...prev, uploadedNode]);
+     // }
+    } catch (error: any) {
+      console.error("Error uploading file:", error);
+      alert(error.response?.data?.message || "Upload failed");
+    }
+  };
+
+  reader.readAsText(file);
+};
+
+  const handleFileUploadold = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    parentId?: string
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+  
+    try {
+      const content = await FileService.parseFile(file);
+  
+      const newFile: CreateNodePayload = {
+        name: file.name,
+        type: "FILE",
+        userId: "1",
+        parentId,
+        content,
+      };
+  
+      //await createNode(newFile);
+       
+
+      // Upload the file to the backend and get the real node object
+      const uploadedNode = await createNode(newFile);
+      const now = new Date();
+  
+      const localNode: FileSystemNodeProps = {
+        id: uploadedNode?.id || Date.now().toString(),
+        name: newFile.name,
+        type: "FILE",
+        userId: newFile.userId,
+        children: [],
+        createdAt: now,
+        updatedAt: now,
+      };
+  
+      handleAddDocument(localNode, parentId ?? null);
+  
+      await refreshNodes(parentId);
+    } catch (error) {
+      handleApiError(error, showToast);
+    } 
+  };
+  
+  const handleFileUploado = async (
     e: React.ChangeEvent<HTMLInputElement>,
     parentId?: string
   ) => {

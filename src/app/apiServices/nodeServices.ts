@@ -1,7 +1,7 @@
 import {  FileSystemNodeProps } from "@/types/fileSystem";
 import { FileType } from "@prisma/client";
 import { apiClient } from ".";
-
+import { AxiosResponse } from "axios";
 export interface CreateNodePayload {
   name: string;
   type: FileType;
@@ -26,7 +26,7 @@ export const fetchNodes = async (
   }
 };
 
-export const createNode = async (node: CreateNodePayload) => {
+export const createNodeold = async (node: CreateNodePayload) => {
   try {
     await apiClient.post("/nodes", node);
   } catch (error) {
@@ -34,6 +34,19 @@ export const createNode = async (node: CreateNodePayload) => {
     throw new Error("Failed to upload file");
   }
 };
+
+
+
+export const createNode = async (node: CreateNodePayload): Promise<FileSystemNodeProps> => {
+  try {
+    const response: AxiosResponse<FileSystemNodeProps> = await apiClient.post("/nodes", node);
+    return response.data;
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    throw new Error("Failed to upload file");
+  }
+};
+
 
 
 export const fetchAllNodes = async (): Promise<FileSystemNodeProps[]> => {

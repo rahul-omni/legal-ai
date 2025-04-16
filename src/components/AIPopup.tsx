@@ -67,17 +67,23 @@ export function AIPopup({
   
   
    const [isPopupOpen, setIsPopupOpen] = useState(false);
-  // const [document, setDocument] = useState<FileSystemNode | null>(null);
   const [document, setDocument] = useState<FileSystemNodeProps[]>([]); // Array to store multiple files
-
+ 
   const handleDocumentSelect = (file: FileSystemNodeProps) => {
-    // setDocument(file); // Do something with the selected document
-    setDocument((prevDocuments) => [...prevDocuments, file]); // Adds selected file to the array
+    const isAlreadySelected = document.some((doc) => doc.id === file.id);
+  
+    if (isAlreadySelected) {
+      console.warn(`⚠️ File already selected: ${file.name} (id: ${file.id})`);
+      return;
+    }
+  
+    setDocument((prev) => [...prev, file]);
   };
+  
    console.log("document--",document);
    
   const handleAddContextClick = () => {
-    alert("working")
+     
     setShowContext(true);
    // setIsPopupOpen(true); // Open the popup when the button is clicked
   };

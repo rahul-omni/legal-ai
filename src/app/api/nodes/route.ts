@@ -48,7 +48,21 @@ export async function POST(request: Request) {
     if (type === "FILE" && !content) {
       return handleError(null, "Content is required for files", 400);
     }
+     
+    const existingNode = await db.fileSystemNode.findFirst({
+      where: {
+        name,
+        type,
+        userId,
+        content: type === "FILE" ? content || "" : null,
+        parentId: parentId || null, // root level or specific folder
+      },
+    });
 
+    if (existingNode) {
+     // return handleError(null, "Duplicate node: This file/folder already exists", 409);
+       return NextResponse.json({error :"Duplicate file is prrsetn"},{status :409})
+    }
     // Create the node in database
     const newNode = await db.fileSystemNode.create({
       data: {
