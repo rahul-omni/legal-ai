@@ -158,7 +158,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
 // Then use debugSetNodes everywhere instead of setNodes temporarily
 
 
-const handleFileUpload = async (
+const handleFileUploadnew = async (
   event: React.ChangeEvent<HTMLInputElement>,
   parentId: string | null = null
 ) => {
@@ -191,7 +191,7 @@ const handleFileUpload = async (
   reader.readAsText(file);
 };
 
-  const handleFileUploadold = async (
+  const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     parentId?: string
   ) => {
