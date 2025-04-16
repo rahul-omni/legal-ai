@@ -1,5 +1,6 @@
 "use client";
-import type { FileData } from "@/lib/fileService";
+import { useLoading } from "@/context/loadingContext";
+import { handleApiError } from "@/helper/handleApiError";
 import { RiskAnalyzer, RiskFinding } from "@/lib/riskAnalyzer";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { useEffect, useState } from "react";
@@ -36,18 +37,14 @@ export default function LegalEditor() {
     indianLanguages[0].value
   );
   const [risks, setRisks] = useState<RiskFinding[]>([]);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showAIPopup, setShowAIPopup] = useState(false);
+  const { startLoading, stopLoading } = useLoading();
 
-  
-  const [selectedText, setSelectedText] = useState('')
-  const [popupPosition, setPopupPosition] = useState({ x: 900, y: 100 })
-  const [editorContent, setEditorContent] = useState('')
-   
-   
- 
-   
+  const [selectedText, setSelectedText] = useState("");
+  const [popupPosition, setPopupPosition] = useState({ x: 900, y: 100 });
+  const [editorContent, setEditorContent] = useState("");
+
   const loadDocuments = async () => {
     try {
       const response = await fetch("/api/documents");
@@ -61,13 +58,12 @@ export default function LegalEditor() {
   useEffect(() => {
     loadDocuments(); // Only load documents, don't show popup
   }, []);
-  
 
   const openPopupWithSelection = () => {
     const selection = window.getSelection();
-    const selectedText = selection?.toString() || '';
+    const selectedText = selection?.toString() || "";
     const position = selection?.getRangeAt(0)?.getBoundingClientRect();
-  
+
     if (selectedText) {
       setSelectedText(selectedText);
       setPopupPosition({
@@ -76,24 +72,21 @@ export default function LegalEditor() {
       });
       setEditorContent(documentContent);
       setShowAIPopup(true);
-      
     }
   };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.code === 'Space') {
+      if (e.ctrlKey && e.code === "Space") {
         e.preventDefault();
-        openPopupWithSelection();  // 👈 Just one call here
+        openPopupWithSelection(); // 👈 Just one call here
       }
     };
-  
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [documentContent]);
-  
- 
-  
+
   const handleFileSelect = (file: FileSystemNodeProps) => {
     setSelectedFile(file);
     if (file.content) {
@@ -238,18 +231,19 @@ export default function LegalEditor() {
 
   const handleAnalyzeRisks = async () => {
     try {
-      setIsAnalyzing(true);
+      startLoading("RISK_ANALYZE");
       const findings = await RiskAnalyzer.analyzeContract(documentContent);
       setRisks(findings);
     } catch (error) {
-      console.error("Risk analysis failed:", error);
+      handleApiError(error, showToast);
     } finally {
-      setIsAnalyzing(false);
+      stopLoading("RISK_ANALYZE");
     }
   };
 
   const handleRiskClick = (risk: RiskFinding) => {
     // Scroll to and highlight the risky section
+    debugger;
     if (risk.location) {
       setDocumentContent((prevContent) => {
         // You might want to implement a more sophisticated highlighting mechanism
@@ -271,19 +265,17 @@ export default function LegalEditor() {
   };
 
   useEffect(() => {
-  if (showAIPopup) {
-    console.log('Documents loaded and passed to AIPopup:', files);
-  }
-}, [showAIPopup, files]);
+    if (showAIPopup) {
+      console.log("Documents loaded and passed to AIPopup:", files);
+    }
+  }, [showAIPopup, files]);
 
   useEffect(() => {
     if (files.length > 0) {
       console.log("Documents loaded and passed to AIPopup:", files);
-      
     }
   }, [files]);
-  
-  
+
   return (
     <div className="h-screen flex">
       {/* Left Panel - File Explorer */}
@@ -292,8 +284,6 @@ export default function LegalEditor() {
           userId={"1"}
           selectedDocument={selectedFile}
           onDocumentSelect={handleFileSelect}
-           
-          
         />
       </div>
 
@@ -306,10 +296,9 @@ export default function LegalEditor() {
           onSave={handleSave}
           onSaveAs={handleSaveAs}
           onAnalyzeRisks={handleAnalyzeRisks}
-          isAnalyzing={isAnalyzing}
         />
       </div>
-        
+
       {/* Right Panel */}
       <RightPanel
         risks={risks}
