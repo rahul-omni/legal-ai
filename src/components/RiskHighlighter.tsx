@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { RiskFinding } from '@/lib/riskAnalyzer'
-import { AlertTriangle, AlertCircle, AlertOctagon } from 'lucide-react'
+import { useState, useEffect } from "react";
+import { RiskFinding } from "@/lib/riskAnalyzer";
+import { AlertTriangle, AlertCircle, AlertOctagon } from "lucide-react";
 
 interface RiskHighlighterProps {
   risks: RiskFinding[];
@@ -11,9 +11,9 @@ interface RiskHighlighterProps {
 
 export function RiskHighlighter({ risks, onRiskClick }: RiskHighlighterProps) {
   const severityIcons = {
-    high: <AlertOctagon className="w-4 h-4 text-red-500" />,
-    medium: <AlertTriangle className="w-4 h-4 text-yellow-500" />,
-    low: <AlertCircle className="w-4 h-4 text-blue-500" />
+    high: <AlertOctagon className="w-4 h-4 min-w-4 text-red-500" />,
+    medium: <AlertTriangle className="w-4 h-4 min-w-4 text-yellow-500" />,
+    low: <AlertCircle className="w-4 h-4 min-w-4 text-blue-500" />,
   };
 
   return (
@@ -32,7 +32,7 @@ export function RiskHighlighter({ risks, onRiskClick }: RiskHighlighterProps) {
           </span>
         </div>
       </div>
-      
+
       <div className="space-y-2 p-4">
         {risks.map((risk, index) => (
           <button
@@ -55,4 +55,4 @@ export function RiskHighlighter({ risks, onRiskClick }: RiskHighlighterProps) {
       </div>
     </div>
   );
-} 
+}
