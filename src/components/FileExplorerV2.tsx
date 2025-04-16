@@ -18,26 +18,29 @@ import {
 import { useParams } from "next/navigation";
 import { FC, useEffect, useState } from "react";
 import { useToast } from "./ui/toast";
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 
 interface FileExplorerProps {
   userId: string;
   selectedDocument?: FileSystemNodeProps;
   onDocumentSelect: (file: FileSystemNodeProps) => void;
+  onPdfParsed: (text: string) => void;
 }
 
 export const FileExplorerV2: FC<FileExplorerProps> = ({
   userId,
   selectedDocument,
   onDocumentSelect,
+  onPdfParsed
 }) => {
   const params = useParams();
   const [nodes, setNodes] = useState<FileSystemNodeProps[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
-  // const [paramChecked, setParamChecked] = useState(false);
   const { showToast } = useToast();
 
-  // Fetch root nodes on mount
+  GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
+
   useEffect(() => {
     fetchRootNodes();
   }, []);
@@ -72,22 +75,18 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
     }
   };
 
-  // Toggle folder expand/collapse
   const toggleExpand = async (node: FileSystemNodeProps, fileId?: string) => {
     if (node.type !== "FOLDER") return;
 
-    // Optimistic UI update
     setNodes((prevNodes) =>
       updateNodeProperty(prevNodes, node.id, "isExpanded", !node.isExpanded)
     );
 
-    // Fetch children if expanding for the first time
     if (!node.isExpanded && (!node.children || node.children.length === 0)) {
       await refreshNodes(node.id, fileId);
     }
   };
 
-  // Helper: Update node properties immutably
   const updateNodeProperty = (
     nodes: FileSystemNodeProps[],
     nodeId: string,
@@ -106,7 +105,6 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
     });
   };
 
-  // Helper functions to update state immutably
   const updateNodeChildren = (
     nodes: FileSystemNodeProps[],
     children: FileSystemNodeProps[],
@@ -126,6 +124,26 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
     });
   };
 
+  const extractTextFromPDF = async (file: File): Promise<string> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await getDocument({ data: arrayBuffer }).promise;
+      let fullText = "";
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const text = content.items.map((item: any) => item.str).join(" ");
+        fullText += `\n\nPage ${i}:\n${text}`;
+      }
+
+      return fullText;
+    } catch (error) {
+      console.error('Error extracting PDF text:', error);
+      throw error;
+    }
+  };
+
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     parentId?: string
@@ -134,7 +152,15 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
     if (!file) return;
 
     try {
-      const content = await FileService.parseFile(file);
+      let content: string;
+      
+      if (file.type === 'application/pdf') {
+        content = await extractTextFromPDF(file);
+        onPdfParsed(content);
+        showToast("PDF Parsed Successfully");
+      } else {
+        content = await FileService.parseFile(file);
+      }
 
       const newFile: CreateNodePayload = {
         name: file.name,
@@ -169,7 +195,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
   };
 
   const handleCreateFolder = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default action
+    e.preventDefault();
     const folderName = prompt("Enter folder name:", "New Folder");
     if (!folderName) return;
 
@@ -240,7 +266,6 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
         </div>
       </div>
 
-      {/* Only render if expanded AND children exists (not undefined) */}
       {node.isExpanded && node.children !== undefined && (
         <div>
           {node.children.length > 0 ? (
@@ -258,8 +283,6 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
   return (
     <>
       <div className="flex flex-col border-r border-border">
-        {/* Header with search and actions */}
-
         <div className="p-4 border-b">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">

@@ -264,6 +264,10 @@ export default function LegalEditor() {
     // showToast('Template loaded successfully');
   };
 
+  const handlePdfParsed = (text: string) => {
+    setDocumentContent(text); // Update the document content with parsed PDF text
+  };
+
   useEffect(() => {
     if (showAIPopup) {
       console.log("Documents loaded and passed to AIPopup:", files);
@@ -284,6 +288,7 @@ export default function LegalEditor() {
           userId={"1"}
           selectedDocument={selectedFile}
           onDocumentSelect={handleFileSelect}
+          onPdfParsed={handlePdfParsed}
         />
       </div>
 
