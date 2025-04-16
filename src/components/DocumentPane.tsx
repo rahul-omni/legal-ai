@@ -1,17 +1,14 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Save, SaveAll, AlertOctagon, FileText } from 'lucide-react'
-import { AIPopup } from './AIPopup'
 import { RiskAnalyzer, RiskFinding } from '@/lib/riskAnalyzer'
-import { RiskHighlighter } from './RiskHighlighter'
-import { LegalTemplates } from './LegalTemplates'
-import { 
-  TranslationVendor, 
-  SARVAM_LANGUAGES, 
-  OPENAI_LANGUAGES 
+import {
+  OPENAI_LANGUAGES,
+  SARVAM_LANGUAGES,
+  TranslationVendor
 } from '@/lib/translation/types'
+import { AlertOctagon, Save, SaveAll } from 'lucide-react'
+import React, { useRef, useState } from 'react'
+import { AIPopup } from './AIPopup'
 
 interface DocumentPaneProps {
   content: string;

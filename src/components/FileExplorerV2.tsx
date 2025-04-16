@@ -178,16 +178,16 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center">
                 {node.isExpanded ? (
-                  <FolderOpenIcon className="w-4 h-4 mr-2 text-yellow-500" />
+                  <FolderOpenIcon className="w-4 h-4 mr-2 min-w-4 text-yellow-500" />
                 ) : (
-                  <FolderIcon className="w-4 h-4 mr-2 text-yellow-500" />
+                  <FolderIcon className="w-4 h-4 mr-2 min-w-4 text-yellow-500" />
                 )}
                 <span className="text-sm">{node.name}</span>
               </div>
 
               <div className="">
                 <label htmlFor={`file-${node.id}`} className="cursor-pointer">
-                  <FilePlus className="w-4 h-4 text-blue-500" />
+                  <FilePlus className="w-4 h-4 min-w-4 text-blue-500" />
                 </label>
                 <input
                   id={`file-${node.id}`}
@@ -204,7 +204,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
             </div>
           ) : (
             <>
-              <FileIcon className="w-4 h-4 mr-2 text-blue-500" />
+              <FileIcon className="w-4 h-4 mr-2 min-w-4 text-blue-500" />
               <span className="text-sm">{node.name}</span>
             </>
           )}
