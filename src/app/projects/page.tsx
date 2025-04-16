@@ -10,11 +10,12 @@ import {
   Search,
   Upload,
 } from "lucide-react";
+import moment from "moment";
 import { Dispatch, FC, useEffect, useReducer, useState } from "react";
 import { createNode, fetchNodes } from "../apiServices/nodeServices";
-import moment from "moment";
 
 import { X } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface ProjectHubProps {
   projects: FileSystemNodeProps[];
@@ -75,7 +76,6 @@ export default function ProjectHub() {
     isNewProjectModalOpen: false,
   });
 
-  // Load projects on mount
   useEffect(() => {
     loadProjects();
   }, []);
@@ -281,7 +281,8 @@ const ProjectCard: FC<
     project: FileSystemNodeProps;
     loadProjects: (parentId?: string) => void;
   }
-> = ({ project, dispatchProjectHub, loadProjects }) => {
+> = ({ projectHubState, project, dispatchProjectHub, loadProjects }) => {
+  const router = useRouter();
   return (
     <button
       onClick={() => {
@@ -292,7 +293,15 @@ const ProjectCard: FC<
           });
 
           loadProjects(project.id);
+          return;
         }
+        if (projectHubState.selectedProject) {
+          router.push(
+            `/editor/${projectHubState.selectedProject.id}/${project.id}`
+          );
+          return;
+        }
+        router.push(`/editor/${project.id}`);
       }}
       className="border border-gray-200 rounded-lg bg-white p-4 hover:shadow-md transition-all hover:border-gray-300 cursor-pointer"
     >
