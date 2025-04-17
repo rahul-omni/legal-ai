@@ -49,12 +49,25 @@ export function DocumentPane({
     useState<TranslationVendor>("openai");
   const [selectedLanguage, setSelectedLanguage] = useState("en-IN");
   const { isLoading, startLoading, stopLoading } = useLoading();
+  const [showTranslateDropdown, setShowTranslateDropdown] = useState(false);
+  const translationDropdownRef = useRef<HTMLDivElement>(null);
 
   // Handle click outside for save dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (saveDropdownRef.current && !saveDropdownRef.current.contains(event.target as Node)) {
         setShowSaveDropdown(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (translationDropdownRef.current && !translationDropdownRef.current.contains(event.target as Node)) {
+        setShowTranslateDropdown(false);
       }
     }
 
@@ -188,52 +201,83 @@ export function DocumentPane({
           <div className="flex items-center gap-3">
             {/* Translation Controls */}
             <div className="flex items-center gap-2">
-              <select
-                value={translationVendor}
-                onChange={(e) => setTranslationVendor(e.target.value as TranslationVendor)}
-                className="px-3 py-2 text-sm border rounded-lg bg-white
-                         focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="openai">OpenAI</option>
-                <option value="sarvam">Sarvam AI</option>
-              </select>
-              <select
-                value={selectedLanguage}
-                onChange={(e) => setSelectedLanguage(e.target.value)}
-                className="px-3 py-2 text-sm border rounded-lg bg-white
-                         focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {translationVendor === "sarvam"
-                  ? SARVAM_LANGUAGES.map((lang) => (
-                      <option key={lang.code} value={lang.code}>
-                        {lang.name}
-                      </option>
-                    ))
-                  : OPENAI_LANGUAGES.map((lang) => (
-                      <option key={lang.value} value={lang.value}>
-                        {lang.label}
-                      </option>
-                    ))}
-              </select>
-              <button
-                onClick={handleTranslate}
-                disabled={isLoading("TRANSLATE_TEXT")}
-                className="px-4 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg
-                         hover:bg-blue-100 transition-colors disabled:opacity-50
-                         flex items-center gap-2"
-              >
-                <span>Translate</span>
-                {isLoading("TRANSLATE_TEXT") && (
-                  <div className="animate-spin">⏳</div>
+              <div className="relative" ref={translationDropdownRef}>
+                <div className="flex">
+                  <button
+                    onClick={handleTranslate}
+                    disabled={isLoading("TRANSLATE_TEXT")}
+                    className="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-l-lg
+                             hover:bg-blue-100 transition-colors disabled:opacity-50
+                             flex items-center gap-2 border-r border-blue-200"
+                  >
+                    <span>Translate</span>
+                    {isLoading("TRANSLATE_TEXT") && (
+                      <div className="animate-spin">⏳</div>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowTranslateDropdown(!showTranslateDropdown)}
+                    className="px-2 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-r-lg
+                             hover:bg-blue-100 transition-colors"
+                    aria-label="Show translation options"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Translation Dropdown Menu */}
+                {showTranslateDropdown && (
+                  <div className="absolute left-0 mt-2 w-56 rounded-lg shadow-lg ring-1 ring-black 
+                                ring-opacity-5 bg-white transform origin-top-left z-50">
+                    <div className="py-1 divide-y divide-gray-100">
+                      <div className="px-4 py-3 bg-gray-50 rounded-t-lg">
+                        <p className="text-sm font-medium text-gray-900">Translation Options</p>
+                        <p className="text-xs text-gray-500 mt-1">Choose translation settings</p>
+                      </div>
+                      
+                      <div className="p-3">
+                        <label className="text-xs font-medium text-gray-500 block mb-2">Translation Service</label>
+                        <select
+                          value={translationVendor}
+                          onChange={(e) => setTranslationVendor(e.target.value as TranslationVendor)}
+                          className="w-full px-2 py-1.5 text-sm border rounded-md bg-white text-gray-600/70
+                                   focus:ring-1 focus:ring-blue-500 focus:border-blue-500 mb-3"
+                        >
+                          <option value="openai">OpenAI</option>
+                          <option value="sarvam">Sarvam AI</option>
+                        </select>
+
+                        <label className="text-xs font-medium text-gray-500 block mb-2">Target Language</label>
+                        <select
+                          value={selectedLanguage}
+                          onChange={(e) => setSelectedLanguage(e.target.value)}
+                          className="w-full px-2 py-1.5 text-sm border rounded-md bg-white text-gray-600/70
+                                   focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          {translationVendor === "sarvam"
+                            ? SARVAM_LANGUAGES.map((lang) => (
+                                <option key={lang.code} value={lang.code}>
+                                  {lang.name}
+                                </option>
+                              ))
+                            : OPENAI_LANGUAGES.map((lang) => (
+                                <option key={lang.value} value={lang.value}>
+                                  {lang.label}
+                                </option>
+                              ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
                 )}
-              </button>
+              </div>
             </div>
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2 ml-auto">
               <button
                 onClick={onAnalyzeRisks}
-                className="px-4 py-2 text-sm bg-amber-50 text-amber-600 rounded-lg
+                className="px-3 py-1.5 text-sm bg-amber-50 text-amber-600 rounded-lg
                          hover:bg-amber-100 transition-colors flex items-center gap-2"
               >
                 <AlertOctagon className="w-4 h-4" />
@@ -245,7 +289,7 @@ export function DocumentPane({
                 <div className="flex">
                   <button
                     onClick={onSave}
-                    className="px-4 py-2 text-sm bg-green-50 text-green-600 rounded-l-lg
+                    className="px-3 py-1.5 text-sm bg-green-50 text-green-600 rounded-l-lg
                              hover:bg-green-100 transition-colors flex items-center gap-2
                              border-r border-green-200"
                   >
@@ -254,7 +298,7 @@ export function DocumentPane({
                   </button>
                   <button
                     onClick={() => setShowSaveDropdown(!showSaveDropdown)}
-                    className="px-2 py-2 text-sm bg-green-50 text-green-600 rounded-r-lg
+                    className="px-2 py-1.5 text-sm bg-green-50 text-green-600 rounded-r-lg
                              hover:bg-green-100 transition-colors"
                     aria-label="Show save options"
                   >
@@ -346,7 +390,7 @@ function getCaretCoordinates(element: HTMLTextAreaElement, position: number) {
   const { offsetLeft, offsetTop } = element;
   const div = document.createElement("div");
   const styles = getComputedStyle(element);
-  const properties = [
+  const safeProperties = [
     "fontFamily",
     "fontSize",
     "fontWeight",
@@ -355,15 +399,14 @@ function getCaretCoordinates(element: HTMLTextAreaElement, position: number) {
     "padding",
     "width",
     "lineHeight",
-    "letterSpacing", // Add these for more accurate positioning
+    "letterSpacing",
     "wordSpacing",
     "textTransform",
-  ];
+  ] as const;
 
-  properties.forEach((prop) => {
-    const key = prop as keyof CSSStyleDeclaration;
-    if (styles[key]) {
-      div.style[key] = styles[key] as string;
+  safeProperties.forEach((prop) => {
+    if (styles[prop]) {
+      div.style[prop] = styles[prop];
     }
   });
 

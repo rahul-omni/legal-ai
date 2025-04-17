@@ -116,8 +116,8 @@ export function LegalTemplates({ onSelectTemplate }: LegalTemplatesProps) {
       <div className="space-y-4">
         {/* Agreements Section */}
         <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500/80 mb-3">
-            Agreements
+          <h3 className="text-xs font-medium text-gray-500/60 uppercase tracking-wider mb-3">
+            AGREEMENTS
           </h3>
           <div className="space-y-2">
             <button
@@ -125,29 +125,29 @@ export function LegalTemplates({ onSelectTemplate }: LegalTemplatesProps) {
               className="w-full text-left p-3 rounded-lg bg-white hover:bg-gray-200/70
                        transition-colors duration-150 ease-in-out"
             >
-              <span className="text-sm text-gray-800/80">Share Purchase Agreement</span>
+              <span className="text-sm text-gray-600/70">Share Purchase Agreement</span>
             </button>
             <button
               onClick={() => onSelectTemplate("Non-Disclosure Agreement template...")}
               className="w-full text-left p-3 rounded-lg bg-white hover:bg-gray-200/70
                        transition-colors duration-150 ease-in-out"
             >
-              <span className="text-sm text-gray-800/80">Non-Disclosure Agreement</span>
+              <span className="text-sm text-gray-600/70">Non-Disclosure Agreement</span>
             </button>
             <button
               onClick={() => onSelectTemplate("Employment Agreement template...")}
               className="w-full text-left p-3 rounded-lg bg-white hover:bg-gray-200/70
                        transition-colors duration-150 ease-in-out"
             >
-              <span className="text-sm text-gray-800">Employment Agreement</span>
+              <span className="text-sm text-gray-600/70">Employment Agreement</span>
             </button>
           </div>
         </div>
 
         {/* Opinions Section */}
         <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500/80 mb-3">
-            Opinions
+          <h3 className="text-xs font-medium text-gray-500/60 uppercase tracking-wider mb-3">
+            OPINIONS
           </h3>
           <div className="space-y-2">
             <button
@@ -155,15 +155,15 @@ export function LegalTemplates({ onSelectTemplate }: LegalTemplatesProps) {
               className="w-full text-left p-3 rounded-lg bg-white hover:bg-gray-200/70
                        transition-colors duration-150 ease-in-out"
             >
-              <span className="text-sm text-gray-800">Legal Opinion - Corporate</span>
+              <span className="text-sm text-gray-600/70">Legal Opinion - Corporate</span>
             </button>
           </div>
         </div>
 
         {/* Reports Section */}
         <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500/80 mb-3">
-            Reports
+          <h3 className="text-xs font-medium text-gray-500/60 uppercase tracking-wider mb-3">
+            REPORTS
           </h3>
           <div className="space-y-2">
             <button
@@ -171,7 +171,7 @@ export function LegalTemplates({ onSelectTemplate }: LegalTemplatesProps) {
               className="w-full text-left p-3 rounded-lg bg-white hover:bg-gray-200/70
                        transition-colors duration-150 ease-in-out"
             >
-              <span className="text-sm text-gray-800">Due Diligence Report</span>
+              <span className="text-sm text-gray-600/70">Due Diligence Report</span>
             </button>
           </div>
         </div>

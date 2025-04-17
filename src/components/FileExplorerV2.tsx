@@ -10,13 +10,13 @@ import { FileSystemNodeProps } from "@/types/fileSystem";
 import {
   FileIcon,
   FilePlus,
-  FolderIcon,
-  FolderOpenIcon,
   FolderPlusIcon,
   Search,
   FileText,
   File,
-  FileType2
+  FileType2,
+  Folder,
+  FolderOpen
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { FC, useEffect, useState } from "react";
@@ -250,9 +250,9 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
                 {node.isExpanded ? (
-                  <FolderOpenIcon className="w-4 h-4 text-yellow-400 shrink-0" />
+                  <FolderOpen className="w-4 h-4 text-gray-500 shrink-0 fill-current" />
                 ) : (
-                  <FolderIcon className="w-4 h-4 text-yellow-400 shrink-0" />
+                  <Folder className="w-4 h-4 text-gray-500 shrink-0 fill-current" />
                 )}
                 <span className="text-sm text-gray-700/80">{node.name}</span>
               </div>
@@ -262,9 +262,9 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
                             transition-opacity">
                 <label
                   htmlFor={`file-${node.id}`}
-                  className="p-1 rounded-md hover:bg-gray-300/70 cursor-pointer"
+                  className="p-1 rounded-md hover:bg-gray-200/70 cursor-pointer"
                 >
-                  <FilePlus className="w-4 h-4 text-gray-500" />
+                  <FilePlus className="w-4 h-4 text-gray-500/80" />
                 </label>
                 <input
                   id={`file-${node.id}`}

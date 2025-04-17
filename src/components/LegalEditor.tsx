@@ -7,10 +7,7 @@ import { useEffect, useState } from "react";
 import { DocumentPane } from "./DocumentPane";
 import { FileExplorerV2 } from "./FileExplorerV2";
 import { RightPanel } from "./RightPanel";
-import { 
-  PanelLeft, 
-  PanelRightOpen, 
-} from "lucide-react";
+import { PanelLeft, PanelRightOpen } from "lucide-react";
 
 // Add this type for language options
 type LanguageOption = {
