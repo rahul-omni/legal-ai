@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, AlertOctagon } from "lucide-react";
+import { FileText, AlertOctagon, ListChecks } from "lucide-react";
 import { RiskHighlighter } from "./RiskHighlighter";
 import { LegalTemplates } from "./LegalTemplates";
 import { RiskFinding } from "@/lib/riskAnalyzer";
@@ -18,12 +18,14 @@ interface RightPanelProps {
   risks: RiskFinding[];
   onRiskClick: (risk: RiskFinding) => void;
   onSelectTemplate: (content: string) => void;
+  onAnalyzeRisks: () => Promise<void>;
 }
 
 export function RightPanel({
   risks,
   onRiskClick,
   onSelectTemplate,
+  onAnalyzeRisks,
 }: RightPanelProps) {
   const [activeTab, setActiveTab] = useState<"templates" | "risks">("templates");
 
@@ -45,60 +47,64 @@ export function RightPanel({
   ];
 
   return (
-    <div className="h-full flex flex-col bg-[#f9f9f9]">
-      <div className="p-4 bg-[#f9f9f9]">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500/80 mb-3">Actions</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            onClick={() => setActiveTab('templates')}
-            className={`px-4 py-2 text-sm rounded-lg transition-colors
-                      ${activeTab === 'templates' 
-                        ? 'bg-blue-50 text-blue-600/95' 
-                        : 'text-gray-600/95 hover:bg-gray-200/70'}
-                      flex items-center justify-center`}
-          >
-            <FileText className="w-4 h-4 mr-2" />
-            Templates
-          </button>
-          <button
-            onClick={() => setActiveTab('risks')}
-            className={`px-4 py-2 text-sm rounded-lg transition-colors
-                      ${activeTab === 'risks' 
-                        ? 'bg-amber-50 text-amber-600/95' 
-                        : 'text-gray-600/95 hover:bg-gray-200/70'}
-                      flex items-center justify-center`}
-          >
-            <AlertOctagon className="w-4 h-4 mr-2" />
-            Risk Analysis {risks.length > 0 && `(${risks.length})`}
-          </button>
-        </div>
+    <div className="h-full flex flex-col bg-white border-l">
+      <div className="flex border-b mt-10">
+        <button
+          onClick={() => setActiveTab("templates")}
+          className={`flex-1 py-2 px-4 text-sm font-medium flex items-center justify-center gap-2 ${
+            activeTab === "templates"
+              ? "border-b-2 border-indigo-500 text-indigo-600"
+              : "text-gray-500 hover:bg-gray-50"
+          }`}
+        >
+          <FileText className="w-4 h-4" /> Templates
+        </button>
+        <button
+          onClick={() => setActiveTab("risks")}
+          className={`flex-1 py-2 px-4 text-sm font-medium flex items-center justify-center gap-2 ${
+            activeTab === "risks"
+              ? "border-b-2 border-amber-500 text-amber-600"
+              : "text-gray-500 hover:bg-gray-50"
+          }`}
+        >
+          <ListChecks className="w-4 h-4" /> Risks ({risks.length})
+        </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 bg-[#f9f9f9]">
-        {activeTab === 'templates' ? (
+      <div className="flex-1 overflow-y-auto p-4">
+        {activeTab === "templates" && (
           <LegalTemplates onSelectTemplate={onSelectTemplate} />
-        ) : (
-          <div className="space-y-3">
+        )}
+
+        {activeTab === "risks" && (
+          <div>
+            <button
+              onClick={onAnalyzeRisks}
+              className="w-full mb-4 px-3 py-2 text-sm bg-amber-50 text-amber-600 rounded-lg
+                       hover:bg-amber-100 transition-colors flex items-center justify-center gap-2"
+            >
+              <AlertOctagon className="w-4 h-4" />
+              Analyze Document Risks
+            </button>
+
             {risks.length === 0 ? (
-              <div className="text-center text-gray-500/95 py-8">
-                No risks detected. Click "Analyze Risks" to begin analysis.
-              </div>
+              <p className="text-sm text-gray-500 text-center mt-4">
+                No risks identified yet. Click the button above to analyze the document.
+              </p>
             ) : (
-              risks.map((risk, index) => (
-                <div
-                  key={index}
-                  className="p-4 rounded-lg border border-amber-200 bg-amber-50
-                           cursor-pointer hover:bg-amber-100 transition-colors"
-                  onClick={() => onRiskClick(risk)}
-                >
-                  <h3 className="font-medium text-amber-800/95">
-                    {risk.description ? 'Risk Warning' : 'No Description'}
-                  </h3>
-                  <p className="text-sm text-amber-700/95 mt-1">
-                    {risk.description}
-                  </p>
-                </div>
-              ))
+              <ul className="space-y-3">
+                {risks.map((risk, index) => (
+                  <li
+                    key={index}
+                    onClick={() => onRiskClick(risk)}
+                    className="p-3 border rounded-md hover:bg-gray-50 cursor-pointer transition-colors"
+                  >
+                    <p className="font-medium text-sm text-gray-800">{risk.clause}</p>
+                    <p className="text-xs text-gray-600 mt-1">{risk.finding}</p>
+                    <p className="text-xs text-red-600 font-semibold mt-1">Severity: {risk.severity}</p>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         )}

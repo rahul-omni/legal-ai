@@ -3,6 +3,7 @@ import { ToastContainer } from "@/components/ui/toast";
 import { LoadingProvider } from "@/context/loadingContext";
 import type { Metadata } from "next";
 import "./globals.css";
+import { TabsProvider } from "@/context/tabsContext";
 
 export const metadata: Metadata = {
   title: "Legal Document Platform",
@@ -18,9 +19,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="flex">
         <LoadingProvider>
-          <Navigation />
-          <main className="flex-1">{children}</main>
-          <ToastContainer toasts={[]} />
+          <TabsProvider>
+            <Navigation />
+            <main className="flex-1">{children}</main>
+            <ToastContainer toasts={[]} />
+          </TabsProvider>
         </LoadingProvider>
       </body>
     </html>

@@ -1,44 +1,57 @@
 "use client"
 
-import { FileSystemNode } from "@/types/fileSystem";
-import { FileIcon, FolderIcon } from "lucide-react";
-import { useState } from "react";
+import { FileSystemNodeProps } from '@/types/fileSystem';
+import { FolderIcon, FileIcon, ChevronRight, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 
 interface TreeNodeProps {
-    node: FileSystemNode;
-    onSelect: (node: FileSystemNode) => void;
-  }
-  
-  const TreeNode: React.FC<TreeNodeProps> = ({ node, onSelect }) => {
-    const [isOpen, setIsOpen] = useState(false);
-  
-    const handleToggle = () => {
-      if (node.type === "FOLDER") {
-        setIsOpen(!isOpen);
-      } else {
-        onSelect(node); // When a file is selected
-      }
-    };
-  
-    return (
-      <div className="ml-2">
-        <div
-          className="cursor-pointer flex items-center gap-2"
-          onClick={handleToggle}
-        >
-          {node.type === "FOLDER" ? <FolderIcon size={16} /> : <FileIcon size={16} />}
-          <span>{node.name}</span>
-        </div>
-        {isOpen && node.children && (
-          <div className="ml-4">
-            {node.children.map((child) => (
-              <TreeNode key={child.id} node={child} onSelect={onSelect} />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-  
+  node: FileSystemNodeProps;
+  onSelect: (node: FileSystemNodeProps) => void;
+}
 
-export default TreeNode;
+export default function TreeNode({ node, onSelect }: TreeNodeProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const isFolder = node.type === 'folder';
+
+  const handleToggle = () => {
+    if (isFolder) {
+      setIsOpen(!isOpen);
+    }
+  };
+
+  const handleSelect = () => {
+    if (!isFolder) {
+      onSelect(node);
+    } else {
+      handleToggle(); // Also toggle folder on click
+    }
+  };
+
+  return (
+    <div className="ml-3">
+      <div
+        className="flex items-center py-0.5 px-1.5 rounded hover:bg-gray-100 cursor-pointer group"
+        onClick={handleSelect}
+      >
+        {isFolder && (
+          <button onClick={(e) => { e.stopPropagation(); handleToggle(); }} className="mr-0.5 p-0.5 rounded hover:bg-gray-200">
+            {isOpen ? <ChevronDown className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600" />}
+          </button>
+        )}
+        {isFolder ? (
+          <FolderIcon className="w-3.5 h-3.5 mr-1.5 text-sky-500 flex-shrink-0" />
+        ) : (
+          <FileIcon className="w-3.5 h-3.5 mr-1.5 text-gray-400 flex-shrink-0" />
+        )}
+        <span className="text-xs text-gray-700 group-hover:text-gray-900 truncate">{node.name}</span>
+      </div>
+      {isFolder && isOpen && node.children && (
+        <div>
+          {node.children.map((child) => (
+            <TreeNode key={child.id} node={child} onSelect={onSelect} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

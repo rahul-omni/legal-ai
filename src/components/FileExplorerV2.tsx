@@ -16,10 +16,12 @@ import {
   File,
   FileType2,
   Folder,
-  FolderOpen
+  FolderOpen,
+  Upload,
+  FolderPlus
 } from "lucide-react";
 import { useParams } from "next/navigation";
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useState, useRef } from "react";
 import { useToast } from "./ui/toast";
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 
@@ -41,6 +43,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
 
@@ -345,30 +348,38 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
           />
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-2 mb-6">
-          <label
-            htmlFor="file-upload"
-            className="flex-1 flex items-center justify-center px-3 py-1.5 
-                     rounded-lg bg-white hover:bg-gray-50/80 
-                     transition-colors cursor-pointer text-sm text-gray-700/80"
-          >
-            <FilePlus className="w-3.5 h-3.5 mr-2" />
-            Upload File
-          </label>
-          <button
-            onClick={handleCreateFolder}
-            className="flex-1 flex items-center justify-center px-3 py-1.5 
-                     rounded-lg bg-white hover:bg-gray-50/80 
-                     transition-colors text-sm text-gray-700/80"
-          >
-            <FolderPlusIcon className="w-3.5 h-3.5 mr-2" />
-            New Folder
-          </button>
-        </div>
-
         {/* Files Header */}
-        <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500/80">FILES</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500/80">FILES</h2>
+          <div className="flex items-center gap-1">
+            {/* Upload File Button */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-600 transition-colors"
+              title="Upload File"
+            >
+              <Upload className="w-4 h-4" />
+            </button>
+
+            {/* New Folder Button */}
+            <button
+              onClick={handleCreateFolder}
+              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-600 transition-colors"
+              title="New Folder"
+            >
+              <FolderPlus className="w-4 h-4" />
+            </button>
+
+            {/* Keep the hidden file input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleFileUpload}
+              accept=".txt,.doc,.docx,.pdf"
+            />
+          </div>
+        </div>
       </div>
 
       {/* File Tree */}

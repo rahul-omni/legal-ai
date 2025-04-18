@@ -77,7 +77,7 @@ const navigationItems = [
 
 export function Navigation() {
   const pathname = usePathname()
-  const [isExpanded, setIsExpanded] = useState(true)
+  const [isExpanded, setIsExpanded] = useState(false)
 
   return (
     <nav className={`h-screen bg-white border-r flex flex-col transition-all duration-300 ${
@@ -108,13 +108,13 @@ export function Navigation() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-2 mx-2 rounded-md transition-colors ${
-                isExpanded ? '' : 'justify-center'
-              } ${
-                isActive 
+              className={`
+                relative flex items-center gap-3 px-4 py-2 mx-2 rounded-md transition-colors
+                ${isExpanded ? '' : 'justify-center'} 
+                ${isActive 
                   ? 'bg-indigo-50 text-indigo-600' 
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
+                  : 'text-gray-600 hover:bg-gray-50'}
+              `}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />
               {isExpanded && (
