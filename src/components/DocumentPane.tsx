@@ -8,7 +8,6 @@ import {
   TranslationVendor,
 } from "@/lib/translation/types";
 import {
-  AlertOctagon,
   Save,
   ChevronDown
 } from "lucide-react";
@@ -17,7 +16,7 @@ import { AIPopup } from "./AIPopup";
 import { CursorTracker } from "./CursorTracker";
 import { SaveDropdown } from "./SaveDropdown";
 import { TranslationDropdown } from "./TranslationDropdown";
-import { SmartPrompts } from "./SmartPrompts";
+import { QuillEditor } from './QuillEditor';
 
 interface DocumentPaneProps {
   content: string;
@@ -60,8 +59,6 @@ export function DocumentPane({
     start: number;
     end: number;
   } | null>(null);
-  const [risks, setRisks] = useState<RiskFinding[]>([]);
-  const [rightTab, setRightTab] = useState<"prompts" | "risks">("prompts");
   const [translationVendor, setTranslationVendor] =
     useState<TranslationVendor>("openai");
   const [selectedLanguage, setSelectedLanguage] = useState("en-IN");
@@ -226,12 +223,6 @@ export function DocumentPane({
         insertPosition: cursorIndicatorPosition || undefined
       });
 
-      const textarea = textareaRef.current;
-      if (!textarea) return;
-
-      const insertAt = textarea.selectionStart;
-      let accumulatedText = '';
-
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -242,6 +233,11 @@ export function DocumentPane({
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
+      let accumulatedText = '';
+
+      // Get Quill instance
+      const quillEditor = document.querySelector('.quill')?.querySelector('.ql-editor');
+      if (!quillEditor) return;
 
       while (true) {
         const { value, done } = await reader.read();
@@ -251,14 +247,9 @@ export function DocumentPane({
         const chunk = decoder.decode(value);
         accumulatedText += chunk;
 
-        // Update content with accumulated text
-        const newContent = content.slice(0, insertAt) + accumulatedText + content.slice(insertAt);
-      onContentChange(newContent);
-
-        // Keep cursor at end of inserted text
-        const newPosition = insertAt + accumulatedText.length;
-        textarea.selectionStart = textarea.selectionEnd = newPosition;
-        textarea.focus();
+        // Create new content by combining existing and new
+        const newContent = content + accumulatedText;
+        onContentChange(newContent);
       }
 
     } catch (error) {
@@ -292,6 +283,29 @@ export function DocumentPane({
     }
   };
 
+  const handleSelectionChange = (range: { index: number; length: number } | null) => {
+    if (!range) {
+      setSelectedText('');
+      return;
+    }
+
+    if (range.length > 0) {
+      // Get selected text from Quill
+      setSelectedText(content.slice(range.index, range.index + range.length));
+    } else {
+      setSelectedText('');
+      // Update cursor position
+      setCursorPosition({
+        line: 1, // Quill doesn't provide line numbers easily
+        column: range.index,
+        coords: { // We'll need to calculate this differently for Quill
+          top: 0,
+          left: 0
+        }
+      });
+    }
+  };
+
   return (
     <div className="h-full flex">
       {/* Main Editor Area */}
@@ -303,7 +317,7 @@ export function DocumentPane({
               {fileName || "New Document"}
             </h1>
 
-        <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <TranslationDropdown 
                 onTranslate={handleTranslate}
                 isLoading={isLoading("TRANSLATE_TEXT")}
@@ -315,27 +329,28 @@ export function DocumentPane({
 
         {/* Editor */}
         <div className="flex-1 relative p-6 bg-white" ref={containerRef}>
-          <CursorTracker
+          <QuillEditor
             content={content}
             onContentChange={onContentChange}
-            onCursorChange={setCursorPosition}
-            onSelectionChange={setSelectedText}
-            textareaRef={textareaRef}
+            onSelectionChange={handleSelectionChange}
           />
 
           {showAIPopup && (
-            <AIPopup
-              onGenerate={handleGeneratedText}
-              currentContent={content}
-              selectedText={selectedText}
-              cursorPosition={cursorPosition}
-              cursorIndicatorPosition={cursorIndicatorPosition}
-              userId="1"
-              documents={[]}
-              files={[]}
-            />
+            <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50" style={{ width: '600px' }}>
+              <AIPopup
+                onGenerate={handleGeneratedText}
+                currentContent={content}
+                selectedText={selectedText}
+                cursorPosition={cursorPosition}
+                cursorIndicatorPosition={cursorIndicatorPosition}
+                userId="1"
+                documents={[]}
+                files={[]}
+              />
+            </div>
           )}
 
+          {/* Loading animation */}
           {generationState.isGenerating && cursorIndicatorPosition && (
             <div 
               className="pointer-events-none absolute z-50"
@@ -352,41 +367,6 @@ export function DocumentPane({
             </div>
           )}
         </div>
-      </div>
-
-      {/* Right Panel */}
-      <div className="w-80 border-l border-gray-200 bg-white">
-        <div className="flex border-b">
-          <button
-            onClick={() => setRightTab("prompts")}
-            className={`flex-1 px-4 py-2 text-sm font-medium ${
-              rightTab === "prompts"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            Smart Prompts
-          </button>
-          <button
-            onClick={() => setRightTab("risks")}
-            className={`flex-1 px-4 py-2 text-sm font-medium ${
-              rightTab === "risks"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            Risks
-          </button>
-        </div>
-
-        {rightTab === "prompts" && (
-          <SmartPrompts />
-        )}
-        {rightTab === "risks" && (
-          <div className="p-4">
-            {/* Existing risks content */}
-          </div>
-        )}
       </div>
     </div>
   );

@@ -303,7 +303,10 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
   
 
   return (
-    <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-40 w-[750px] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] bg-green-50 rounded-full">
+    <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-40 w-[750px] 
+                    shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] 
+                    bg-gradient-to-r from-blue-50/80 via-blue-100/50 to-blue-50/80 
+                    backdrop-blur-sm rounded-full">
       {/* Main form with fixed height - Always visible */}
       <form onSubmit={handleSubmit} className="flex items-center gap-2 p-4">
         {/* Left side buttons */}
@@ -311,7 +314,8 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
           <button
             type="button"
             onClick={() => setShowContext(!showContext)}
-            className="p-1.5 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-200 transition-colors flex-shrink-0"
+            className="p-1.5 bg-white/70 backdrop-blur-sm border border-blue-100 text-blue-600 
+                       rounded hover:bg-white transition-colors flex-shrink-0"
             aria-label="Add Context"
           >
             <FilePlus className="w-4 h-4" />
@@ -319,7 +323,8 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
 
           <button 
             type="button" 
-            className="p-1.5 bg-white text-gray-500 border border-gray-300 rounded hover:bg-gray-200 transition-colors flex-shrink-0"
+            className="p-1.5 bg-white/70 backdrop-blur-sm text-blue-600 
+                       border border-blue-100 rounded hover:bg-white transition-colors flex-shrink-0"
           >
             <Paperclip className="w-4 h-4" />
           </button>
@@ -330,7 +335,9 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Type your request..."
-          className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 bg-white text-gray-900"
+          className="flex-1 px-3 py-2 text-sm border border-blue-100 rounded-md resize-none 
+                     focus:outline-none focus:ring-1 focus:ring-blue-200 focus:border-blue-200 
+                     bg-white/70 backdrop-blur-sm text-gray-700"
           rows={2}
           disabled={isLoading}
         />
@@ -339,7 +346,10 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
         <button
           type="submit"
           disabled={isLoading || !prompt.trim()}
-          className="p-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+          className="p-2 bg-gradient-to-r from-blue-400 to-blue-500 text-white 
+                     rounded-md hover:from-blue-500 hover:to-blue-600 
+                     disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0
+                     shadow-lg shadow-blue-400/25"
         >
           {isLoading ? (
             <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>

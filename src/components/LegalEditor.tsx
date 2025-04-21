@@ -6,9 +6,10 @@ import { FileSystemNodeProps } from "@/types/fileSystem";
 import { useEffect, useState } from "react";
 import { DocumentPane } from "./DocumentPane";
 import { FileExplorerV2 } from "./FileExplorerV2";
-import { RightPanel } from "./RightPanel";
 import { PanelLeft, PanelRightOpen, X, Plus } from "lucide-react";
 import { useTabs } from "@/context/tabsContext";
+import { SmartPrompts } from "./SmartPrompts";
+import { SmartPromptsPanel } from './SmartPromptsPanel';
 
 // Add this interface near the top
 interface TabInfo {
@@ -53,6 +54,7 @@ export default function LegalEditor() {
   // Add state for panel visibility
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(false);
+  const [showSmartPrompts, setShowSmartPrompts] = useState(true);
 
   // Add these states
   const { openTabs, activeTabId, openFileInTab, closeTab, updateTabContent, setActiveTabId } = useTabs();
@@ -258,8 +260,8 @@ export default function LegalEditor() {
             <PanelLeft className="w-4 h-4 text-gray-600/80" />
           </button>
           <button
-            onClick={() => setShowRightPanel(!showRightPanel)}
-            className={`p-1.5 rounded ${showRightPanel ? 'bg-white shadow-sm' : 'bg-transparent'} 
+            onClick={() => setShowSmartPrompts(!showSmartPrompts)}
+            className={`p-1.5 rounded ${showSmartPrompts ? 'bg-white shadow-sm' : 'bg-transparent'} 
                        hover:bg-white hover:shadow-sm transition-all`}
           >
             <PanelRightOpen className="w-4 h-4 text-gray-600/80" />
@@ -323,15 +325,13 @@ export default function LegalEditor() {
             </button>
           </div>
 
-          {/* Editor Wrapper - Updated with conditional rendering */}
+          {/* Editor Wrapper */}
           <div className="flex-1 flex flex-col min-h-0">
             {activeTabId ? (
               <DocumentPane
                 content={activeTab?.content || ''}
                 onContentChange={(newContent) => {
-                  console.log("🎯 LegalEditor: onContentChange called with content length:", newContent.length);
                   if (activeTabId) {
-                    console.log("🎯 LegalEditor: Updating tab", activeTabId, "with new content");
                     updateTabContent(activeTabId, newContent);
                   }
                 }}
@@ -354,15 +354,10 @@ export default function LegalEditor() {
           </div>
         </div>
 
-        {/* Right Panel */}
-        <div className={`${showRightPanel ? 'w-80' : 'w-0'} transition-all duration-200`}>
-          <div className={`h-full overflow-hidden ${!showRightPanel && 'invisible'}`}>
-            <RightPanel
-              risks={risks}
-              onRiskClick={handleRiskClick}
-              onSelectTemplate={handleTemplateSelect}
-              onAnalyzeRisks={handleAnalyzeRisks}
-            />
+        {/* Smart Prompts Panel */}
+        <div className={`${showSmartPrompts ? 'w-80' : 'w-0'} transition-all duration-200`}>
+          <div className={`h-full overflow-hidden ${!showSmartPrompts && 'invisible'}`}>
+            <SmartPromptsPanel />
           </div>
         </div>
       </div>

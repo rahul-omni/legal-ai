@@ -306,6 +306,34 @@ Format the response as proper HTML with semantic markup. Use:
   },
 
   // Add more categories and prompts...
+  {
+    id: 'line-spacing',
+    title: 'Add Line Breaks',
+    description: 'Add proper line spacing between paragraphs and sections',
+    category: 'Other',
+    prompt: `Please format the text by:
+
+1. Adding a blank line between paragraphs
+2. Adding two blank lines before each major section heading
+3. Adding one blank line after each heading
+4. Adding appropriate line breaks after each list item
+5. Ensuring consistent spacing throughout the document
+
+Format the response with proper HTML markup:
+- Use <br /> for single line breaks
+- Use multiple <br /> tags or paragraph tags <p> for larger spacing
+- Maintain all existing formatting and content
+- Only modify the spacing between elements
+
+Example:
+First paragraph text here.
+<br /><br />
+Second paragraph text here.
+<br /><br />
+<h2>Major Section</h2>
+<br />
+Section content here.`
+  },
 ];
 
 // Update the category list in the component

@@ -38,8 +38,12 @@
     "pdf-parse": "^1.1.1",
     "pdf-table-extractor": "^1.0.3",
     "pdfjs-dist": "^2.16.105",
+    "quill": "^2.0.3",
+    "quill-better-table": "^1.2.10",
+    "quill-table": "^1.0.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-quill": "^2.0.0",
     "react-resizable-panels": "^1.0.5",
     "zod": "^3.24.2"
   },

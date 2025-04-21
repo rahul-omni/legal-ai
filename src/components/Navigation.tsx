@@ -14,13 +14,15 @@ import {
   MessagesSquare, 
   Store, 
   ClipboardCheck,
-  Calendar 
+  Calendar,
+  Gavel,
+  FileStack
 } from 'lucide-react'
 
 const navigationItems = [
   {
-    name: 'Document Editor',
-    href: '/',
+    name: 'Editor',
+    href: '/editor',
     icon: FileText
   },
   {
@@ -29,49 +31,24 @@ const navigationItems = [
     icon: FolderKanban
   },
   {
-    name: 'Contract Analytics',
+    name: 'Cases',
+    href: '/cases',
+    icon: Gavel
+  },
+  {
+    name: 'Analytics',
     href: '/analytics',
     icon: BarChart2
   },
   {
-    name: 'Research Center',
-    href: '/research',
-    icon: BookOpen
-  },
-  {
-    name: 'Client Portal',
-    href: '/clients',
-    icon: Users
-  },
-  {
-    name: 'Compliance',
-    href: '/compliance',
-    icon: ShieldCheck
-  },
-  {
     name: 'Document Assembly',
     href: '/assembly',
-    icon: FileOutput
-  },
-  {
-    name: 'Team Collaboration',
-    href: '/team',
-    icon: MessagesSquare
-  },
-  {
-    name: 'Forms Marketplace',
-    href: '/marketplace',
-    icon: Store
+    icon: FileStack
   },
   {
     name: 'Due Diligence',
     href: '/due-diligence',
     icon: ClipboardCheck
-  },
-  {
-    name: 'Calendar',
-    href: '/calendar',
-    icon: Calendar
   }
 ]
 
@@ -106,7 +83,7 @@ export function Navigation() {
 
           return (
             <Link
-              key={item.href}
+              key={item.name}
               href={item.href}
               className={`
                 relative flex items-center gap-3 px-4 py-2 mx-2 rounded-md transition-colors
