@@ -4,8 +4,7 @@ import { routeConfig } from "./lib/routeConfig";
 
 export function middleware(request: NextRequest) {
   const authToken = request.cookies.get("authToken")?.value;
-  // const authToken = true;
-
+  
   const privateRoute = routeConfig.privateRoutes.find((route) =>
     request.nextUrl.pathname.startsWith(route)
   );
