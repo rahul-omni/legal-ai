@@ -1,5 +1,5 @@
 "use client";
-import { loginUser, setAuthCookie } from "@/lib/auth";
+import { login } from "@/app/apiServices/authServices";
 import { routeConfig } from "@/lib/routeConfig";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -15,8 +15,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const { token } = await loginUser({ email, password });
-      setAuthCookie(token);
+      await login({ email, password });
       router.push(routeConfig.privateRoutes[0]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
@@ -26,8 +25,6 @@ export default function LoginPage() {
   return (
     <div className="max-w-md mx-auto p-4 mt-10">
       <h1 className="text-2xl font-bold mb-6">Login</h1>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block mb-1">Email</label>
@@ -50,6 +47,8 @@ export default function LoginPage() {
             required
           />
         </div>
+
+        {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
 
         <button
           type="submit"

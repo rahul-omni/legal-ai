@@ -1,20 +1,41 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
-import { signIn } from '@/auth'
- 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+import { db } from "@/lib/db";
+import type { NextApiRequest, NextApiResponse } from "next";
+import { NextResponse } from "next/server";
+
+function handleError(error: unknown, message: string, status = 500) {
+  console.error(message, error);
+  return NextResponse.json({ error: message }, { status });
+}
+
+export async function POST(request: Request) {
   try {
-    const { email, password } = req.body
-    await signIn('credentials', { email, password })
- 
-    res.status(200).json({ success: true })
+    const { email, password } = await request.json();
+
+    const user = await db.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const [result] = await db.$queryRawUnsafe<{ verify_password: boolean }[]>(
+      `SELECT verify_password($1, $2)`,
+      password,
+      user.password
+    );
+
+    if (!result?.verify_password) {
+      return NextResponse.json({ error: "Invalid password" }, { status: 401 });
+    }
+
+    const token = `valid-token-${user.id}`;
+
+    return NextResponse.json(
+      { message: "Login success", token },
+      { status: 200 }
+    );
   } catch (error) {
-    // if (error.type === 'CredentialsSignin') {
-    //   res.status(401).json({ error: 'Invalid credentials.' })
-    // } else {
-    //   res.status(500).json({ error: 'Something went wrong.' })
-    // }
+    return handleError(error, "Something went wrong.");
   }
 }
