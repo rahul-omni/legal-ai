@@ -15,6 +15,12 @@ export function middleware(request: NextRequest) {
 
   console.log("authToken", authToken);
 
+  if (request.nextUrl.pathname === "/") {
+    return NextResponse.redirect(
+      new URL(routeConfig.privateRoutes[0], request.url)
+    );
+  }
+
   if (privateRoute && !authToken) {
     return NextResponse.redirect(
       new URL(routeConfig.publicRoutes[0], request.url)
@@ -29,6 +35,8 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Optimized: Only match private routes
-  matcher: routeConfig.privateRoutes,
+  matcher: [
+    "/",
+    ...routeConfig.privateRoutes.map((route) => `${route}/:path*`),
+  ],
 };

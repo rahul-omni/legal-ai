@@ -1,6 +1,8 @@
 import { LoadingProvider } from "@/context/loadingContext";
 import { Metadata } from "next";
 import React from "react";
+import "../../globals.css";
+
 
 export const metadata: Metadata = {
   title: "Login",
@@ -13,10 +15,14 @@ export default function LoginLayout({
   children: React.ReactNode;
 }) {
   return (
-    <LoadingProvider>
-      <div className="bg-white p-8 rounded shadow-md w-full max-w-sm">
-        {children}
-      </div>
-    </LoadingProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className="flex">
+        <LoadingProvider>
+          <div className="bg-white p-8 rounded shadow-md w-full">
+            {children}
+          </div>
+        </LoadingProvider>
+      </body>
+    </html>
   );
 }
