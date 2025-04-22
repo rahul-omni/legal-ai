@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import React from "react";
-import "../../globals.css";
 
 export const metadata: Metadata = {
   title: "Login",
@@ -13,6 +12,8 @@ export default function LoginLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white p-8 rounded shadow-md w-full">{children}</div>
+    <div className="bg-white p-8 rounded shadow-md w-full h-screen">
+      {children}
+    </div>
   );
 }

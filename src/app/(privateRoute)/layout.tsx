@@ -1,8 +1,6 @@
 import { Navigation } from "@/components/Navigation";
 import { TabsProvider } from "@/context/tabsContext";
 import type { Metadata } from "next";
-import "../globals.css";
-import { ToastContainer } from "@/components/ui/toast";
 
 export const metadata: Metadata = {
   title: "Legal Document Platform",
