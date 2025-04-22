@@ -17,6 +17,25 @@ export async function verifyAuthToken(token: string) {
   return user;
 }
 
+export const userIdFromHeader = (request: Request) => {
+  const authToken = request.headers
+    .get("Authorization")
+    ?.replace("Bearer ", "");
+
+  if (!authToken) {
+    throw new Error("No auth token provided");
+  }
+
+  const userId = authToken.replace("valid-token-", "");
+
+  return userId;
+};
+
+export function getAuthCookie() {
+  const match = document.cookie.match(/authToken=([^;]+)/);
+  return match ? match[1] : null;
+}
+
 export function setAuthCookie(token: string) {
   document.cookie = `authToken=${token}; path=/; max-age=${60 * 60 * 24}`;
 }

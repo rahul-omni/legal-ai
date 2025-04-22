@@ -13,8 +13,6 @@ export function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(route)
   );
 
-  console.log("authToken", authToken);
-
   if (request.nextUrl.pathname === "/") {
     return NextResponse.redirect(
       new URL(routeConfig.privateRoutes[0], request.url)
@@ -31,7 +29,11 @@ export function middleware(request: NextRequest) {
     );
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  if (authToken) {
+    response.headers.set("Authorization", `Bearer ${authToken}`);
+  }
+  return response;
 }
 
 export const config = {

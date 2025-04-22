@@ -1,19 +1,17 @@
 "use client";
-
-import { useState, useEffect, useRef } from "react";
-//import { X, ArrowUpCircle } from 'lucide-react'
-import { AIWaveform } from "./AIWaveform";
-import { ArrowUpCircle, FilePlus, Upload, FolderIcon, FileIcon, Paperclip, ArrowUp, X } from "lucide-react";
-// add this import
-import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
-import mammoth from "mammoth";
+import { useEffect, useState } from "react";
+import { ArrowUp, FilePlus, Paperclip, X } from "lucide-react";
+import {
+  fetchAllNodes,
+  fetchNodes,
+  readFile,
+} from "@/app/apiServices/nodeServices";
 import { FileData } from "@/lib/fileService";
-import { fetchAllNodes, fetchNodes, readFile } from "@/app/apiServices/nodeServices";
-
-import {   FileSystemNodeProps } from "@/types/fileSystem";
- 
+import { FileSystemNodeProps } from "@/types/fileSystem";
+import mammoth from "mammoth";
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import TreeNode from "./TreeNode";
- 
+
 const extractTextFromDocx = async (file: File): Promise<string> => {
   const arrayBuffer = await file.arrayBuffer();
   const result = await mammoth.extractRawText({ arrayBuffer });
@@ -23,13 +21,12 @@ const extractTextFromDocx = async (file: File): Promise<string> => {
 GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
 
 interface AIPopupProps {
-  userId: string;
   onGenerate: (text: string) => void;
   currentContent: string;
   selectedText: string;
   documents: any[];
   files: FileSystemNodeProps[];
-  cursorPosition?: { 
+  cursorPosition?: {
     line: number;
     column: number;
   };
@@ -49,14 +46,13 @@ export const estimateTokenCount = (text: string): number => {
 };
 
 export function AIPopup({
-  userId,
   onGenerate,
   currentContent,
   selectedText,
   documents,
   files,
   cursorPosition,
-  cursorIndicatorPosition
+  cursorIndicatorPosition,
 }: AIPopupProps) {
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -67,43 +63,41 @@ export function AIPopup({
   const [fileNodes, setFileNodes] = useState<FileSystemNodeProps[]>([]);
   const [showContext, setShowContext] = useState(false);
   const [nodes, setNodes] = useState<FileSystemNodeProps[]>([]);
-  
-  
+
   const [document, setDocument] = useState<FileData[]>([]);
 
   const handleDocumentSelect = (file: FileSystemNodeProps) => {
     const fileData: FileData = {
       id: file.id,
       name: file.name,
-      content: file.content || '',  // Provide default empty string
+      content: file.content || "", // Provide default empty string
       type: file.type,
-      parentId: file.parentId || ''
+      parentId: file.parentId || "",
     };
     setDocument((prevDocuments) => [...prevDocuments, fileData]);
   };
-   console.log("document--",document);
-   
+  console.log("document--", document);
+
   const handleAddContextClick = () => {
-    alert("working")
+    alert("working");
     setShowContext(true);
-   // setIsPopupOpen(true); // Open the popup when the button is clicked
+    // setIsPopupOpen(true); // Open the popup when the button is clicked
   };
 
-   
- 
-    useEffect(() => {
-      const fetchData = async () => {
-        try {
-          const data = await fetchNodes(userId);
-          setNodes(data);
-        } catch (error) {
-          console.error("Error fetching nodes:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchData();
-    }, [userId]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await fetchNodes();
+        setNodes(data);
+      } catch (error) {
+        console.error("Error fetching nodes:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   const extractTextFromPDF = async (file: File): Promise<string> => {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await getDocument({ data: arrayBuffer }).promise;
@@ -119,17 +113,18 @@ export function AIPopup({
 
     return fullText;
   };
-  
-  
-  const buildTree = (flatNodes: FileSystemNodeProps[]): FileSystemNodeProps[] => {
+
+  const buildTree = (
+    flatNodes: FileSystemNodeProps[]
+  ): FileSystemNodeProps[] => {
     const map = new Map<string, FileSystemNodeProps>();
     const roots: FileSystemNodeProps[] = [];
-  
-    flatNodes.forEach(node => {
+
+    flatNodes.forEach((node) => {
       map.set(node.id, { ...node, children: node.children ?? [] }); // ✅ preserve existing children
     });
-  
-    flatNodes.forEach(node => {
+
+    flatNodes.forEach((node) => {
       if (node.parentId) {
         const parent = map.get(node.parentId);
         if (parent) {
@@ -139,40 +134,39 @@ export function AIPopup({
         roots.push(map.get(node.id)!);
       }
     });
-  
+
     return roots;
   };
-  
+
   const getAllFiles = (nodes: FileSystemNodeProps[]): FileSystemNodeProps[] => {
     let result: FileSystemNodeProps[] = [];
-  
+
     for (const node of nodes) {
       if (node.type === "FILE") {
         result.push(node);
       }
-  
+
       if (node.type === "FOLDER" && node.children && node.children.length > 0) {
         result = result.concat(getAllFiles(node.children));
       }
     }
-  
+
     return result;
   };
-  
 
   useEffect(() => {
     const getTree = async () => {
       try {
         const data = await fetchAllNodes(); // flat array
-     
-console.log("📦 Flat fetched data:", data); // <-- Add this
 
-        const treeData = buildTree(data); 
-        console.log("🌲 Built tree:", treeData)  // convert to nested
+        console.log("📦 Flat fetched data:", data); // <-- Add this
+
+        const treeData = buildTree(data);
+        console.log("🌲 Built tree:", treeData); // convert to nested
         setTree(treeData);
-  
+
         const allFiles = getAllFiles(treeData); // collect deeply nested files
-        console.log("📄 All files (nested + flat):", allFiles); 
+        console.log("📄 All files (nested + flat):", allFiles);
         setFileNodes(allFiles); // store them in state
       } catch (error) {
         console.error("Failed to fetch tree:", error);
@@ -180,13 +174,12 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
         setLoading(false);
       }
     };
-  
+
     getTree();
   }, []);
   console.log("tree", tree);
   console.log("fileNodes", fileNodes); // now should show all files, nested or not!
-  
-  
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
@@ -194,7 +187,7 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
     }
   };
   console.log("uploadfile", uploadedFiles);
-  console.log("documenttre--",document);
+  console.log("documenttre--", document);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -237,7 +230,10 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
       });
 
       // Combine results from files
-      const results = await Promise.all([...fileReadPromises, ...treeFileReadPromises]);
+      const results = await Promise.all([
+        ...fileReadPromises,
+        ...treeFileReadPromises,
+      ]);
       fileText = results.filter(Boolean).join("\n\n"); // Join non-empty results
       // console.log("🧾 Context File Text:", fileText);
 
@@ -250,13 +246,18 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
         console.log("Using currentContent as primary context.");
         primaryContext = `Document Content:\n"""\n${currentContent}\n"""`;
       } else {
-        console.log("No primary context (selectedText or currentContent) available.");
+        console.log(
+          "No primary context (selectedText or currentContent) available."
+        );
         // primaryContext remains ""
       }
 
       // --- Combine Primary Context and File Context ---
       // Add a separator only if both contexts exist
-      const separator = primaryContext && fileText ? "\n\n---\n\nAdditional Context Files:\n" : "";
+      const separator =
+        primaryContext && fileText
+          ? "\n\n---\n\nAdditional Context Files:\n"
+          : "";
       const fullText = primaryContext + separator + fileText;
 
       // The user's direct instruction
@@ -274,7 +275,7 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: fullText,     // Send the combined context here
+          text: fullText, // Send the combined context here
           prompt: finalPrompt, // Send the user's instruction here
         }),
       });
@@ -282,9 +283,11 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
       // ... (handle response) ...
       const summary = await response.text();
       if (!response.ok) throw new Error(summary);
-      console.log("🎯 AIPopup: About to call onGenerate with summary:", summary.substring(0, 100) + "...");
+      console.log(
+        "🎯 AIPopup: About to call onGenerate with summary:",
+        summary.substring(0, 100) + "..."
+      );
       onGenerate(summary);
-
     } catch (err) {
       console.error("Submit error:", err);
       setError("Something went wrong while processing files.");
@@ -293,20 +296,20 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
     }
   };
 
- 
   const handleRemoveFile = (index: number) => {
     setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
   };
   const handleRemoveDocument = (index: number) => {
     setDocument((prev) => prev.filter((_, i) => i !== index));
   };
-  
 
   return (
-    <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-40 w-[750px] 
+    <div
+      className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-40 w-[750px] 
                     shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] 
                     bg-gradient-to-r from-blue-50/80 via-blue-100/50 to-blue-50/80 
-                    backdrop-blur-sm rounded-full">
+                    backdrop-blur-sm rounded-full"
+    >
       {/* Main form with fixed height - Always visible */}
       <form onSubmit={handleSubmit} className="flex items-center gap-2 p-4">
         {/* Left side buttons */}
@@ -321,8 +324,8 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
             <FilePlus className="w-4 h-4" />
           </button>
 
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="p-1.5 bg-white/70 backdrop-blur-sm text-blue-600 
                        border border-blue-100 rounded hover:bg-white transition-colors flex-shrink-0"
           >
@@ -360,14 +363,20 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
       </form>
 
       {/* Expandable context panel - Appears above the form */}
-      {(selectedText || document.length > 0 || showContext || uploadedFiles.length > 0 || cursorPosition) && (
+      {(selectedText ||
+        document.length > 0 ||
+        showContext ||
+        uploadedFiles.length > 0 ||
+        cursorPosition) && (
         <div className="absolute bottom-full left-0 w-full mb-2 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[300px] overflow-y-auto">
           <div className="p-3">
             {/* Selected Text with Cursor Position */}
             {selectedText ? (
               <div className="mb-2 p-2 border border-dashed border-green-300 rounded bg-green-50">
                 <div className="flex items-center justify-between mb-1">
-                  <h4 className="text-xs font-semibold text-green-800">Using Selected Text:</h4>
+                  <h4 className="text-xs font-semibold text-green-800">
+                    Using Selected Text:
+                  </h4>
                   {cursorPosition && (
                     <span className="text-xs text-gray-500">
                       Line {cursorPosition.line}, Column {cursorPosition.column}
@@ -378,39 +387,53 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
                   {selectedText}
                 </p>
               </div>
-            ) : cursorPosition && (
-              <div className="mb-2 p-2 border border-dashed border-blue-300 rounded bg-blue-50">
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-semibold text-blue-800">Current Cursor:</h4>
-                    <span className="text-xs text-gray-500">
-                      Line {cursorPosition.line}, Column {cursorPosition.column}
-                      {cursorIndicatorPosition && (
-                        <span className="ml-2 text-gray-400">
-                          (x: {Math.round(cursorIndicatorPosition.coords.left)}, y: {Math.round(cursorIndicatorPosition.coords.top)})
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                  {cursorIndicatorPosition && (
-                    <div className="flex items-center justify-between border-t border-blue-200 pt-1 mt-1">
-                      <h4 className="text-xs font-semibold text-blue-600">Insertion Point:</h4>
-                      <span className="text-xs text-blue-600">
-                        Line {cursorIndicatorPosition.line}, Column {cursorIndicatorPosition.column}
-                        <span className="ml-2 text-gray-500">
-                          (x: {Math.round(cursorIndicatorPosition.coords.left)}, y: {Math.round(cursorIndicatorPosition.coords.top)})
-                        </span>
+            ) : (
+              cursorPosition && (
+                <div className="mb-2 p-2 border border-dashed border-blue-300 rounded bg-blue-50">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-semibold text-blue-800">
+                        Current Cursor:
+                      </h4>
+                      <span className="text-xs text-gray-500">
+                        Line {cursorPosition.line}, Column{" "}
+                        {cursorPosition.column}
+                        {cursorIndicatorPosition && (
+                          <span className="ml-2 text-gray-400">
+                            (x:{" "}
+                            {Math.round(cursorIndicatorPosition.coords.left)},
+                            y: {Math.round(cursorIndicatorPosition.coords.top)})
+                          </span>
+                        )}
                       </span>
                     </div>
-                  )}
+                    {cursorIndicatorPosition && (
+                      <div className="flex items-center justify-between border-t border-blue-200 pt-1 mt-1">
+                        <h4 className="text-xs font-semibold text-blue-600">
+                          Insertion Point:
+                        </h4>
+                        <span className="text-xs text-blue-600">
+                          Line {cursorIndicatorPosition.line}, Column{" "}
+                          {cursorIndicatorPosition.column}
+                          <span className="ml-2 text-gray-500">
+                            (x:{" "}
+                            {Math.round(cursorIndicatorPosition.coords.left)},
+                            y: {Math.round(cursorIndicatorPosition.coords.top)})
+                          </span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )
             )}
 
             {/* Selected Documents */}
             {document.length > 0 && (
               <div className="mb-2">
-                <h4 className="text-xs font-semibold text-gray-600 mb-1">Selected Documents:</h4>
+                <h4 className="text-xs font-semibold text-gray-600 mb-1">
+                  Selected Documents:
+                </h4>
                 {document.map((file, idx) => (
                   <div
                     key={`document-${idx}`}
@@ -421,7 +444,7 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
                       onClick={() => handleRemoveDocument(idx)}
                       className="ml-2 text-red-500 hover:text-red-700 flex-shrink-0"
                     >
-                      <X className="w-3 h-3"/>
+                      <X className="w-3 h-3" />
                     </button>
                   </div>
                 ))}
@@ -432,13 +455,21 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
             {showContext && (
               <div className="mb-2 border border-gray-200 rounded bg-white">
                 {loading ? (
-                  <p className="text-xs text-gray-500 text-center py-2">Loading files...</p>
+                  <p className="text-xs text-gray-500 text-center py-2">
+                    Loading files...
+                  </p>
                 ) : tree.length > 0 ? (
                   tree.map((node) => (
-                    <TreeNode key={node.id} node={node} onSelect={handleDocumentSelect} />
+                    <TreeNode
+                      key={node.id}
+                      node={node}
+                      onSelect={handleDocumentSelect}
+                    />
                   ))
                 ) : (
-                  <p className="text-xs text-gray-500 text-center py-2">No files found.</p>
+                  <p className="text-xs text-gray-500 text-center py-2">
+                    No files found.
+                  </p>
                 )}
               </div>
             )}
@@ -446,7 +477,9 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
             {/* Uploaded Files */}
             {uploadedFiles.length > 0 && (
               <div>
-                <h4 className="text-xs font-semibold text-gray-600 mb-1">Uploaded Files:</h4>
+                <h4 className="text-xs font-semibold text-gray-600 mb-1">
+                  Uploaded Files:
+                </h4>
                 {uploadedFiles.map((file, idx) => (
                   <div
                     key={idx}
@@ -457,7 +490,7 @@ console.log("📦 Flat fetched data:", data); // <-- Add this
                       onClick={() => handleRemoveFile(idx)}
                       className="ml-2 text-red-500 hover:text-red-700 flex-shrink-0"
                     >
-                      <X className="w-3 h-3"/>
+                      <X className="w-3 h-3" />
                     </button>
                   </div>
                 ))}

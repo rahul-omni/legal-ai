@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { userIdFromHeader } from "@/lib/auth";
 
 function handleError(error: unknown, message: string, status = 500) {
   console.error(message, error);
@@ -10,8 +11,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const parentId = searchParams.get("parentId");
-
-    const userId = searchParams.get("userId");
+    const userId = userIdFromHeader(request);
 
     if (!userId) {
       return handleError(null, "User ID is required", 400);
@@ -20,7 +20,6 @@ export async function GET(request: Request) {
     const nodes = await db.fileSystemNode.findMany({
       where: {
         parentId: parentId || null,
-
         userId: userId,
       },
       orderBy: { type: "desc" },
@@ -34,7 +33,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { name, type, parentId, content, userId } = await request.json();
+    const { name, type, parentId, content } = await request.json();
+    const userId = userIdFromHeader(request);
 
     if (!name || !type || !userId) {
       return handleError(null, "Name, type, and user ID are required", 400);
@@ -49,9 +49,7 @@ export async function POST(request: Request) {
         name,
         type,
         content: type === "FILE" ? content || "" : null,
-
         parentId: parentId || null,
-
         userId,
       },
     });

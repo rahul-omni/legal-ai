@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { FileSystemNodeProps } from "@/types/fileSystem";
+import { userIdFromHeader } from "@/lib/auth";
 
 // Recursive function to build a nested tree structure
 async function buildTree(parentId: string | null, userId: string) {
@@ -26,8 +27,7 @@ async function buildTree(parentId: string | null, userId: string) {
 // GET: Fetch entire file system tree for a user
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const userId = userIdFromHeader(request);
 
     if (!userId) {
       return NextResponse.json(

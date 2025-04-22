@@ -275,7 +275,6 @@ export default function LegalEditor() {
         <div className={`${showLeftPanel ? 'w-56' : 'w-0'} transition-all duration-200`}>
           <div className={`h-full overflow-hidden ${!showLeftPanel && 'invisible'}`}>
             <FileExplorerV2
-              userId={"1"}
               selectedDocument={selectedFile}
               onDocumentSelect={handleFileSelect}
               onPdfParsed={handlePdfParsed}

@@ -343,7 +343,6 @@ export function DocumentPane({
                 selectedText={selectedText}
                 cursorPosition={cursorPosition}
                 cursorIndicatorPosition={cursorIndicatorPosition}
-                userId="1"
                 documents={[]}
                 files={[]}
               />

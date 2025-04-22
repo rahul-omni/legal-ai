@@ -8,35 +8,31 @@ import { handleApiError } from "@/helper/handleApiError";
 import { FileService } from "@/lib/fileService";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import {
+  File,
   FileIcon,
   FilePlus,
-  FolderPlusIcon,
-  Search,
   FileText,
-  File,
-  FileType2,
   Folder,
   FolderOpen,
+  FolderPlus,
+  Search,
   Upload,
-  FolderPlus
 } from "lucide-react";
 import { useParams } from "next/navigation";
-import { FC, useEffect, useState, useRef } from "react";
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
+import { FC, useEffect, useRef, useState } from "react";
 import { useToast } from "./ui/toast";
-import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 
 interface FileExplorerProps {
-  userId: string;
   selectedDocument?: FileSystemNodeProps;
   onDocumentSelect: (file: FileSystemNodeProps) => void;
   onPdfParsed: (text: string) => void;
 }
 
 export const FileExplorerV2: FC<FileExplorerProps> = ({
-  userId,
   selectedDocument,
   onDocumentSelect,
-  onPdfParsed
+  onPdfParsed,
 }) => {
   const params = useParams();
   const [nodes, setNodes] = useState<FileSystemNodeProps[]>([]);
@@ -71,7 +67,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
 
   const fetchRootNodes = async () => {
     try {
-      const node = await fetchNodes(userId);
+      const node = await fetchNodes();
       setNodes(() => node);
       handleParams(node);
     } catch (error) {
@@ -145,7 +141,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
 
       return fullText;
     } catch (error) {
-      console.error('Error extracting PDF text:', error);
+      console.error("Error extracting PDF text:", error);
       throw error;
     }
   };
@@ -159,8 +155,8 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
 
     try {
       let content: string;
-      
-      if (file.type === 'application/pdf') {
+
+      if (file.type === "application/pdf") {
         content = await extractTextFromPDF(file);
         onPdfParsed(content);
         showToast("PDF Parsed Successfully");
@@ -171,7 +167,6 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
       const newFile: CreateNodePayload = {
         name: file.name,
         type: "FILE",
-        userId: "1",
         parentId,
         content,
       };
@@ -184,7 +179,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
   };
 
   const refreshNodes = async (parentId?: string, fileId?: string) => {
-    const children = await fetchNodes(userId, parentId);
+    const children = await fetchNodes(parentId);
     if (!parentId) {
       setNodes(children);
       return;
@@ -209,7 +204,6 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
       const folder: CreateNodePayload = {
         name: folderName,
         type: "FOLDER",
-        userId: "1",
       };
 
       await createNode(folder);
@@ -223,19 +217,19 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
     <div key={node.id} className="relative">
       {/* Guide Lines */}
       {depth > 0 && (
-        <div 
-          className="absolute left-0 top-0 bottom-0 border-l border-gray-400" 
-          style={{ 
+        <div
+          className="absolute left-0 top-0 bottom-0 border-l border-gray-400"
+          style={{
             left: `${depth * 20}px`,
-            opacity: 0.7
-          }} 
+            opacity: 0.7,
+          }}
         />
       )}
 
       <div
         className={`
           flex items-center px-2 py-1.5 rounded-md cursor-pointer
-          ${depth > 0 ? 'pl-[28px]' : ''}
+          ${depth > 0 ? "pl-[28px]" : ""}
           ${
             selectedDocument?.id === node.id
               ? "bg-blue-50 text-blue-600 ring-1 ring-blue-200"
@@ -261,8 +255,10 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
               </div>
 
               {/* Folder Actions */}
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 
-                            transition-opacity">
+              <div
+                className="flex items-center gap-1 opacity-0 group-hover:opacity-100 
+                            transition-opacity"
+              >
                 <label
                   htmlFor={`file-${node.id}`}
                   className="p-1 rounded-md hover:bg-gray-200/70 cursor-pointer"
@@ -311,19 +307,19 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
 
   // Add this helper function to get appropriate file icons
   const getFileIcon = (fileName: string) => {
-    const extension = fileName.split('.').pop()?.toLowerCase();
-    
+    const extension = fileName.split(".").pop()?.toLowerCase();
+
     switch (extension) {
-      case 'pdf':
+      case "pdf":
         return (
           <div className="flex items-center justify-center text-[10px] font-medium bg-gray-100 text-gray-600/80 rounded w-5 h-5">
             PDF
           </div>
         );
-      case 'docx':
-      case 'doc':
+      case "docx":
+      case "doc":
         return <FileText className="w-4 h-4 text-blue-500/80" />;
-      case 'txt':
+      case "txt":
         return <File className="w-4 h-4 text-gray-500/80" />;
       default:
         return <FileIcon className="w-4 h-4 text-gray-400" />;
@@ -350,7 +346,9 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
 
         {/* Files Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500/80">FILES</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500/80">
+            FILES
+          </h2>
           <div className="flex items-center gap-1">
             {/* Upload File Button */}
             <button
