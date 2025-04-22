@@ -1,9 +1,8 @@
 import { Navigation } from "@/components/Navigation";
-import { ToastContainer } from "@/components/ui/toast";
-import { LoadingProvider } from "@/context/loadingContext";
-import type { Metadata } from "next";
 import { TabsProvider } from "@/context/tabsContext";
+import type { Metadata } from "next";
 import "../globals.css";
+import { ToastContainer } from "@/components/ui/toast";
 
 export const metadata: Metadata = {
   title: "Legal Document Platform",
@@ -16,16 +15,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="flex">
-        <LoadingProvider>
-          <TabsProvider>
-            <Navigation />
-            <main className="flex-1">{children}</main>
-            <ToastContainer toasts={[]} />
-          </TabsProvider>
-        </LoadingProvider>
-      </body>
-    </html>
+    <TabsProvider>
+      <div className="flex">
+        <Navigation />
+        <div className="flex-1">{children}</div>
+      </div>
+    </TabsProvider>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 import { login } from "@/app/apiServices/authServices";
+import { userContext } from "@/context/userContext";
 import { routeConfig } from "@/lib/routeConfig";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -9,13 +10,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  const { dispatchUser } = userContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     try {
-      await login({ email, password });
+      const { token, user } = await login({ email, password });
+      dispatchUser({
+        type: "ADD_USER",
+        payload: { user, token },
+      });
       router.push(routeConfig.privateRoutes[0]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
