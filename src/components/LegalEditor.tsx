@@ -1,5 +1,5 @@
 "use client";
-import { useLoading } from "@/context/loadingContext";
+import { loadingContext } from "@/context/loadingContext";
 import { handleApiError } from "@/helper/handleApiError";
 import { RiskAnalyzer, RiskFinding } from "@/lib/riskAnalyzer";
 import { FileSystemNodeProps } from "@/types/fileSystem";
@@ -49,7 +49,7 @@ export default function LegalEditor() {
     indianLanguages[0].value
   );
   const [risks, setRisks] = useState<RiskFinding[]>([]);
-  const { startLoading, stopLoading } = useLoading();
+  const { startLoading, stopLoading } = loadingContext();
 
   // Add state for panel visibility
   const [showLeftPanel, setShowLeftPanel] = useState(true);

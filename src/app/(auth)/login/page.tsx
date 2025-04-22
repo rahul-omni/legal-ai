@@ -1,5 +1,6 @@
 "use client";
 import { login } from "@/app/apiServices/authServices";
+import { loadingContext } from "@/context/loadingContext";
 import { userContext } from "@/context/userContext";
 import { routeConfig } from "@/lib/routeConfig";
 import { useRouter } from "next/navigation";
@@ -11,12 +12,14 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const router = useRouter();
   const { dispatchUser } = userContext();
+  const { startLoading, stopLoading, isLoading } = loadingContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     try {
+      startLoading("LOGGING_IN");
       const { token, user } = await login({ email, password });
       dispatchUser({
         type: "LOGIN_USER",
@@ -25,6 +28,8 @@ export default function LoginPage() {
       router.push(routeConfig.privateRoutes[0]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
+    } finally {
+      stopLoading("LOGGING_IN");
     }
   };
 
@@ -58,9 +63,14 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
+          disabled={isLoading("LOGGING_IN")}
+          className="w-full bg-primary text-white py-2 rounded hover:bg-primaryDark disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Login
+          {isLoading("LOGGING_IN") ? (
+            <span>Loading...</span>
+          ) : (
+            <span>Login</span>
+          )}
         </button>
       </form>
     </div>

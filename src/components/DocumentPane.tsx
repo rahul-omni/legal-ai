@@ -1,6 +1,6 @@
 "use client";
 
-import { useLoading } from "@/context/loadingContext";
+import { loadingContext } from "@/context/loadingContext";
 import { RiskFinding } from "@/lib/riskAnalyzer";
 import {
   OPENAI_LANGUAGES,
@@ -62,7 +62,7 @@ export function DocumentPane({
   const [translationVendor, setTranslationVendor] =
     useState<TranslationVendor>("openai");
   const [selectedLanguage, setSelectedLanguage] = useState("en-IN");
-  const { isLoading, startLoading, stopLoading } = useLoading();
+  const { isLoading, startLoading, stopLoading } = loadingContext();
   const [showTranslateDropdown, setShowTranslateDropdown] = useState(false);
   const translationDropdownRef = useRef<HTMLDivElement>(null);
   const [cursorPosition, setCursorPosition] = useState<{
