@@ -7,12 +7,11 @@ export interface UserStateProps {
 
 export type UserActionType =
   | {
-      type: "ADD_USER";
+      type: "LOGIN_USER";
       payload: { user: User; token: string };
     }
   | {
-      type: "REMOVE_USER";
-      payload: string;
+      type: "LOGOUT_USER";
     };
 
 const initialState: UserStateProps = {};
@@ -22,14 +21,14 @@ const reducer = (
   action: UserActionType
 ): UserStateProps => {
   switch (action.type) {
-    case "ADD_USER": {
+    case "LOGIN_USER": {
       setAuthCookie(action.payload.token);
       return {
         ...state,
         user: action.payload.user,
       };
     }
-    case "REMOVE_USER":
+    case "LOGOUT_USER":
       clearAuthCookie();
       return {
         ...state,

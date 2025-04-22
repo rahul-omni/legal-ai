@@ -19,7 +19,7 @@ export default function LoginPage() {
     try {
       const { token, user } = await login({ email, password });
       dispatchUser({
-        type: "ADD_USER",
+        type: "LOGIN_USER",
         payload: { user, token },
       });
       router.push(routeConfig.privateRoutes[0]);

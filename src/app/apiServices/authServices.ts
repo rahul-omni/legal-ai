@@ -1,6 +1,5 @@
-import { setAuthCookie } from "@/lib/auth";
-import { apiClient } from ".";
 import { User } from "@prisma/client";
+import { apiClient } from ".";
 
 export const login = async (userDetails: {
   email: string;
@@ -9,8 +8,8 @@ export const login = async (userDetails: {
   try {
     const { data } = await apiClient.post("/auth/login", userDetails);
     const { token, user } = data;
-    
-    return {token, user };
+
+    return { token, user };
   } catch (error) {
     throw new Error("Failed to login user");
   }

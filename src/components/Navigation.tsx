@@ -1,6 +1,6 @@
 "use client";
 
-import { clearAuthCookie } from "@/lib/auth";
+import { userContext } from "@/context/userContext";
 import { routeConfig } from "@/lib/routeConfig";
 import {
   BarChart2,
@@ -48,12 +48,13 @@ const navigationItems = [
 ];
 
 export function Navigation() {
+  const { dispatchUser } = userContext();
   const pathname = usePathname();
   const [isExpanded, setIsExpanded] = useState(false);
   const router = useRouter();
 
   const handleLogout = () => {
-    clearAuthCookie();
+    dispatchUser({ type: "LOGOUT_USER" });
     router.push(routeConfig.publicRoutes[0]);
   };
 
