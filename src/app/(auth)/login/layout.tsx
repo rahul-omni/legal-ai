@@ -18,7 +18,7 @@ export default function LoginLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="flex">
         <LoadingProvider>
-          <div className="bg-white p-8 rounded shadow-md w-full">
+          <div className="bg-white p-8 rounded shadow-md w-full h-screen">
             {children}
           </div>
         </LoadingProvider>
