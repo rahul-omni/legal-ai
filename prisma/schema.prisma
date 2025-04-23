@@ -22,7 +22,7 @@ model User {
 
   role           Role?            @relation("role_user_id_idx", fields: [roleId], references: [id])
   organization   Organization?    @relation("user_organization_id_idx", fields: [organizationId], references: [id])
-  FileSystemNode FileSystemNode[] @relation("file_system_nodes_user_id_idx")
+  fileSystemNode FileSystemNode[] @relation("file_system_nodes_user_id_idx")
   createdBy      FileSystemNode[] @relation("file_system_nodes_created_by_idx")
   updatedBy      FileSystemNode[] @relation("file_system_nodes_updated_by_idx")
 
