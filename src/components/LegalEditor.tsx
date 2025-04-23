@@ -1,12 +1,24 @@
 "use client";
-import { useLoading } from "@/context/loadingContext";
+import { loadingContext } from "@/context/loadingContext";
 import { handleApiError } from "@/helper/handleApiError";
 import { RiskAnalyzer, RiskFinding } from "@/lib/riskAnalyzer";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { useEffect, useState } from "react";
 import { DocumentPane } from "./DocumentPane";
 import { FileExplorerV2 } from "./FileExplorerV2";
-import { RightPanel } from "./RightPanel";
+import { PanelLeft, PanelRightOpen, X, Plus } from "lucide-react";
+import { useTabs } from "@/context/tabsContext";
+import { SmartPrompts } from "./SmartPrompts";
+import { SmartPromptsPanel } from './SmartPromptsPanel';
+
+// Add this interface near the top
+interface TabInfo {
+  id: string;
+  fileId: string | null;  // null for new untitled files
+  name: string;
+  content: string;
+  isUnsaved: boolean;
+}
 
 // Add this type for language options
 type LanguageOption = {
@@ -37,13 +49,15 @@ export default function LegalEditor() {
     indianLanguages[0].value
   );
   const [risks, setRisks] = useState<RiskFinding[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showAIPopup, setShowAIPopup] = useState(false);
-  const { startLoading, stopLoading } = useLoading();
+  const { startLoading, stopLoading } = loadingContext();
 
-  const [selectedText, setSelectedText] = useState("");
-  const [popupPosition, setPopupPosition] = useState({ x: 900, y: 100 });
-  const [editorContent, setEditorContent] = useState("");
+  // Add state for panel visibility
+  const [showLeftPanel, setShowLeftPanel] = useState(true);
+  const [showRightPanel, setShowRightPanel] = useState(false);
+  const [showSmartPrompts, setShowSmartPrompts] = useState(true);
+
+  // Add these states
+  const { openTabs, activeTabId, openFileInTab, closeTab, updateTabContent, setActiveTabId } = useTabs();
 
   const loadDocuments = async () => {
     try {
@@ -59,39 +73,8 @@ export default function LegalEditor() {
     loadDocuments(); // Only load documents, don't show popup
   }, []);
 
-  const openPopupWithSelection = () => {
-    const selection = window.getSelection();
-    const selectedText = selection?.toString() || "";
-    const position = selection?.getRangeAt(0)?.getBoundingClientRect();
-
-    if (selectedText) {
-      setSelectedText(selectedText);
-      setPopupPosition({
-        x: position?.x ?? 900,
-        y: position?.y ?? 100,
-      });
-      setEditorContent(documentContent);
-      setShowAIPopup(true);
-    }
-  };
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.code === "Space") {
-        e.preventDefault();
-        openPopupWithSelection(); // 👈 Just one call here
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [documentContent]);
-
   const handleFileSelect = (file: FileSystemNodeProps) => {
-    setSelectedFile(file);
-    if (file.content) {
-      setDocumentContent(file.content);
-    }
+    openFileInTab(file);
   };
 
   const handleContentChange = (newContent: string) => {
@@ -115,8 +98,6 @@ export default function LegalEditor() {
 
   const handleGenerateSummary = async () => {
     try {
-      setIsLoading(true);
-
       if (!documentContent || documentContent.trim().length === 0) {
         alert("Please enter some text first");
         return;
@@ -155,14 +136,11 @@ export default function LegalEditor() {
       alert(
         error instanceof Error ? error.message : "Failed to generate summary"
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleTranslate = async () => {
     try {
-      setIsLoading(true);
       const response = await fetch("/api/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -179,8 +157,6 @@ export default function LegalEditor() {
     } catch (error) {
       console.error("Translation error:", error);
       alert("Failed to translate text");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -264,47 +240,126 @@ export default function LegalEditor() {
     // showToast('Template loaded successfully');
   };
 
-  useEffect(() => {
-    if (showAIPopup) {
-      console.log("Documents loaded and passed to AIPopup:", files);
-    }
-  }, [showAIPopup, files]);
+  const handlePdfParsed = (text: string) => {
+    setDocumentContent(text);
+  };
 
-  useEffect(() => {
-    if (files.length > 0) {
-      console.log("Documents loaded and passed to AIPopup:", files);
-    }
-  }, [files]);
+  // Add this before the return statement
+  const activeTab = openTabs.find(tab => tab.id === activeTabId);
 
   return (
-    <div className="h-screen flex">
-      {/* Left Panel - File Explorer */}
-      <div className="w-64 border-r">
-        <FileExplorerV2
-          userId={"1"}
-          selectedDocument={selectedFile}
-          onDocumentSelect={handleFileSelect}
-        />
+    <div className="h-screen flex flex-col bg-[#f9f9f9]">
+      {/* Toolbar */}
+      <div className="absolute top-0 right-0 z-50 flex gap-1 p-2">
+        <div className="flex gap-1 bg-[#f9f9f9] shadow-sm rounded p-1">
+          <button
+            onClick={() => setShowLeftPanel(!showLeftPanel)}
+            className={`p-1.5 rounded ${showLeftPanel ? 'bg-white shadow-sm' : 'bg-transparent'} 
+                       hover:bg-white hover:shadow-sm transition-all`}
+          >
+            <PanelLeft className="w-4 h-4 text-gray-600/80" />
+          </button>
+          <button
+            onClick={() => setShowSmartPrompts(!showSmartPrompts)}
+            className={`p-1.5 rounded ${showSmartPrompts ? 'bg-white shadow-sm' : 'bg-transparent'} 
+                       hover:bg-white hover:shadow-sm transition-all`}
+          >
+            <PanelRightOpen className="w-4 h-4 text-gray-600/80" />
+          </button>
+        </div>
       </div>
 
-      {/* Middle Panel - Document Editor */}
-      <div className="flex-1">
-        <DocumentPane
-          content={documentContent}
-          onContentChange={setDocumentContent}
-          fileName={selectedFile?.name || "New Document"}
-          onSave={handleSave}
-          onSaveAs={handleSaveAs}
-          onAnalyzeRisks={handleAnalyzeRisks}
-        />
-      </div>
+      {/* Main content */}
+      <div className="flex flex-1">
+        {/* Left Panel - File Explorer */}
+        <div className={`${showLeftPanel ? 'w-56' : 'w-0'} transition-all duration-200`}>
+          <div className={`h-full overflow-hidden ${!showLeftPanel && 'invisible'}`}>
+            <FileExplorerV2
+              selectedDocument={selectedFile}
+              onDocumentSelect={handleFileSelect}
+              onPdfParsed={handlePdfParsed}
+            />
+          </div>
+        </div>
 
-      {/* Right Panel */}
-      <RightPanel
-        risks={risks}
-        onRiskClick={handleRiskClick}
-        onSelectTemplate={handleTemplateSelect}
-      />
+        {/* Middle Panel - Document Editor */}
+        <div className="flex-1 bg-white flex flex-col">
+          {/* Tab Bar */}
+          <div className="flex items-center h-9 border-b border-gray-200 bg-gray-50/80">
+            <div className="flex-1 flex items-center">
+              {openTabs.map(tab => (
+                <div
+                  key={tab.id}
+                  onClick={() => setActiveTabId(tab.id)}
+                  className={`group flex items-center h-full px-3 border-r border-gray-200 cursor-pointer
+                            ${activeTabId === tab.id 
+                              ? 'bg-white text-gray-700 border-b-0' 
+                              : 'text-gray-500 hover:bg-gray-100'}`}
+                >
+                  <span className="text-xs font-medium truncate max-w-[100px]">
+                    {tab.name} {tab.isUnsaved && '•'}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      closeTab(tab.id);
+                    }}
+                    className="ml-1.5 p-0.5 rounded-sm hover:bg-gray-200/80 opacity-0 group-hover:opacity-100
+                             transition-opacity"
+                  >
+                    <X className="w-3 h-3 text-gray-400" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* New Tab Button */}
+            <button
+              onClick={() => {
+                // addNewTab();
+              }}
+              className="h-full px-2 text-gray-500 hover:bg-gray-100 transition-colors border-l border-gray-200"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Editor Wrapper */}
+          <div className="flex-1 flex flex-col min-h-0">
+            {activeTabId ? (
+              <DocumentPane
+                content={activeTab?.content || ''}
+                onContentChange={(newContent) => {
+                  if (activeTabId) {
+                    updateTabContent(activeTabId, newContent);
+                  }
+                }}
+                fileName={activeTab?.name || "Untitled"}
+                onSave={handleSave}
+                onSaveAs={handleSaveAs}
+              />
+            ) : (
+              <div className="flex-1 flex items-center justify-center bg-gray-50">
+                <div className="text-center">
+                  <h3 className="text-lg font-medium text-gray-700 mb-2">
+                    No Document Open
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Open a file from the file explorer to start working
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Smart Prompts Panel */}
+        <div className={`${showSmartPrompts ? 'w-80' : 'w-0'} transition-all duration-200`}>
+          <div className={`h-full overflow-hidden ${!showSmartPrompts && 'invisible'}`}>
+            <SmartPromptsPanel />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

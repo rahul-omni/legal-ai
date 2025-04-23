@@ -12,6 +12,7 @@ model User {
   id             String           @id @default(cuid())
   name           String?
   email          String           @unique
+  password       String?
   projects       Project[]
   FileSystemNode FileSystemNode[] @relation("file_system_nodes_user_id_idx")
 

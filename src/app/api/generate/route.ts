@@ -6,98 +6,57 @@ const openai = new OpenAI({
 });
 
 export async function POST(request: Request) {
-  console.log('API Key exists:', !!process.env.OPENAI_API_KEY);
-  
   if (!process.env.OPENAI_API_KEY) {
-    console.error('OpenAI API key not found');
-    return NextResponse.json({ 
-      error: "Server configuration error" 
-    }, { status: 500 });
+    return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
   }
 
   try {
     const body = await request.json();
-    console.log("📦 Request body received:", body);
     const { text, prompt } = body;
     
-    if (!text || typeof text !== 'string') {
-      return NextResponse.json({ 
-        error: `Invalid or missing text. Received: ${typeof text}` 
-      }, { status: 400 });
-    }
-    if (!prompt || typeof prompt !== 'string') {
-      return NextResponse.json({ 
-        error: `Invalid or missing prompt. Received: ${typeof prompt}` 
-      }, { status: 400 });
-    }
-
-    // Check if this is a chronology request
-    const isChronologyRequest = prompt.toLowerCase().includes('chronology');
+    const userContent = text ? `${prompt}:\n\n${text}` : prompt;
     
-    const systemPrompt = isChronologyRequest 
-      ? "You are a legal assistant that creates detailed chronologies from case documents. Format the output as a markdown table with | Date | Event | Significance | columns. Be comprehensive and precise with dates."
-      : "You are a legal document assistant. Create clear and professional legal content.";
-
-    const completion = await openai.chat.completions.create({
+    // Create streaming response
+    const stream = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content: systemPrompt
+          content: "You are a legal document assistant. Create clear and professional legal content."
         },
         {
           role: "user",
-          content: `${prompt}:\n\n${text}`
+          content: userContent
         }
       ],
+      stream: true,
       temperature: 0.7,
-      max_tokens: 1000
     });
 
-    //const summary = completion.choices[0].message.content?.trim()
-    
-    // if (!summary) {
-    //   throw new Error('No content generated');
-    // }
-
-
-    const rawSummary = completion.choices?.[0]?.message?.content?.trim() || "";
-    console.log("🧠 OpenAI Response:", completion.choices?.[0]?.message?.content);
-
-if (!rawSummary || rawSummary === "" || rawSummary === "\n") {
-  console.warn("⚠️ Model returned empty or useless output");
-  return new Response("Model returned no usable content", { status: 500 });
-}
-
-    // return NextResponse.json({ summary });
-    return new Response(rawSummary, {
-      status: 200,
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8"
-      }
-    });
-
-  }catch (error: any) {
-    console.error('❌ OpenAI API error:', error?.message || error);
-  
-    return new Response(
-      "Something went wrong while processing files.\n\n" +
-      (error?.message || JSON.stringify(error)),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8"
+    // Create a TransformStream for streaming the response
+    const encoder = new TextEncoder();
+    const readable = new ReadableStream({
+      async start(controller) {
+        for await (const chunk of stream) {
+          const content = chunk.choices[0]?.delta?.content;
+          if (content) {
+            controller.enqueue(encoder.encode(content));
+          }
         }
+        controller.close();
       }
-    );
+    });
+
+    return new Response(readable, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
+
+  } catch (error: any) {
+    console.error('OpenAI API error:', error);
+    return new Response(error.message || 'An error occurred', { status: 500 });
   }
-  
-  
-  // catch (error:any) {
-  //   console.error('OpenAI API error:', error);
-  //   return NextResponse.json({ 
-  //     error: "Failed to generate content: " + (error as Error).message 
-  //   }, { status: 500 });
-  // }
- 
 } 

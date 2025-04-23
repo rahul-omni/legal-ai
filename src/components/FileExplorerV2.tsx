@@ -8,37 +8,42 @@ import { handleApiError } from "@/helper/handleApiError";
 import { FileService } from "@/lib/fileService";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import {
+  File,
   FileIcon,
   FilePlus,
-  FolderIcon,
-  FolderOpenIcon,
-  FolderPlusIcon,
+  FileText,
+  Folder,
+  FolderOpen,
+  FolderPlus,
   Search,
+  Upload,
 } from "lucide-react";
  
 import { useParams } from "next/navigation";
-import { FC, useEffect, useState } from "react";
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
+import { FC, useEffect, useRef, useState } from "react";
 import { useToast } from "./ui/toast";
 
 interface FileExplorerProps {
-  userId: string;
   selectedDocument?: FileSystemNodeProps;
   onDocumentSelect: (file: FileSystemNodeProps) => void;
+  onPdfParsed: (text: string) => void;
 }
 
 export const FileExplorerV2: FC<FileExplorerProps> = ({
-  userId,
   selectedDocument,
   onDocumentSelect,
+  onPdfParsed,
 }) => {
   const params = useParams();
   const [nodes, setNodes] = useState<FileSystemNodeProps[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
-  // const [paramChecked, setParamChecked] = useState(false);
   const { showToast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch root nodes on mount
+  GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
+
   useEffect(() => {
     fetchRootNodes();
   }, []);
@@ -63,7 +68,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
 
   const fetchRootNodes = async () => {
     try {
-      const node = await fetchNodes(userId);
+      const node = await fetchNodes();
       setNodes(() => node);
       handleParams(node);
     } catch (error) {
@@ -73,22 +78,18 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
     }
   };
 
-  // Toggle folder expand/collapse
   const toggleExpand = async (node: FileSystemNodeProps, fileId?: string) => {
     if (node.type !== "FOLDER") return;
 
-    // Optimistic UI update
     setNodes((prevNodes) =>
       updateNodeProperty(prevNodes, node.id, "isExpanded", !node.isExpanded)
     );
 
-    // Fetch children if expanding for the first time
     if (!node.isExpanded && (!node.children || node.children.length === 0)) {
       await refreshNodes(node.id, fileId);
     }
   };
 
-  // Helper: Update node properties immutably
   const updateNodeProperty = (
     nodes: FileSystemNodeProps[],
     nodeId: string,
@@ -107,7 +108,6 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
     });
   };
 
-  // Helper functions to update state immutably
   const updateNodeChildren = (
     nodes: FileSystemNodeProps[],
     children: FileSystemNodeProps[],
@@ -213,6 +213,26 @@ const handleFileUploadnew = async (
   reader.readAsText(file);
 };
 
+  const extractTextFromPDF = async (file: File): Promise<string> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await getDocument({ data: arrayBuffer }).promise;
+      let fullText = "";
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const text = content.items.map((item: any) => item.str).join(" ");
+        fullText += `\n\nPage ${i}:\n${text}`;
+      }
+
+      return fullText;
+    } catch (error) {
+      console.error("Error extracting PDF text:", error);
+      throw error;
+    }
+  };
+
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     parentId?: string
@@ -264,12 +284,19 @@ const handleFileUploadnew = async (
     if (!file) return;
 
     try {
-      const content = await FileService.parseFile(file);
+      let content: string;
+
+      if (file.type === "application/pdf") {
+        content = await extractTextFromPDF(file);
+        onPdfParsed(content);
+        showToast("PDF Parsed Successfully");
+      } else {
+        content = await FileService.parseFile(file);
+      }
 
       const newFile: CreateNodePayload = {
         name: file.name,
         type: "FILE",
-        userId: "1",
         parentId,
         content,
       };
@@ -282,7 +309,7 @@ const handleFileUploadnew = async (
   };
 
   const refreshNodes = async (parentId?: string, fileId?: string) => {
-    const children = await fetchNodes(userId, parentId);
+    const children = await fetchNodes(parentId);
     if (!parentId) {
       setNodes(children);
       return;
@@ -299,7 +326,7 @@ const handleFileUploadnew = async (
   };
 
   const handleCreateFolder = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default action
+    e.preventDefault();
     const folderName = prompt("Enter folder name:", "New Folder");
     if (!folderName) return;
 
@@ -307,7 +334,6 @@ const handleFileUploadnew = async (
       const folder: CreateNodePayload = {
         name: folderName,
         type: "FOLDER",
-        userId: "1",
       };
 
       await createNode(folder);
@@ -317,36 +343,57 @@ const handleFileUploadnew = async (
     }
   };
 
-  const renderNode = (node: FileSystemNodeProps) => (
-    <div key={node.id} className="pl-2">
+  const renderNode = (node: FileSystemNodeProps, depth = 0) => (
+    <div key={node.id} className="relative">
+      {/* Guide Lines */}
+      {depth > 0 && (
+        <div
+          className="absolute left-0 top-0 bottom-0 border-l border-gray-400"
+          style={{
+            left: `${depth * 20}px`,
+            opacity: 0.7,
+          }}
+        />
+      )}
+
       <div
         className={`
-          flex items-center gap-2 p-1 rounded-md cursor-pointer
+          flex items-center px-2 py-1.5 rounded-md cursor-pointer
+          ${depth > 0 ? "pl-[28px]" : ""}
           ${
             selectedDocument?.id === node.id
-              ? "bg-primary/10 text-primary"
-              : "hover:bg-gray-100"
+              ? "bg-blue-50 text-blue-600 ring-1 ring-blue-200"
+              : "hover:bg-gray-200/70"
           }
+          relative group transition-colors duration-150 ease-in-out
         `}
         onClick={() =>
           node.type === "FOLDER" ? toggleExpand(node) : onDocumentSelect(node)
         }
       >
-        <div className="flex items-center w-full px-2">
+        <div className="flex items-center w-full gap-2">
+          {/* Folder/File Icon */}
           {node.type === "FOLDER" ? (
             <div className="flex items-center justify-between w-full">
-              <div className="flex items-center">
+              <div className="flex items-center gap-2">
                 {node.isExpanded ? (
-                  <FolderOpenIcon className="w-4 h-4 mr-2 min-w-4 text-yellow-500" />
+                  <FolderOpen className="w-4 h-4 text-gray-500 shrink-0 fill-current" />
                 ) : (
-                  <FolderIcon className="w-4 h-4 mr-2 min-w-4 text-yellow-500" />
+                  <Folder className="w-4 h-4 text-gray-500 shrink-0 fill-current" />
                 )}
-                <span className="text-sm">{node.name}</span>
+                <span className="text-sm text-gray-700/80">{node.name}</span>
               </div>
 
-              <div className="">
-                <label htmlFor={`file-${node.id}`} className="cursor-pointer">
-                  <FilePlus className="w-4 h-4 min-w-4 text-blue-500" />
+              {/* Folder Actions */}
+              <div
+                className="flex items-center gap-1 opacity-0 group-hover:opacity-100 
+                            transition-opacity"
+              >
+                <label
+                  htmlFor={`file-${node.id}`}
+                  className="p-1 rounded-md hover:bg-gray-200/70 cursor-pointer"
+                >
+                  <FilePlus className="w-4 h-4 text-gray-500/80" />
                 </label>
                 <input
                   id={`file-${node.id}`}
@@ -362,21 +409,24 @@ const handleFileUploadnew = async (
               </div>
             </div>
           ) : (
-            <>
-              <FileIcon className="w-4 h-4 mr-2 min-w-4 text-blue-500" />
-              <span className="text-sm">{node.name}</span>
-            </>
+            <div className="flex items-center gap-2 w-full">
+              {/* File Icon based on extension */}
+              <div className="w-4 h-4 flex items-center justify-center shrink-0">
+                {getFileIcon(node.name)}
+              </div>
+              <span className="text-sm text-gray-600/80">{node.name}</span>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Only render if expanded AND children exists (not undefined) */}
+      {/* Children */}
       {node.isExpanded && node.children !== undefined && (
-        <div>
+        <div className="ml-5">
           {node.children.length > 0 ? (
-            node.children.map(renderNode)
+            node.children.map((child) => renderNode(child, depth + 1))
           ) : (
-            <div className="text-xs text-gray-500 italic pl-4">
+            <div className="text-xs text-gray-400 italic ml-6 mt-1">
               Empty folder
             </div>
           )}
@@ -385,55 +435,93 @@ const handleFileUploadnew = async (
     </div>
   );
 
-  return (
-    <>
-      <div className="flex flex-col border-r border-border">
-        {/* Header with search and actions */}
+  // Add this helper function to get appropriate file icons
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split(".").pop()?.toLowerCase();
 
-        <div className="p-4 border-b">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search files..."
-                className="w-full pl-8 pr-4 py-1 text-sm rounded-md border focus:border-primary focus:ring-1 focus:ring-primary"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <label
-              htmlFor="file-upload"
-              className="p-1.5 rounded-md bg-gray-900 text-white hover:bg-gray-800 transition-colors cursor-pointer"
-            >
-              <FilePlus className="h-4 w-4" />
-            </label>
-            <input
-              id="file-upload"
-              type="file"
-              className="hidden"
-              accept=".docx,.pdf,.txt"
-              onChange={handleFileUpload}
-            />
+    switch (extension) {
+      case "pdf":
+        return (
+          <div className="flex items-center justify-center text-[10px] font-medium bg-gray-100 text-gray-600/80 rounded w-5 h-5">
+            PDF
+          </div>
+        );
+      case "docx":
+      case "doc":
+        return <FileText className="w-4 h-4 text-blue-500/80" />;
+      case "txt":
+        return <File className="w-4 h-4 text-gray-500/80" />;
+      default:
+        return <FileIcon className="w-4 h-4 text-gray-400" />;
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-[#f9f9f9]">
+      {/* Header */}
+      <div className="p-4 bg-[#f9f9f9] sticky top-0 z-10">
+        {/* Search */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search files..."
+            className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-200 
+                     focus:border-blue-500 focus:ring-1 focus:ring-blue-500 
+                     placeholder-gray-400"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        {/* Files Header */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500/80">
+            FILES
+          </h2>
+          <div className="flex items-center gap-1">
+            {/* Upload File Button */}
             <button
-              className="p-1.5 rounded-md bg-gray-900 text-white hover:bg-gray-800 transition-colors"
-              onClick={(e) => handleCreateFolder(e)}
+              onClick={() => fileInputRef.current?.click()}
+              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-600 transition-colors"
+              title="Upload File"
             >
-              <FolderPlusIcon className="h-4 w-4" />
+              <Upload className="w-4 h-4" />
             </button>
+
+            {/* New Folder Button */}
+            <button
+              onClick={handleCreateFolder}
+              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-600 transition-colors"
+              title="New Folder"
+            >
+              <FolderPlus className="w-4 h-4" />
+            </button>
+
+            {/* Keep the hidden file input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleFileUpload}
+              accept=".txt,.doc,.docx,.pdf"
+            />
           </div>
         </div>
       </div>
 
-      <div className="w-64 h-[calc(100vh-76px)] border-r border-gray-200 overflow-y-auto">
-        <div className="p-3 font-medium bg-gray-50">File Explorer</div>
-
+      {/* File Tree */}
+      <div className="flex-1 overflow-y-auto p-2 bg-[#f9f9f9]">
         {loading ? (
-          <div className="p-4 text-sm text-gray-500">Loading...</div>
+          <div className="flex items-center justify-center h-full text-gray-500">
+            <div className="animate-spin mr-2">⏳</div> Loading...
+          </div>
         ) : (
-          <div className="py-1">{nodes.map((node) => renderNode(node))}</div>
+          <div className="space-y-0.5">
+            {nodes.map((node) => renderNode(node))}
+          </div>
         )}
       </div>
-    </>
+    </div>
   );
 };

@@ -1,31 +1,28 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { userIdFromHeader } from "@/lib/auth";
 
-// Helper function for consistent error handling
 function handleError(error: unknown, message: string, status = 500) {
   console.error(message, error);
   return NextResponse.json({ error: message }, { status });
 }
 
-// GET: Fetch nodes (root level or children of a folder)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const parentId = searchParams.get("parentId"); // NULL for root items
-    const userId = searchParams.get("userId"); // Required for multi-user systems
+    const parentId = searchParams.get("parentId");
+    const userId = userIdFromHeader(request);
 
-    // Validate user ID
     if (!userId) {
       return handleError(null, "User ID is required", 400);
     }
 
-    // Query nodes from database
     const nodes = await db.fileSystemNode.findMany({
       where: {
-        parentId: parentId || null, // NULL = root level
-        userId: userId, // Only fetch user's files
+        parentId: parentId || null,
+        userId: userId,
       },
-      orderBy: { type: "desc" }, // Folders first (FOLDER > FILE)
+      orderBy: { type: "desc" },
     });
 
     return NextResponse.json(nodes);
@@ -34,17 +31,15 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: Create a new file/folder
 export async function POST(request: Request) {
   try {
-    const { name, type, parentId, content, userId } = await request.json();
+    const { name, type, parentId, content } = await request.json();
+    const userId = userIdFromHeader(request);
 
-    // Validation
     if (!name || !type || !userId) {
       return handleError(null, "Name, type, and user ID are required", 400);
     }
 
-    // Files must have content (folders can be empty)
     if (type === "FILE" && !content) {
       return handleError(null, "Content is required for files", 400);
     }
@@ -61,15 +56,15 @@ export async function POST(request: Request) {
 
     if (existingNode) {
      // return handleError(null, "Duplicate node: This file/folder already exists", 409);
-       return NextResponse.json({error :"Duplicate file is prrsetn"},{status :409})
+       return NextResponse.json({error :"Duplicate file is present"},{status :409})
     }
     // Create the node in database
     const newNode = await db.fileSystemNode.create({
       data: {
         name,
         type,
-        content: type === "FILE" ? content || "" : null, // Folders = NULL
-        parentId: parentId || null, // NULL = root level
+        content: type === "FILE" ? content || "" : null,
+        parentId: parentId || null,
         userId,
       },
     });

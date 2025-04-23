@@ -1,15 +1,22 @@
 "use client";
 
-import { useLoading } from "@/context/loadingContext";
+import { loadingContext } from "@/context/loadingContext";
 import { RiskFinding } from "@/lib/riskAnalyzer";
 import {
   OPENAI_LANGUAGES,
   SARVAM_LANGUAGES,
   TranslationVendor,
 } from "@/lib/translation/types";
-import { AlertOctagon, Save, SaveAll } from "lucide-react";
-import React, { useRef, useState } from "react";
+import {
+  Save,
+  ChevronDown
+} from "lucide-react";
+import React, { useRef, useState, useEffect } from "react";
 import { AIPopup } from "./AIPopup";
+import { CursorTracker } from "./CursorTracker";
+import { SaveDropdown } from "./SaveDropdown";
+import { TranslationDropdown } from "./TranslationDropdown";
+import { QuillEditor } from './QuillEditor';
 
 interface DocumentPaneProps {
   content: string;
@@ -17,7 +24,19 @@ interface DocumentPaneProps {
   fileName: string;
   onSave: () => Promise<void>;
   onSaveAs: () => Promise<void>;
-  onAnalyzeRisks: () => Promise<void>;
+  // userId: string;
+  // documents: any[];
+  // files: any[];
+}
+
+// Add this interface to track generation state
+interface GenerationState {
+  isGenerating: boolean;
+  insertPosition?: {
+    line: number;
+    column: number;
+    coords: { left: number; top: number };
+  };
 }
 
 export function DocumentPane({
@@ -26,78 +45,217 @@ export function DocumentPane({
   fileName,
   onSave,
   onSaveAs,
-  onAnalyzeRisks,
+  // userId,
+  // documents,
+  // files,
 }: DocumentPaneProps) {
-  const [showAIPopup, setShowAIPopup] = useState(false);
-  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+  const [showAIPopup, setShowAIPopup] = useState(true);
   const [selectedText, setSelectedText] = useState("");
+  const [showSaveDropdown, setShowSaveDropdown] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const saveDropdownRef = useRef<HTMLDivElement>(null);
   const [highlightRange, setHighlightRange] = useState<{
     start: number;
     end: number;
   } | null>(null);
-  const [risks, setRisks] = useState<RiskFinding[]>([]);
-  const [rightTab, setRightTab] = useState<"templates" | "risks">("templates");
   const [translationVendor, setTranslationVendor] =
     useState<TranslationVendor>("openai");
   const [selectedLanguage, setSelectedLanguage] = useState("en-IN");
-  const { isLoading, startLoading, stopLoading } = useLoading();
+  const { isLoading, startLoading, stopLoading } = loadingContext();
+  const [showTranslateDropdown, setShowTranslateDropdown] = useState(false);
+  const translationDropdownRef = useRef<HTMLDivElement>(null);
+  const [cursorPosition, setCursorPosition] = useState<{
+    line: number;
+    column: number;
+    coords?: { left: number; top: number };
+  }>();
+  const [cursorIndicatorPosition, setCursorIndicatorPosition] = useState<{
+    line: number;
+    column: number;
+    coords: { left: number; top: number };
+  } | null>(null);
+  const [generationState, setGenerationState] = useState<GenerationState>({
+    isGenerating: false
+  });
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    // Show popup on Ctrl+Space
-    if (e.ctrlKey && e.code === "Space") {
-      e.preventDefault();
-      const textarea = textareaRef.current;
-      const container = containerRef.current;
-      if (textarea && container) {
-        const { selectionStart, selectionEnd } = textarea;
-        const selectedText = content.slice(selectionStart, selectionEnd);
-        setSelectedText(selectedText);
-
-        const containerRect = container.getBoundingClientRect();
-        const textareaRect = textarea.getBoundingClientRect();
-
-        // Get cursor position relative to textarea
-        const cursorPos = getCaretCoordinates(textarea, selectionEnd);
-
-        // Account for scroll position
-        const scrollTop = textarea.scrollTop;
-
-        // Calculate position relative to the container
-        setPopupPosition({
-          x: cursorPos.left - textareaRect.left + 20,
-          y: cursorPos.top - textareaRect.top - scrollTop + 20,
-        });
-        setShowAIPopup(true);
+  // Handle click outside for save dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (saveDropdownRef.current && !saveDropdownRef.current.contains(event.target as Node)) {
+        setShowSaveDropdown(false);
       }
     }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (translationDropdownRef.current && !translationDropdownRef.current.contains(event.target as Node)) {
+        setShowTranslateDropdown(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const calculateCursorPosition = (textarea: HTMLTextAreaElement) => {
+    const cursorIndex = textarea.selectionStart;
+    const textBeforeCursor = textarea.value.substring(0, cursorIndex);
+    
+    // Split into lines and count up to cursor
+    const lines = textBeforeCursor.split('\n');
+    
+    // Line number (1-based)
+    const line = lines.length;
+    
+    // Get the current line's content
+    const currentLine = lines[lines.length - 1] || '';
+    
+    // Debug logging
+    console.log("Cursor position details:", {
+      cursorIndex,
+      totalLines: lines.length,
+      currentLine,
+      allLines: lines.map((l, i) => `Line ${i + 1}: "${l}"`)
+    });
+    
+    // Calculate visual column position (1-based)
+    let column = 1;
+    for (let i = 0; i < currentLine.length; i++) {
+      if (currentLine[i] === '\t') {
+        column += 4 - (column - 1) % 4;
+      } else {
+        column++;
+      }
+    }
+
+    return { line, column };
   };
 
-  const handleGeneratedText = (generatedText: string) => {
+  const updateCursorIndicator = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    
+    const position = calculateCursorPosition(textarea);
+    const coordinates = getCaretCoordinates(textarea, textarea.selectionStart);
+    
+    setCursorIndicatorPosition({
+      ...position,
+      coords: coordinates
+    });
+  };
+
+  // Add this to handle scroll events
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const handleScroll = () => {
+      if (!selectedText) {
+        updateCursorIndicator();
+      }
+    };
+
+    textarea.addEventListener('scroll', handleScroll);
+    return () => textarea.removeEventListener('scroll', handleScroll);
+  }, [selectedText]);
+
+  // Update cursor indicator when cursor position changes
+  const handleCursorChange = () => {
     const textarea = textareaRef.current;
     if (textarea) {
       const start = textarea.selectionStart;
-      const end = start + generatedText.length;
-      const newContent =
-        content.slice(0, start) +
-        generatedText +
-        content.slice(textarea.selectionEnd);
+      const end = textarea.selectionEnd;
+      
+      if (start !== end) {
+        const currentSelection = textarea.value.substring(start, end);
+        setSelectedText(currentSelection);
+        setCursorIndicatorPosition(null);
+      } else {
+        setSelectedText("");
+        const position = calculateCursorPosition(textarea);
+        const coords = getCaretCoordinates(textarea, start);
+        
+        setCursorIndicatorPosition({
+          ...position,
+          coords: coords
+        });
+      }
+      
+      const position = calculateCursorPosition(textarea);
+      setCursorPosition(position);
+    }
+  };
 
-      onContentChange(newContent);
+  const handleTranslate = async (vendor: TranslationVendor, language: string) => {
+    try {
+      startLoading("TRANSLATE_TEXT");
+      const response = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vendor,
+          sourceText: content,
+          targetLanguage: language,
+          mode: "formal",
+        }),
+      });
 
-      // Set highlight range
-      setHighlightRange({ start, end });
+      if (!response.ok) throw new Error("Translation failed");
+      const data = await response.json();
+      onContentChange(data.translation);
+    } catch (error) {
+      console.error("Translation error:", error);
+      alert("Failed to translate text");
+    } finally {
+      stopLoading("TRANSLATE_TEXT");
+    }
+  };
 
-      // Clear highlight after 5 seconds
-      setTimeout(() => {
-        setHighlightRange(null);
-      }, 5000);
+  const handleGeneratedText = async (prompt: string) => {
+    try {
+      setGenerationState({
+        isGenerating: true,
+        insertPosition: cursorIndicatorPosition || undefined
+      });
 
-      // Set cursor position after inserted text
-      setTimeout(() => {
-        textarea.selectionStart = textarea.selectionEnd = end;
-      }, 0);
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.body) return;
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedText = '';
+
+      // Get Quill instance
+      const quillEditor = document.querySelector('.quill')?.querySelector('.ql-editor');
+      if (!quillEditor) return;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        // Decode and accumulate the chunk
+        const chunk = decoder.decode(value);
+        accumulatedText += chunk;
+
+        // Create new content by combining existing and new
+        const newContent = content + accumulatedText;
+        onContentChange(newContent);
+      }
+
+    } catch (error) {
+      console.error('Error generating text:', error);
+    } finally {
+      setGenerationState({ isGenerating: false });
     }
   };
 
@@ -125,119 +283,89 @@ export function DocumentPane({
     }
   };
 
-  const handleTranslate = async () => {
-    try {
-      startLoading("TRANSLATE_TEXT");
-      const response = await fetch("/api/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vendor: translationVendor,
-          sourceText: content,
-          targetLanguage: selectedLanguage,
-          mode: "formal",
-        }),
-      });
+  const handleSelectionChange = (range: { index: number; length: number } | null) => {
+    if (!range) {
+      setSelectedText('');
+      return;
+    }
 
-      if (!response.ok) throw new Error("Translation failed");
-      const data = await response.json();
-      onContentChange(data.translation);
-    } catch (error) {
-      console.error("Translation error:", error);
-      alert("Failed to translate text");
-    } finally {
-      stopLoading("TRANSLATE_TEXT");
+    if (range.length > 0) {
+      // Get selected text from Quill
+      setSelectedText(content.slice(range.index, range.index + range.length));
+    } else {
+      setSelectedText('');
+      // Update cursor position
+      setCursorPosition({
+        line: 1, // Quill doesn't provide line numbers easily
+        column: range.index,
+        coords: { // We'll need to calculate this differently for Quill
+          top: 0,
+          left: 0
+        }
+      });
     }
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 border-b flex items-center justify-between">
-        <h2 className="text-lg font-medium">{fileName}</h2>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onAnalyzeRisks}
-            className="px-3 py-1.5 text-sm border border-gray-200 rounded inline-flex items-center gap-2 hover:bg-gray-50"
-            disabled={isLoading("RISK_ANALYZE")}
-          >
-            <AlertOctagon className="w-4 h-4" />
-            {isLoading("RISK_ANALYZE") ? "Analyzing..." : "Analyze Risks"}
-          </button>
-          <button
-            onClick={onSave}
-            className="px-3 py-1.5 text-sm border border-gray-200 rounded inline-flex items-center gap-2 hover:bg-gray-50"
-          >
-            <Save className="w-4 h-4" />
-            Save
-          </button>
-          <button
-            onClick={onSaveAs}
-            className="px-3 py-1.5 text-sm border border-gray-200 rounded inline-flex items-center gap-2 hover:bg-gray-50"
-          >
-            <SaveAll className="w-4 h-4" />
-            Save As
-          </button>
-          <select
-            value={translationVendor}
-            onChange={(e) =>
-              setTranslationVendor(e.target.value as TranslationVendor)
-            }
-            className="px-2 py-1 border rounded text-sm"
-          >
-            <option value="openai">OpenAI</option>
-            <option value="sarvam">Sarvam AI</option>
-          </select>
-          <select
-            value={selectedLanguage}
-            onChange={(e) => setSelectedLanguage(e.target.value)}
-            className="px-2 py-1 border rounded text-sm"
-          >
-            {translationVendor === "sarvam"
-              ? SARVAM_LANGUAGES.map((lang) => (
-                  <option key={lang.code} value={lang.code}>
-                    {lang.name}
-                  </option>
-                ))
-              : OPENAI_LANGUAGES.map((lang) => (
-                  <option key={lang.value} value={lang.value}>
-                    {lang.label}
-                  </option>
-                ))}
-          </select>
-          <button
-            onClick={handleTranslate}
-            disabled={isLoading("TRANSLATE_TEXT")}
-          >
-            {isLoading("TRANSLATE_TEXT") ? "Translating..." : "Translate"}
-          </button>
-        </div>
-      </div>
-      <div className="flex-1 relative" ref={containerRef}>
-        {highlightRange ? (
-          <div
-            className="w-full h-full p-4 border rounded"
-            style={{ whiteSpace: "pre-wrap" }}
-          >
-            {renderContent()}
+    <div className="h-full flex">
+      {/* Main Editor Area */}
+      <div className="flex-1 flex flex-col bg-[#f9f9f9]">
+        {/* Header */}
+        <div className="p-4 bg-[#f9f9f9]">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-semibold text-gray-800/80">
+              {fileName || "New Document"}
+            </h1>
+
+            <div className="flex items-center gap-2">
+              <TranslationDropdown 
+                onTranslate={handleTranslate}
+                isLoading={isLoading("TRANSLATE_TEXT")}
+              />
+              <SaveDropdown onSave={onSave} onSaveAs={onSaveAs} />
+            </div>
           </div>
-        ) : (
-          <textarea
-            ref={textareaRef}
-            value={content}
-            onChange={(e) => onContentChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="w-full h-full p-4 border rounded resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+        </div>
+
+        {/* Editor */}
+        <div className="flex-1 relative p-6 bg-white" ref={containerRef}>
+          <QuillEditor
+            content={content}
+            onContentChange={onContentChange}
+            onSelectionChange={handleSelectionChange}
           />
-        )}
-        {showAIPopup && (
-          <AIPopup
-            position={popupPosition}
-            onClose={() => setShowAIPopup(false)}
-            onGenerate={handleGeneratedText}
-            currentContent={content}
-            selectedText={selectedText}
-          />
-        )}
+
+          {showAIPopup && (
+            <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50" style={{ width: '600px' }}>
+              <AIPopup
+                onGenerate={handleGeneratedText}
+                currentContent={content}
+                selectedText={selectedText}
+                cursorPosition={cursorPosition}
+                cursorIndicatorPosition={cursorIndicatorPosition}
+                documents={[]}
+                files={[]}
+              />
+            </div>
+          )}
+
+          {/* Loading animation */}
+          {generationState.isGenerating && cursorIndicatorPosition && (
+            <div 
+              className="pointer-events-none absolute z-50"
+              style={{
+                top: `${cursorIndicatorPosition.coords.top - 8}px`,
+                left: `${cursorIndicatorPosition.coords.left}px`,
+              }}
+            >
+              <div className="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-full shadow-lg">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse [animation-delay:150ms]" />
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse [animation-delay:300ms]" />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -245,37 +373,39 @@ export function DocumentPane({
 
 // Helper function to get caret coordinates
 function getCaretCoordinates(element: HTMLTextAreaElement, position: number) {
-  const { offsetLeft, offsetTop } = element;
-  const div = document.createElement("div");
-  const styles = getComputedStyle(element);
-  const properties = [
-    "fontFamily",
-    "fontSize",
-    "fontWeight",
-    "wordWrap",
-    "whiteSpace",
-    "padding",
-    "width",
-    "lineHeight",
-    "letterSpacing", // Add these for more accurate positioning
-    "wordSpacing",
-    "textTransform",
-  ];
+  // Create a mirror div with exact same content and styling
+  const mirror = document.createElement('div');
+  mirror.style.cssText = `
+    position: absolute;
+    visibility: hidden;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    box-sizing: border-box;
+    width: ${element.offsetWidth}px;
+    font: ${getComputedStyle(element).font};
+    line-height: ${getComputedStyle(element).lineHeight};
+    padding: ${getComputedStyle(element).padding};
+  `;
 
-  properties.forEach((prop) => {
-    div.style[prop as any] = styles[prop];
-  });
-
-  div.textContent = element.value.slice(0, position);
-  div.style.position = "absolute";
-  div.style.visibility = "hidden";
-  document.body.appendChild(div);
+  // Add text content up to cursor position
+  const textBeforeCursor = element.value.slice(0, position);
+  const textNode = document.createTextNode(textBeforeCursor);
+  const span = document.createElement('span');
+  span.appendChild(textNode);
+  mirror.appendChild(span);
+  
+  // Add to DOM temporarily for measurement
+  document.body.appendChild(mirror);
+  
+  // Get exact coordinates
+  const rect = element.getBoundingClientRect();
+  const spanRect = span.getBoundingClientRect();
 
   const coordinates = {
-    left: div.offsetWidth + offsetLeft,
-    top: div.offsetHeight + offsetTop,
+    top: spanRect.height + rect.top - element.scrollTop,
+    left: spanRect.width + rect.left - element.scrollLeft
   };
 
-  document.body.removeChild(div);
+  document.body.removeChild(mirror);
   return coordinates;
 }

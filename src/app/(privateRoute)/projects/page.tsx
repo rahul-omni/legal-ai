@@ -1,4 +1,6 @@
 "use client";
+import { createNode, fetchNodes } from "@/app/apiServices/nodeServices";
+import { userContext } from "@/context/userContext";
 import { handleApiError } from "@/helper/handleApiError";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import {
@@ -9,13 +11,11 @@ import {
   MoreVertical,
   Search,
   Upload,
+  X,
 } from "lucide-react";
 import moment from "moment";
-import { Dispatch, FC, useEffect, useReducer, useState } from "react";
-import { createNode, fetchNodes } from "../apiServices/nodeServices";
-
-import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Dispatch, FC, useEffect, useReducer, useState } from "react";
 
 interface ProjectHubProps {
   projects: FileSystemNodeProps[];
@@ -68,6 +68,7 @@ const reducer = (
 };
 
 export default function ProjectHub() {
+  const { userState } = userContext();
   const [projectHubState, dispatchProjectHub] = useReducer(reducer, {
     projects: [],
     createLoading: false,
@@ -83,7 +84,7 @@ export default function ProjectHub() {
   const loadProjects = async (parentId?: string) => {
     try {
       dispatchProjectHub({ type: "SET_LOADING", payload: true });
-      const response = await fetchNodes("1", parentId);
+      const response = await fetchNodes(parentId);
       dispatchProjectHub({ type: "SET_PROJECTS", payload: response });
     } catch (error) {
       handleApiError(error);
@@ -354,12 +355,13 @@ export const NewProjectModal: FC<ProjectReducerProps> = ({
   projectHubState: projectHubState,
   dispatchProjectHub: dispatchProjectHub,
 }) => {
+  const { userState } = userContext();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleCreateProject(name, description);
+    handleCreateProject(userState.user!.id, name, description);
     setName("");
     setDescription("");
   };
@@ -384,7 +386,7 @@ export const NewProjectModal: FC<ProjectReducerProps> = ({
   };
 
   const refreshProject = async (parentId?: string) => {
-    const children = await fetchNodes("1", parentId);
+    const children = await fetchNodes(parentId);
     if (!parentId) {
       dispatchProjectHub({ type: "SET_PROJECTS", payload: children });
       return;
@@ -395,14 +397,18 @@ export const NewProjectModal: FC<ProjectReducerProps> = ({
     });
   };
 
-  const handleCreateProject = async (name: string, description: string) => {
+  const handleCreateProject = async (
+    userId: string,
+    name: string,
+    description: string
+  ) => {
     try {
       dispatchProjectHub({ type: "SET_CREATE_LOADING", payload: true });
       dispatchProjectHub({
         type: "SET_IS_NEW_PROJECT_MODAL_OPEN",
         payload: false,
       });
-      await createNode({ name: name, type: "FOLDER", userId: "1" });
+      await createNode({ name: name, type: "FOLDER" });
       await refreshProject();
     } catch (error) {
       handleApiError(error);

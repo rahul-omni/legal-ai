@@ -4,6 +4,7 @@ import { createContext, FC, ReactNode, useContext, useState } from "react";
 const defaultLoadingState = {
   RISK_ANALYZE: false,
   TRANSLATE_TEXT: false,
+  LOGGING_IN: false,
 };
 
 type LoadingType = keyof typeof defaultLoadingState;
@@ -34,7 +35,7 @@ export const LoadingProvider: FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 // Custom hook
-export function useLoading() {
+export function loadingContext() {
   const context = useContext(LoadingContext);
   if (!context) {
     throw new Error(

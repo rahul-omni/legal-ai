@@ -1,13 +1,11 @@
 export interface RiskFinding {
-  severity: 'high' | 'medium' | 'low';
-  category: string;
-  description: string;
   clause: string;
+  finding: string;
+  severity: string;
   location: {
     start: number;
     end: number;
   };
-  recommendation: string;
 }
 
 export class RiskAnalyzer {

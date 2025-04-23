@@ -1,29 +1,45 @@
-import { getServerSession } from "next-auth"
-import { db } from './db'
+import { db } from "./db";
 
-// Temporary auth function until we set up NextAuth properly
-export async function auth() {
-  // Try to find test user or create one
-  let user = await db.user.findUnique({
-    where: { email: "test@example.com" }
-  })
-
-  if (!user) {
-    user = await db.user.create({
-      data: {
-        name: "Test User",
-        email: "test@example.com"
-      }
-    })
+export async function verifyAuthToken(token: string) {
+  if (!token.startsWith("valid-token-")) {
+    throw new Error("Invalid token");
   }
 
-  return user
+  const userId = token.replace("valid-token-", "");
+
+  const user = await db.user.findUnique({
+    where: { id: userId },
+  });
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user;
 }
 
-// Later we'll implement proper authentication:
-/*
-export async function auth() {
-  const session = await getServerSession()
-  return session?.user
+export const userIdFromHeader = (request: Request) => {
+  const authToken = request.headers
+    .get("Authorization")
+    ?.replace("Bearer ", "");
+
+  if (!authToken) {
+    throw new Error("No auth token provided");
+  }
+
+  const userId = authToken.replace("valid-token-", "");
+
+  return userId;
+};
+
+export function getAuthCookie() {
+  const match = document.cookie.match(/authToken=([^;]+)/);
+  return match ? match[1] : null;
 }
-*/ 
+
+export function setAuthCookie(token: string) {
+  document.cookie = `authToken=${token}; path=/; max-age=${60 * 60 * 24}`;
+}
+
+export function clearAuthCookie() {
+  document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+}

@@ -1,0 +1,87 @@
+/* Quill Editor Base Styles */
+.quill {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Container Styles */
+.ql-container {
+  flex: 1;
+  overflow: hidden;
+  border: none !important;
+}
+
+.ql-container.ql-snow {
+  border: none !important;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: white;
+}
+
+/* Editor Styles */
+.ql-editor {
+  height: 100%;
+  font-size: 15px;
+  line-height: 1.6;
+  padding: 32px 48px !important;
+  overflow-y: auto;
+  border: none !important;
+  background: linear-gradient(to right, #f9fafb 0px, white 32px, white 100%);
+  background-image: linear-gradient(#e5e7eb 1px, transparent 1px);
+  background-size: 100% 2rem;
+  background-position: 0 1rem;
+}
+
+/* Toolbar Styles */
+.ql-toolbar.ql-snow {
+  border: none !important;
+  background: #fafafa;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.ql-toolbar.ql-snow .ql-formats button,
+.ql-toolbar.ql-snow .ql-picker {
+  border: none !important;
+}
+
+.ql-toolbar.ql-snow .ql-picker-options {
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.ql-toolbar.ql-snow .ql-formats button:hover,
+.ql-toolbar.ql-snow .ql-formats button.ql-active {
+  border: none !important;
+  background-color: rgba(0,0,0,0.05);
+}
+
+/* 3D Paper Effect */
+.perspective-1000 {
+  perspective: 1000px;
+  transform: rotateX(0.5deg);
+}
+
+.shadow-paper {
+  box-shadow: 
+    0 1px 1px rgba(0,0,0,0.12),
+    0 2px 2px rgba(0,0,0,0.12),
+    0 4px 4px rgba(0,0,0,0.12),
+    0 8px 8px rgba(0,0,0,0.12),
+    0 16px 16px rgba(0,0,0,0.12);
+}
+
+/* Page Fold Effect */
+.ql-editor::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.03) 50%);
+  pointer-events: none;
+} 
