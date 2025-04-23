@@ -10,6 +10,7 @@ import { PanelLeft, PanelRightOpen, X, Plus } from "lucide-react";
 import { useTabs } from "@/context/tabsContext";
 import { SmartPrompts } from "./SmartPrompts";
 import { SmartPromptsPanel } from './SmartPromptsPanel';
+import { log } from "console";
 
 // Add this interface near the top
 interface TabInfo {
@@ -162,7 +163,7 @@ export default function LegalEditor() {
 
   const handleSave = async () => {
     if (!selectedFile) return;
-
+    console.log("check handle save api")
     try {
       const response = await fetch(`/api/documents/${selectedFile.id}`, {
         method: "PUT",
@@ -246,7 +247,8 @@ export default function LegalEditor() {
 
   // Add this before the return statement
   const activeTab = openTabs.find(tab => tab.id === activeTabId);
-
+    console.log("activetab" ,activeTab)
+    
   return (
     <div className="h-screen flex flex-col bg-[#f9f9f9]">
       {/* Toolbar */}
@@ -278,6 +280,7 @@ export default function LegalEditor() {
               selectedDocument={selectedFile}
               onDocumentSelect={handleFileSelect}
               onPdfParsed={handlePdfParsed}
+            //  files ={files}
             />
           </div>
         </div>
@@ -337,6 +340,7 @@ export default function LegalEditor() {
                 fileName={activeTab?.name || "Untitled"}
                 onSave={handleSave}
                 onSaveAs={handleSaveAs}
+                fileId={activeTab?.fileId || "" }
               />
             ) : (
               <div className="flex-1 flex items-center justify-center bg-gray-50">

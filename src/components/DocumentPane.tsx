@@ -17,13 +17,17 @@ import { CursorTracker } from "./CursorTracker";
 import { SaveDropdown } from "./SaveDropdown";
 import { TranslationDropdown } from "./TranslationDropdown";
 import { QuillEditor } from './QuillEditor';
+import { updateNodeContent } from "@/app/apiServices/nodeServices";
+import { FileSystemNodeProps } from "@/types/fileSystem";
 
 interface DocumentPaneProps {
   content: string;
   onContentChange: (content: string) => void;
   fileName: string;
-  onSave: () => Promise<void>;
+  //onSave: () => Promise<void>;
+  onSave: (fileId?: string | null) => void;
   onSaveAs: () => Promise<void>;
+  fileId?: string | null;
   // userId: string;
   // documents: any[];
   // files: any[];
@@ -45,6 +49,7 @@ export function DocumentPane({
   fileName,
   onSave,
   onSaveAs,
+  fileId
   // userId,
   // documents,
   // files,
@@ -79,6 +84,11 @@ export function DocumentPane({
     isGenerating: false
   });
 
+  console.log("content",content);
+  
+   
+  console.log("filesID",fileId);
+  
   // Handle click outside for save dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -305,6 +315,9 @@ export function DocumentPane({
       });
     }
   };
+ 
+ 
+  
 
   return (
     <div className="h-full flex">
@@ -322,7 +335,21 @@ export function DocumentPane({
                 onTranslate={handleTranslate}
                 isLoading={isLoading("TRANSLATE_TEXT")}
               />
-              <SaveDropdown onSave={onSave} onSaveAs={onSaveAs} />
+              {/* <SaveDropdown onSave={onSave} onSaveAs={onSaveAs} nodeId={nodeId} content={content} name={""} />
+            */}
+               
+                 <SaveDropdown
+                 onSave={async () => {
+                  if (!fileId) {
+                    console.error("❌ fileId is undefined. Can't save.");
+                    return;
+                  }
+                   console.log("✅ Saving document with fileId:", fileId);
+                  await updateNodeContent(fileId, content   ); // <-- use 'content' prop
+                } }
+
+                onSaveAs={onSaveAs} name={""} 
+  />    
             </div>
           </div>
         </div>

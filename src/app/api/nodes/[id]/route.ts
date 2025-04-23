@@ -70,6 +70,13 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+
+    if (!params.id) {
+      return NextResponse.json(
+        { error: "Node ID is  PUT nodes routes  required" },
+        { status: 400 }
+      );
+    }
     const { name, content, parentId, isExpanded } = await request.json();
 
     // Partial update - only modify provided fields
