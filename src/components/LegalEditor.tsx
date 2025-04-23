@@ -9,12 +9,12 @@ import { FileExplorerV2 } from "./FileExplorerV2";
 import { PanelLeft, PanelRightOpen, X, Plus } from "lucide-react";
 import { useTabs } from "@/context/tabsContext";
 import { SmartPrompts } from "./SmartPrompts";
-import { SmartPromptsPanel } from './SmartPromptsPanel';
+import { SmartPromptsPanel } from "./SmartPromptsPanel";
 
 // Add this interface near the top
 interface TabInfo {
   id: string;
-  fileId: string | null;  // null for new untitled files
+  fileId: string | null; // null for new untitled files
   name: string;
   content: string;
   isUnsaved: boolean;
@@ -57,18 +57,17 @@ export default function LegalEditor() {
   const [showSmartPrompts, setShowSmartPrompts] = useState(true);
 
   // Add these states
-  const { openTabs, activeTabId, openFileInTab, closeTab, updateTabContent, setActiveTabId } = useTabs();
+  const {
+    openTabs,
+    activeTabId,
+    openFileInTab,
+    closeTab,
+    updateTabContent,
+    setActiveTabId,
+  } = useTabs();
 
-  const loadDocuments = async () => {
-    try {
-      const response = await fetch("/api/documents");
-      if (!response.ok) throw new Error("Failed to fetch documents");
-      const data = await response.json();
-      setFiles(data);
-    } catch (error) {
-      console.error("Failed to load documents:", error);
-    }
-  };
+  const loadDocuments = async () => {};
+
   useEffect(() => {
     loadDocuments(); // Only load documents, don't show popup
   }, []);
@@ -162,47 +161,11 @@ export default function LegalEditor() {
 
   const handleSave = async () => {
     if (!selectedFile) return;
-
-    try {
-      const response = await fetch(`/api/documents/${selectedFile.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: documentContent,
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to save document");
-      showToast("Document saved successfully");
-    } catch (error) {
-      console.error("Save error:", error);
-      showToast("Failed to save document", "error");
-    }
   };
 
   const handleSaveAs = async () => {
     const newName = prompt("Enter new file name:", selectedFile?.name || "");
     if (!newName) return;
-
-    try {
-      const response = await fetch("/api/documents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newName,
-          content: documentContent,
-          type: "file",
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to save document");
-      showToast("Document saved successfully");
-      // Refresh file list
-      loadDocuments();
-    } catch (error) {
-      console.error("Save as error:", error);
-      showToast("Failed to save document", "error");
-    }
   };
 
   const handleAnalyzeRisks = async () => {
@@ -245,7 +208,7 @@ export default function LegalEditor() {
   };
 
   // Add this before the return statement
-  const activeTab = openTabs.find(tab => tab.id === activeTabId);
+  const activeTab = openTabs.find((tab) => tab.id === activeTabId);
 
   return (
     <div className="h-screen flex flex-col bg-[#f9f9f9]">
@@ -254,14 +217,18 @@ export default function LegalEditor() {
         <div className="flex gap-1 bg-[#f9f9f9] shadow-sm rounded p-1">
           <button
             onClick={() => setShowLeftPanel(!showLeftPanel)}
-            className={`p-1.5 rounded ${showLeftPanel ? 'bg-white shadow-sm' : 'bg-transparent'} 
+            className={`p-1.5 rounded ${
+              showLeftPanel ? "bg-white shadow-sm" : "bg-transparent"
+            } 
                        hover:bg-white hover:shadow-sm transition-all`}
           >
             <PanelLeft className="w-4 h-4 text-gray-600/80" />
           </button>
           <button
             onClick={() => setShowSmartPrompts(!showSmartPrompts)}
-            className={`p-1.5 rounded ${showSmartPrompts ? 'bg-white shadow-sm' : 'bg-transparent'} 
+            className={`p-1.5 rounded ${
+              showSmartPrompts ? "bg-white shadow-sm" : "bg-transparent"
+            } 
                        hover:bg-white hover:shadow-sm transition-all`}
           >
             <PanelRightOpen className="w-4 h-4 text-gray-600/80" />
@@ -272,8 +239,16 @@ export default function LegalEditor() {
       {/* Main content */}
       <div className="flex flex-1">
         {/* Left Panel - File Explorer */}
-        <div className={`${showLeftPanel ? 'w-56' : 'w-0'} transition-all duration-200`}>
-          <div className={`h-full overflow-hidden ${!showLeftPanel && 'invisible'}`}>
+        <div
+          className={`${
+            showLeftPanel ? "w-56" : "w-0"
+          } transition-all duration-200`}
+        >
+          <div
+            className={`h-full overflow-hidden ${
+              !showLeftPanel && "invisible"
+            }`}
+          >
             <FileExplorerV2
               selectedDocument={selectedFile}
               onDocumentSelect={handleFileSelect}
@@ -287,17 +262,19 @@ export default function LegalEditor() {
           {/* Tab Bar */}
           <div className="flex items-center h-9 border-b border-gray-200 bg-gray-50/80">
             <div className="flex-1 flex items-center">
-              {openTabs.map(tab => (
+              {openTabs.map((tab) => (
                 <div
                   key={tab.id}
                   onClick={() => setActiveTabId(tab.id)}
                   className={`group flex items-center h-full px-3 border-r border-gray-200 cursor-pointer
-                            ${activeTabId === tab.id 
-                              ? 'bg-white text-gray-700 border-b-0' 
-                              : 'text-gray-500 hover:bg-gray-100'}`}
+                            ${
+                              activeTabId === tab.id
+                                ? "bg-white text-gray-700 border-b-0"
+                                : "text-gray-500 hover:bg-gray-100"
+                            }`}
                 >
                   <span className="text-xs font-medium truncate max-w-[100px]">
-                    {tab.name} {tab.isUnsaved && '•'}
+                    {tab.name} {tab.isUnsaved && "•"}
                   </span>
                   <button
                     onClick={(e) => {
@@ -328,7 +305,7 @@ export default function LegalEditor() {
           <div className="flex-1 flex flex-col min-h-0">
             {activeTabId ? (
               <DocumentPane
-                content={activeTab?.content || ''}
+                content={activeTab?.content || ""}
                 onContentChange={(newContent) => {
                   if (activeTabId) {
                     updateTabContent(activeTabId, newContent);
@@ -354,8 +331,16 @@ export default function LegalEditor() {
         </div>
 
         {/* Smart Prompts Panel */}
-        <div className={`${showSmartPrompts ? 'w-80' : 'w-0'} transition-all duration-200`}>
-          <div className={`h-full overflow-hidden ${!showSmartPrompts && 'invisible'}`}>
+        <div
+          className={`${
+            showSmartPrompts ? "w-80" : "w-0"
+          } transition-all duration-200`}
+        >
+          <div
+            className={`h-full overflow-hidden ${
+              !showSmartPrompts && "invisible"
+            }`}
+          >
             <SmartPromptsPanel />
           </div>
         </div>

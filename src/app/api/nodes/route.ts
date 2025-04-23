@@ -13,6 +13,8 @@ export async function GET(request: Request) {
     const parentId = searchParams.get("parentId");
     const userId = userIdFromHeader(request);
 
+    console.log(userId, "userId from header");
+
     if (!userId) {
       return handleError(null, "User ID is required", 400);
     }
