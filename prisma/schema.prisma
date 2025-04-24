@@ -9,51 +9,49 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name           String?
-  email          String   @unique
+  email          String    @unique
   password       String
+  roleId         String?   @map("role_id") @db.Uuid
   isVerified     Boolean?  @default(false) @map("is_verified")
   isIndividual   Boolean?  @default(true) @map("is_individual")
-  organizationId String?  @map("organization_id") @db.Uuid
+  organizationId String?   @map("organization_id") @db.Uuid
   createdAt      DateTime? @default(now()) @map("created_at")
   updatedAt      DateTime? @updatedAt @map("updated_at")
 
+  role           Role?            @relation("role_user_id_idx", fields: [roleId], references: [id])
   organization   Organization?    @relation("user_organization_id_idx", fields: [organizationId], references: [id])
-  FileSystemNode FileSystemNode[] @relation("file_system_nodes_user_id_idx")
+  fileSystemNode FileSystemNode[] @relation("file_system_nodes_user_id_idx")
   createdBy      FileSystemNode[] @relation("file_system_nodes_created_by_idx")
   updatedBy      FileSystemNode[] @relation("file_system_nodes_updated_by_idx")
-  Role           Role[]           @relation("role_user_id_idx")
 
-  @@index([organizationId], name: "user_organization_id_idx")
-  @@map("user")
+  @@map("users")
 }
 
 model Role {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        RoleName
+  name        RoleName @unique
   description String?
-  userId      String   @map("user_id") @db.Uuid
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  user        User         @relation("role_user_id_idx", fields: [userId], references: [id])
-  permissions Permission[] @relation("role_permissions_idx")
+  user       User[]       @relation("role_user_id_idx")
+  Permission Permission[] @relation("role_permission_id_idx")
 
-  @@index([userId], name: "user_id_idx")
   @@map("roles")
 }
 
 model Permission {
   id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name      PermissionName
-  roleId    String?        @db.Uuid
+  roleId    String?        @map("role_id") @db.Uuid
   createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  Role Role? @relation("role_permissions_idx", fields: [roleId], references: [id])
+  role Role? @relation("role_permission_id_idx", fields: [roleId], references: [id])
 
-  @@index([roleId], name: "role_id_idx")
+  @@unique([roleId, name], name: "roleId_name_unique")
   @@map("permissions")
 }
 
@@ -77,7 +75,7 @@ model FileSystemNode {
   content    String?  @db.Text // Content is only applicable for files
   isExpanded Boolean  @default(false) @map("is_expanded")
   parentId   String?  @map("parent_id") @db.Uuid // Nullable for root nodes
-  userId     String?   @map("user_id") @db.Uuid // TODO : Need to remove this as we already have created by and updated by fields
+  userId     String?  @map("user_id") @db.Uuid // TODO : Need to remove this as we already have created by and updated by fields
   createdBy  String?  @map("created_by") @db.Uuid
   updatedBy  String?  @map("updated_by") @db.Uuid
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -85,7 +83,7 @@ model FileSystemNode {
 
   createdByUser User?            @relation("file_system_nodes_created_by_idx", fields: [createdBy], references: [id])
   updatedByUser User?            @relation("file_system_nodes_updated_by_idx", fields: [updatedBy], references: [id])
-  user          User?             @relation("file_system_nodes_user_id_idx", fields: [userId], references: [id])
+  user          User?            @relation("file_system_nodes_user_id_idx", fields: [userId], references: [id])
   parent        FileSystemNode?  @relation("file_system_node_hierarchy", fields: [parentId], references: [id])
   children      FileSystemNode[] @relation("file_system_node_hierarchy")
 
@@ -109,8 +107,8 @@ enum Plan {
 
 enum RoleName {
   ADMIN
-  EDITOR
-  VIEWER
+  SUPERVISOR
+  ASSISTANT
 }
 
 enum PermissionName {

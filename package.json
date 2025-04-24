@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed": "node -r esbuild-register prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.6.0",
@@ -26,7 +27,9 @@
     "@tiptap/pm": "^2.11.7",
     "@tiptap/react": "^2.11.7",
     "@tiptap/starter-kit": "^2.11.7",
+    "@types/bcryptjs": "^2.4.6",
     "axios": "^1.8.4",
+    "bcryptjs": "^3.0.2",
     "dompurify": "^3.2.5",
     "gpt-3-encoder": "^1.1.4",
     "lucide-react": "^0.477.0",
