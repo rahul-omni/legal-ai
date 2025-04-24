@@ -31,7 +31,7 @@ model User {
 
 model Role {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        RoleName
+  name        RoleName @unique
   description String?
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -51,6 +51,7 @@ model Permission {
 
   role Role? @relation("role_permission_id_idx", fields: [roleId], references: [id])
 
+  @@unique([roleId, name], name: "roleId_name_unique")
   @@map("permissions")
 }
 
@@ -106,8 +107,8 @@ enum Plan {
 
 enum RoleName {
   ADMIN
-  EDITOR
-  VIEWER
+  SUPERVISOR
+  ASSISTANT
 }
 
 enum PermissionName {
