@@ -2,12 +2,14 @@
 import { PermissionName, RoleName } from "@prisma/client";
 import { ZodIssue } from "zod";
 
+type SignupType = "individual" | "organization";
+
 export interface IndividualSignupRequest {
   name?: string;
   email: string;
   password: string;
   roleId?: string; // Optional role ID (will use default if not provided)
-  signupType: "individual";
+  signupType: SignupType;
 }
 
 export interface OrganizationSignupRequest {
@@ -16,10 +18,10 @@ export interface OrganizationSignupRequest {
   email: string;
   password: string;
   roleId?: string; // Optional role ID (will use ADMIN if not provided)
-  signupType: "organization";
+  signupType: SignupType;
 }
 
-export type SignupRequest = IndividualSignupRequest | OrganizationSignupRequest;
+export type SignupRequest = IndividualSignupRequest & OrganizationSignupRequest;
 
 export interface BaseUserResponse {
   id: string;

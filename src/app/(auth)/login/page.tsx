@@ -73,6 +73,18 @@ export default function LoginPage() {
           )}
         </button>
       </form>
+
+      <div className="mt-6 text-center">
+        <p className="text-sm">
+          Don't have an account?{" "}
+          <button
+            onClick={() => router.push(routeConfig.publicRoutes[1])} // Assuming the signup page is the second public route
+            className="text-primary hover:underline"
+          >
+            Sign up here
+          </button>
+        </p>
+      </div>
     </div>
   );
 }

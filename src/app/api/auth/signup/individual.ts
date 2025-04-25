@@ -1,55 +1,50 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { NextApiRequest, NextApiResponse } from "next";
-import { IndividualSignupSchema } from "../../lib/validation/auth";
+import { NextResponse } from "next/server";
 import {
   ErrorResponse,
   IndividualSignupRequest,
   IndividualSignupResponse,
 } from "../types";
-
-const prisma = new PrismaClient();
+import { db } from "@/lib/db";
 
 export default async function handler(
-  req: NextApiRequest & { body: IndividualSignupRequest },
-  res: NextApiResponse<IndividualSignupResponse | ErrorResponse>
-) {
+  data: IndividualSignupRequest
+): Promise<NextResponse<IndividualSignupResponse | ErrorResponse>> {
   try {
-    const validation = IndividualSignupSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({
-        message: "Validation failed",
-        errors: validation.error.errors,
-      });
-    }
-
-    const { name, email, password, roleId } = validation.data;
+    const { name, email, password, roleId } = data;
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await db.user.findUnique({
       where: { email },
       select: { id: true },
     });
 
     if (existingUser) {
-      return res.status(409).json({ message: "User already exists" });
+      return NextResponse.json(
+        { message: "User already exists" },
+        { status: 409 }
+      );
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Default to ASSISTANT role if not specified
-    const defaultRole = await prisma.role.findUnique({
+    const defaultRole = await db.role.findUnique({
       where: { name: "ASSISTANT" },
       select: { id: true },
     });
 
     if (!roleId && !defaultRole) {
-      return res.status(400).json({ message: "No default role configured" });
+      return NextResponse.json(
+        { message: "No default role configured" },
+        { status: 400 }
+      );
     }
 
     // Create user
-    const user = await prisma.user.create({
+    const user = await db.user.create({
       data: {
         name,
         email,
@@ -70,14 +65,20 @@ export default async function handler(
       },
     });
 
-    return res.status(201).json({
-      message: "User created successfully",
-      user,
-    });
+    return NextResponse.json(
+      {
+        user,
+        message: "User created successfully",
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Signup error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }

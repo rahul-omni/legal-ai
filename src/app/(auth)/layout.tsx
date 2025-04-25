@@ -6,14 +6,14 @@ export const metadata: Metadata = {
   description: "Login to your account",
 };
 
-export default function LoginLayout({
+export default function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white p-8 rounded shadow-md w-full h-screen">
+    <>
       {children}
-    </div>
+    </>
   );
 }

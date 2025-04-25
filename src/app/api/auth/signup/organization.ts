@@ -1,57 +1,58 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient } from "@prisma/client";
+import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
-import { OrganizationSignupSchema } from "../../lib/validation/auth";
+import { NextResponse } from "next/server";
 import {
   ErrorResponse,
   OrganizationSignupRequest,
   OrganizationSignupResponse,
 } from "../types";
 
-const prisma = new PrismaClient();
-
 export default async function handler(
-  req: NextApiRequest & { body: OrganizationSignupRequest },
-  res: NextApiResponse<OrganizationSignupResponse | ErrorResponse>
-) {
+  data: OrganizationSignupRequest
+): Promise<NextResponse<OrganizationSignupResponse | ErrorResponse>> {
   try {
-    const validation = OrganizationSignupSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({
-        message: "Validation failed",
-        errors: validation.error.errors,
-      });
-    }
+    console.log("Received request for organization signup");
 
-    const { orgName, adminName, email, password, roleId } = validation.data;
+    const { orgName, adminName, email, password, roleId } = data;
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await db.user.findUnique({
       where: { email },
       select: { id: true },
     });
+    console.log("Checked for existing user:", existingUser);
 
     if (existingUser) {
-      return res.status(409).json({ message: "User already exists" });
+      console.warn("User already exists with email:", email);
+      return NextResponse.json(
+        { message: "User already exists" },
+        { status: 409 }
+      );
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    console.log("Hashing password...");
+    const hashedPassword = await bcrypt.hash(password, 8);
+    console.log("Password hashed successfully");
 
     // Default to ADMIN role for organization signup if not specified
-    const defaultRole = await prisma.role.findUnique({
+    const defaultRole = await db.role.findUnique({
       where: { name: "ADMIN" },
       select: { id: true },
     });
+    console.log("Fetched default role:", defaultRole);
 
     if (!roleId && !defaultRole) {
-      return res
-        .status(400)
-        .json({ message: "No default admin role configured" });
+      console.error("No default admin role configured");
+      return NextResponse.json(
+        { message: "No default admin role configured" },
+        { status: 400 }
+      );
     }
 
     // Transaction for org and user creation
-    const result = await prisma.$transaction(async (tx) => {
+    console.log("Starting transaction for organization and user creation...");
+    const result = await db.$transaction(async (tx) => {
       const organization = await tx.organization.create({
         data: { name: orgName, isVerified: false },
         select: {
@@ -63,6 +64,7 @@ export default async function handler(
           updatedAt: true,
         },
       });
+      console.log("Organization created:", organization);
 
       const user = await tx.user.create({
         data: {
@@ -86,19 +88,29 @@ export default async function handler(
           updatedAt: true,
         },
       });
+      console.log("User created:", user);
 
       return { user, organization };
     });
+    console.log("Transaction completed successfully");
 
-    return res.status(201).json({
-      message: "Organization and admin user created successfully",
-      user: result.user,
-      organization: result.organization,
-    });
+    return NextResponse.json(
+      {
+        message: "Organization and admin user created successfully",
+        user: result.user,
+        organization: result.organization,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Organization signup error:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
   } finally {
-    await prisma.$disconnect();
+    console.log("Disconnecting from database...");
+    await db.$disconnect();
+    console.log("Database disconnected");
   }
 }

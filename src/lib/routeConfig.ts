@@ -9,5 +9,5 @@ export const routeConfig = {
     "/marketplace",
     "templates",
   ],
-  publicRoutes: ["/login"],
+  publicRoutes: ["/login", "/signup"],
 };

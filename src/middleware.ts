@@ -15,7 +15,7 @@ export function middleware(request: NextRequest) {
 
   if (request.nextUrl.pathname === "/") {
     return NextResponse.redirect(
-      new URL(routeConfig.privateRoutes[0], request.url)
+      new URL(routeConfig.publicRoutes[0], request.url)
     );
   }
 
