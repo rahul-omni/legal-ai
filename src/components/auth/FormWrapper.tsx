@@ -24,7 +24,7 @@ export default function FormWrapper({
           <p className="text-sm text-gray-600">
             Already have an account?{" "}
             <button
-              onClick={() => router.push(routeConfig.publicRoutes[0])} // Assuming the signup page is the second public route
+              onClick={() => router.push(routeConfig.publicRoutes.login)} // Assuming the signup page is the second public route
               className="text-primary hover:underline"
             >
               Login
