@@ -28,6 +28,8 @@ interface FileExplorerProps {
   selectedDocument?: FileSystemNodeProps;
   onDocumentSelect: (file: FileSystemNodeProps) => void;
   onPdfParsed: (text: string) => void;
+  onNodeSelect: (node: FileSystemNodeProps | null) => void; 
+  
  // files: FileSystemNodeProps[]; 
 }
 
@@ -35,6 +37,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
   selectedDocument,
   onDocumentSelect,
   onPdfParsed,
+  onNodeSelect
  // files
 }) => {
   const params = useParams();
@@ -49,6 +52,15 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
   useEffect(() => {
     fetchRootNodes();
   }, []);
+
+  const handleNodeClick = (node: FileSystemNodeProps) => {
+    onNodeSelect(node); // <-- Add this
+    if (node.type === "FILE") {
+      onDocumentSelect(node);
+    } else {
+      toggleExpand(node);
+    }
+  };
 
   const handleParams = (nodes: FileSystemNodeProps[]) => {
     const { filePath } = params;
@@ -196,7 +208,7 @@ const handleFileUploadnew = async (
     const newFile: CreateNodePayload = {
       name: file.name,
       type: "FILE",
-      userId,
+       
       parentId,
       content,
     };
@@ -248,7 +260,7 @@ const handleFileUploadnew = async (
       const newFile: CreateNodePayload = {
         name: file.name,
         type: "FILE",
-        userId: "1",
+         
         parentId,
         content,
       };
@@ -264,7 +276,7 @@ const handleFileUploadnew = async (
         id: uploadedNode?.id || Date.now().toString(),
         name: newFile.name,
         type: "FILE",
-        userId: newFile.userId,
+        userId:  "",
         children: [],
         createdAt: now,
         updatedAt: now,
@@ -346,7 +358,7 @@ const handleFileUploadnew = async (
   };
 
   const renderNode = (node: FileSystemNodeProps, depth = 0) => (
-    <div key={node.id} className="relative">
+    <div key={node.id} onClick={() => handleNodeClick(node)} className="relative">
       {/* Guide Lines */}
       {depth > 0 && (
         <div

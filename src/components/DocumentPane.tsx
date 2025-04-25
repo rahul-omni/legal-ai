@@ -17,8 +17,10 @@ import { CursorTracker } from "./CursorTracker";
 import { SaveDropdown } from "./SaveDropdown";
 import { TranslationDropdown } from "./TranslationDropdown";
 import { QuillEditor } from './QuillEditor';
-import { updateNodeContent } from "@/app/apiServices/nodeServices";
+import { createNode, CreateNodePayload, fetchNodes, updateNodeContent } from "@/app/apiServices/nodeServices";
 import { FileSystemNodeProps } from "@/types/fileSystem";
+import { handleApiError } from "@/helper/handleApiError";
+import { useToast } from "./ui/toast";
 
 interface DocumentPaneProps {
   content: string;
@@ -28,6 +30,8 @@ interface DocumentPaneProps {
   onSave: (fileId?: string | null) => void;
   onSaveAs: () => Promise<void>;
   fileId?: string | null;
+  onDocumentSelect: (doc: FileSystemNodeProps) => void;
+  selectedNode: FileSystemNodeProps | null;
   // userId: string;
   // documents: any[];
   // files: any[];
@@ -49,7 +53,8 @@ export function DocumentPane({
   fileName,
   onSave,
   onSaveAs,
-  fileId
+  fileId,
+  onDocumentSelect
   // userId,
   // documents,
   // files,
@@ -84,6 +89,11 @@ export function DocumentPane({
     isGenerating: false
   });
 
+  const [nodes, setNodes] = useState<FileSystemNodeProps[]>([]);
+     const { showToast } = useToast();
+     const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(null);
+   
+     
   console.log("content",content);
   
    
@@ -315,10 +325,245 @@ export function DocumentPane({
       });
     }
   };
- 
- 
+
+  const checkDuplicateInTree = (
+    nodes: FileSystemNodeProps[],
+    name: string,
+    type: string
+  ): boolean => {
+    for (const node of nodes) {
+      if (node.name === name && node.type === type) return true;
+      if (node.children && checkDuplicateInTree(node.children, name, type)) {
+        return true;
+      }
+    }
+    return false;
+  };
   
 
+  const handleAddDocument = (newDoc: FileSystemNodeProps, parentId: string | null) => {
+    // Check the entire tree for a duplicate before adding
+    if (checkDuplicateInTree(nodes, newDoc.name, newDoc.type)) {
+      console.log("Duplicate found, showing alert and skipping addition.");
+      alert(`A document named "${newDoc.name}" already exists somewhere in your tree.`);
+      return; // Exit early – don't add duplicate
+    }
+    console.log("Not duplicate, proceeding to add.");
+    const addRecursively = (nodes: FileSystemNodeProps[]): FileSystemNodeProps[] => {
+      return nodes.map((node) => {
+        if (node.id === parentId && node.type === "FOLDER") {
+          const children = node.children || [];
+          return {
+            ...node,
+            children: [...children, newDoc],
+          };
+        }
+        if (node.type === "FOLDER" && node.children?.length) {
+          return {
+            ...node,
+            children: addRecursively(node.children),
+          };
+        }
+        return node;
+      });
+    };
+  
+    // Add at root level if no parent
+    if (!parentId) {
+      setNodes([...nodes, newDoc]);
+    } else {
+      setNodes(addRecursively(nodes));
+    }
+  };
+  const updateNodeChildren = (
+    nodes: FileSystemNodeProps[],
+    children: FileSystemNodeProps[],
+    parentId: string
+  ): FileSystemNodeProps[] => {
+    return nodes.map((node) => {
+      if (node.id === parentId) {
+        return { ...node, children };
+      }
+      if (node.children) {
+        return {
+          ...node,
+          children: updateNodeChildren(node.children, children, parentId),
+        };
+      }
+      return node;
+    });
+  };
+     
+   const refreshNodeswork1 = async (parentId?: string, fileId?: string) => {
+      const children = await fetchNodes(parentId);
+      if (!parentId) {
+        setNodes(children);
+        return;
+      }
+  
+      if (fileId && children.length >= 0) {
+        const file = children.find((node) => node.id === fileId);
+        if (file) {
+          onDocumentSelect(file);
+        }
+      }
+  
+      setNodes((prevNodes) => updateNodeChildren(prevNodes, children, parentId));
+    };
+ 
+  const handleSaveAswork1 = async (name?: string, parentId?: string) => {
+    try {
+      let fileName: string | undefined = name;
+  
+      if (!fileName) {
+        const userInput = window.prompt("Please enter new file name:");
+        if (!userInput || userInput.trim() === "") {
+          alert("❌ File name is required to save.");
+          return;
+        }
+        fileName = userInput.trim();
+      }
+  
+      const newFile: CreateNodePayload = {
+        name: fileName,
+        type: "FILE",
+         
+        parentId,
+        content, // current content from editor
+      };
+  
+      const uploadedNode = await createNode(newFile);
+      const now = new Date();
+  
+      const localNode: FileSystemNodeProps = {
+        id: uploadedNode?.id || Date.now().toString(),
+        name: newFile.name,
+        type: "FILE",
+        userId: "",
+        children: [],
+        createdAt: now,
+        updatedAt: now,
+      };
+  
+      handleAddDocument(localNode, parentId ?? null);
+  
+       await refreshNodes();
+      showToast("✅ Document saved as new file!");
+    } catch (error) {
+      handleApiError(error, showToast);
+    }
+  };
+   
+  const refreshNodes = async (parentId?: string) => {
+    try {
+      const children = await fetchNodes(parentId);
+      if (!parentId) {
+        setNodes(children);
+      } else {
+        setNodes(prevNodes => {
+          const updateChildren = (nodes: FileSystemNodeProps[]): FileSystemNodeProps[] => {
+            return nodes.map(node => {
+              if (node.id === parentId) {
+                return { ...node, children };
+              }
+              if (node.children) {
+                return { ...node, children: updateChildren(node.children) };
+              }
+              return node;
+            });
+          };
+          return updateChildren(prevNodes);
+        });
+      }
+    } catch (error) {
+      handleApiError(error, showToast);
+    }
+  };
+   
+  const handleSaveAs = async (name?: string) => {
+    try {
+      // 1. Get filename
+      let fileName = name?.trim() || window.prompt("File name:")?.trim();
+      if (!fileName) {
+        alert("Filename required");
+        return;
+      }
+  
+      // 2. Add extension if missing
+      if (!fileName.includes('.')) {
+        fileName += '.docx';
+      }
+  
+      // 3. Determine parent folder
+      const parentId = selectedNode
+        ? selectedNode.type === "FOLDER" 
+          ? selectedNode.id 
+          : selectedNode.parentId ?? null
+        : null;
+  
+      // 4. Handle root save confirmation
+      if (parentId === null) {
+        const confirmSave = window.confirm(
+          `Save "${fileName}" to root directory?`
+        );
+        if (!confirmSave) return;
+      }
+  
+      // 5. Create file payload
+      const newFile = {
+        name: fileName,
+        type: "FILE",
+        parentId,
+        content
+      };
+  
+      // 6. Save to backend
+      const savedFile = await createNode(newFile);
+      
+      // 7. Create complete node object with all required properties
+      const fileNode: FileSystemNodeProps = {
+        id: savedFile.id,
+        name: fileName,
+        type: "FILE",
+        userId: savedFile.userId || "", // Required field
+        parentId,
+        content,
+        children: [], // Required if defined in interface
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        // Include any other required properties
+      };
+  
+      // 8. Update UI
+      handleAddDocument(fileNode, parentId); // Now types match
+      await refreshNodes(parentId);
+      onDocumentSelect(fileNode);
+      showToast(`Saved: ${fileName}`);
+  
+    } catch (error) {
+      console.error('Save failed:', error);
+      showToast('Save failed', 'error');
+    }
+  };
+  
+  useEffect(() => {
+    if (fileId) {
+      // Find the node in your nodes tree
+      const findNode = (nodes: FileSystemNodeProps[]): FileSystemNodeProps | null => {
+        for (const node of nodes) {
+          if (node.id === fileId) return node;
+          if (node.children) {
+            const found = findNode(node.children);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+      
+      const current = findNode(nodes);
+      setSelectedNode(current);
+    }
+  }, [fileId, nodes]);
   return (
     <div className="h-full flex">
       {/* Main Editor Area */}
@@ -338,7 +583,7 @@ export function DocumentPane({
               {/* <SaveDropdown onSave={onSave} onSaveAs={onSaveAs} nodeId={nodeId} content={content} name={""} />
             */}
                
-                 <SaveDropdown
+                 {/* <SaveDropdown
                  onSave={async () => {
                   if (!fileId) {
                     console.error("❌ fileId is undefined. Can't save.");
@@ -346,10 +591,44 @@ export function DocumentPane({
                   }
                    console.log("✅ Saving document with fileId:", fileId);
                   await updateNodeContent(fileId, content   ); // <-- use 'content' prop
+                   
                 } }
+                onSaveAs={handleSaveAs}
+                //onSaveAs={onSaveAs} 
+                name={""} 
+               />     */}
 
-                onSaveAs={onSaveAs} name={""} 
-  />    
+<SaveDropdown
+  onSave={async () => {
+    if (!fileId) {
+      console.error("❌ fileId is undefined. Can't save.");
+      return;
+    }
+    console.log("✅ Saving document with fileId:", fileId);
+    await updateNodeContent(fileId, content);
+  }}
+  onSaveAs={async () => {
+    // Safely handle the parentId type
+    const parentId = selectedNode
+      ? selectedNode.type === "FOLDER"
+        ? selectedNode.id
+        : selectedNode.parentId ?? null // Fallback to null if parentId is undefined
+      : null;
+
+    console.log("Saving to parent:", parentId);
+    
+    const newFile = await handleSaveAs(
+      undefined, // No default name
+      parentId,  // Now properly typed as string | null
+           // Current editor content
+    );
+    
+    if (newFile) {
+      onDocumentSelect(newFile);
+    }
+  }}
+  name={fileName || ""}
+/>
             </div>
           </div>
         </div>
