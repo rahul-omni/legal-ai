@@ -27,7 +27,7 @@ export default async function handler(
     if (existingUser) {
       logger.warn("User already exists", { email });
       return NextResponse.json(
-        { message: "User already exists" },
+        { errMsg: "User already exists" },
         { status: 409 }
       );
     }
@@ -44,12 +44,13 @@ export default async function handler(
     if (!roleId && !defaultRole) {
       logger.error("No default role configured");
       return NextResponse.json(
-        { message: "No default role configured" },
+        { errMsg: "No default role configured" },
         { status: 400 }
       );
     }
 
     const verificationToken = generateVerificationToken();
+
     logger.info("Verification token generated", { verificationToken });
 
     const tokenExpiry = getTokenExpiry();
@@ -85,14 +86,14 @@ export default async function handler(
     return NextResponse.json(
       {
         user,
-        message: "User created successfully",
+        errMsg: "User created successfully",
       },
       { status: 201 }
     );
   } catch (error) {
     logger.error("Signup error", { error: error });
     return NextResponse.json(
-      { message: "Internal server error" },
+      { errMsg: "Internal server error" },
       { status: 500 }
     );
   } finally {

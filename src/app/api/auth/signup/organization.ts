@@ -6,6 +6,8 @@ import {
   OrganizationSignupRequest,
   OrganizationSignupResponse,
 } from "../types";
+import { sendVerificationEmail } from "../../lib/mail";
+import { generateVerificationToken, getTokenExpiry } from "../../lib/tokens";
 
 export default async function handler(
   data: OrganizationSignupRequest
@@ -35,11 +37,11 @@ export default async function handler(
     const hashedPassword = await bcrypt.hash(password, 8);
     console.log("Password hashed successfully");
 
-    // Default to ADMIN role for organization signup if not specified
     const defaultRole = await db.role.findUnique({
       where: { name: "ADMIN" },
       select: { id: true },
     });
+
     console.log("Fetched default role:", defaultRole);
 
     if (!roleId && !defaultRole) {
@@ -49,6 +51,9 @@ export default async function handler(
         { status: 400 }
       );
     }
+
+    const verificationToken = generateVerificationToken();
+    const tokenExpiry = getTokenExpiry();
 
     // Transaction for org and user creation
     console.log("Starting transaction for organization and user creation...");
@@ -71,6 +76,8 @@ export default async function handler(
           name: adminName,
           email,
           password: hashedPassword,
+          verificationToken,
+          verificationTokenExpiry: tokenExpiry,
           isIndividual: false,
           isVerified: false,
           organizationId: organization.id,
@@ -93,6 +100,8 @@ export default async function handler(
       return { user, organization };
     });
     console.log("Transaction completed successfully");
+
+    await sendVerificationEmail(email, verificationToken);
 
     return NextResponse.json(
       {
