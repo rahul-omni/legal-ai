@@ -1,6 +1,6 @@
-import { ToastContainer } from "@/components/ui/toast";
 import { LoadingProvider } from "@/context/loadingContext";
 import { UserProvider } from "@/context/userContext";
+import { Toaster } from "react-hot-toast";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -17,11 +17,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
+        <Toaster
+          position="top-right"
+          toastOptions={{ success: { duration: 4000 } }}
+        />
         <LoadingProvider>
           <UserProvider>
             <main>{children}</main>
           </UserProvider>
-          <ToastContainer toasts={[]} />
         </LoadingProvider>
       </body>
     </html>

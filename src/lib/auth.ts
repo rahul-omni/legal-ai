@@ -36,7 +36,7 @@ export function getAuthCookie() {
   return match ? match[1] : null;
 }
 
-export function setAuthCookie(token: string) {
+export function setAuthCookie(token: string, isVerified?: boolean) {
   document.cookie = `authToken=${token}; path=/; max-age=${60 * 60 * 24}`;
 }
 

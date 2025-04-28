@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/logs
 
 # next.js
 /.next/
@@ -40,4 +41,3 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 src/components/rough
-

@@ -3,6 +3,7 @@ interface PublicRoute {
   signup: string;
   forgotPass: string;
   verifyEmail: string;
+  verifyEmailSuccess: string;
 }
 
 interface PrivateRoute {
@@ -35,5 +36,6 @@ export const routeConfig: {
     signup: "/signup",
     forgotPass: "/forgot-password",
     verifyEmail: "/verify-email",
+    verifyEmailSuccess: "/verify-email/success",
   },
 };

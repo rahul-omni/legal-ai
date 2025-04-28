@@ -1,4 +1,6 @@
 import { SignupRequest } from "@/app/api/auth/types";
+import { apiClient } from "@/app/apiServices";
+import { routeConfig } from "@/lib/routeConfig";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -26,12 +28,11 @@ export default function useSignup() {
         throw result;
       }
 
-      // Redirect based on signup type
-      if (data.signupType === "organization") {
-        router.push("/projects");
-      } else {
-        router.push("/projects");
-      }
+      router.push(
+        `${routeConfig.publicRoutes.verifyEmail}?email=${data.email}&from=${
+          routeConfig.publicRoutes.signup
+        }`
+      );
     } catch (err) {
       setError(err);
     } finally {
@@ -41,3 +42,26 @@ export default function useSignup() {
 
   return { isLoading, error, signup };
 }
+
+export const useResendVerification = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const resendVerification = async (email: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.post("/auth/resend-verification", {
+        email,
+      });
+      return response.data;
+    } catch (err) {
+      setError("Failed to resend verification email");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { resendVerification, isLoading, error };
+};

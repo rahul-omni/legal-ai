@@ -1,18 +1,22 @@
-import { PrismaClient } from "@prisma/client";
+import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
+import { sendVerificationEmail } from "../../lib/mail";
+import { generateVerificationToken, getTokenExpiry } from "../../lib/tokens";
 import {
   ErrorResponse,
   IndividualSignupRequest,
   IndividualSignupResponse,
 } from "../types";
-import { db } from "@/lib/db";
+import { logger } from "../../lib/logger";
 
 export default async function handler(
   data: IndividualSignupRequest
 ): Promise<NextResponse<IndividualSignupResponse | ErrorResponse>> {
   try {
     const { name, email, password, roleId } = data;
+
+    logger.info("Signup request received", { email });
 
     // Check if user already exists
     const existingUser = await db.user.findUnique({
@@ -21,6 +25,7 @@ export default async function handler(
     });
 
     if (existingUser) {
+      logger.warn("User already exists", { email });
       return NextResponse.json(
         { message: "User already exists" },
         { status: 409 }
@@ -37,17 +42,25 @@ export default async function handler(
     });
 
     if (!roleId && !defaultRole) {
+      logger.error("No default role configured");
       return NextResponse.json(
         { message: "No default role configured" },
         { status: 400 }
       );
     }
 
+    const verificationToken = generateVerificationToken();
+    logger.info("Verification token generated", { verificationToken });
+
+    const tokenExpiry = getTokenExpiry();
+
     // Create user
     const user = await db.user.create({
       data: {
         name,
         email,
+        verificationToken,
+        verificationTokenExpiry: tokenExpiry,
         password: hashedPassword,
         isIndividual: true,
         isVerified: false,
@@ -65,6 +78,10 @@ export default async function handler(
       },
     });
 
+    logger.info("User created successfully", { userId: user.id });
+
+    await sendVerificationEmail(email, verificationToken);
+
     return NextResponse.json(
       {
         user,
@@ -73,12 +90,13 @@ export default async function handler(
       { status: 201 }
     );
   } catch (error) {
-    console.error("Signup error:", error);
+    logger.error("Signup error", { error: error });
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
     );
   } finally {
     await db.$disconnect();
+    logger.info("Database connection closed");
   }
 }

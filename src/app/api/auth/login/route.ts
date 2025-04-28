@@ -1,13 +1,19 @@
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { ErrorResponse } from "../types";
+import { User } from "@prisma/client";
 
-function handleError(error: unknown, message: string, status = 500) {
-  console.error(message, error);
-  return NextResponse.json({ error: message }, { status });
+interface LoginResponse {
+  successMsg: string;
+  user: Omit<User, "password">;
+  token: string;
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse<LoginResponse | ErrorResponse>> {
   try {
     console.log("Received login request");
     const { email, password } = await request.json();
@@ -20,33 +26,45 @@ export async function POST(request: NextRequest) {
 
     if (!userDetails) {
       console.warn("User not found for email:", email);
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ errMsg: "User not found" }, { status: 404 });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, userDetails.password);
+    if (!userDetails?.isVerified) {
+      return NextResponse.json(
+        { errMsg: "User not verified" },
+        { status: 403 }
+      );
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      password,
+      userDetails.password
+    );
     console.log("Password comparison result:", isPasswordValid);
 
     if (!isPasswordValid) {
       console.warn("Invalid password for user:", email);
-      return NextResponse.json(
-        { error: "Invalid password" },
-        { status: 401 }
-      );
+      return NextResponse.json({ errMsg: "Invalid password" }, { status: 401 });
     }
 
     const token = `valid-token-${userDetails.id}`;
     console.log("Generated token:", token);
 
-    // remove password from user object
     const { password: _, ...user } = userDetails;
 
     console.log("Login successful for user:", userDetails.id);
+
+    cookies().set("authToken", token);
+
     return NextResponse.json(
-      { message: "Login success", user, token },
+      { successMsg: "Login success", user, token },
       { status: 200 }
     );
   } catch (error) {
     console.error("Error during login process:", error);
-    return handleError(error, "Something went wrong.");
+    return NextResponse.json(
+      { errMsg: "Something went wrong" },
+      { status: 500 }
+    );
   }
 }

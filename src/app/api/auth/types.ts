@@ -72,7 +72,7 @@ export type SignupResponse =
   | OrganizationSignupResponse;
 
 export interface ErrorResponse {
-  message: string;
+  errMsg: string;
 
   errors?:
     | Array<{

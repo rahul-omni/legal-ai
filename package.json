@@ -31,6 +31,7 @@
     "@types/bcryptjs": "^2.4.6",
     "axios": "^1.8.4",
     "bcryptjs": "^3.0.2",
+    "date-fns": "^4.1.0",
     "dompurify": "^3.2.5",
     "gpt-3-encoder": "^1.1.4",
     "lucide-react": "^0.477.0",
@@ -48,8 +49,11 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.56.1",
+    "react-hot-toast": "^2.5.2",
     "react-quill": "^2.0.0",
     "react-resizable-panels": "^1.0.5",
+    "resend": "^4.4.1",
+    "winston": "^3.17.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {

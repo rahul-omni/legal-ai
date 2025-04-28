@@ -3,16 +3,27 @@ import { login } from "@/app/apiServices/authServices";
 import { loadingContext } from "@/context/loadingContext";
 import { userContext } from "@/context/userContext";
 import { routeConfig } from "@/lib/routeConfig";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
-export default function LoginPage() {
+export default function LoginPage({}) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const router = useRouter();
   const { dispatchUser } = userContext();
   const { startLoading, stopLoading, isLoading } = loadingContext();
+  const emailParam = useSearchParams().get("email") || "";
+  const redirectedFromParam = useSearchParams().get("from") || "";
+
+  useEffect(() => {
+    if (!emailParam) return;
+    setEmail(emailParam);
+
+    if (redirectedFromParam !== routeConfig.publicRoutes.signup) return;
+    toast("Please verify your email before logging in", { icon: "ℹ️" });
+  }, [emailParam, redirectedFromParam]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,8 +36,9 @@ export default function LoginPage() {
         type: "LOGIN_USER",
         payload: { user, token },
       });
-      router.push(routeConfig.privateRoutes[0]);
+      router.push(routeConfig.privateRoutes.projects);
     } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Login failed");
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       stopLoading("LOGGING_IN");
@@ -78,7 +90,7 @@ export default function LoginPage() {
         <p className="text-sm">
           Don't have an account?{" "}
           <button
-            onClick={() => router.push(routeConfig.publicRoutes[1])} // Assuming the signup page is the second public route
+            onClick={() => router.push(routeConfig.publicRoutes.signup)} // Assuming the signup page is the second public route
             className="text-primary hover:underline"
           >
             Sign up here

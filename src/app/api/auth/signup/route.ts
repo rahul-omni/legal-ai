@@ -18,7 +18,7 @@ export async function POST(
 
     if (!signupType || !(signupType in validationSchemas)) {
       return NextResponse.json(
-        { message: "Invalid or missing signup type" },
+        { errMsg: "Invalid or missing signup type" },
         { status: 400 }
       );
     }
@@ -26,7 +26,7 @@ export async function POST(
     const validation = validationSchemas[signupType].safeParse(data);
     if (!validation.success) {
       return NextResponse.json(
-        { message: "Invalid request data" },
+        { errMsg: "Invalid request data" },
         { status: 400 }
       );
     }
@@ -35,16 +35,14 @@ export async function POST(
       const { default: signupHandler } = await import(`./${signupType}`);
       return signupHandler(validation.data);
     } catch (importError) {
-      console.error("Error loading signup handler:", importError);
       return NextResponse.json(
-        { message: "Internal server error" },
+        { errMsg: "Internal server error" },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error("Signup routing error:", error);
     return NextResponse.json(
-      { message: "Internal server error" },
+      { errMsg: "Internal server error" },
       { status: 500 }
     );
   }

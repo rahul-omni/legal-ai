@@ -20,10 +20,6 @@ export function middleware(request: NextRequest) {
     );
   }
 
-  // if (authToken && !verified && !pathname.includes("/verify-email")) {
-  //   return NextResponse.redirect(new URL("/auth/verify-email", request.url));
-  // }
-
   if (privateRoute && !authToken) {
     return NextResponse.redirect(
       new URL(routeConfig.publicRoutes.login, request.url)

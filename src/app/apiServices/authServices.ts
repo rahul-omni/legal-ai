@@ -5,6 +5,7 @@ import {
   SignupRequest,
   SignupResponse,
 } from "../api/auth/types";
+import { AxiosError } from "axios";
 
 export const login = async (userDetails: {
   email: string;
@@ -13,10 +14,10 @@ export const login = async (userDetails: {
   try {
     const { data } = await apiClient.post("/auth/login", userDetails);
     const { token, user } = data;
-
     return { token, user };
   } catch (error) {
-    throw new Error("Failed to login user");
+    const errorResponse = error as AxiosError<ErrorResponse>;
+    throw new Error(errorResponse.response?.data.errMsg || "Login failed");
   }
 };
 
