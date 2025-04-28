@@ -59,7 +59,7 @@ export default async function handler(
     console.log("Starting transaction for organization and user creation...");
     const result = await db.$transaction(async (tx) => {
       const organization = await tx.organization.create({
-        data: { name: orgName, isVerified: false },
+        data: { name: orgName, isVerified: false, createdBy: email },
         select: {
           id: true,
           name: true,

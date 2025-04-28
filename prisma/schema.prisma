@@ -63,11 +63,11 @@ model Organization {
   name       String
   plan       Plan     @default(FREE)
   isVerified Boolean  @default(false) @map("is_verified")
-  createdBy  String?  @map("created_by") @db.Uuid
+  createdBy  String?  @map("created_by")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  createdByUser User?  @relation("organization_created_by_idx", fields: [createdBy], references: [id], onDelete: Cascade)
+  createdByUser User?  @relation("organization_created_by_idx", fields: [createdBy], references: [email], onDelete: Cascade)
   users         User[] @relation("user_organization_id_idx")
 
   @@map("organizations")
