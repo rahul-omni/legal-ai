@@ -262,12 +262,13 @@ const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(nul
             //  files ={files}
             /> */}
             <FileExplorerV2
+            
   selectedDocument={selectedFile}
   onDocumentSelect={(file) => {
     handleFileSelect(file);
     setSelectedNode(file); // Update selected node
   }}
-  onNodeSelect={setSelectedNode} // Add this handler
+  
   onPdfParsed={handlePdfParsed}
 />
           </div>
@@ -321,18 +322,19 @@ const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(nul
           <div className="flex-1 flex flex-col min-h-0">
             {activeTabId ? (
               <DocumentPane
-              onDocumentSelect={handleFileSelect}
+                onDocumentSelect={handleFileSelect}
                 content={activeTab?.content || ""}
                 onContentChange={(newContent) => {
                   if (activeTabId) {
                     updateTabContent(activeTabId, newContent);
                   }
-                }}
+                } }
                 fileName={activeTab?.name || "Untitled"}
                 onSave={handleSave}
                 onSaveAs={handleSaveAs}
-                fileId={activeTab?.fileId || "" }
-                selectedNode={selectedNode}
+                fileId={activeTab?.fileId || ""}
+                 node={[]}                 
+                
               />
             ) : (
               <div className="flex-1 flex items-center justify-center bg-gray-50">

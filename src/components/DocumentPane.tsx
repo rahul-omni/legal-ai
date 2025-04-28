@@ -31,7 +31,8 @@ interface DocumentPaneProps {
   onSaveAs: () => Promise<void>;
   fileId?: string | null;
   onDocumentSelect: (doc: FileSystemNodeProps) => void;
-  selectedNode: FileSystemNodeProps | null;
+   
+  node :FileSystemNodeProps[]
   // userId: string;
   // documents: any[];
   // files: any[];
@@ -54,7 +55,9 @@ export function DocumentPane({
   onSave,
   onSaveAs,
   fileId,
-  onDocumentSelect
+  onDocumentSelect,
+   
+  node
   // userId,
   // documents,
   // files,
@@ -92,13 +95,70 @@ export function DocumentPane({
   const [nodes, setNodes] = useState<FileSystemNodeProps[]>([]);
      const { showToast } = useToast();
      const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(null);
-   
+    
+     const [fileTree, setFileTree] = useState<FileSystemNodeProps[]>([]);
+     const [currentParentId, setCurrentParentId] = useState<string | null>(null);
+  // This callback will be passed to AIPopup
+  const handleTreeUpdate = (newTree: FileSystemNodeProps[]) => {
+    setFileTree(newTree);
+    console.log("Tree received in DocumentPane:", newTree);
+  };
      
-  console.log("content",content);
-  
+
+  //console.log("content",content);
+  console.log("filetree---",fileTree);
+  console.log("nodes+++++",nodes);
    
   console.log("filesID",fileId);
+  // Add this function to DocumentPane.tsx
+  const verifyFileInTree = (tree: FileSystemNodeProps[], targetFileId: string) => {
+    // Track both the file and its parent folder
+    let result = { file: null as FileSystemNodeProps | null, parent: null as FileSystemNodeProps | null };
   
+    const findFile = (nodes: FileSystemNodeProps[], parent: FileSystemNodeProps | null): boolean => {
+      for (const node of nodes) {
+        if (node.id === targetFileId) {
+          result.file = node;
+          result.parent = parent;
+          return true;
+        }
+        if (node.type === "FOLDER" && node.children) {
+          if (findFile(node.children, node)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+  
+    findFile(tree, null);
+    
+    if (result.file) {
+      console.log("File found:", {
+        id: result.file.id,
+        name: result.file.name,
+        parent: result.parent 
+          ? { id: result.parent.id, name: result.parent.name } 
+          : "root"
+      });
+      return result.parent?.id || null;
+    }
+    
+    console.error("File not found in tree");
+    return null;
+  };
+
+// In DocumentPane.tsx, inside the component
+useEffect(() => {
+  if (fileTree.length > 0 && fileId) {
+    console.log("🔍 Checking fileId in tree...");
+    const parentId = verifyFileInTree(fileTree, fileId);
+    console.log("Parent ID of current file:", parentId);
+    
+    // Store the parentId in state
+    setCurrentParentId(parentId);
+  }
+}, [fileTree, fileId]);
   // Handle click outside for save dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -341,6 +401,8 @@ export function DocumentPane({
   };
   
 
+  
+
   const handleAddDocument = (newDoc: FileSystemNodeProps, parentId: string | null) => {
     // Check the entire tree for a duplicate before adding
     if (checkDuplicateInTree(nodes, newDoc.name, newDoc.type)) {
@@ -454,98 +516,151 @@ export function DocumentPane({
     }
   };
    
-  const refreshNodes = async (parentId?: string) => {
+  const refreshNodes = async (parentId?: string, fileId?: string) => {
     try {
       const children = await fetchNodes(parentId);
+      
       if (!parentId) {
         setNodes(children);
-      } else {
-        setNodes(prevNodes => {
-          const updateChildren = (nodes: FileSystemNodeProps[]): FileSystemNodeProps[] => {
-            return nodes.map(node => {
-              if (node.id === parentId) {
-                return { ...node, children };
-              }
-              if (node.children) {
-                return { ...node, children: updateChildren(node.children) };
-              }
-              return node;
-            });
-          };
-          return updateChildren(prevNodes);
-        });
+        return;
+      }
+  
+      // Update the specific folder and maintain expanded state
+      setNodes(prevNodes => {
+        const updateChildren = (nodes: FileSystemNodeProps[]): FileSystemNodeProps[] => {
+          return nodes.map(node => {
+            if (node.id === parentId) {
+              return { 
+                ...node, 
+                children,
+                isExpanded: node.isExpanded // Maintain expanded state
+              };
+            }
+            if (node.children) {
+              return { 
+                ...node, 
+                children: updateChildren(node.children) 
+              };
+            }
+            return node;
+          });
+        };
+        return updateChildren(prevNodes);
+      });
+  
+      if (fileId && children.length > 0) {
+        const file = children.find(node => node.id === fileId);
+        if (file) onDocumentSelect(file);
       }
     } catch (error) {
       handleApiError(error, showToast);
     }
   };
-   
-  const handleSaveAs = async (name?: string) => {
-    try {
-      // 1. Get filename
-      let fileName = name?.trim() || window.prompt("File name:")?.trim();
-      if (!fileName) {
-        alert("Filename required");
-        return;
-      }
-  
-      // 2. Add extension if missing
-      if (!fileName.includes('.')) {
-        fileName += '.docx';
-      }
-  
-      // 3. Determine parent folder
-      const parentId = selectedNode
-        ? selectedNode.type === "FOLDER" 
-          ? selectedNode.id 
-          : selectedNode.parentId ?? null
-        : null;
-  
-      // 4. Handle root save confirmation
-      if (parentId === null) {
-        const confirmSave = window.confirm(
-          `Save "${fileName}" to root directory?`
-        );
-        if (!confirmSave) return;
-      }
-  
-      // 5. Create file payload
-      const newFile = {
-        name: fileName,
-        type: "FILE",
-        parentId,
-        content
-      };
-  
-      // 6. Save to backend
-      const savedFile = await createNode(newFile);
-      
-      // 7. Create complete node object with all required properties
-      const fileNode: FileSystemNodeProps = {
-        id: savedFile.id,
-        name: fileName,
-        type: "FILE",
-        userId: savedFile.userId || "", // Required field
-        parentId,
-        content,
-        children: [], // Required if defined in interface
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        // Include any other required properties
-      };
-  
-      // 8. Update UI
-      handleAddDocument(fileNode, parentId); // Now types match
-      await refreshNodes(parentId);
-      onDocumentSelect(fileNode);
-      showToast(`Saved: ${fileName}`);
-  
-    } catch (error) {
-      console.error('Save failed:', error);
-      showToast('Save failed', 'error');
+
+  // Helper to find any node in the tree
+const findNodeInTree = (id: string, nodes: FileSystemNodeProps[]): FileSystemNodeProps | null => {
+  for (const node of nodes) {
+    if (node.id === id) return node;
+    if (node.children) {
+      const found = findNodeInTree(id, node.children);
+      if (found) return found;
     }
-  };
+  }
+  return null;
+};
+
+// Gets the effective parent ID for saving
+const getEffectiveParentId = (): string | null => {
+  // Case 1: Explicit folder selection
+  if (selectedNode?.type === "FOLDER") return selectedNode.id;
   
+  // Case 2: Saving existing file (use its parent)
+  if (fileId) {
+    const originalFile = findNodeInTree(fileId, nodes);
+    if (originalFile) return originalFile.parentId ?? null;
+  }
+  
+  // Case 3: File is selected (use its parent)
+  if (selectedNode?.type === "FILE") return selectedNode.parentId ?? null;
+  
+  // Case 4: No selection
+  return null;
+};
+   
+const handleSaveAs = async (name?: string) => {
+  try {
+    // 1. Get the current file's location - use ID-based verification
+    const parentId = verifyFileInTree(fileTree, fileId!);
+    
+    // Double-check we have the right parent
+    const parentFolder = parentId 
+      ? findNodeById(fileTree, parentId)
+      : null;
+
+    console.log("Save As location verification:", {
+      currentFile: selectedNode?.name,
+      parentFolder: parentFolder?.name || "root",
+      parentId
+    });
+
+    // 2. Get new filename
+    let fileName = name || window.prompt("Enter new file name:")?.trim();
+    if (!fileName) return;
+    if (!fileName.includes(".")) {
+      const originalExt = selectedNode?.name.split('.').pop() || "docx";
+      fileName += `.${originalExt}`;
+    }
+    // 3. Ensure unique name in target location
+    const siblings = parentId
+      ? (parentFolder?.children || [])
+      : fileTree.filter(node => node.type === "FILE");
+
+    if (siblings.some(f => f.name === fileName)) {
+      alert(`"${fileName}" already exists in this location`);
+      return;
+    }
+
+    // 4. Create new file
+    const newFile = await createNode({
+      name: fileName,
+      type: "FILE",
+      parentId,
+      content
+    });
+
+    // 5. Update UI
+   // await refreshNodes(parentId || undefined);
+   if (parentId) {
+    // Refresh the specific folder
+    await refreshNodes(parentId);
+  } else {
+    // Refresh root if no parent
+    await refreshNodes();
+  }
+    onDocumentSelect({
+      ...newFile,
+      children: [],
+      content
+    });
+
+    showToast(`Saved as ${fileName} in ${parentFolder?.name || "root"}`);
+    
+  } catch (error) {
+    handleApiError(error, showToast);
+  }
+};
+  
+  // Helper function to find original file
+  const findNodeById = (nodes: FileSystemNodeProps[], id: string): FileSystemNodeProps | null => {
+    for (const node of nodes) {
+      if (node.id === id) return node;
+      if (node.children) {
+        const found = findNodeById(node.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
   useEffect(() => {
     if (fileId) {
       // Find the node in your nodes tree
@@ -564,6 +679,7 @@ export function DocumentPane({
       setSelectedNode(current);
     }
   }, [fileId, nodes]);
+  
   return (
     <div className="h-full flex">
       {/* Main Editor Area */}
@@ -607,26 +723,8 @@ export function DocumentPane({
     console.log("✅ Saving document with fileId:", fileId);
     await updateNodeContent(fileId, content);
   }}
-  onSaveAs={async () => {
-    // Safely handle the parentId type
-    const parentId = selectedNode
-      ? selectedNode.type === "FOLDER"
-        ? selectedNode.id
-        : selectedNode.parentId ?? null // Fallback to null if parentId is undefined
-      : null;
-
-    console.log("Saving to parent:", parentId);
-    
-    const newFile = await handleSaveAs(
-      undefined, // No default name
-      parentId,  // Now properly typed as string | null
-           // Current editor content
-    );
-    
-    if (newFile) {
-      onDocumentSelect(newFile);
-    }
-  }}
+   
+  onSaveAs={handleSaveAs} 
   name={fileName || ""}
 />
             </div>
@@ -651,6 +749,7 @@ export function DocumentPane({
                 cursorIndicatorPosition={cursorIndicatorPosition}
                 documents={[]}
                 files={[]}
+                onTreeUpdate={handleTreeUpdate} 
               />
             </div>
           )}

@@ -18,7 +18,6 @@ import {
   Search,
   Upload,
 } from "lucide-react";
- 
 import { useParams } from "next/navigation";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import { FC, useEffect, useRef, useState } from "react";
@@ -28,17 +27,12 @@ interface FileExplorerProps {
   selectedDocument?: FileSystemNodeProps;
   onDocumentSelect: (file: FileSystemNodeProps) => void;
   onPdfParsed: (text: string) => void;
-  onNodeSelect: (node: FileSystemNodeProps | null) => void; 
-  
- // files: FileSystemNodeProps[]; 
 }
 
 export const FileExplorerV2: FC<FileExplorerProps> = ({
   selectedDocument,
   onDocumentSelect,
   onPdfParsed,
-  onNodeSelect
- // files
 }) => {
   const params = useParams();
   const [nodes, setNodes] = useState<FileSystemNodeProps[]>([]);
@@ -52,15 +46,6 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
   useEffect(() => {
     fetchRootNodes();
   }, []);
-
-  const handleNodeClick = (node: FileSystemNodeProps) => {
-    onNodeSelect(node); // <-- Add this
-    if (node.type === "FILE") {
-      onDocumentSelect(node);
-    } else {
-      toggleExpand(node);
-    }
-  };
 
   const handleParams = (nodes: FileSystemNodeProps[]) => {
     const { filePath } = params;
@@ -140,92 +125,6 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
       return node;
     });
   };
-     
-  const checkDuplicateInTree = (
-    nodes: FileSystemNodeProps[],
-    name: string,
-    type: string
-  ): boolean => {
-    for (const node of nodes) {
-      if (node.name === name && node.type === type) return true;
-      if (node.children && checkDuplicateInTree(node.children, name, type)) {
-        return true;
-      }
-    }
-    return false;
-  };
-  
-  const handleAddDocument = (newDoc: FileSystemNodeProps, parentId: string | null) => {
-    // Check the entire tree for a duplicate before adding
-    if (checkDuplicateInTree(nodes, newDoc.name, newDoc.type)) {
-      console.log("Duplicate found, showing alert and skipping addition.");
-      alert(`A document named "${newDoc.name}" already exists somewhere in your tree.`);
-      return; // Exit early – don't add duplicate
-    }
-    console.log("Not duplicate, proceeding to add.");
-    const addRecursively = (nodes: FileSystemNodeProps[]): FileSystemNodeProps[] => {
-      return nodes.map((node) => {
-        if (node.id === parentId && node.type === "FOLDER") {
-          const children = node.children || [];
-          return {
-            ...node,
-            children: [...children, newDoc],
-          };
-        }
-        if (node.type === "FOLDER" && node.children?.length) {
-          return {
-            ...node,
-            children: addRecursively(node.children),
-          };
-        }
-        return node;
-      });
-    };
-  
-    // Add at root level if no parent
-    if (!parentId) {
-      setNodes([...nodes, newDoc]);
-    } else {
-      setNodes(addRecursively(nodes));
-    }
-  };
-  
-   
-// Then use debugSetNodes everywhere instead of setNodes temporarily
-
-
-const handleFileUploadnew = async (
-  event: React.ChangeEvent<HTMLInputElement>,
-  parentId: string | null = null
-) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    const content = e.target?.result as string;
-
-    const newFile: CreateNodePayload = {
-      name: file.name,
-      type: "FILE",
-       
-      parentId,
-      content,
-    };
-
-    try {
-      const uploadedNode = await createNode(newFile);
-     // if (uploadedNode) {
-        setNodes((prev) => [...prev, uploadedNode]);
-     // }
-    } catch (error: any) {
-      console.error("Error uploading file:", error);
-      alert(error.response?.data?.message || "Upload failed");
-    }
-  };
-
-  reader.readAsText(file);
-};
 
   const extractTextFromPDF = async (file: File): Promise<string> => {
     try {
@@ -248,49 +147,6 @@ const handleFileUploadnew = async (
   };
 
   const handleFileUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    parentId?: string
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-  
-    try {
-      const content = await FileService.parseFile(file);
-  
-      const newFile: CreateNodePayload = {
-        name: file.name,
-        type: "FILE",
-         
-        parentId,
-        content,
-      };
-  
-      //await createNode(newFile);
-       
-
-      // Upload the file to the backend and get the real node object
-      const uploadedNode = await createNode(newFile);
-      const now = new Date();
-  
-      const localNode: FileSystemNodeProps = {
-        id: uploadedNode?.id || Date.now().toString(),
-        name: newFile.name,
-        type: "FILE",
-        userId:  "",
-        children: [],
-        createdAt: now,
-        updatedAt: now,
-      };
-  
-      handleAddDocument(localNode, parentId ?? null);
-  
-      await refreshNodes(parentId);
-    } catch (error) {
-      handleApiError(error, showToast);
-    } 
-  };
-  
-  const handleFileUploado = async (
     e: React.ChangeEvent<HTMLInputElement>,
     parentId?: string
   ) => {
@@ -358,7 +214,7 @@ const handleFileUploadnew = async (
   };
 
   const renderNode = (node: FileSystemNodeProps, depth = 0) => (
-    <div key={node.id} onClick={() => handleNodeClick(node)} className="relative">
+    <div key={node.id} className="relative">
       {/* Guide Lines */}
       {depth > 0 && (
         <div
