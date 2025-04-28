@@ -25,7 +25,7 @@ export default async function handler(
     if (existingUser) {
       console.warn("User already exists with email:", email);
       return NextResponse.json(
-        { message: "User already exists" },
+        { errMsg: "User already exists" },
         { status: 409 }
       );
     }
@@ -45,7 +45,7 @@ export default async function handler(
     if (!roleId && !defaultRole) {
       console.error("No default admin role configured");
       return NextResponse.json(
-        { message: "No default admin role configured" },
+        { errMsg: "No default admin role configured" },
         { status: 400 }
       );
     }
@@ -96,7 +96,7 @@ export default async function handler(
 
     return NextResponse.json(
       {
-        message: "Organization and admin user created successfully",
+        errMsg: "Organization and admin user created successfully",
         user: result.user,
         organization: result.organization,
       },
@@ -105,7 +105,7 @@ export default async function handler(
   } catch (error) {
     console.error("Organization signup error:", error);
     return NextResponse.json(
-      { message: "Internal server error" },
+      { errMsg: "Internal server error" },
       { status: 500 }
     );
   } finally {
