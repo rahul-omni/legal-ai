@@ -46,37 +46,46 @@ export default function LoginPage({}) {
   };
 
   return (
-    <div className="max-w-md mx-auto p-4 mt-10">
-      <h1 className="text-2xl font-bold mb-6">Login</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="max-w-md mx-auto p-6 mt-10 bg-white shadow-md rounded-lg">
+      <h1 className="text-3xl font-bold mb-4 text-center text-gray-800">
+        Login
+      </h1>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block mb-1">Email</label>
+          <label className="block mb-2 text-sm font-medium text-gray-700">
+            Email Address
+          </label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="Enter your email"
             required
           />
         </div>
 
         <div>
-          <label className="block mb-1">Password</label>
+          <label className="block mb-2 text-sm font-medium text-gray-700">
+            Password
+          </label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+            placeholder="Enter your password"
             required
           />
         </div>
 
-        {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
+        {error && <p className="text-red-500 text-center">{error}</p>}
 
         <button
           type="submit"
           disabled={isLoading("LOGGING_IN")}
-          className="w-full bg-primary text-white py-2 rounded hover:bg-primaryDark disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-primary text-white py-3 rounded-lg font-medium hover:bg-primaryDark disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading("LOGGING_IN") ? (
             <span>Loading...</span>
@@ -87,10 +96,20 @@ export default function LoginPage({}) {
       </form>
 
       <div className="mt-6 text-center">
-        <p className="text-sm">
+        <p className="text-sm text-gray-600">
+          Forgot your password?{" "}
+          <button
+            // TODO: uncomment this when the route is ready
+            // onClick={() => router.push(routeConfig.publicRoutes.forgotPassword)}
+            className="text-primary hover:underline"
+          >
+            Reset it here
+          </button>
+        </p>
+        <p className="text-sm text-gray-600 mt-4">
           Don't have an account?{" "}
           <button
-            onClick={() => router.push(routeConfig.publicRoutes.signup)} // Assuming the signup page is the second public route
+            onClick={() => router.push(routeConfig.publicRoutes.signup)}
             className="text-primary hover:underline"
           >
             Sign up here
