@@ -9,7 +9,7 @@ import { FileExplorerV2 } from "./FileExplorerV2";
 import { PanelLeft, PanelRightOpen, X, Plus } from "lucide-react";
 import { useTabs } from "@/context/tabsContext";
 import { SmartPrompts } from "./SmartPrompts";
-import { SmartPromptsPanel } from "./SmartPromptsPanel";
+import { SmartPromptsPanel } from './SmartPromptsPanel';
 
 // Add this interface near the top
 interface TabInfo {
@@ -55,7 +55,8 @@ export default function LegalEditor() {
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(false);
   const [showSmartPrompts, setShowSmartPrompts] = useState(true);
-
+   // In LegalEditor component
+const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(null);
   // Add these states
   const {
     openTabs,
@@ -208,8 +209,9 @@ export default function LegalEditor() {
   };
 
   // Add this before the return statement
-  const activeTab = openTabs.find((tab) => tab.id === activeTabId);
-
+  const activeTab = openTabs.find(tab => tab.id === activeTabId);
+    console.log("activetab" ,activeTab)
+    
   return (
     <div className="h-screen flex flex-col bg-[#f9f9f9]">
       {/* Toolbar */}
@@ -249,11 +251,26 @@ export default function LegalEditor() {
               !showLeftPanel && "invisible"
             }`}
           >
-            <FileExplorerV2
+            {/* <FileExplorerV2
               selectedDocument={selectedFile}
               onDocumentSelect={handleFileSelect}
               onPdfParsed={handlePdfParsed}
-            />
+              onNodeSelect={(node) => {
+                setSelectedNode(node);
+                console.log("Node selected:", node);
+              }}
+            //  files ={files}
+            /> */}
+            <FileExplorerV2
+            
+  selectedDocument={selectedFile}
+  onDocumentSelect={(file) => {
+    handleFileSelect(file);
+    setSelectedNode(file); // Update selected node
+  }}
+  
+  onPdfParsed={handlePdfParsed}
+/>
           </div>
         </div>
 
@@ -305,15 +322,19 @@ export default function LegalEditor() {
           <div className="flex-1 flex flex-col min-h-0">
             {activeTabId ? (
               <DocumentPane
+                onDocumentSelect={handleFileSelect}
                 content={activeTab?.content || ""}
                 onContentChange={(newContent) => {
                   if (activeTabId) {
                     updateTabContent(activeTabId, newContent);
                   }
-                }}
+                } }
                 fileName={activeTab?.name || "Untitled"}
                 onSave={handleSave}
                 onSaveAs={handleSaveAs}
+                fileId={activeTab?.fileId || ""}
+                 node={[]}                 
+                
               />
             ) : (
               <div className="flex-1 flex items-center justify-center bg-gray-50">

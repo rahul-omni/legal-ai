@@ -1,0 +1,7 @@
+/* Quill Editor Base Styles */
+
+/* Editor Styles */
+.editor-container .ql-editor {
+    min-height: 60vh;
+    overflow: 'hidden';
+  }

@@ -1,15 +1,14 @@
 "use client";
-import { useEffect, useState } from "react";
-import { ArrowUp, FilePlus, Paperclip, X } from "lucide-react";
 import {
   fetchAllNodes,
   fetchNodes,
   readFile,
 } from "@/app/apiServices/nodeServices";
-import { FileData } from "@/lib/fileService";
 import { FileSystemNodeProps } from "@/types/fileSystem";
+import { ArrowUp, FilePlus, Paperclip, X } from "lucide-react";
 import mammoth from "mammoth";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
+import { useEffect, useState } from "react";
 import TreeNode from "./TreeNode";
 
 const extractTextFromDocx = async (file: File): Promise<string> => {
@@ -35,6 +34,7 @@ interface AIPopupProps {
     line: number;
     column: number;
   } | null;
+  onTreeUpdate: (tree: FileSystemNodeProps[]) => void; 
 }
 const MAX_TOKENS = 16000;
 
@@ -53,6 +53,7 @@ export function AIPopup({
   files,
   cursorPosition,
   cursorIndicatorPosition,
+  onTreeUpdate
 }: AIPopupProps) {
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -63,23 +64,51 @@ export function AIPopup({
   const [fileNodes, setFileNodes] = useState<FileSystemNodeProps[]>([]);
   const [showContext, setShowContext] = useState(false);
   const [nodes, setNodes] = useState<FileSystemNodeProps[]>([]);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [documentall, setDocument] = useState<FileSystemNodeProps[]>([]); // Array to store multiple files
+  const [selectedNodeText, setSelectedNodeText] = useState("");
 
-  const [document, setDocument] = useState<FileData[]>([]);
-
-  const handleDocumentSelect = (file: FileSystemNodeProps) => {
-    const fileData: FileData = {
-      id: file.id,
-      name: file.name,
-      content: file.content || "", // Provide default empty string
-      type: file.type,
-      parentId: file.parentId || "",
+  useEffect(() => {
+    const handleSelection = () => {
+      const selection = window.getSelection();
+      if (selection && selection.toString()) {
+        setSelectedNodeText(selection.toString());
+      }
     };
-    setDocument((prevDocuments) => [...prevDocuments, fileData]);
+  
+    if (typeof document !== "undefined") {
+      document.addEventListener("mouseup", handleSelection);
+      document.addEventListener("keyup", handleSelection);
+    }
+  
+    return () => {
+      if (typeof document !== "undefined") {
+        document.removeEventListener("mouseup", handleSelection);
+        document.removeEventListener("keyup", handleSelection);
+      }
+    };
+  }, []);
+  
+  
+
+  // Use selectedNodeText wherever needed
+  useEffect(() => {
+    console.log("🔍 Text sent to AI Prompt:", selectedNodeText);
+  }, [selectedNodeText]);
+  const handleDocumentSelect = (file: FileSystemNodeProps) => {
+    const isAlreadySelected =  documentall.some((doc) => doc.id === file.id);
+
+    if (isAlreadySelected) {
+      console.warn(`⚠️ File already selected: ${file.name} (id: ${file.id})`);
+      return;
+    }
+
+    setDocument((prev) => [...prev, file]);
   };
-  console.log("document--", document);
+
+  console.log("documentall--", documentall);
 
   const handleAddContextClick = () => {
-    alert("working");
     setShowContext(true);
     // setIsPopupOpen(true); // Open the popup when the button is clicked
   };
@@ -164,7 +193,7 @@ export function AIPopup({
         const treeData = buildTree(data);
         console.log("🌲 Built tree:", treeData); // convert to nested
         setTree(treeData);
-
+        onTreeUpdate(treeData);
         const allFiles = getAllFiles(treeData); // collect deeply nested files
         console.log("📄 All files (nested + flat):", allFiles);
         setFileNodes(allFiles); // store them in state
@@ -187,7 +216,7 @@ export function AIPopup({
     }
   };
   console.log("uploadfile", uploadedFiles);
-  console.log("documenttre--", document);
+  console.log("documenttre--", documentall);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -211,7 +240,7 @@ export function AIPopup({
       });
 
       // 2. Handle documents (FileSystemNode[])
-      const treeFileReadPromises = document.map(async (fileNode) => {
+      const treeFileReadPromises =  documentall.map(async (fileNode) => {
         try {
           const { content, name } = await readFile(fileNode.id);
           const extension = name.split(".").pop()?.toLowerCase();
@@ -303,9 +332,12 @@ export function AIPopup({
     setDocument((prev) => prev.filter((_, i) => i !== index));
   };
 
+   
+  
+
   return (
     <div
-      className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-40 w-[750px] 
+      className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-40 w-[750px] 
                     shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] 
                     bg-gradient-to-r from-blue-50/80 via-blue-100/50 to-blue-50/80 
                     backdrop-blur-sm rounded-full"
@@ -364,7 +396,7 @@ export function AIPopup({
 
       {/* Expandable context panel - Appears above the form */}
       {(selectedText ||
-        document.length > 0 ||
+         documentall.length > 0 ||
         showContext ||
         uploadedFiles.length > 0 ||
         cursorPosition) && (
@@ -384,7 +416,7 @@ export function AIPopup({
                   )}
                 </div>
                 <p className="text-xs text-green-700 whitespace-pre-wrap">
-                  {selectedText}
+                  { selectedNodeText}
                 </p>
               </div>
             ) : (
@@ -429,12 +461,12 @@ export function AIPopup({
             )}
 
             {/* Selected Documents */}
-            {document.length > 0 && (
+            { documentall.length > 0 && (
               <div className="mb-2">
                 <h4 className="text-xs font-semibold text-gray-600 mb-1">
                   Selected Documents:
                 </h4>
-                {document.map((file, idx) => (
+                { documentall.map((file, idx) => (
                   <div
                     key={`document-${idx}`}
                     className="flex items-center justify-between bg-green-50 px-2 py-1 rounded text-xs text-green-800 my-1"

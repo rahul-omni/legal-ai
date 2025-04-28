@@ -1,7 +1,7 @@
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { FileType } from "@prisma/client";
 import { apiClient } from ".";
-
+import { AxiosResponse } from "axios";
 export interface CreateNodePayload {
   name: string;
   type: FileType;
@@ -22,7 +22,7 @@ export const fetchNodes = async (
   }
 };
 
-export const createNode = async (node: CreateNodePayload) => {
+export const createNodeold = async (node: CreateNodePayload) => {
   try {
     await apiClient.post("/nodes", node);
   } catch (error) {
@@ -30,6 +30,20 @@ export const createNode = async (node: CreateNodePayload) => {
     throw new Error("Failed to upload file");
   }
 };
+
+
+
+export const createNode = async (node: CreateNodePayload): Promise<FileSystemNodeProps> => {
+  try {
+    const response: AxiosResponse<FileSystemNodeProps> = await apiClient.post("/nodes", node);
+    return response.data;
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    throw new Error("Failed to upload file");
+  }
+};
+
+
 
 export const fetchAllNodes = async (): Promise<FileSystemNodeProps[]> => {
   try {
@@ -59,5 +73,53 @@ export const readFile = async (
   } catch (error) {
     console.error("Error reading file content:", error);
     throw new Error("Failed to read file content");
+  }
+};
+
+ 
+
+export const updateNodeContentwork = async (
+  nodeId: string,
+  content: string
+): Promise<FileSystemNodeProps> => {
+
+  if (!nodeId){
+    throw new Error("Node ID is required");
+  }
+  try {
+    const response: AxiosResponse<FileSystemNodeProps> = await apiClient.put(
+      `/nodes/${nodeId}`,
+      { content }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating node content:", error);
+    throw new Error("Failed to update node content");
+  }
+};
+
+
+export const updateNodeContent = async (
+  nodeId: string,
+  content: string,
+  name?: string // optional if not renaming
+): Promise<FileSystemNodeProps> => {
+  if (!nodeId) {
+    throw new Error("Node ID is required");
+  }
+
+  try {
+    const payload: any = { content };
+    if (name) payload.name = name;
+
+    const response: AxiosResponse<FileSystemNodeProps> = await apiClient.put(
+      `/nodes/${nodeId}`,
+      payload
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error updating node content:", error);
+    throw new Error("Failed to update node content");
   }
 };
