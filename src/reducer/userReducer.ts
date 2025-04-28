@@ -22,7 +22,6 @@ const reducer = (
 ): UserStateProps => {
   switch (action.type) {
     case "LOGIN_USER": {
-      setAuthCookie(action.payload.token);
       return {
         ...state,
         user: action.payload.user,

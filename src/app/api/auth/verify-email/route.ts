@@ -31,6 +31,9 @@ export async function GET(req: NextRequest) {
           verificationTokenExpiry: { gt: new Date() },
         },
       });
+
+      // TODO - add auth token expiry flow
+
       logger.debug("Database query result for user", { user });
       if (!user) {
         logger.warn("Invalid or expired token");
@@ -59,7 +62,10 @@ export async function GET(req: NextRequest) {
     logger.info("Verification cookie set");
 
     return NextResponse.redirect(
-      new URL(`${routeConfig.publicRoutes.verifyEmailSuccess}?email=${email}`, req.url)
+      new URL(
+        `${routeConfig.publicRoutes.verifyEmailSuccess}?email=${email}`,
+        req.url
+      )
     );
   } catch (error) {
     logger.error("Error occurred during email verification", { error });

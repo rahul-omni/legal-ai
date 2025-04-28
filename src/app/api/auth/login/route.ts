@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { ErrorResponse } from "../types";
 import { User } from "@prisma/client";
+import { addHours } from "date-fns";
 
 interface LoginResponse {
   successMsg: string;
@@ -54,7 +55,9 @@ export async function POST(
 
     console.log("Login successful for user:", userDetails.id);
 
-    cookies().set("authToken", token);
+    cookies().set("authToken", token, {
+      expires: addHours(new Date(), 24),
+    });
 
     return NextResponse.json(
       { successMsg: "Login success", user, token },
