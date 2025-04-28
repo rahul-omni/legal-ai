@@ -1,7 +1,7 @@
 import dynamic from 'next/dynamic';
 import { useEffect } from 'react';
 import 'react-quill/dist/quill.snow.css';
-
+import "../styles/editor.css"
 // Dynamic import to avoid SSR issues
 const ReactQuill = dynamic(() => import('react-quill'), {
   ssr: false,
@@ -49,7 +49,7 @@ export function QuillEditor({ content, onContentChange, onSelectionChange }: Qui
     <div className="h-full flex flex-col overflow-hidden">
       <div className="relative flex-1">
         {/* 3D Paper Effect Container */}
-        <div className="absolute inset-0 bg-white shadow-paper transform-gpu perspective-1000">
+        <div className="absolute inset-0 bg-white shadow-paper transform-gpu perspective-1000 editor-container">
           <ReactQuill
             theme="snow"
             value={content}
