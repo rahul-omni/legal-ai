@@ -59,17 +59,11 @@ export default async function handler(
     console.log("Starting transaction for organization and user creation...");
     const result = await db.$transaction(async (tx) => {
       const organization = await tx.organization.create({
-        data: { name: orgName, isVerified: false, createdBy: email },
+        data: { name: orgName, isVerified: false },
         select: {
           id: true,
-          name: true,
-          isVerified: true,
-          plan: true,
-          createdAt: true,
-          updatedAt: true,
         },
       });
-      console.log("Organization created:", organization);
 
       const user = await tx.user.create({
         data: {
@@ -95,9 +89,22 @@ export default async function handler(
           updatedAt: true,
         },
       });
-      console.log("User created:", user);
 
-      return { user, organization };
+      const organizationWithCreatedBy = await tx.organization.update({
+        where: { id: organization.id },
+        data: { createdBy: email },
+        select: {
+          id: true,
+          name: true,
+          isVerified: true,
+          plan: true,
+          createdBy: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      return { user, organization: organizationWithCreatedBy };
     });
     console.log("Transaction completed successfully");
 
