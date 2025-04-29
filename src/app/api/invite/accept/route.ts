@@ -1,5 +1,7 @@
-import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { orgMembershipService } from "@/app/api/lib/services/orgMembershipService";
+import { userService } from "@/app/api/lib/services/userService";
+import { invitationService } from "../../lib/services/invitationService";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -7,9 +9,7 @@ export async function GET(req: NextRequest) {
   const email = searchParams.get("email") ?? undefined;
   const roleId = searchParams.get("role_id") ?? undefined;
 
-  const invite = await db.invitation.findUnique({
-    where: { token, expiresAt: { gt: new Date() } },
-  });
+  const invite = await invitationService.findInvitationByToken(token!);
 
   if (!invite) {
     return NextResponse.json(
@@ -18,37 +18,22 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const currentUser = await db.user.findUnique({
-    where: { email: invite.email },
-  });
+  const currentUser = await userService.findUserByEmail(invite.email);
 
   let createdUser = null;
 
   if (!currentUser) {
-    createdUser = await db.user.create({
-      data: {
-        email: invite.email,
-        isVerified: true,
-        verificationToken: null,
-        verificationTokenExpiry: null,
-      },
-      select: { id: true },
-    });
+    createdUser = await userService.createUser(invite.email);
   }
 
-  await db.orgMembership.create({
-    data: {
-      userId: currentUser?.id ?? createdUser?.id ?? "",
-      orgId: invite.orgId,
-      roleId: invite.roleId,
-    },
-  });
+  await orgMembershipService.createOrgMembership(
+    currentUser?.id ?? createdUser?.id ?? "",
+    invite.orgId,
+    invite.roleId
+  );
 
   // Update invite status
-  await db.invitation.update({
-    where: { id: invite.id },
-    data: { status: "ACCEPTED" },
-  });
+  await invitationService.updateInvitationStatus(invite.id, "ACCEPTED");
 
   return NextResponse.redirect("/dashboard");
 }

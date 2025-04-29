@@ -4,6 +4,7 @@ import {
   getTokenExpiry,
 } from "../../lib/verificationTokens";
 import { organizationService } from "./organizationService";
+import { InvitationStatus } from "@prisma/client";
 
 export interface InviteUserParams {
   email: string;
@@ -100,6 +101,19 @@ class InvitationService {
       console.error("Failed to update invitation token:", error);
       throw new Error("Failed to update invitation token in the database");
     }
+  }
+
+  async findInvitationByToken(token: string) {
+    return await db.invitation.findUnique({
+      where: { token, expiresAt: { gt: new Date() } },
+    });
+  }
+
+  async updateInvitationStatus(invitationId: string, status: InvitationStatus) {
+    return await db.invitation.update({
+      where: { id: invitationId },
+      data: { status },
+    });
   }
 }
 
