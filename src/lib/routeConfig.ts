@@ -15,6 +15,7 @@ interface PrivateRoute {
   dueDiligence: string;
   marketplace: string;
   templates: string;
+  settings: string;
 }
 
 export const routeConfig: {
@@ -29,7 +30,8 @@ export const routeConfig: {
     cases: "/cases",
     dueDiligence: "/due-diligence",
     marketplace: "/marketplace",
-    templates: "templates",
+    templates: "/templates",
+    settings: "/settings",
   },
   publicRoutes: {
     login: "/login",

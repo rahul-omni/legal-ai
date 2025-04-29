@@ -3,12 +3,10 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
-console.log("jwt secret", JWT_SECRET);
-console.log("jwt secret", !JWT_SECRET);
-
 export const generateJwdToken = (
   payload: object,
-  expiresIn: number = 60 * 60 * 24 // 1 day
+  //TODO - need to fix the expiresIn type
+  expiresIn: number = 60 * 60 * 24 * 365
 ): string => {
   return jwt.sign(payload, JWT_SECRET, { expiresIn });
 };

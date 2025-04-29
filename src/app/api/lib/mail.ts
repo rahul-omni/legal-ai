@@ -1,7 +1,8 @@
 import { Resend } from "resend";
 import { logger } from "../lib/logger";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+export const resend = new Resend(process.env.RESEND_API_KEY);
+
 export async function sendVerificationEmail(email: string, token: string) {
   const successLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify-email/success`;
   const confirmLink = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}&redirect=${encodeURIComponent(successLink)}&email=${encodeURIComponent(email)}`;
@@ -20,5 +21,30 @@ export async function sendVerificationEmail(email: string, token: string) {
   } catch (error) {
     logger.error("Error sending verification email:", { error });
     throw new Error("Failed to send verification email");
+  }
+}
+
+export async function sendInviteEmail(
+  email: string,
+  token: string,
+  orgName: string,
+  role: string
+) {
+  const inviteLink = `${process.env.NEXT_PUBLIC_URL}/accept-invite?token=${token}&email=${encodeURIComponent(email)}&role=${encodeURIComponent(role)}`;
+
+  logger.info(`Sending invite email to: ${email}`);
+  logger.debug(`Invite link: ${inviteLink}`);
+
+  try {
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: email,
+      subject: `Join ${orgName} on Our Platform`,
+      html: `<p>You have been invited to join ${orgName}. Click <a href="${inviteLink}">here</a> to accept the invitation.</p>`,
+    });
+    logger.info("Invitation email sent successfully.");
+  } catch (error) {
+    logger.error("Error sending invitation email:", { error });
+    throw new Error("Failed to send invitation email");
   }
 }

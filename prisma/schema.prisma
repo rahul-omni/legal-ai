@@ -12,7 +12,7 @@ model User {
   id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                    String?
   email                   String    @unique
-  password                String
+  password                String?
   roleId                  String?   @map("role_id") @db.Uuid
   verificationToken       String?   @unique @map("verification_token")
   verificationTokenExpiry DateTime? @map("verification_token_expiry")
@@ -28,6 +28,7 @@ model User {
   createdBy      FileSystemNode[] @relation("file_system_nodes_created_by_idx")
   updatedBy      FileSystemNode[] @relation("file_system_nodes_updated_by_idx")
   organizations  Organization[]   @relation("organization_created_by_idx")
+  orgMemberships OrgMembership[]  @relation("org_memberships_user_id_idx")
 
   @@map("users")
 }
@@ -41,7 +42,7 @@ model Role {
 
   user       User[]       @relation("role_user_id_idx")
   permission Permission[] @relation("role_permission_id_idx")
-  invitation Invitation[]
+  invitation Invitation[] @relation("invitation_role_id_idx")
 
   @@map("roles")
 }
@@ -68,11 +69,27 @@ model Organization {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  createdByUser User?        @relation("organization_created_by_idx", fields: [createdBy], references: [email], onDelete: Cascade)
-  users         User[]       @relation("user_organization_id_idx")
-  invitation    Invitation[]
+  createdByUser  User?           @relation("organization_created_by_idx", fields: [createdBy], references: [email], onDelete: Cascade)
+  users          User[]          @relation("user_organization_id_idx")
+  invitations    Invitation[]    @relation("organization_invitations_org_id_idx")
+  orgMemberships OrgMembership[] @relation("org_memberships_org_id_idx")
 
   @@map("organizations")
+}
+
+model OrgMembership {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id") @db.Uuid
+  orgId     String   @map("organization_id") @db.Uuid
+  roleId    String   @map("role_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  org  Organization @relation("org_memberships_org_id_idx", fields: [orgId], references: [id])
+  user User         @relation("org_memberships_user_id_idx", fields: [userId], references: [id])
+
+  @@unique([userId, orgId])
+  @@map("org_memberships")
 }
 
 model Invitation {
@@ -81,13 +98,13 @@ model Invitation {
   token     String           @unique
   expiresAt DateTime         @map("expires_at")
   orgId     String           @map("organization_id") @db.Uuid
-  role      RoleName
+  roleId    String           @map("role_id") @db.Uuid
   status    InvitationStatus @default(PENDING)
   createdAt DateTime         @default(now()) @map("created_at")
   updatedAt DateTime         @updatedAt @map("updated_at")
 
-  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  roleName     Role         @relation(fields: [role], references: [name], onDelete: Cascade)
+  organization Organization @relation("organization_invitations_org_id_idx", fields: [orgId], references: [id], onDelete: Cascade)
+  role         Role         @relation("invitation_role_id_idx", fields: [roleId], references: [id], onDelete: Cascade)
 
   @@map("invitations")
 }

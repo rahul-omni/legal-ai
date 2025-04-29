@@ -1,7 +1,7 @@
 "use client";
 
 import { Navigation } from "@/components/Navigation";
-import { Settings } from "@/components/Settings";
+import { Settings } from "@/components/settings/Settings";
 
 export default function SettingsPage() {
   return (
