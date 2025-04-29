@@ -23,11 +23,11 @@ model User {
   updatedAt               DateTime? @updatedAt @map("updated_at")
 
   role           Role?            @relation("role_user_id_idx", fields: [roleId], references: [id])
-  Organization   Organization?    @relation("user_organization_id_idx", fields: [organizationId], references: [id])
+  organization   Organization?    @relation("user_organization_id_idx", fields: [organizationId], references: [id])
   fileSystemNode FileSystemNode[] @relation("file_system_nodes_user_id_idx")
   createdBy      FileSystemNode[] @relation("file_system_nodes_created_by_idx")
   updatedBy      FileSystemNode[] @relation("file_system_nodes_updated_by_idx")
-  organization   Organization[]   @relation("organization_created_by_idx")
+  organizations  Organization[]   @relation("organization_created_by_idx")
 
   @@map("users")
 }
@@ -40,7 +40,8 @@ model Role {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   user       User[]       @relation("role_user_id_idx")
-  Permission Permission[] @relation("role_permission_id_idx")
+  permission Permission[] @relation("role_permission_id_idx")
+  invitation Invitation[]
 
   @@map("roles")
 }
@@ -67,10 +68,28 @@ model Organization {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  createdByUser User?  @relation("organization_created_by_idx", fields: [createdBy], references: [email], onDelete: Cascade)
-  users         User[] @relation("user_organization_id_idx")
+  createdByUser User?        @relation("organization_created_by_idx", fields: [createdBy], references: [email], onDelete: Cascade)
+  users         User[]       @relation("user_organization_id_idx")
+  invitation    Invitation[]
 
   @@map("organizations")
+}
+
+model Invitation {
+  id        String           @id @default(uuid())
+  email     String
+  token     String           @unique
+  expiresAt DateTime         @map("expires_at")
+  orgId     String           @map("organization_id") @db.Uuid
+  role      RoleName
+  status    InvitationStatus @default(PENDING)
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  roleName     Role         @relation(fields: [role], references: [name], onDelete: Cascade)
+
+  @@map("invitations")
 }
 
 model FileSystemNode {
@@ -123,4 +142,10 @@ enum PermissionName {
   SHARE
   UPLOAD
   DOWNLOAD
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
 }
