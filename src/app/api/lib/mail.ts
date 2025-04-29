@@ -28,9 +28,9 @@ export async function sendInviteEmail(
   email: string,
   token: string,
   orgName: string,
-  role: string
+  roleId: string
 ) {
-  const inviteLink = `${process.env.NEXT_PUBLIC_URL}/accept-invite?token=${token}&email=${encodeURIComponent(email)}&role=${encodeURIComponent(role)}`;
+  const inviteLink = `${process.env.NEXT_PUBLIC_URL}/accept-invite?token=${token}&email=${encodeURIComponent(email)}&role_id=${encodeURIComponent(roleId)}`;
 
   logger.info(`Sending invite email to: ${email}`);
   logger.debug(`Invite link: ${inviteLink}`);

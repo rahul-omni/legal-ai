@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { sendInviteEmail } from "../lib/mail";
-import { createInvitation } from "../lib/services/invitationService";
+import { invitationService } from "../lib/services/invitationService";
 
 // Define request validation schema
 const InviteRequestSchema = z.object({
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Use the service to handle database operations
-    const invitationResult = await createInvitation(validation.data);
+    const invitationResult = await invitationService.createInvitation(validation.data);
 
     // Send invitation email
     sendInviteEmail(

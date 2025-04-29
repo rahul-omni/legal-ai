@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const token = searchParams.get("token") ?? undefined;
+  const email = searchParams.get("email") ?? undefined;
+  const roleId = searchParams.get("role_id") ?? undefined;
 
   const invite = await db.invitation.findUnique({
     where: { token, expiresAt: { gt: new Date() } },
