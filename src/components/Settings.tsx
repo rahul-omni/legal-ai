@@ -23,7 +23,7 @@ export function Settings() {
 
   const handleLogout = () => {
     dispatchUser({ type: "LOGOUT_USER" });
-    router.push(routeConfig.publicRoutes[0]);
+    router.push(routeConfig.publicRoutes.login);
   };
 
   const teamMembers: TeamMember[] = [
