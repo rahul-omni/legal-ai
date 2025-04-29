@@ -9,6 +9,7 @@ import {
   FileText,
   FolderKanban,
   Gavel,
+  Settings,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -48,15 +49,8 @@ const navigationItems = [
 ];
 
 export function Navigation() {
-  const { dispatchUser } = userContext();
   const pathname = usePathname();
   const [isExpanded, setIsExpanded] = useState(false);
-  const router = useRouter();
-
-  const handleLogout = () => {
-    dispatchUser({ type: "LOGOUT_USER" });
-    router.push(routeConfig.publicRoutes.login);
-  };
 
   return (
     <nav
@@ -111,27 +105,17 @@ export function Navigation() {
       </div>
 
       {/* User Profile Area */}
-      <div className="p-4 border-t space-y-2">
-        <div
-          className={`flex items-start gap-3 ${
-            isExpanded ? "" : "justify-center"
-          }`}
+      
+
+      {/* Settings link */}
+      <div className="flex justify-center py-4 mt-auto">
+        <Link
+          href="/settings"
+          className="p-3 rounded hover:bg-gray-100 transition-colors"
+          title="Settings"
         >
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0" />
-            <button className="text-sm " onClick={handleLogout}>
-              Logout
-            </button>
-          </div>
-          {isExpanded && (
-            <div className="min-w-0">
-              <div className="text-sm font-medium truncate">John Doe</div>
-              <div className="text-xs text-gray-500 truncate">
-                john@example.com
-              </div>
-            </div>
-          )}
-        </div>
+          <Settings className="w-5 h-5 text-gray-600" />
+        </Link>
       </div>
     </nav>
   );
