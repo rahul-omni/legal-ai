@@ -7,7 +7,7 @@ import {
   OrganizationSignupResponse,
 } from "../types";
 import { sendVerificationEmail } from "../../lib/mail";
-import { generateVerificationToken, getTokenExpiry } from "../../lib/tokens";
+import { generateVerificationToken, getTokenExpiry } from "../../lib/verificationTokens";
 
 export default async function handler(
   data: OrganizationSignupRequest

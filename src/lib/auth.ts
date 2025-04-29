@@ -1,21 +1,4 @@
-import { db } from "./db";
-
-export async function verifyAuthToken(token: string) {
-  if (!token.startsWith("valid-token-")) {
-    throw new Error("Invalid token");
-  }
-
-  const userId = token.replace("valid-token-", "");
-
-  const user = await db.user.findUnique({
-    where: { id: userId },
-  });
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  return user;
-}
+import { verifyToken as verifyJwdToken } from "@/app/api/lib/jsonWebToken";
 
 export const userIdFromHeader = (request: Request) => {
   const authToken = request.headers
@@ -26,9 +9,10 @@ export const userIdFromHeader = (request: Request) => {
     throw new Error("No auth token provided");
   }
 
-  const userId = authToken.replace("valid-token-", "");
+  const { user } = verifyJwdToken(authToken);
+  console.log(user, "user from token");
 
-  return userId;
+  return user.id;
 };
 
 export function getAuthCookie() {

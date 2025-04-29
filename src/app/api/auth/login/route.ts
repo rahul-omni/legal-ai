@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ErrorResponse } from "../types";
 import { User } from "@prisma/client";
 import { addHours } from "date-fns";
+import { generateJwdToken } from "../../lib/jsonWebToken";
 
 interface LoginResponse {
   successMsg: string;
@@ -48,10 +49,9 @@ export async function POST(
       return NextResponse.json({ errMsg: "Invalid password" }, { status: 401 });
     }
 
-    const token = `valid-token-${userDetails.id}`;
-    console.log("Generated token:", token);
-
     const { password: _, ...user } = userDetails;
+
+    const token = generateJwdToken({ user });
 
     console.log("Login successful for user:", userDetails.id);
 

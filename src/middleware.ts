@@ -35,9 +35,11 @@ export function middleware(request: NextRequest) {
   }
 
   const response = NextResponse.next();
+
   if (authToken) {
     response.headers.set("Authorization", `Bearer ${authToken}`);
   }
+
   return response;
 }
 
