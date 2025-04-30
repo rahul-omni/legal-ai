@@ -1,14 +1,14 @@
 import { db } from "@/lib/db";
+import { Organization, OrgMembership } from "@prisma/client";
 
 class OrganizationService {
   /**
    * Fetches organization details by ID
    */
-  async getOrganizationDetails(orgId: string) {
+  async getOrganizationDetails(orgId: string): Promise<Organization> {
     try {
       const org = await db.organization.findFirst({
         where: { id: orgId },
-        select: { name: true },
       });
 
       if (!org) {

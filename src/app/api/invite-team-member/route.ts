@@ -1,29 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { sendInviteEmail } from "../lib/mail";
 import { invitationService } from "../lib/services/invitationService";
+import { InviteRequestSchema } from "../lib/validation/inviteTeamMember";
+import { ErrorResponse, SuccessResponse } from "../types";
 
-// Define request validation schema
-const InviteRequestSchema = z.object({
-  email: z.string().email(),
-  orgId: z.string().uuid(),
-  roleId: z.string().uuid(),
-});
-
-export async function POST(req: NextRequest) {
+export async function POST(
+  req: NextRequest
+): Promise<NextResponse<SuccessResponse | ErrorResponse>> {
   try {
     const body = await req.json();
 
     const validation = InviteRequestSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { errMsg: "Invalid request data", errors: validation.error.errors },
+        {
+          errorMessage: "Invalid request data",
+          errors: validation.error.errors,
+        },
         { status: 400 }
       );
     }
 
     // Use the service to handle database operations
-    const invitationResult = await invitationService.createInvitation(validation.data);
+    const invitationResult = await invitationService.createInvitation(
+      validation.data
+    );
 
     // Send invitation email
     sendInviteEmail(
@@ -33,11 +34,14 @@ export async function POST(req: NextRequest) {
       invitationResult.roleId
     );
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return NextResponse.json(
+      { ...invitationResult, successMessage: "Invitation sent successfully" },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error in invite POST handler:", error);
     return NextResponse.json(
-      { errMsg: "Internal server error" },
+      { errorMessage: "Internal server error" },
       { status: 500 }
     );
   }

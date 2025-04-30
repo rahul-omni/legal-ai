@@ -1,6 +1,7 @@
-import { Navigation } from "@/components/Navigation";
+import { RoleProvider } from "@/context/roleContext";
 import { TabsProvider } from "@/context/tabsContext";
 import type { Metadata } from "next";
+import PrivatePages from "./privatePages";
 
 export const metadata: Metadata = {
   title: "Legal Document Platform",
@@ -14,10 +15,9 @@ export default function RootLayout({
 }) {
   return (
     <TabsProvider>
-      <div className="flex">
-        <Navigation />
-        <div className="flex-1">{children}</div>
-      </div>
+      <RoleProvider>
+        <PrivatePages children={children} />
+      </RoleProvider>
     </TabsProvider>
   );
 }

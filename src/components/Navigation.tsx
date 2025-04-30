@@ -1,6 +1,6 @@
 "use client";
 
-import { userContext } from "@/context/userContext";
+import { useUserContext } from "@/context/userContext";
 import { routeConfig } from "@/lib/routeConfig";
 import {
   BarChart2,

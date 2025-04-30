@@ -43,7 +43,7 @@ export function middleware(request: NextRequest) {
   return response;
 }
 
-export const config = {
+const config = {
   matcher: [
     "/",
     ...Object.values(routeConfig.privateRoutes).map(

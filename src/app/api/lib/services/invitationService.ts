@@ -4,27 +4,14 @@ import {
   getTokenExpiry,
 } from "../../lib/verificationTokens";
 import { organizationService } from "./organizationService";
-import { InvitationStatus } from "@prisma/client";
-
-export interface InviteUserParams {
-  email: string;
-  orgId: string;
-  roleId: string;
-}
-
-export interface InviteUserResult {
-  email: string;
-  token: string;
-  orgId: string;
-  orgName?: string;
-  roleId: string;
-}
+import { Invitation, InvitationStatus } from "@prisma/client";
+import { InviteUserReq, InviteUserRes } from "../../invite-team-member/types";
 
 class InvitationService {
   /**
    * Creates an invitation and retrieves the associated organization
    */
-  async createInvitation(params: InviteUserParams): Promise<InviteUserResult> {
+  async createInvitation(params: InviteUserReq): Promise<InviteUserRes> {
     try {
       const { email, orgId, roleId } = params;
 
@@ -33,21 +20,38 @@ class InvitationService {
       const expiresAt = getTokenExpiry();
 
       // Check if invitation already exists updating the token and expiry date
-      const existedInvitationId = await this.checkInvitationExists(
-        email,
-        orgId
-      );
+      const existedInvitation = await this.checkInvitationExists(email, orgId);
 
-      if (!!existedInvitationId) {
-        await this.updateInvitationToken(existedInvitationId);
-        return { email, token, orgId, roleId };
+      if (!!existedInvitation) {
+        await this.updateInvitationToken(existedInvitation.id);
+        return {
+          successMessage: "Invitation already exists, token updated",
+          email,
+          token,
+          orgId,
+          roleId,
+          status: existedInvitation.status,
+        };
       }
 
       // Create the invitation
       const invitedUser = await db.invitation
         .create({
-          data: { email, orgId, roleId, token, expiresAt },
-          select: { email: true, token: true, orgId: true, roleId: true },
+          data: {
+            email,
+            orgId,
+            roleId,
+            token,
+            expiresAt,
+            status: InvitationStatus.PENDING,
+          },
+          select: {
+            email: true,
+            token: true,
+            orgId: true,
+            roleId: true,
+            status: true,
+          },
         })
         .catch((error) => {
           console.error("Failed to create invitation:", error);
@@ -61,6 +65,7 @@ class InvitationService {
 
       return {
         ...invitedUser,
+        successMessage: "Invitation created successfully",
         orgName: org.name,
       };
     } catch (error) {
@@ -77,12 +82,12 @@ class InvitationService {
   async checkInvitationExists(
     email: string,
     orgId: string
-  ): Promise<string | undefined> {
+  ): Promise<Invitation | null> {
     try {
       const invitation = await db.invitation.findFirst({
         where: { email, orgId },
       });
-      return invitation?.id;
+      return invitation;
     } catch (error) {
       console.error("Failed to check invitation existence:", error);
       throw new Error("Failed to check invitation existence in the database");

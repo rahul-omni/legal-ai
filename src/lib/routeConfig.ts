@@ -1,4 +1,4 @@
-interface PublicRoute {
+interface PublicPageRoute {
   login: string;
   signup: string;
   forgotPass: string;
@@ -6,7 +6,7 @@ interface PublicRoute {
   verifyEmailSuccess: string;
 }
 
-interface PrivateRoute {
+interface PrivatePageRoute {
   projects: string;
   editor: string;
   analytics: string;
@@ -19,8 +19,8 @@ interface PrivateRoute {
 }
 
 export const routeConfig: {
-  privateRoutes: PrivateRoute;
-  publicRoutes: PublicRoute;
+  privateRoutes: PrivatePageRoute;
+  publicRoutes: PublicPageRoute;
 } = {
   privateRoutes: {
     projects: "/projects",

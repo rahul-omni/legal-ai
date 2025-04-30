@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { userContext } from "@/context/userContext";
+import { useUserContext } from "@/context/userContext";
 import { routeConfig } from "@/lib/routeConfig";
 import { useRouter } from "next/navigation";
 import { GeneralSettings } from './GeneralSettings';
@@ -7,7 +7,7 @@ import { TeamManagement } from './TeamManagement';
 
 export function Settings() {
   const [activeTab, setActiveTab] = useState<'general' | 'team'>('general');
-  const { dispatchUser } = userContext();
+  const { dispatchUser } = useUserContext();
   const router = useRouter();
 
   const handleLogout = () => {

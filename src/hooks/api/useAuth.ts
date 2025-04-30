@@ -1,4 +1,5 @@
 import { SignupRequest } from "@/app/api/auth/types";
+import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
 import { apiClient } from "@/app/apiServices";
 import { routeConfig } from "@/lib/routeConfig";
 import { useRouter } from "next/navigation";
@@ -14,19 +15,7 @@ export default function useSignup() {
     setError(null);
 
     try {
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw result;
-      }
+      await apiClient.post(apiRouteConfig.publicRoutes.signup, data);
 
       router.push(
         `${routeConfig.publicRoutes.verifyEmail}?email=${data.email}&from=${
@@ -51,9 +40,12 @@ export const useResendVerification = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiClient.post("/auth/resend-verification", {
-        email,
-      });
+      const response = await apiClient.post(
+        apiRouteConfig.publicRoutes.resendVerification,
+        {
+          email,
+        }
+      );
       return response.data;
     } catch (err) {
       setError("Failed to resend verification email");

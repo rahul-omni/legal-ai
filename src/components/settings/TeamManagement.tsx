@@ -1,6 +1,14 @@
+import { useRoleContext } from "@/context/roleContext";
+import { useUserContext } from "@/context/userContext";
+import { useInviteTemMember } from "@/hooks/api/useTeamManagement";
 import { Search, UserPlus } from "lucide-react";
 import { useReducer } from "react";
-import { useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
+
+interface InviteFormInputs {
+  email: string;
+  roleId: string;
+}
 
 interface TeamMember {
   id: string;
@@ -65,20 +73,20 @@ function InviteTeamModal({
   state: State;
   dispatch: React.Dispatch<Action>;
 }) {
-  const { register, handleSubmit } = useForm({
-    // resolver: zodResolver(inviteSchema),
-  });
+  const { getAllRoles } = useRoleContext();
+  const { register, handleSubmit } = useForm<InviteFormInputs>(); // Add the type here
+  const { inviteTeamMember } = useInviteTemMember();
+  const { userState } = useUserContext();
 
-  const onSubmit = async (data) => {
-    //TODO - Need to implement API for invite member
+  const roles = getAllRoles();
 
-    console.log("Submitting invite data:", data);
+  const onSubmit: SubmitHandler<InviteFormInputs> = async (data) => {
     dispatch({ type: "SET_MODAL_OPEN", payload: false });
-
-    await fetch("/api/invites", {
-      method: "POST",
-      body: JSON.stringify({ ...data, orgId }),
+    const res = await inviteTeamMember({
+      ...data,
+      orgId: userState.user!.organizationId!,
     });
+    console.log("Submitting invite data:", data);
   };
 
   if (!state.isModalOpen) return null;
@@ -101,11 +109,14 @@ function InviteTeamModal({
             Role
           </label>
           <select
-            {...register("role")}
+            {...register("roleId")} // Use "roleId" instead of "role" to match the type
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
           >
-            <option value="MEMBER">Member</option>
-            <option value="ADMIN">Admin</option>
+            {roles.map((role) => (
+              <option key={role.id} value={role.id}>
+                {role.name}
+              </option>
+            ))}
           </select>
 
           <div className="flex justify-end gap-2">
