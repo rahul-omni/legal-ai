@@ -30,7 +30,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   );
 };
 
-export const userContext = () => {
+export const useUserContext = () => {
   const context = useContext(contextMade);
   if (!context) {
     throw new Error("useUserContext must be used within a UserProvider");

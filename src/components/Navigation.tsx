@@ -1,6 +1,6 @@
 "use client";
 
-import { userContext } from "@/context/userContext";
+import { useUserContext } from "@/context/userContext";
 import { routeConfig } from "@/lib/routeConfig";
 import {
   BarChart2,
@@ -48,7 +48,7 @@ const navigationItems = [
 ];
 
 export function Navigation() {
-  const { dispatchUser } = userContext();
+  const { dispatchUser } = useUserContext();
   const pathname = usePathname();
   const [isExpanded, setIsExpanded] = useState(false);
   const router = useRouter();

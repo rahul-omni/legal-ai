@@ -1,6 +1,6 @@
 "use client";
 import { createNode, fetchNodes } from "@/app/apiServices/nodeServices";
-import { userContext } from "@/context/userContext";
+import { useUserContext } from "@/context/userContext";
 import { handleApiError } from "@/helper/handleApiError";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import {
@@ -68,7 +68,7 @@ const reducer = (
 };
 
 export default function ProjectHub() {
-  const { userState } = userContext();
+  const { userState } = useUserContext();
   const [projectHubState, dispatchProjectHub] = useReducer(reducer, {
     projects: [],
     createLoading: false,
@@ -355,7 +355,7 @@ export const NewProjectModal: FC<ProjectReducerProps> = ({
   projectHubState: projectHubState,
   dispatchProjectHub: dispatchProjectHub,
 }) => {
-  const { userState } = userContext();
+  const { userState } = useUserContext();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 

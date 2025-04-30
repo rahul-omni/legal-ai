@@ -1,7 +1,7 @@
 "use client";
 import { login } from "@/app/apiServices/authServices";
 import { loadingContext } from "@/context/loadingContext";
-import { userContext } from "@/context/userContext";
+import { useUserContext } from "@/context/userContext";
 import { routeConfig } from "@/lib/routeConfig";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
-  const { dispatchUser } = userContext();
+  const { dispatchUser } = useUserContext();
   const { startLoading, stopLoading, isLoading } = loadingContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
