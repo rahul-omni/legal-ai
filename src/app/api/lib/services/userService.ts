@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { User } from "@prisma/client";
 
 class UserService {
   /**
@@ -8,6 +9,7 @@ class UserService {
     try {
       return await db.user.findUnique({
         where: { email },
+        include: { organization: true },
       });
     } catch (error) {
       console.error("Failed to find user by email:", error);
@@ -18,16 +20,12 @@ class UserService {
   /**
    * Creates a new verified user with the given email
    */
-  async createUser(email: string) {
+  async createUser(user: User) {
     try {
       return await db.user.create({
         data: {
-          email,
-          isVerified: true,
-          verificationToken: null,
-          verificationTokenExpiry: null,
+          ...user,
         },
-        select: { id: true },
       });
     } catch (error) {
       console.error("Failed to create user:", error);

@@ -4,6 +4,7 @@ interface PublicPageRoute {
   forgotPass: string;
   verifyEmail: string;
   verifyEmailSuccess: string;
+  createPassword: string;
 }
 
 interface PrivatePageRoute {
@@ -36,6 +37,7 @@ export const routeConfig: {
   publicRoutes: {
     login: "/login",
     signup: "/signup",
+    createPassword: "/create-password",
     forgotPass: "/forgot-password",
     verifyEmail: "/verify-email",
     verifyEmailSuccess: "/verify-email/success",

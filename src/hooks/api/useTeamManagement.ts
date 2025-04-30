@@ -1,24 +1,24 @@
 // create a hook for inviting team members
 
+import {
+  InviteTeamMemberReq,
+  InviteTeamMemberRes,
+} from "@/app/api/invite-team-member/types";
 import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
 import { apiClient } from "@/app/apiServices";
 import { useState } from "react";
-
-interface InviteTeamMemberRequest {
-  email: string;
-  roleId: string;
-  orgId: string;
-}
 
 export const useInviteTemMember = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const inviteTeamMember = async (req: InviteTeamMemberRequest) => {
+  const inviteTeamMember = async (
+    req: InviteTeamMemberReq
+  ): Promise<InviteTeamMemberRes | null> => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiClient.post(
+      const response = await apiClient.post<InviteTeamMemberRes>(
         apiRouteConfig.publicRoutes.inviteTeamMember,
         req
       );
@@ -26,7 +26,7 @@ export const useInviteTemMember = () => {
       return response.data;
     } catch (err) {
       setError("Failed to invite team member");
-      return;
+      return null;
     } finally {
       setIsLoading(false);
     }

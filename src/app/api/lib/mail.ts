@@ -1,11 +1,12 @@
 import { Resend } from "resend";
 import { logger } from "../lib/logger";
+import { apiRouteConfig } from "./apiRouteConfig";
 
 export const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendVerificationEmail(email: string, token: string) {
-  const successLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify-email/success`;
-  const confirmLink = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}&redirect=${encodeURIComponent(successLink)}&email=${encodeURIComponent(email)}`;
+  const successLink = `${process.env.NEXT_PUBLIC_APP_URL}${apiRouteConfig.publicRoutes.verifyEmailSuccess}`;
+  const confirmLink = `${process.env.NEXT_PUBLIC_APP_URL}/api${apiRouteConfig.publicRoutes.verifyEmail}?token=${token}&redirect=${encodeURIComponent(successLink)}&email=${encodeURIComponent(email)}`;
 
   logger.info(`Sending verification email to: ${email}`);
   logger.debug(`Verification link: ${confirmLink}`);
@@ -25,12 +26,11 @@ export async function sendVerificationEmail(email: string, token: string) {
 }
 
 export async function sendInviteEmail(
-  email: string,
   token: string,
-  orgName: string,
-  roleId: string
+  email: string,
+  orgName: string
 ) {
-  const inviteLink = `${process.env.NEXT_PUBLIC_URL}/accept-invite?token=${token}&email=${encodeURIComponent(email)}&role_id=${encodeURIComponent(roleId)}`;
+  const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/api${apiRouteConfig.publicRoutes.acceptInvite}?token=${token}`;
 
   logger.info(`Sending invite email to: ${email}`);
   logger.debug(`Invite link: ${inviteLink}`);

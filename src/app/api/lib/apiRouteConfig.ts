@@ -12,6 +12,7 @@ interface PrivateApiRoute {
   node: "/nodes";
   nodeTree: "/system/tree";
   roles: "/roles";
+  user: "/user";
 }
 
 export const apiRouteConfig: {
@@ -22,6 +23,7 @@ export const apiRouteConfig: {
     node: "/nodes",
     nodeTree: "/system/tree",
     roles: "/roles",
+    user: "/user",
   },
   publicRoutes: {
     login: "/auth/login",

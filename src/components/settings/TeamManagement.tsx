@@ -4,6 +4,7 @@ import { useInviteTemMember } from "@/hooks/api/useTeamManagement";
 import { Search, UserPlus } from "lucide-react";
 import { useReducer } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 
 interface InviteFormInputs {
   email: string;
@@ -86,7 +87,10 @@ function InviteTeamModal({
       ...data,
       orgId: userState.user!.organizationId!,
     });
-    console.log("Submitting invite data:", data);
+
+    if (!res) return;
+
+    toast.success(res.successMessage);
   };
 
   if (!state.isModalOpen) return null;

@@ -7,6 +7,10 @@ export interface UserStateProps {
 
 export type UserActionType =
   | {
+      type: "FETCH_USER";
+      payload: { user: User };
+    }
+  | {
       type: "LOGIN_USER";
       payload: { user: User; token: string };
     }
@@ -22,12 +26,22 @@ const reducer = (
 ): UserStateProps => {
   switch (action.type) {
     case "LOGIN_USER": {
+      localStorage.setItem("userId", action.payload.user.id);
+      localStorage.setItem("userEmail", action.payload.user.email);
+      return {
+        ...state,
+        user: action.payload.user,
+      };
+    }
+    case "FETCH_USER": {
       return {
         ...state,
         user: action.payload.user,
       };
     }
     case "LOGOUT_USER":
+      localStorage.removeItem("userId");
+      localStorage.removeItem("userEmail");
       clearAuthCookie();
       return {
         ...state,

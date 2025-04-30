@@ -5,34 +5,40 @@ import {
 } from "../../lib/verificationTokens";
 import { organizationService } from "./organizationService";
 import { Invitation, InvitationStatus } from "@prisma/client";
-import { InviteUserReq, InviteUserRes } from "../../invite-team-member/types";
+import {
+  InviteTeamMemberReq,
+  InviteTeamMemberRes,
+} from "../../invite-team-member/types";
 
 class InvitationService {
   /**
    * Creates an invitation and retrieves the associated organization
    */
-  async createInvitation(params: InviteUserReq): Promise<InviteUserRes> {
+  async createInvitation(
+    params: InviteTeamMemberReq
+  ): Promise<InviteTeamMemberRes> {
     try {
       const { email, orgId, roleId } = params;
-
-      // Generate token for invitation
-      const token = generateVerificationToken();
-      const expiresAt = getTokenExpiry();
 
       // Check if invitation already exists updating the token and expiry date
       const existedInvitation = await this.checkInvitationExists(email, orgId);
 
       if (!!existedInvitation) {
-        await this.updateInvitationToken(existedInvitation.id);
+        const invitation = await this.updateInvitationToken(
+          existedInvitation.id
+        );
         return {
           successMessage: "Invitation already exists, token updated",
           email,
-          token,
+          token: invitation.token!,
           orgId,
           roleId,
           status: existedInvitation.status,
         };
       }
+
+      const token = generateVerificationToken();
+      const expiresAt = getTokenExpiry();
 
       // Create the invitation
       const invitedUser = await db.invitation
@@ -94,11 +100,11 @@ class InvitationService {
     }
   }
 
-  async updateInvitationToken(invitationId: string): Promise<void> {
+  async updateInvitationToken(invitationId: string): Promise<Invitation> {
     const token = generateVerificationToken();
     const expiresAt = getTokenExpiry();
     try {
-      await db.invitation.update({
+      return await db.invitation.update({
         where: { id: invitationId },
         data: { token, expiresAt },
       });
@@ -114,10 +120,14 @@ class InvitationService {
     });
   }
 
-  async updateInvitationStatus(invitationId: string, status: InvitationStatus) {
+  async updateInvitationStatusToAccepted(invitationId: string) {
     return await db.invitation.update({
       where: { id: invitationId },
-      data: { status },
+      data: {
+        status: InvitationStatus.ACCEPTED,
+        token: null,
+        expiresAt: null,
+      },
     });
   }
 }

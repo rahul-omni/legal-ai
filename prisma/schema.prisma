@@ -69,7 +69,7 @@ model Organization {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  createdByUser  User?           @relation("organization_created_by_idx", fields: [createdBy], references: [email], onDelete: Cascade)
+  createdByUser  User?           @relation("organization_created_by_idx", fields: [createdBy], references: [email])
   users          User[]          @relation("user_organization_id_idx")
   invitations    Invitation[]    @relation("organization_invitations_org_id_idx")
   orgMemberships OrgMembership[] @relation("org_memberships_org_id_idx")
@@ -95,8 +95,8 @@ model OrgMembership {
 model Invitation {
   id        String           @id @default(uuid())
   email     String
-  token     String           @unique
-  expiresAt DateTime         @map("expires_at")
+  token     String?           @unique
+  expiresAt DateTime?         @map("expires_at")
   orgId     String           @map("organization_id") @db.Uuid
   roleId    String           @map("role_id") @db.Uuid
   status    InvitationStatus @default(PENDING)
@@ -104,7 +104,7 @@ model Invitation {
   updatedAt DateTime         @updatedAt @map("updated_at")
 
   organization Organization @relation("organization_invitations_org_id_idx", fields: [orgId], references: [id], onDelete: Cascade)
-  role         Role         @relation("invitation_role_id_idx", fields: [roleId], references: [id], onDelete: Cascade)
+  role         Role         @relation("invitation_role_id_idx", fields: [roleId], references: [id])
 
   @@map("invitations")
 }

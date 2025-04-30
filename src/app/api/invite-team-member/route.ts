@@ -27,11 +27,10 @@ export async function POST(
     );
 
     // Send invitation email
-    sendInviteEmail(
-      invitationResult.email,
+    await sendInviteEmail(
       invitationResult.token,
-      invitationResult.orgName!,
-      invitationResult.roleId
+      invitationResult.email,
+      invitationResult.orgName!
     );
 
     return NextResponse.json(
