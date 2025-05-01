@@ -161,5 +161,6 @@ enum PermissionName {
 enum InvitationStatus {
   PENDING
   ACCEPTED
+  ACTIVE
   EXPIRED
 }
