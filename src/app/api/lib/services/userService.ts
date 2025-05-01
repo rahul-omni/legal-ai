@@ -9,7 +9,18 @@ class UserService {
     try {
       return await db.user.findUnique({
         where: { email },
-        include: { organization: true },
+      });
+    } catch (error) {
+      console.error("Failed to find user by email:", error);
+      throw new Error("Failed to find user in the database");
+    }
+  }
+
+  async findUserByEmailWithOrgs(email: string) {
+    try {
+      return await db.user.findUnique({
+        where: { email },
+        include: { organizations: true },
       });
     } catch (error) {
       console.error("Failed to find user by email:", error);

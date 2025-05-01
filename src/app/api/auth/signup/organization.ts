@@ -7,7 +7,11 @@ import {
   OrganizationSignupResponse,
 } from "../types";
 import { sendVerificationEmail } from "../../lib/mail";
-import { generateVerificationToken, getTokenExpiry } from "../../lib/verificationTokens";
+import {
+  generateVerificationToken,
+  getTokenExpiry,
+} from "../../lib/verificationTokens";
+import { RoleName } from "@prisma/client";
 
 export default async function handler(
   data: OrganizationSignupRequest
@@ -38,7 +42,7 @@ export default async function handler(
     console.log("Password hashed successfully");
 
     const defaultRole = await db.role.findUnique({
-      where: { name: "ADMIN" },
+      where: { name: RoleName.ADMIN },
       select: { id: true },
     });
 
@@ -58,13 +62,6 @@ export default async function handler(
     // Transaction for org and user creation
     console.log("Starting transaction for organization and user creation...");
     const result = await db.$transaction(async (tx) => {
-      const organization = await tx.organization.create({
-        data: { name: orgName, isVerified: false },
-        select: {
-          id: true,
-        },
-      });
-
       const user = await tx.user.create({
         data: {
           name: adminName,
@@ -74,7 +71,6 @@ export default async function handler(
           verificationTokenExpiry: tokenExpiry,
           isIndividual: false,
           isVerified: false,
-          organizationId: organization.id,
           roleId: roleId || defaultRole?.id,
         },
         select: {
@@ -83,30 +79,29 @@ export default async function handler(
           email: true,
           isVerified: true,
           isIndividual: true,
-          organizationId: true,
           roleId: true,
           createdAt: true,
           updatedAt: true,
         },
       });
-
-      const organizationWithCreatedBy = await tx.organization.update({
-        where: { id: organization.id },
-        data: { createdBy: email },
+      const organization = await tx.organization.create({
+        data: { name: orgName, isVerified: false, createdBy: email },
         select: {
           id: true,
-          name: true,
-          isVerified: true,
-          plan: true,
-          createdBy: true,
-          createdAt: true,
-          updatedAt: true,
         },
       });
 
-      return { user, organization: organizationWithCreatedBy };
+      // Create organization membership
+      await tx.orgMembership.create({
+        data: {
+          userId: user.id,
+          orgId: organization.id,
+          roleId: roleId || defaultRole!.id,
+        },
+      });
+
+      return { user, organization };
     });
-    console.log("Transaction completed successfully");
 
     await sendVerificationEmail(email, verificationToken);
 

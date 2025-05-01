@@ -85,7 +85,7 @@ function InviteTeamModal({
     dispatch({ type: "SET_MODAL_OPEN", payload: false });
     const res = await inviteTeamMember({
       ...data,
-      orgId: userState.user!.organizationId!,
+      orgId: undefined, // TODO - Replace with actual orgId if needed
     });
 
     if (!res) return;

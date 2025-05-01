@@ -9,7 +9,7 @@ export async function GET(
   try {
     const email = request.nextUrl.searchParams.get("email") || "";
     // Fetch all users with their associated roles
-    const user = await userService.findUserByEmail(email);
+    const user = await userService.findUserByEmailWithOrgs(email);
 
     // Return the users with their roles
     return NextResponse.json(

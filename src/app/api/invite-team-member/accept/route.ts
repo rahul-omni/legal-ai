@@ -29,7 +29,6 @@ export async function GET(req: NextRequest) {
       email: invite.email,
       isVerified: true,
       isIndividual: false,
-      organizationId: invite.orgId,
     } as User;
 
     createdUser = await userService.createUser(user);

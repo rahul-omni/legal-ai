@@ -30,7 +30,6 @@ export interface BaseUserResponse {
   updatedAt: Date | null;
   roleId: string | null;
   email: string;
-  organizationId?: string | null;
   isVerified: boolean | null;
   isIndividual: boolean | null;
 }
