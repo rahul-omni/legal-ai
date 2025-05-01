@@ -62,6 +62,7 @@ export default async function handler(
     // Transaction for org and user creation
     console.log("Starting transaction for organization and user creation...");
     const result = await db.$transaction(async (tx) => {
+      console.log("Creating user...");
       const user = await tx.user.create({
         data: {
           name: adminName,
@@ -84,14 +85,18 @@ export default async function handler(
           updatedAt: true,
         },
       });
+      console.log("User created successfully:", user);
+
+      console.log("Creating organization...");
       const organization = await tx.organization.create({
-        data: { name: orgName, isVerified: false, createdBy: email },
+        data: { name: orgName, isVerified: false, createdBy: user.id },
         select: {
           id: true,
         },
       });
+      console.log("Organization created successfully:", organization);
 
-      // Create organization membership
+      console.log("Creating organization membership...");
       await tx.orgMembership.create({
         data: {
           userId: user.id,
@@ -99,6 +104,7 @@ export default async function handler(
           roleId: roleId || defaultRole!.id,
         },
       });
+      console.log("Organization membership created successfully");
 
       return { user, organization };
     });

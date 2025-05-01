@@ -15,19 +15,27 @@ const PrivatePages: FC<{
   const { fetchUser } = useUser();
 
   useEffect(() => {
-    (async () => {
-      const userEmail = localStorage.getItem("userEmail") || "";
-      if (!userEmail) return;
-
-      const user = await fetchUser(userEmail);
-
-      if (!user) return;
-      dispatchUser({
-        type: "FETCH_USER",
-        payload: { user },
-      });
-    })();
+    userApiCall();
   }, []);
+
+  const userApiCall = async () => {
+    const userEmail = localStorage.getItem("userEmail") || "";
+    if (!userEmail) return;
+
+    const data = await fetchUser(userEmail);
+
+    if (!data) return;
+
+    if (!data) {
+      dispatchUser({ type: "LOGOUT_USER" });
+      return;
+    }
+
+    dispatchUser({
+      type: "FETCH_USER",
+      payload: { orgMemberships: data.orgMemberships, user: data.user },
+    });
+  };
 
   useEffect(() => {
     setRole(roleList || []);

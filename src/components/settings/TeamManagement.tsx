@@ -75,17 +75,17 @@ function InviteTeamModal({
   dispatch: React.Dispatch<Action>;
 }) {
   const { getAllRoles } = useRoleContext();
-  const { register, handleSubmit } = useForm<InviteFormInputs>(); // Add the type here
+  const { register, handleSubmit } = useForm<InviteFormInputs>(); //s Add the type here
   const { inviteTeamMember } = useInviteTemMember();
   const { userState } = useUserContext();
-
   const roles = getAllRoles();
 
   const onSubmit: SubmitHandler<InviteFormInputs> = async (data) => {
     dispatch({ type: "SET_MODAL_OPEN", payload: false });
     const res = await inviteTeamMember({
       ...data,
-      orgId: undefined, // TODO - Replace with actual orgId if needed
+      //TODO -  Update the org id selection to be the user selected org one
+      orgId: userState.orgMemberships![0].orgId,
     });
 
     if (!res) return;

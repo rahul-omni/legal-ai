@@ -15,7 +15,7 @@ export default function useUser() {
       const response = await apiClient.get<UserResponse>(
         `${apiRouteConfig.privateRoutes.user}?email=${email}`
       );
-      return response.data.user;
+      return response.data;
     } catch (err) {
       setError("Failed to fetch user");
     } finally {

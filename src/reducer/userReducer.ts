@@ -1,14 +1,15 @@
 import { clearAuthCookie, setAuthCookie } from "@/lib/auth";
-import { User } from "@prisma/client";
+import { OrgMembership, User } from "@prisma/client";
 
 export interface UserStateProps {
   user?: User;
+  orgMemberships?: OrgMembership[];
 }
 
 export type UserActionType =
   | {
       type: "FETCH_USER";
-      payload: { user: User };
+      payload: { user: User; orgMemberships: OrgMembership[] };
     }
   | {
       type: "LOGIN_USER";
@@ -37,6 +38,7 @@ const reducer = (
       return {
         ...state,
         user: action.payload.user,
+        orgMemberships: action.payload.orgMemberships,
       };
     }
     case "LOGOUT_USER":

@@ -1,5 +1,9 @@
 import { db } from "@/lib/db";
-import { User } from "@prisma/client";
+import { OrgMembership, User } from "@prisma/client";
+
+type UserWithOrganizations = User & {
+  orgMemberships: OrgMembership[];
+};
 
 class UserService {
   /**
@@ -16,15 +20,21 @@ class UserService {
     }
   }
 
-  async findUserByEmailWithOrgs(email: string) {
+  async findUserByEmailWithOrgs(email: string): Promise<UserWithOrganizations> {
     try {
-      return await db.user.findUnique({
+      const user = await db.user.findUnique({
         where: { email },
-        include: { organizations: true },
+        include: { orgMemberships: true },
       });
+
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      return user;
     } catch (error) {
       console.error("Failed to find user by email:", error);
-      throw new Error("Failed to find user in the database");
+      throw new Error(error?.message ?? "Failed to find user in the database");
     }
   }
 

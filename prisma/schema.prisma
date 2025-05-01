@@ -25,7 +25,7 @@ model User {
   nodes                FileSystemNode[] @relation("file_system_nodes_user_id_idx")
   nodesCreated         FileSystemNode[] @relation("file_system_nodes_created_by_idx")
   nodesUpdated         FileSystemNode[] @relation("file_system_nodes_updated_by_idx")
-  organizations        OrgMembership[]  @relation("org_memberships_user_id_idx")
+  orgMemberships       OrgMembership[]  @relation("org_memberships_user_id_idx")
   organizationsCreated Organization[]   @relation("Organization_createdByUser")
 
   @@map("users")

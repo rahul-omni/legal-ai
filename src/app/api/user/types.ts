@@ -1,6 +1,7 @@
-import { User } from "@prisma/client";
+import { OrgMembership, User } from "@prisma/client";
 import { SuccessResponse } from "../types";
 
 export interface UserResponse extends SuccessResponse {
-  user: User | null;
+  user: User;
+  orgMemberships: OrgMembership[];
 }

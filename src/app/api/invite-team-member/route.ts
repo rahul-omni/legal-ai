@@ -28,7 +28,7 @@ export async function POST(
 
     // Send invitation email
     await sendInviteEmail(
-      invitationResult.token,
+      invitationResult.token!,
       invitationResult.email,
       invitationResult.orgName!
     );
