@@ -9,37 +9,32 @@ datasource db {
 }
 
 model User {
-  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                      String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                    String?
-  email                   String    @unique
+  email                   String           @unique
   password                String?
-  roleId                  String?   @map("role_id") @db.Uuid
-  verificationToken       String?   @unique @map("verification_token")
-  verificationTokenExpiry DateTime? @map("verification_token_expiry")
-  isVerified              Boolean?  @default(false) @map("is_verified")
-  createdAt               DateTime? @default(now()) @map("created_at")
-  updatedAt               DateTime? @updatedAt @map("updated_at")
-
-  role                 Role?            @relation("role_user_id_idx", fields: [roleId], references: [id])
-  nodes                FileSystemNode[] @relation("file_system_nodes_user_id_idx")
-  nodesCreated         FileSystemNode[] @relation("file_system_nodes_created_by_idx")
-  nodesUpdated         FileSystemNode[] @relation("file_system_nodes_updated_by_idx")
-  orgMemberships       OrgMembership[]  @relation("org_memberships_user_id_idx")
-  organizationsCreated Organization[]   @relation("Organization_createdByUser")
+  isVerified              Boolean?         @default(false) @map("is_verified")
+  createdAt               DateTime?        @default(now()) @map("created_at")
+  updatedAt               DateTime?        @updatedAt @map("updated_at")
+  verificationToken       String?          @unique @map("verification_token")
+  verificationTokenExpiry DateTime?        @map("verification_token_expiry")
+  nodesCreated            FileSystemNode[] @relation("file_system_nodes_created_by_idx")
+  nodesUpdated            FileSystemNode[] @relation("file_system_nodes_updated_by_idx")
+  nodes                   FileSystemNode[] @relation("file_system_nodes_user_id_idx")
+  orgMemberships          OrgMembership[]  @relation("org_memberships_user_id_idx")
+  organizationsCreated    Organization[]   @relation("Organization_createdByUser")
 
   @@map("users")
 }
 
 model Role {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        RoleName @unique
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        RoleName     @unique
   description String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  user       User[]       @relation("role_user_id_idx")
-  permission Permission[] @relation("role_permission_id_idx")
-  invitation Invitation[] @relation("invitation_role_id_idx")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  invitation  Invitation[] @relation("invitation_role_id_idx")
+  permission  Permission[] @relation("role_permission_id_idx")
 
   @@map("roles")
 }
@@ -47,87 +42,82 @@ model Role {
 model Permission {
   id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name      PermissionName
-  roleId    String?        @map("role_id") @db.Uuid
   createdAt DateTime       @default(now()) @map("created_at")
   updatedAt DateTime       @updatedAt @map("updated_at")
-
-  role Role? @relation("role_permission_id_idx", fields: [roleId], references: [id], onDelete: Cascade)
+  roleId    String?        @map("role_id") @db.Uuid
+  role      Role?          @relation("role_permission_id_idx", fields: [roleId], references: [id], onDelete: Cascade)
 
   @@unique([roleId, name], name: "roleId_name_unique")
   @@map("permissions")
 }
 
 model Organization {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name       String
-  plan       Plan     @default(FREE)
-  isVerified Boolean  @default(false) @map("is_verified")
-  createdBy  String?  @map("created_by") @db.Uuid
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-
-  createdByUser User?           @relation("Organization_createdByUser", fields: [createdBy], references: [id])
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String
+  plan          Plan            @default(FREE)
+  isVerified    Boolean         @default(false) @map("is_verified")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  createdBy     String?         @map("created_by") @db.Uuid
   invitations   Invitation[]    @relation("organization_invitations_org_id_idx")
   members       OrgMembership[] @relation("org_memberships_org_id_idx")
+  createdByUser User?           @relation("Organization_createdByUser", fields: [createdBy], references: [id])
 
   @@map("organizations")
 }
 
 model OrgMembership {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id") @db.Uuid
-  orgId     String   @map("organization_id") @db.Uuid
-  roleId    String   @map("role_id") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  org  Organization @relation("org_memberships_org_id_idx", fields: [orgId], references: [id])
-  user User         @relation("org_memberships_user_id_idx", fields: [userId], references: [id])
+  id        String       @id @default(uuid())
+  userId    String       @map("user_id") @db.Uuid
+  orgId     String       @map("organization_id") @db.Uuid
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  roleId    String       @map("role_id") @db.Uuid
+  org       Organization @relation("org_memberships_org_id_idx", fields: [orgId], references: [id])
+  user      User         @relation("org_memberships_user_id_idx", fields: [userId], references: [id])
 
   @@unique([userId, orgId])
   @@map("org_memberships")
 }
 
 model Invitation {
-  id        String           @id @default(uuid())
-  email     String
-  token     String?          @unique
-  expiresAt DateTime?        @map("expires_at")
-  orgId     String           @map("organization_id") @db.Uuid
-  roleId    String           @map("role_id") @db.Uuid
-  status    InvitationStatus @default(PENDING)
-  createdAt DateTime         @default(now()) @map("created_at")
-  updatedAt DateTime         @updatedAt @map("updated_at")
-
-  organization Organization @relation("organization_invitations_org_id_idx", fields: [orgId], references: [id], onDelete: Cascade)
-  role         Role         @relation("invitation_role_id_idx", fields: [roleId], references: [id])
+  id           String           @id @default(uuid())
+  email        String
+  token        String?          @unique
+  expiresAt    DateTime?        @map("expires_at")
+  orgId        String           @map("organization_id") @db.Uuid
+  status       InvitationStatus @default(PENDING)
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+  roleId       String           @map("role_id") @db.Uuid
+  organization Organization     @relation("organization_invitations_org_id_idx", fields: [orgId], references: [id], onDelete: Cascade)
+  role         Role             @relation("invitation_role_id_idx", fields: [roleId], references: [id])
 
   @@map("invitations")
 }
 
 model FileSystemNode {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name       String
-  type       FileType
-  content    String?  @db.Text // Content is only applicable for files
-  isExpanded Boolean  @default(false) @map("is_expanded")
-  parentId   String?  @map("parent_id") @db.Uuid // Nullable for root nodes
-  userId     String?  @map("user_id") @db.Uuid // TODO : Need to remove this as we already have created by and updated by fields
-  createdBy  String?  @map("created_by") @db.Uuid
-  updatedBy  String?  @map("updated_by") @db.Uuid
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String
+  type          FileType
+  content       String?
+  parentId      String?          @map("parent_id") @db.Uuid
+  isExpanded    Boolean          @default(false) @map("is_expanded")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  createdBy     String?          @map("created_by") @db.Uuid
+  updatedBy     String?          @map("updated_by") @db.Uuid
+  userId        String?          @map("user_id") @db.Uuid
   createdByUser User?            @relation("file_system_nodes_created_by_idx", fields: [createdBy], references: [id])
-  updatedByUser User?            @relation("file_system_nodes_updated_by_idx", fields: [updatedBy], references: [id])
-  user          User?            @relation("file_system_nodes_user_id_idx", fields: [userId], references: [id])
   parent        FileSystemNode?  @relation("file_system_node_hierarchy", fields: [parentId], references: [id])
   children      FileSystemNode[] @relation("file_system_node_hierarchy")
+  updatedByUser User?            @relation("file_system_nodes_updated_by_idx", fields: [updatedBy], references: [id])
+  user          User?            @relation("file_system_nodes_user_id_idx", fields: [userId], references: [id])
 
-  @@index([createdBy], name: "file_system_nodes_created_by_idx")
-  @@index([updatedBy], name: "file_system_nodes_updated_by_idx")
-  @@index([parentId], name: "file_system_nodes_parent_id_idx")
-  @@index([userId], name: "file_system_nodes_user_id_idx")
+  @@index([createdBy])
+  @@index([updatedBy])
+  @@index([parentId])
+  @@index([userId])
   @@map("file_system_nodes")
 }
 
@@ -160,6 +150,6 @@ enum PermissionName {
 enum InvitationStatus {
   PENDING
   ACCEPTED
-  ACTIVE
   EXPIRED
+  ACTIVE
 }
