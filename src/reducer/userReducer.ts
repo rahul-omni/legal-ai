@@ -3,7 +3,9 @@ import { OrgMembership, User } from "@prisma/client";
 
 export interface UserStateProps {
   user?: User;
+  hasAnyOrganization: boolean;
   orgMemberships?: OrgMembership[];
+  selectedOrdMembership?: OrgMembership;
 }
 
 export type UserActionType =
@@ -19,7 +21,9 @@ export type UserActionType =
       type: "LOGOUT_USER";
     };
 
-const initialState: UserStateProps = {};
+const initialState: UserStateProps = {
+  hasAnyOrganization: false,
+};
 
 const reducer = (
   state: UserStateProps,
@@ -38,7 +42,9 @@ const reducer = (
       return {
         ...state,
         user: action.payload.user,
+        hasAnyOrganization: action.payload.orgMemberships.length > 0,
         orgMemberships: action.payload.orgMemberships,
+        selectedOrdMembership: action.payload.orgMemberships[0],
       };
     }
     case "LOGOUT_USER":

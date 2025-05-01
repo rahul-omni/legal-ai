@@ -84,8 +84,7 @@ function InviteTeamModal({
     dispatch({ type: "SET_MODAL_OPEN", payload: false });
     const res = await inviteTeamMember({
       ...data,
-      //TODO -  Update the org id selection to be the user selected org one
-      orgId: userState.orgMemberships![0].orgId,
+      orgId: userState.selectedOrdMembership!.orgId,
     });
 
     if (!res) return;
