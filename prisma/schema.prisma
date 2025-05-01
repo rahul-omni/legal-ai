@@ -18,17 +18,15 @@ model User {
   verificationTokenExpiry DateTime? @map("verification_token_expiry")
   isVerified              Boolean?  @default(false) @map("is_verified")
   isIndividual            Boolean?  @default(true) @map("is_individual")
-  organizationId          String?   @map("organization_id") @db.Uuid
   createdAt               DateTime? @default(now()) @map("created_at")
   updatedAt               DateTime? @updatedAt @map("updated_at")
 
-  role           Role?            @relation("role_user_id_idx", fields: [roleId], references: [id])
-  organization   Organization?    @relation("user_organization_id_idx", fields: [organizationId], references: [id])
-  fileSystemNode FileSystemNode[] @relation("file_system_nodes_user_id_idx")
-  createdBy      FileSystemNode[] @relation("file_system_nodes_created_by_idx")
-  updatedBy      FileSystemNode[] @relation("file_system_nodes_updated_by_idx")
-  organizations  Organization[]   @relation("organization_created_by_idx")
-  orgMemberships OrgMembership[]  @relation("org_memberships_user_id_idx")
+  role                 Role?            @relation("role_user_id_idx", fields: [roleId], references: [id])
+  nodes                FileSystemNode[] @relation("file_system_nodes_user_id_idx")
+  nodesCreated         FileSystemNode[] @relation("file_system_nodes_created_by_idx")
+  nodesUpdated         FileSystemNode[] @relation("file_system_nodes_updated_by_idx")
+  organizations        OrgMembership[]  @relation("org_memberships_user_id_idx")
+  organizationsCreated Organization[]   @relation("Organization_createdByUser")
 
   @@map("users")
 }
@@ -54,7 +52,7 @@ model Permission {
   createdAt DateTime       @default(now()) @map("created_at")
   updatedAt DateTime       @updatedAt @map("updated_at")
 
-  role Role? @relation("role_permission_id_idx", fields: [roleId], references: [id])
+  role Role? @relation("role_permission_id_idx", fields: [roleId], references: [id], onDelete: Cascade)
 
   @@unique([roleId, name], name: "roleId_name_unique")
   @@map("permissions")
@@ -65,14 +63,13 @@ model Organization {
   name       String
   plan       Plan     @default(FREE)
   isVerified Boolean  @default(false) @map("is_verified")
-  createdBy  String?  @map("created_by")
+  createdBy  String?  @map("created_by") @db.Uuid
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  createdByUser  User?           @relation("organization_created_by_idx", fields: [createdBy], references: [email])
-  users          User[]          @relation("user_organization_id_idx")
-  invitations    Invitation[]    @relation("organization_invitations_org_id_idx")
-  orgMemberships OrgMembership[] @relation("org_memberships_org_id_idx")
+  createdByUser User?           @relation("Organization_createdByUser", fields: [createdBy], references: [id])
+  invitations   Invitation[]    @relation("organization_invitations_org_id_idx")
+  members       OrgMembership[] @relation("org_memberships_org_id_idx")
 
   @@map("organizations")
 }
@@ -95,8 +92,8 @@ model OrgMembership {
 model Invitation {
   id        String           @id @default(uuid())
   email     String
-  token     String?           @unique
-  expiresAt DateTime?         @map("expires_at")
+  token     String?          @unique
+  expiresAt DateTime?        @map("expires_at")
   orgId     String           @map("organization_id") @db.Uuid
   roleId    String           @map("role_id") @db.Uuid
   status    InvitationStatus @default(PENDING)
