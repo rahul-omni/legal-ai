@@ -91,7 +91,6 @@ async function getOrCreateUser(invite: Invitation, tx: Transaction) {
     email: invite.email,
     roleId: invite.roleId,
     isVerified: true,
-    isIndividual: false,
   } as User;
 
   const createdUser = await userService.createUser(user, tx);

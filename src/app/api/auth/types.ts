@@ -31,7 +31,6 @@ export interface BaseUserResponse {
   roleId: string | null;
   email: string;
   isVerified: boolean | null;
-  isIndividual: boolean | null;
 }
 
 export interface UserWithRoleResponse extends BaseUserResponse {

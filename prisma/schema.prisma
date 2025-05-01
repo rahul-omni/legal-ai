@@ -17,7 +17,6 @@ model User {
   verificationToken       String?   @unique @map("verification_token")
   verificationTokenExpiry DateTime? @map("verification_token_expiry")
   isVerified              Boolean?  @default(false) @map("is_verified")
-  isIndividual            Boolean?  @default(true) @map("is_individual")
   createdAt               DateTime? @default(now()) @map("created_at")
   updatedAt               DateTime? @updatedAt @map("updated_at")
 
