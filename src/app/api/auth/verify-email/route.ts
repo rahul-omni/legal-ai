@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
-import { logger } from "../../lib/logger";
 import { routeConfig } from "@/lib/routeConfig";
+import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
+import { logger } from "../../lib/logger";
+import { redirectToURL } from "../../lib/redirect";
 
 export async function GET(req: NextRequest) {
   try {
@@ -61,11 +62,8 @@ export async function GET(req: NextRequest) {
     cookies().set("verified", "true");
     logger.info("Verification cookie set");
 
-    return NextResponse.redirect(
-      new URL(
-        `${routeConfig.publicRoutes.verifyEmailSuccess}?email=${email}`,
-        req.url
-      )
+    return redirectToURL(
+      `${routeConfig.publicRoutes.verifyEmailSuccess}?email=${email}`
     );
   } catch (error) {
     logger.error("Error occurred during email verification", { error });

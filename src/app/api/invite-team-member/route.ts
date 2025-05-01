@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendInviteEmail } from "../lib/mail";
-import { invitationService } from "../lib/services/invitationService";
+import { invitationService } from "../lib/services/invitationTeamMemberService";
 import { InviteRequestSchema } from "../lib/validation/inviteTeamMember";
 import { ErrorResponse, SuccessResponse } from "../types";
 

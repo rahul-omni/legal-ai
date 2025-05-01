@@ -6,6 +6,7 @@ interface PublicApiRoute {
   resendVerification: "/auth/resend-verification";
   inviteTeamMember: "/invite-team-member";
   acceptInvite: "/invite-team-member/accept";
+  createPassword: "/auth/create-password";
 }
 
 interface PrivateApiRoute {
@@ -33,5 +34,6 @@ export const apiRouteConfig: {
     resendVerification: "/auth/resend-verification",
     inviteTeamMember: "/invite-team-member",
     acceptInvite: "/invite-team-member/accept",
+    createPassword: "/auth/create-password",
   },
 };

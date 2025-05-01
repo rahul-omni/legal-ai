@@ -1,14 +1,13 @@
 import { db } from "@/lib/db";
-import { OrgMembership, User } from "@prisma/client";
+import { OrgMembership, User, PrismaClient } from "@prisma/client";
+import { Transaction } from "../../types";
+import { NotFoundError } from "../errors";
 
 type UserWithOrganizations = User & {
   orgMemberships: OrgMembership[];
 };
 
 class UserService {
-  /**
-   * Finds a user by their email address
-   */
   async findUserByEmail(email: string) {
     try {
       return await db.user.findUnique({
@@ -20,39 +19,54 @@ class UserService {
     }
   }
 
-  async findUserByEmailWithOrgs(email: string): Promise<UserWithOrganizations> {
+  async findUserByEmailWithOrgs(
+    email: string
+  ): Promise<UserWithOrganizations | null> {
     try {
       const user = await db.user.findUnique({
         where: { email },
         include: { orgMemberships: true },
       });
 
-      if (!user) {
-        throw new Error("User not found");
-      }
-
       return user;
     } catch (error) {
-      console.error("Failed to find user by email:", error);
-      throw new Error(error?.message ?? "Failed to find user in the database");
+      throw new NotFoundError("User not found");
     }
   }
 
-  /**
-   * Creates a new verified user with the given email
-   */
-  async createUser(user: User) {
+  async createUser(user: User, tx?: Transaction) {
     try {
-      return await db.user.create({
-        data: {
-          ...user,
-        },
+      const prisma = tx || db;
+      return await prisma.user.create({
+        data: user,
       });
     } catch (error) {
       console.error("Failed to create user:", error);
-      throw error instanceof Error
-        ? error
-        : new Error("Failed to create user in the database");
+      throw new Error("Failed to create user in the database");
+    }
+  }
+
+  async findUserByEmailWithPassword(email: string) {
+    try {
+      return await db.user.findUnique({
+        where: {
+          email,
+          password: { not: null },
+        },
+      });
+    } catch (error) {
+      throw new NotFoundError("User not found");
+    }
+  }
+
+  async updateUserById(user: User) {
+    try {
+      return await db.user.update({
+        where: { id: user.id },
+        data: user,
+      });
+    } catch (error) {
+      throw new NotFoundError("User not found");
     }
   }
 }

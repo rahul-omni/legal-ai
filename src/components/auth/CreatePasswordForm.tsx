@@ -1,3 +1,6 @@
+import { useCreatePassword } from "@/hooks/api/useAuth";
+import { routeConfig } from "@/lib/routeConfig";
+import { useRouter } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -8,6 +11,8 @@ interface CreatePasswordFormInputs {
 }
 
 export function CreatePasswordForm({ email }: { email: string }) {
+  const { createPassword } = useCreatePassword();
+  const router = useRouter();
   const { register, handleSubmit } = useForm<CreatePasswordFormInputs>({
     defaultValues: { email },
   });
@@ -17,15 +22,10 @@ export function CreatePasswordForm({ email }: { email: string }) {
       toast.error("Passwords do not match");
       return;
     }
-
-    console.log(
-      "Creating password for user:",
-      data.email,
-      "in org:",
-      data.password,
-      data.confirmPassword
-    );
-    //
+    const res = await createPassword(data);
+    if (res?.success) {
+      router.replace(`${routeConfig.publicRoutes.login}?email=${data.email}`);
+    }
   };
 
   return (

@@ -1,10 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { redirectToURL } from "./app/api/lib/redirect";
 import { routeConfig } from "./lib/routeConfig";
 
 export function middleware(request: NextRequest) {
   const authToken = request.cookies.get("authToken")?.value;
-  const verified = request.cookies.get("verified")?.value;
+  const verified = request.cookies.get("verified")?.value === "true";
 
   const privateRoute = Object.values(routeConfig.privateRoutes).find((route) =>
     request.nextUrl.pathname.startsWith(route)
@@ -15,23 +16,13 @@ export function middleware(request: NextRequest) {
   );
 
   if (request.nextUrl.pathname === "/") {
-    return NextResponse.redirect(
-      new URL(routeConfig.publicRoutes.login, request.url)
-    );
-  }
-
-  if (privateRoute && !authToken) {
-    return NextResponse.redirect(
-      new URL(routeConfig.publicRoutes.login, request.url)
-    );
+    return redirectToURL(routeConfig.publicRoutes.login);
+  } else if (privateRoute && !authToken) {
+    return redirectToURL(routeConfig.publicRoutes.login);
   } else if (privateRoute && authToken && !verified) {
-    return NextResponse.redirect(
-      new URL(routeConfig.publicRoutes.verifyEmail, request.url)
-    );
+    return redirectToURL(routeConfig.publicRoutes.verifyEmail);
   } else if (publicRoute && authToken) {
-    return NextResponse.redirect(
-      new URL(routeConfig.privateRoutes.projects, request.url)
-    );
+    redirectToURL(routeConfig.privateRoutes.projects);
   }
 
   const response = NextResponse.next();

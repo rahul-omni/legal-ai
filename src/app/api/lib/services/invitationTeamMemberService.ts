@@ -2,13 +2,14 @@ import { db } from "@/lib/db";
 import {
   generateVerificationToken,
   getTokenExpiry,
-} from "../../lib/verificationTokens";
+} from "../verificationTokens";
 import { organizationService } from "./organizationService";
 import { Invitation, InvitationStatus } from "@prisma/client";
 import {
   InviteTeamMemberReq,
   InviteTeamMemberRes,
 } from "../../invite-team-member/types";
+import { Transaction } from "../../types";
 
 class InvitationService {
   /**
@@ -120,15 +121,45 @@ class InvitationService {
     });
   }
 
-  async updateInvitationStatusToAccepted(invitationId: string) {
-    return await db.invitation.update({
-      where: { id: invitationId },
-      data: {
-        status: InvitationStatus.ACCEPTED,
-        token: null,
-        expiresAt: null,
-      },
-    });
+  async updateInvitationStatusToAccepted(
+    invitationId: string,
+    tx?: Transaction
+  ) {
+    const prisma = tx || db;
+    console.log("Updating invitation status to ACCEPTED for ID:", invitationId);
+    try {
+      const updatedInvitation = await prisma.invitation.update({
+        where: { id: invitationId },
+        data: {
+          status: InvitationStatus.ACCEPTED,
+          token: null,
+          expiresAt: null,
+        },
+      });
+      console.log("Invitation status updated successfully:", updatedInvitation);
+      return updatedInvitation;
+    } catch (error) {
+      console.error(
+        "Failed to update invitation status to ACCEPTED for ID:",
+        invitationId,
+        error
+      );
+      throw new Error("Failed to update invitation status in the database");
+    }
+  }
+
+  async findAcceptedInvitationByEmail(email: string) {
+    try {
+      return await db.invitation.findFirst({
+        where: {
+          email,
+          status: InvitationStatus.ACCEPTED,
+        },
+      });
+    } catch (error) {
+      console.error("Failed to find accepted invitation by email:", error);
+      throw new Error("Failed to find accepted invitation in the database");
+    }
   }
 }
 

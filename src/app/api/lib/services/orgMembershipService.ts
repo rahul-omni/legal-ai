@@ -1,12 +1,18 @@
 import { db } from "@/lib/db";
+import { Transaction } from "../../types";
+import { AppError } from "../errors";
 
 class OrgMembershipService {
-  /**
-   * Creates an organization membership
-   */
-  async createOrgMembership(userId: string, orgId: string, roleId: string) {
+  async createOrgMembership(
+    userId: string,
+    orgId: string,
+    roleId: string,
+    tx?: Transaction
+  ) {
+    const prisma = tx || db;
+
     try {
-      return await db.orgMembership.create({
+      return await prisma.orgMembership.create({
         data: {
           userId,
           orgId,
@@ -14,16 +20,10 @@ class OrgMembershipService {
         },
       });
     } catch (error) {
-      console.error("Failed to create organization membership:", error);
-      throw error instanceof Error
-        ? error
-        : new Error("Failed to create organization membership in the database");
+      throw new AppError("Failed to create organization membership");
     }
   }
 
-  /**
-   * Finds organization memberships by user ID
-   */
   async findMembershipsByUserId(userId: string) {
     try {
       return await db.orgMembership.findMany({
@@ -40,5 +40,4 @@ class OrgMembershipService {
   }
 }
 
-// Export default instance for easier usage
 export const orgMembershipService = new OrgMembershipService();

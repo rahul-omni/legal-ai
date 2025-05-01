@@ -1,5 +1,5 @@
 // types/auth.ts
-import { PermissionName, RoleName } from "@prisma/client";
+import { PermissionName, RoleName, User } from "@prisma/client";
 import { ZodIssue } from "zod";
 
 type SignupType = "individual" | "organization";
@@ -69,6 +69,11 @@ export interface OrganizationSignupResponse {
 export type SignupResponse =
   | IndividualSignupResponse
   | OrganizationSignupResponse;
+
+export interface CreatePasswordResponse {
+  success: boolean;
+  message: string;
+}
 
 export interface ErrorResponse {
   errMsg: string;

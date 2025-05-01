@@ -30,7 +30,7 @@ export async function sendInviteEmail(
   email: string,
   orgName: string
 ) {
-  const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/api${apiRouteConfig.publicRoutes.acceptInvite}?token=${token}`;
+  const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/api${apiRouteConfig.publicRoutes.acceptInvite}?token=${token}&email=${encodeURIComponent(email)}`;
 
   logger.info(`Sending invite email to: ${email}`);
   logger.debug(`Invite link: ${inviteLink}`);
