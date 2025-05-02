@@ -54,6 +54,7 @@ export async function POST(
     cookies().set("authToken", token, {
       expires: addHours(new Date(), 24),
     });
+    cookies().set("verified", "true");
 
     return NextResponse.json(
       { successMsg: "Login success", user, token },
