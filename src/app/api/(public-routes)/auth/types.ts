@@ -1,5 +1,5 @@
 // types/auth.ts
-import { PermissionName, RoleName, User } from "@prisma/client";
+import { PermissionName, RoleName } from "@prisma/client";
 import { ZodIssue } from "zod";
 
 type SignupType = "individual" | "organization";

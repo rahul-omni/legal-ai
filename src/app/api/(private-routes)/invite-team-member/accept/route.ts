@@ -3,13 +3,13 @@ import { userService } from "@/app/api/lib/services/userService";
 import { db } from "@/lib/db";
 import { routeConfig } from "@/lib/routeConfig";
 import { Invitation, User } from "@prisma/client";
-import { NextRequest } from "next/server";
-import { AppError, handleError } from "../../lib/errors";
-import { logger } from "../../lib/logger";
-import { redirectToURL } from "../../lib/redirect";
-import { invitationService } from "../../lib/services/invitationTeamMemberService";
-import { Transaction } from "../../types";
 import { cookies } from "next/headers";
+import { NextRequest } from "next/server";
+import { AppError, handleError } from "../../../lib/errors";
+import { logger } from "../../../lib/logger";
+import { redirectToURL } from "../../../lib/redirect";
+import { invitationService } from "../../../lib/services/invitationTeamMemberService";
+import { Transaction } from "../../../types";
 
 export async function GET(req: NextRequest) {
   logger.info(`Received GET request with URL: ${req.url}`);

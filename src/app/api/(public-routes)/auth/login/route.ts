@@ -10,8 +10,8 @@ import {
   ForbiddenError,
   handleError,
   NotFoundError,
-} from "../../lib/errors";
-import { generateJwdToken } from "../../lib/jsonWebToken";
+} from "../../../lib/errors";
+import { generateJwdToken } from "../../../lib/jsonWebToken";
 
 interface LoginResponse {
   successMsg: string;

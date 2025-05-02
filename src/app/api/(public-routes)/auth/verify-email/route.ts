@@ -2,8 +2,8 @@ import { db } from "@/lib/db";
 import { routeConfig } from "@/lib/routeConfig";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { logger } from "../../lib/logger";
-import { redirectToURL } from "../../lib/redirect";
+import { logger } from "../../../lib/logger";
+import { redirectToURL } from "../../../lib/redirect";
 
 export async function GET(req: NextRequest) {
   try {

@@ -1,14 +1,17 @@
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
-import { sendVerificationEmail } from "../../lib/mail";
-import { generateVerificationToken, getTokenExpiry } from "../../lib/verificationTokens";
+import { logger } from "../../../lib/logger";
+import { sendVerificationEmail } from "../../../lib/mail";
+import {
+  generateVerificationToken,
+  getTokenExpiry,
+} from "../../../lib/verificationTokens";
 import {
   ErrorResponse,
   IndividualSignupRequest,
   IndividualSignupResponse,
 } from "../types";
-import { logger } from "../../lib/logger";
 
 export default async function handler(
   data: IndividualSignupRequest

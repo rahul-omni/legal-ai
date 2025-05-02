@@ -6,9 +6,9 @@ import {
   handleError,
   NotFoundError,
   ValidationError,
-} from "../../lib/errors";
-import { logger } from "../../lib/logger";
-import { userService } from "../../lib/services/userService";
+} from "../../../lib/errors";
+import { logger } from "../../../lib/logger";
+import { userService } from "../../../lib/services/userService";
 import { CreatePasswordResponse } from "../types";
 
 const CreatePasswordSchema = z.object({
