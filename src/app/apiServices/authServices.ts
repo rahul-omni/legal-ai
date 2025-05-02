@@ -1,11 +1,11 @@
 import { User } from "@prisma/client";
+import { AxiosError } from "axios";
 import { apiClient } from ".";
 import {
   ErrorResponse,
   SignupRequest,
   SignupResponse,
-} from "../api/auth/types";
-import { AxiosError } from "axios";
+} from "../api/(public-routes)/auth/types";
 
 export const login = async (userDetails: {
   email: string;

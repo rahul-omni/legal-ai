@@ -1,13 +1,13 @@
-import { createLogger, format, transports } from "winston";
-import path from "path";
 import { formatDate } from "date-fns";
+import path from "path";
+import { createLogger, format, transports } from "winston";
 
 export const logger = createLogger({
   level: "info",
   format: format.combine(
     format.timestamp(),
     format.errors({ stack: true }), // Include stack trace for errors
-    format.printf(({ timestamp, level, message, stack }) => {
+    format.printf(({ timestamp: _, level, message, stack }) => {
       const folderName = path.basename(__dirname);
       const fileName = path.basename(__filename);
       const filePath = path.join(folderName, fileName);

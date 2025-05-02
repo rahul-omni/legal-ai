@@ -1,17 +1,17 @@
 import { db } from "@/lib/db";
+import { RoleName } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
+import { sendVerificationEmail } from "../../../lib/mail";
+import {
+  generateVerificationToken,
+  getTokenExpiry,
+} from "../../../lib/verificationTokens";
 import {
   ErrorResponse,
   OrganizationSignupRequest,
   OrganizationSignupResponse,
 } from "../types";
-import { sendVerificationEmail } from "../../lib/mail";
-import {
-  generateVerificationToken,
-  getTokenExpiry,
-} from "../../lib/verificationTokens";
-import { RoleName } from "@prisma/client";
 
 export default async function handler(
   data: OrganizationSignupRequest

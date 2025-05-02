@@ -1,9 +1,7 @@
-// create a hook for inviting team members
-
 import {
   InviteTeamMemberReq,
   InviteTeamMemberRes,
-} from "@/app/api/invite-team-member/types";
+} from "@/app/api/(private-routes)/invite-team-member/types";
 import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
 import { apiClient } from "@/app/apiServices";
 import { useState } from "react";
@@ -33,4 +31,15 @@ export const useInviteTemMember = () => {
   };
 
   return { inviteTeamMember, isLoading, error };
+};
+
+// hook to fetch invited team members
+export const useFetchTeamMembers = (orgId: string) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<any>(null);
+
+  const fetchTeamMembers = async () => {};
+
+  return { fetchTeamMembers, isLoading, error, data };
 };

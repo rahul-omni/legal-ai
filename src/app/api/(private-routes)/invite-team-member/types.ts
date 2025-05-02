@@ -1,5 +1,5 @@
 import { InvitationStatus } from "@prisma/client";
-import { SuccessResponse } from "../types";
+import { SuccessResponse } from "../../types";
 
 export interface InviteTeamMemberReq {
   email: string;

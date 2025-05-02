@@ -25,5 +25,6 @@ export function setAuthCookie(token: string, isVerified?: boolean) {
 }
 
 export function clearAuthCookie() {
+  document.cookie = "verified=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 }
