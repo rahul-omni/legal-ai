@@ -89,7 +89,6 @@ async function getOrCreateUser(invite: Invitation, tx: Transaction) {
 
   const user = {
     email: invite.email,
-    roleId: invite.roleId,
     isVerified: true,
   } as User;
 
