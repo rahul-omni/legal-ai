@@ -27,12 +27,14 @@ interface FileExplorerProps {
   selectedDocument?: FileSystemNodeProps;
   onDocumentSelect: (file: FileSystemNodeProps) => void;
   onPdfParsed: (text: string) => void;
+  fileTree: FileSystemNodeProps[]; 
 }
 
 export const FileExplorerV2: FC<FileExplorerProps> = ({
   selectedDocument,
   onDocumentSelect,
   onPdfParsed,
+  fileTree
 }) => {
   const params = useParams();
   const [nodes, setNodes] = useState<FileSystemNodeProps[]>([]);
@@ -46,6 +48,13 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
   useEffect(() => {
     fetchRootNodes();
   }, []);
+  
+   
+
+  // useEffect(() => {
+  //   setNodes(fileTree);  // Whenever fileTree prop changes, update the local state
+  //   console.log("Updated file tree:", fileTree);
+  // }, [fileTree]);
 
   const handleParams = (nodes: FileSystemNodeProps[]) => {
     const { filePath } = params;
