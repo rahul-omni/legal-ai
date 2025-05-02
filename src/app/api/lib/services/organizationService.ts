@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { Organization, OrgMembership } from "@prisma/client";
+import { Organization } from "@prisma/client";
 
 class OrganizationService {
   /**

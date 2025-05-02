@@ -5,11 +5,11 @@ import {
 } from "../verificationTokens";
 import { organizationService } from "./organizationService";
 import { Invitation, InvitationStatus } from "@prisma/client";
+import { Transaction } from "../../types";
 import {
   InviteTeamMemberReq,
   InviteTeamMemberRes,
-} from "../../invite-team-member/types";
-import { Transaction } from "../../types";
+} from "../../(private-routes)/invite-team-member/types";
 
 class InvitationService {
   /**
