@@ -1,6 +1,5 @@
 // types/auth.ts
-import { PermissionName, RoleName } from "@prisma/client";
-import { ZodIssue } from "zod";
+import { Organization, User } from "@prisma/client";
 
 type SignupType = "individual" | "organization";
 
@@ -23,36 +22,7 @@ export interface OrganizationSignupRequest {
 
 export type SignupRequest = IndividualSignupRequest & OrganizationSignupRequest;
 
-export interface BaseUserResponse {
-  id: string;
-  name: string | null;
-  createdAt: Date | null;
-  updatedAt: Date | null;
-  roleId: string | null;
-  email: string;
-  isVerified: boolean | null;
-}
-
-export interface UserWithRoleResponse extends BaseUserResponse {
-  role: {
-    id: string;
-    name: RoleName;
-    description: string | null;
-    permissions: {
-      id: string;
-      name: PermissionName;
-    }[];
-  } | null;
-}
-
-export interface OrganizationResponse {
-  id: string;
-  name: string;
-  plan: "FREE" | "PRO" | "ENTERPRISE";
-  isVerified: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
+type BaseUserResponse = Omit<User, "password"> & {};
 
 export interface IndividualSignupResponse {
   message: string;
@@ -62,7 +32,7 @@ export interface IndividualSignupResponse {
 export interface OrganizationSignupResponse {
   message: string;
   user: BaseUserResponse;
-  organization: OrganizationResponse;
+  organization: Organization;
 }
 
 export type SignupResponse =
@@ -72,15 +42,4 @@ export type SignupResponse =
 export interface CreatePasswordResponse {
   success: boolean;
   message: string;
-}
-
-export interface ErrorResponse {
-  errMsg: string;
-
-  errors?:
-    | Array<{
-        path: string[];
-        message: string;
-      }>
-    | ZodIssue[];
 }

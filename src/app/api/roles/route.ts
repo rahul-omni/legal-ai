@@ -1,8 +1,7 @@
-import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { ErrorResponse, handleError } from "../lib/errors";
 import { roleService } from "../lib/services/roleService";
 import { RoleResponse } from "./types";
-import { ErrorResponse } from "../types";
 
 export async function GET(
   request: NextRequest
@@ -27,11 +26,6 @@ export async function GET(
       { status: 200 }
     );
   } catch (error) {
-    return NextResponse.json(
-      {
-        errorMessage: "Failed to fetch roles",
-      },
-      { status: 500 }
-    );
+    return handleError(error);
   }
 }

@@ -1,3 +1,9 @@
+import {
+  ErrorAlreadyExists,
+  ErrorApp,
+  ErrorResponse,
+  handleError,
+} from "@/app/api/lib/errors";
 import { db } from "@/lib/db";
 import { RoleName } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -8,7 +14,6 @@ import {
   getTokenExpiry,
 } from "../../../lib/verificationTokens";
 import {
-  ErrorResponse,
   OrganizationSignupRequest,
   OrganizationSignupResponse,
 } from "../types";
@@ -17,52 +22,34 @@ export default async function handler(
   data: OrganizationSignupRequest
 ): Promise<NextResponse<OrganizationSignupResponse | ErrorResponse>> {
   try {
-    console.log("Received request for organization signup");
-
-    const { orgName, adminName, email, password, roleId } = data;
+    const { orgName, adminName, email, password } = data;
 
     // Check if user already exists
     const existingUser = await db.user.findUnique({
       where: { email },
       select: { id: true },
     });
-    console.log("Checked for existing user:", existingUser);
 
     if (existingUser) {
-      console.warn("User already exists with email:", email);
-      return NextResponse.json(
-        { errMsg: "User already exists" },
-        { status: 409 }
-      );
+      throw new ErrorAlreadyExists("User");
     }
 
     // Hash password
-    console.log("Hashing password...");
     const hashedPassword = await bcrypt.hash(password, 8);
-    console.log("Password hashed successfully");
 
     const defaultRole = await db.role.findUnique({
       where: { name: RoleName.ADMIN },
       select: { id: true },
     });
 
-    console.log("Fetched default role:", defaultRole);
-
-    if (!roleId && !defaultRole) {
-      console.error("No default admin role configured");
-      return NextResponse.json(
-        { errMsg: "No default admin role configured" },
-        { status: 400 }
-      );
+    if (!defaultRole) {
+      throw new ErrorApp("No default admin role configured");
     }
 
     const verificationToken = generateVerificationToken();
     const tokenExpiry = getTokenExpiry();
 
-    // Transaction for org and user creation
-    console.log("Starting transaction for organization and user creation...");
     const result = await db.$transaction(async (tx) => {
-      console.log("Creating user...");
       const user = await tx.user.create({
         data: {
           name: adminName,
@@ -72,58 +59,37 @@ export default async function handler(
           verificationTokenExpiry: tokenExpiry,
           isVerified: false,
         },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          isVerified: true,
-          createdAt: true,
-          updatedAt: true,
-        },
       });
-      console.log("User created successfully:", user);
 
-      console.log("Creating organization...");
       const organization = await tx.organization.create({
         data: { name: orgName, isVerified: false, createdBy: user.id },
-        select: {
-          id: true,
-        },
       });
-      console.log("Organization created successfully:", organization);
 
-      console.log("Creating organization membership...");
       await tx.orgMembership.create({
         data: {
           userId: user.id,
           orgId: organization.id,
-          roleId: roleId || defaultRole!.id,
+          roleId: defaultRole!.id,
         },
       });
-      console.log("Organization membership created successfully");
 
       return { user, organization };
     });
 
     await sendVerificationEmail(email, verificationToken);
 
+    const { password: _, ...userDetails } = result.user;
+
     return NextResponse.json(
       {
-        errMsg: "Organization and admin user created successfully",
-        user: result.user,
+        message: "Organization and admin user created successfully",
+        user: userDetails,
         organization: result.organization,
       },
       { status: 201 }
     );
   } catch (error) {
     console.error("Organization signup error:", error);
-    return NextResponse.json(
-      { errMsg: "Internal server error" },
-      { status: 500 }
-    );
-  } finally {
-    console.log("Disconnecting from database...");
-    await db.$disconnect();
-    console.log("Database disconnected");
+    return handleError(error);
   }
 }

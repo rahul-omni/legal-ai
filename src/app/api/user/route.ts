@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { userService } from "../lib/services/userService";
-import { ErrorResponse } from "../types";
 import { UserResponse } from "./types";
+import { ErrorResponse, handleError } from "../lib/errors";
 
 export async function GET(
   request: NextRequest
@@ -10,21 +10,18 @@ export async function GET(
     const email = request.nextUrl.searchParams.get("email") || "";
 
     const data = await userService.findUserByEmailWithOrgs(email);
-    const { orgMemberships, ...user } = data;
+
+    const { orgMemberships, ...user } = data!;
     return NextResponse.json(
       {
         user,
         orgMemberships: orgMemberships,
+        success: true,
         successMessage: "User fetched successfully",
       },
       { status: 200 }
     );
   } catch (error) {
-    return NextResponse.json(
-      {
-        errorMessage: error?.message ?? "Failed to fetch users",
-      },
-      { status: 500 }
-    );
+    return handleError(error);
   }
 }

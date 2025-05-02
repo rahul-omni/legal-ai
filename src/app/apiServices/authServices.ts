@@ -2,10 +2,10 @@ import { User } from "@prisma/client";
 import { AxiosError } from "axios";
 import { apiClient } from ".";
 import {
-  ErrorResponse,
   SignupRequest,
   SignupResponse,
 } from "../api/(public-routes)/auth/types";
+import { ErrorResponse } from "../api/lib/errors";
 
 export const login = async (userDetails: {
   email: string;
@@ -17,7 +17,7 @@ export const login = async (userDetails: {
     return { token, user };
   } catch (error) {
     const errorResponse = error as AxiosError<ErrorResponse>;
-    throw new Error(errorResponse.response?.data.errMsg || "Login failed");
+    throw new Error(errorResponse.response?.data.error || "Login failed");
   }
 };
 

@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
-import { OrgMembership, User, PrismaClient } from "@prisma/client";
+import { OrgMembership, User } from "@prisma/client";
 import { Transaction } from "../../types";
-import { NotFoundError } from "../errors";
+import { ErrorNotFound } from "../errors";
 
 type UserWithOrganizations = User & {
   orgMemberships: OrgMembership[];
@@ -30,7 +30,7 @@ class UserService {
 
       return user;
     } catch (error) {
-      throw new NotFoundError("User not found");
+      throw new ErrorNotFound("User not found");
     }
   }
 
@@ -55,7 +55,7 @@ class UserService {
         },
       });
     } catch (error) {
-      throw new NotFoundError("User not found");
+      throw new ErrorNotFound("User not found");
     }
   }
 
@@ -66,7 +66,7 @@ class UserService {
         data: user,
       });
     } catch (error) {
-      throw new NotFoundError("User not found");
+      throw new ErrorNotFound("User not found");
     }
   }
 }

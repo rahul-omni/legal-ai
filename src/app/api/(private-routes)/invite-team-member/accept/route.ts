@@ -5,7 +5,7 @@ import { routeConfig } from "@/lib/routeConfig";
 import { Invitation, User } from "@prisma/client";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
-import { AppError, handleError } from "../../../lib/errors";
+import { ErrorApp, handleError } from "../../../lib/errors";
 import { logger } from "../../../lib/logger";
 import { redirectToURL } from "../../../lib/redirect";
 import { invitationService } from "../../../lib/services/invitationTeamMemberService";
@@ -61,17 +61,17 @@ async function checkExistingAcceptedInvitation(email: string | undefined) {
 async function validateInvitationToken(token: string | undefined) {
   logger.info(`Validating invitation token: ${token}`);
   if (!token) {
-    throw new AppError("Invitation token is required");
+    throw new ErrorApp("Invitation token is required");
   }
 
   const invite = await invitationService.findInvitationByToken(token);
 
   if (!invite) {
-    throw new AppError("Invalid or expired invitation");
+    throw new ErrorApp("Invalid or expired invitation");
   }
 
   if (invite.expiresAt && new Date(invite.expiresAt) < new Date()) {
-    throw new AppError("Invitation has expired");
+    throw new ErrorApp("Invitation has expired");
   }
 
   logger.info(`Invitation token validated successfully for token: ${token}`);
@@ -121,6 +121,6 @@ async function processInvitationAcceptance(invite: Invitation) {
     });
   } catch (error) {
     logger.error(`Failed to process invitation`);
-    throw new AppError("Failed to process invitation");
+    throw new ErrorApp("Failed to process invitation");
   }
 }

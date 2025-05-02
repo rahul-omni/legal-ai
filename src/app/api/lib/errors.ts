@@ -5,7 +5,7 @@ export interface ErrorResponse {
   details?: any; // For validation errors
 }
 
-export class AppError extends Error {
+export class ErrorApp extends Error {
   constructor(
     public message: string,
     public statusCode: number = 400,
@@ -15,53 +15,59 @@ export class AppError extends Error {
   }
 }
 
-export class NotFoundError extends AppError {
+export class ErrorNotFound extends ErrorApp {
   constructor(resource: string) {
     super(`${resource} not found`, 404);
   }
 }
 
-export class AuthError extends AppError {
+export class ErrorAuth extends ErrorApp {
   constructor(message?: string) {
     super(message || "Authentication failed", 401);
   }
 }
 
-export class ForbiddenError extends AppError {
+export class ErrorForbidden extends ErrorApp {
   constructor(message?: string) {
     super(message || "Forbidden", 403);
   }
 }
 
-export class ValidationError extends AppError {
+export class ErrorAlreadyExists extends ErrorApp {
+  constructor(resource: string) {
+    super(`${resource} already exists`, 409);
+  }
+}
+
+export class ErrorValidation extends ErrorApp {
   constructor(details: any) {
     super("Validation failed", 422, details);
   }
 }
 
 export function handleError(error: unknown) {
-  if (error instanceof NotFoundError) {
+  if (error instanceof ErrorNotFound) {
     return NextResponse.json(
       { error: error.message },
       { status: error.statusCode }
     );
   }
 
-  if (error instanceof AuthError) {
+  if (error instanceof ErrorAuth) {
     return NextResponse.json(
       { error: error.message },
       { status: error.statusCode }
     );
   }
 
-  if (error instanceof ForbiddenError) {
+  if (error instanceof ErrorForbidden) {
     return NextResponse.json(
       { error: error.message },
       { status: error.statusCode }
     );
   }
 
-  if (error instanceof ValidationError) {
+  if (error instanceof ErrorValidation) {
     return NextResponse.json(
       {
         error: error.message,
@@ -71,7 +77,7 @@ export function handleError(error: unknown) {
     );
   }
 
-  if (error instanceof AppError) {
+  if (error instanceof ErrorApp) {
     return NextResponse.json(
       { error: error.message },
       { status: error.statusCode }

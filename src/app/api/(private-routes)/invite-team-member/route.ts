@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ErrorResponse, handleError, ErrorValidation } from "../../lib/errors";
 import { sendInviteEmail } from "../../lib/mail";
 import { invitationService } from "../../lib/services/invitationTeamMemberService";
 import { InviteRequestSchema } from "../../lib/validation/inviteTeamMember";
-import { ErrorResponse, SuccessResponse } from "../../types";
+import { SuccessResponse } from "../../types";
 
 export async function POST(
   req: NextRequest
@@ -12,13 +13,7 @@ export async function POST(
 
     const validation = InviteRequestSchema.safeParse(body);
     if (!validation.success) {
-      return NextResponse.json(
-        {
-          errorMessage: "Invalid request data",
-          errors: validation.error.errors,
-        },
-        { status: 400 }
-      );
+      throw new ErrorValidation("Invalid request data");
     }
 
     // Use the service to handle database operations
@@ -39,9 +34,6 @@ export async function POST(
     );
   } catch (error) {
     console.error("Error in invite POST handler:", error);
-    return NextResponse.json(
-      { errorMessage: "Internal server error" },
-      { status: 500 }
-    );
+    return handleError(error);
   }
 }

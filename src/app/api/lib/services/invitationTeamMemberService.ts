@@ -1,20 +1,30 @@
 import { db } from "@/lib/db";
+import { Invitation, InvitationStatus } from "@prisma/client";
+import {
+  InviteTeamMemberReq,
+  InviteTeamMemberRes,
+} from "../../(private-routes)/invite-team-member/types";
+import { Transaction } from "../../types";
+import { ErrorNotFound } from "../errors";
 import {
   generateVerificationToken,
   getTokenExpiry,
 } from "../verificationTokens";
 import { organizationService } from "./organizationService";
-import { Invitation, InvitationStatus } from "@prisma/client";
-import { Transaction } from "../../types";
-import {
-  InviteTeamMemberReq,
-  InviteTeamMemberRes,
-} from "../../(private-routes)/invite-team-member/types";
 
 class InvitationService {
-  /**
-   * Creates an invitation and retrieves the associated organization
-   */
+  async organizationInvitations(orgId: string) {
+    try {
+      const invitations = await db.invitation.findMany({
+        where: { orgId },
+      });
+      return invitations;
+    } catch (error) {
+      console.error("Failed to fetch organization invitations:", error);
+      throw new ErrorNotFound("Invitations");
+    }
+  }
+
   async createInvitation(
     params: InviteTeamMemberReq
   ): Promise<InviteTeamMemberRes> {
@@ -83,9 +93,6 @@ class InvitationService {
     }
   }
 
-  /**
-   * Checks if an invitation exists for a given email and organization ID
-   */
   async checkInvitationExists(
     email: string,
     orgId: string
@@ -163,5 +170,4 @@ class InvitationService {
   }
 }
 
-// Export default instance for easier usage
 export const invitationService = new InvitationService();

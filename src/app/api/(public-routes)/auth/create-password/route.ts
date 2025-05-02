@@ -4,8 +4,8 @@ import { z } from "zod";
 import {
   ErrorResponse,
   handleError,
-  NotFoundError,
-  ValidationError,
+  ErrorNotFound,
+  ErrorValidation,
 } from "../../../lib/errors";
 import { logger } from "../../../lib/logger";
 import { userService } from "../../../lib/services/userService";
@@ -25,7 +25,7 @@ export async function POST(
 
     const validation = CreatePasswordSchema.safeParse(requestData);
     if (!validation.success) {
-      throw new ValidationError("Invalid request data");
+      throw new ErrorValidation("Invalid request data");
     }
 
     const { email, password } = validation.data;
@@ -36,7 +36,7 @@ export async function POST(
 
     if (!userDetails) {
       logger.warn(`User not found for email: ${email}`);
-      throw new NotFoundError("User");
+      throw new ErrorNotFound("User");
     }
 
     if (userDetails.password) {

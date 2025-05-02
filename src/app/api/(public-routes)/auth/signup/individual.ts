@@ -1,3 +1,8 @@
+import {
+  ErrorAlreadyExists,
+  ErrorResponse,
+  handleError,
+} from "@/app/api/lib/errors";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
@@ -7,11 +12,7 @@ import {
   generateVerificationToken,
   getTokenExpiry,
 } from "../../../lib/verificationTokens";
-import {
-  ErrorResponse,
-  IndividualSignupRequest,
-  IndividualSignupResponse,
-} from "../types";
+import { IndividualSignupRequest, IndividualSignupResponse } from "../types";
 
 export default async function handler(
   data: IndividualSignupRequest
@@ -29,28 +30,10 @@ export default async function handler(
 
     if (existingUser) {
       logger.warn("User already exists", { email });
-      return NextResponse.json(
-        { errMsg: "User already exists" },
-        { status: 409 }
-      );
+      throw new ErrorAlreadyExists("User");
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Default to ASSISTANT role if not specified
-    const defaultRole = await db.role.findUnique({
-      where: { name: "ASSISTANT" },
-      select: { id: true },
-    });
-
-    if (!roleId && !defaultRole) {
-      logger.error("No default role configured");
-      return NextResponse.json(
-        { errMsg: "No default role configured" },
-        { status: 400 }
-      );
-    }
 
     const verificationToken = generateVerificationToken();
 
@@ -58,7 +41,6 @@ export default async function handler(
 
     const tokenExpiry = getTokenExpiry();
 
-    // Create user
     const user = await db.user.create({
       data: {
         name,
@@ -68,35 +50,22 @@ export default async function handler(
         password: hashedPassword,
         isVerified: false,
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        isVerified: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     });
 
     logger.info("User created successfully", { userId: user.id });
 
     await sendVerificationEmail(email, verificationToken);
 
+    const { password: _, ...userDetails } = user;
     return NextResponse.json(
       {
-        user,
-        errMsg: "User created successfully",
+        user: userDetails,
+        message: "User created successfully",
       },
       { status: 201 }
     );
   } catch (error) {
     logger.error("Signup error", { error: error });
-    return NextResponse.json(
-      { errMsg: "Internal server error" },
-      { status: 500 }
-    );
-  } finally {
-    await db.$disconnect();
-    logger.info("Database connection closed");
+    return handleError(error);
   }
 }

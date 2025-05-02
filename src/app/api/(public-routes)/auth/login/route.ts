@@ -5,11 +5,11 @@ import { addHours } from "date-fns";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import {
-  AuthError,
+  ErrorAuth,
   ErrorResponse,
-  ForbiddenError,
+  ErrorForbidden,
   handleError,
-  NotFoundError,
+  ErrorNotFound,
 } from "../../../lib/errors";
 import { generateJwdToken } from "../../../lib/jsonWebToken";
 
@@ -31,11 +31,11 @@ export async function POST(
 
     if (!userDetails) {
       console.warn("User not found for email:", email);
-      throw new NotFoundError("User");
+      throw new ErrorNotFound("User");
     }
 
     if (!userDetails?.isVerified) {
-      throw new ForbiddenError("User not verified");
+      throw new ErrorForbidden("User not verified");
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -44,7 +44,7 @@ export async function POST(
     );
 
     if (!isPasswordValid) {
-      throw new AuthError();
+      throw new ErrorAuth();
     }
 
     const { password: _, ...user } = userDetails;
