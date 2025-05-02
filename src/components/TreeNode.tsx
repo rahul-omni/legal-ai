@@ -11,7 +11,7 @@ interface TreeNodeProps {
 
 export default function TreeNode({ node, onSelect }: TreeNodeProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const isFolder = node.type === 'folder';
+  const isFolder = node.type === 'FOLDER';
 
   const handleToggle = () => {
     if (isFolder) {
@@ -19,14 +19,20 @@ export default function TreeNode({ node, onSelect }: TreeNodeProps) {
     }
   };
 
+  // const handleSelect = () => {
+  //   if (!isFolder) {
+  //     onSelect(node);
+  //   } 
+  //   else {
+  //     handleToggle(); // Also toggle folder on click
+  //   }
+  // };
   const handleSelect = () => {
-    if (!isFolder) {
-      onSelect(node);
-    } else {
-      handleToggle(); // Also toggle folder on click
+    if (isFolder) {
+      return; // Skip selection for folders
     }
+    onSelect(node);
   };
-
   return (
     <div className="ml-3">
       <div

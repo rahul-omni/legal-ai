@@ -3,13 +3,14 @@ import { loadingContext } from "@/context/loadingContext";
 import { handleApiError } from "@/helper/handleApiError";
 import { RiskAnalyzer, RiskFinding } from "@/lib/riskAnalyzer";
 import { FileSystemNodeProps } from "@/types/fileSystem";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DocumentPane } from "./DocumentPane";
-import { FileExplorerV2 } from "./FileExplorerV2";
+import {  FileExplorerV2 } from "./FileExplorerV2";
 import { PanelLeft, PanelRightOpen, X, Plus } from "lucide-react";
 import { useTabs } from "@/context/tabsContext";
 import { SmartPrompts } from "./SmartPrompts";
 import { SmartPromptsPanel } from './SmartPromptsPanel';
+import { fetchAllNodes, fetchNodes } from "@/app/apiServices/nodeServices";
 
 // Add this interface near the top
 interface TabInfo {
@@ -40,6 +41,7 @@ const indianLanguages: LanguageOption[] = [
 ];
 
 export default function LegalEditor() {
+ 
   const [files, setFiles] = useState<FileSystemNodeProps[]>([]);
   const [selectedFile, setSelectedFile] = useState<FileSystemNodeProps>();
   const [documentContent, setDocumentContent] = useState(
@@ -57,6 +59,9 @@ export default function LegalEditor() {
   const [showSmartPrompts, setShowSmartPrompts] = useState(true);
    // In LegalEditor component
 const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(null);
+const [fileTree, setFileTree] = useState<FileSystemNodeProps[]>([]);
+const [isLoading, setIsLoading] = useState(true);
+//const fileExplorerRef = useRef<{ refreshNodes: (parentId?: string) => void }>(null);
   // Add these states
   const {
     openTabs,
@@ -68,7 +73,28 @@ const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(nul
   } = useTabs();
 
   const loadDocuments = async () => {};
-
+ 
+  const [refreshKey, setRefreshKey] = useState(0); // Add this state
+ 
+  const fetchUpdatedFileTree = async (parentId?: string) => {
+    try {
+      const tree = parentId 
+        ? await fetchNodes(parentId)
+        : await fetchAllNodes();
+      
+       
+        setFileTree(tree);
+        setRefreshKey(n => n + 1);
+       
+      
+      return tree;
+    } catch (error) {
+      handleApiError(error, showToast);
+      return [];
+    }
+  };
+  
+ 
   useEffect(() => {
     loadDocuments(); // Only load documents, don't show popup
   }, []);
@@ -84,6 +110,8 @@ const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(nul
       selectedFile.content = newContent;
     }
   };
+
+  
 
   const showToast = (
     message: string,
@@ -211,7 +239,7 @@ const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(nul
   // Add this before the return statement
   const activeTab = openTabs.find(tab => tab.id === activeTabId);
     console.log("activetab" ,activeTab)
-    
+    console.log("Updated file tree in LegalEditor:", fileTree);
   return (
     <div className="h-screen flex flex-col bg-[#f9f9f9]">
       {/* Toolbar */}
@@ -261,8 +289,12 @@ const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(nul
               }}
             //  files ={files}
             /> */}
-            <FileExplorerV2
             
+            <FileExplorerV2
+          // key={fileTree.length}
+         key={`file-explorer-${refreshKey}`} // 🔑 Key change = full reload
+         
+            fileTree={fileTree}
   selectedDocument={selectedFile}
   onDocumentSelect={(file) => {
     handleFileSelect(file);
@@ -270,6 +302,7 @@ const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(nul
   }}
   
   onPdfParsed={handlePdfParsed}
+    
 />
           </div>
         </div>
@@ -334,6 +367,11 @@ const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(nul
                 onSaveAs={handleSaveAs}
                 fileId={activeTab?.fileId || ""}
                  node={[]}                 
+                //  onFileTreeUpdate={async () => {
+                //   await reloadFileExplorer();
+                //   return []; // Return empty array to satisfy type
+                // }}
+               onFileTreeUpdate={fetchUpdatedFileTree}
                 
               />
             ) : (

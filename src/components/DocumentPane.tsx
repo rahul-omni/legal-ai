@@ -17,11 +17,11 @@ import { CursorTracker } from "./CursorTracker";
 import { SaveDropdown } from "./SaveDropdown";
 import { TranslationDropdown } from "./TranslationDropdown";
 import { QuillEditor } from './QuillEditor';
-import { createNode, CreateNodePayload, fetchNodes, updateNodeContent } from "@/app/apiServices/nodeServices";
+import { createNode, CreateNodePayload, fetchAllNodes, fetchNodes, updateNodeContent } from "@/app/apiServices/nodeServices";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { handleApiError } from "@/helper/handleApiError";
 import { useToast } from "./ui/toast";
-
+ 
 interface DocumentPaneProps {
   content: string;
   onContentChange: (content: string) => void;
@@ -31,7 +31,8 @@ interface DocumentPaneProps {
   onSaveAs: () => Promise<void>;
   fileId?: string | null;
   onDocumentSelect: (doc: FileSystemNodeProps) => void;
-   
+   onFileTreeUpdate: (parentId?: string) => Promise<FileSystemNodeProps[]>;
+  //onFileTreeUpdate?: () => Promise<void>;
   node :FileSystemNodeProps[]
   // userId: string;
   // documents: any[];
@@ -56,7 +57,7 @@ export function DocumentPane({
   onSaveAs,
   fileId,
   onDocumentSelect,
-   
+  onFileTreeUpdate,
   node
   // userId,
   // documents,
@@ -98,13 +99,32 @@ export function DocumentPane({
     
      const [fileTree, setFileTree] = useState<FileSystemNodeProps[]>([]);
      const [currentParentId, setCurrentParentId] = useState<string | null>(null);
+       
   // This callback will be passed to AIPopup
   const handleTreeUpdate = (newTree: FileSystemNodeProps[]) => {
     setFileTree(newTree);
     console.log("Tree received in DocumentPane:", newTree);
   };
      
-
+  const fetchUpdatedFileTree = async () => {
+    try {
+      console.log("Fetching file tree...");  // This log will help us know if the function is being called.
+      const tree = await fetchAllNodes();
+      console.log("📦 Updated file tree inside DocumentPane:", tree);  // This is where we check the actual tree.
+      setFileTree(tree);
+    } catch (error) {
+      handleApiError(error, showToast);
+      console.error("Error fetching file tree:", error);  // Log error if something goes wrong
+    }
+  };
+  
+  
+  // useEffect(() => {
+  //   console.log("Fetching file tree on mount...");
+  //   fetchUpdatedFileTree();
+  // }, []);
+  
+  
   //console.log("content",content);
   console.log("filetree---",fileTree);
   console.log("nodes+++++",nodes);
@@ -149,16 +169,16 @@ export function DocumentPane({
   };
 
 // In DocumentPane.tsx, inside the component
-useEffect(() => {
-  if (fileTree.length > 0 && fileId) {
-    console.log("🔍 Checking fileId in tree...");
-    const parentId = verifyFileInTree(fileTree, fileId);
-    console.log("Parent ID of current file:", parentId);
+// useEffect(() => {
+//   if (fileTree.length > 0 && fileId) {
+//     console.log("🔍 Checking fileId in tree...");
+//     const parentId = verifyFileInTree(fileTree, fileId);
+//     console.log("Parent ID of current file:", parentId);
     
-    // Store the parentId in state
-    setCurrentParentId(parentId);
-  }
-}, [fileTree, fileId]);
+//     // Store the parentId in state
+//     setCurrentParentId(parentId);
+//   }
+// }, [fileTree, fileId]);
   // Handle click outside for save dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -456,109 +476,10 @@ useEffect(() => {
     });
   };
      
-   const refreshNodeswork1 = async (parentId?: string, fileId?: string) => {
-      const children = await fetchNodes(parentId);
-      if (!parentId) {
-        setNodes(children);
-        return;
-      }
-  
-      if (fileId && children.length >= 0) {
-        const file = children.find((node) => node.id === fileId);
-        if (file) {
-          onDocumentSelect(file);
-        }
-      }
-  
-      setNodes((prevNodes) => updateNodeChildren(prevNodes, children, parentId));
-    };
- 
-  const handleSaveAswork1 = async (name?: string, parentId?: string) => {
-    try {
-      let fileName: string | undefined = name;
-  
-      if (!fileName) {
-        const userInput = window.prompt("Please enter new file name:");
-        if (!userInput || userInput.trim() === "") {
-          alert("❌ File name is required to save.");
-          return;
-        }
-        fileName = userInput.trim();
-      }
-  
-      const newFile: CreateNodePayload = {
-        name: fileName,
-        type: "FILE",
-         
-        parentId,
-        content, // current content from editor
-      };
-  
-      const uploadedNode = await createNode(newFile);
-      const now = new Date();
-  
-      const localNode: FileSystemNodeProps = {
-        id: uploadedNode?.id || Date.now().toString(),
-        name: newFile.name,
-        type: "FILE",
-        userId: "",
-        children: [],
-        createdAt: now,
-        updatedAt: now,
-      };
-  
-      handleAddDocument(localNode, parentId ?? null);
-  
-       await refreshNodes();
-      showToast("✅ Document saved as new file!");
-    } catch (error) {
-      handleApiError(error, showToast);
-    }
-  };
    
-  const refreshNodes = async (parentId?: string, fileId?: string) => {
-    try {
-      const children = await fetchNodes(parentId);
-      
-      if (!parentId) {
-        setNodes(children);
-        return;
-      }
   
-      // Update the specific folder and maintain expanded state
-      setNodes(prevNodes => {
-        const updateChildren = (nodes: FileSystemNodeProps[]): FileSystemNodeProps[] => {
-          return nodes.map(node => {
-            if (node.id === parentId) {
-              return { 
-                ...node, 
-                children,
-                isExpanded: node.isExpanded // Maintain expanded state
-              };
-            }
-            if (node.children) {
-              return { 
-                ...node, 
-                children: updateChildren(node.children) 
-              };
-            }
-            return node;
-          });
-        };
-        return updateChildren(prevNodes);
-      });
-  
-      if (fileId && children.length > 0) {
-        const file = children.find(node => node.id === fileId);
-        if (file) onDocumentSelect(file);
-      }
-    } catch (error) {
-      handleApiError(error, showToast);
-    }
-  };
-
-  // Helper to find any node in the tree
-const findNodeInTree = (id: string, nodes: FileSystemNodeProps[]): FileSystemNodeProps | null => {
+ 
+  const findNodeInTree = (id: string, nodes: FileSystemNodeProps[]): FileSystemNodeProps | null => {
   for (const node of nodes) {
     if (node.id === id) return node;
     if (node.children) {
@@ -586,72 +507,229 @@ const getEffectiveParentId = (): string | null => {
   // Case 4: No selection
   return null;
 };
-   
-const handleSaveAs = async (name?: string) => {
+const getAvailableName = (name: string, siblings: FileSystemNodeProps[]) => {
+  const base = name.replace(/\..+$/, '');
+  const ext = name.split('.').pop() || '';
+  let counter = 1;
+  
+  while (siblings.some(f => f.name === `${base}_${counter}.${ext}`)) {
+    counter++;
+  }
+  
+  return `${base}_${counter}.${ext}`;
+};
+const handleSaveAs1 = async (name?: string) => {
   try {
-    // 1. Get the current file's location - use ID-based verification
-    const parentId = verifyFileInTree(fileTree, fileId!);
-    
-    // Double-check we have the right parent
-    const parentFolder = parentId 
-      ? findNodeById(fileTree, parentId)
-      : null;
-
-    console.log("Save As location verification:", {
-      currentFile: selectedNode?.name,
-      parentFolder: parentFolder?.name || "root",
-      parentId
-    });
-
-    // 2. Get new filename
-    let fileName = name || window.prompt("Enter new file name:")?.trim();
-    if (!fileName) return;
-    if (!fileName.includes(".")) {
-      const originalExt = selectedNode?.name.split('.').pop() || "docx";
-      fileName += `.${originalExt}`;
-    }
-    // 3. Ensure unique name in target location
-    const siblings = parentId
-      ? (parentFolder?.children || [])
-      : fileTree.filter(node => node.type === "FILE");
-
-    if (siblings.some(f => f.name === fileName)) {
-      alert(`"${fileName}" already exists in this location`);
+    if (!fileId) {
+      showToast("No file selected to save as", "error");
       return;
     }
 
-    // 4. Create new file
+    // 1. Get current file's location
+    const parentId = verifyFileInTree(fileTree, fileId) ?? null;
+    const parentFolder = parentId ? findNodeById(fileTree, parentId) : null;
+
+    // 2. Get and validate filename
+    let fileName = name?.trim() || window.prompt("Enter new file name:")?.trim();
+    if (!fileName) {
+      showToast("File name is required", "error");
+      return;
+    }
+
+    // 3. Add extension if missing
+    if (!fileName.includes(".")) {
+      const originalExt = selectedNode?.name.split('.').pop() || "docx";
+      fileName = `${fileName}.${originalExt}`;
+    }
+
+    // 4. Check for duplicates
+    const siblings = parentId 
+      ? parentFolder?.children || []
+      : fileTree.filter(node => node.type === "FILE");
+
+    if (siblings.some(f => f.name === fileName)) {
+      const availableName = getAvailableName(fileName, siblings);
+      const useSuggestedName = window.confirm(
+        `"${fileName}" exists in ${parentFolder?.name || "root"}.\nUse "${availableName}"?`
+      );
+      if (!useSuggestedName) return;
+      fileName = availableName;
+    }
+
+    // 5. Create new file
     const newFile = await createNode({
       name: fileName,
       type: "FILE",
-      parentId,
+      parentId: parentId || undefined,
       content
     });
 
-    // 5. Update UI
-   // await refreshNodes(parentId || undefined);
-   if (parentId) {
-    // Refresh the specific folder
-    await refreshNodes(parentId);
-  } else {
-    // Refresh root if no parent
-    await refreshNodes();
-  }
+    // 6. Update UI IMMEDIATELY (two-way sync)
+    // Update local state
+    const updatedTree = parentId
+      ? updateTreeWithNewFile(fileTree, parentId, newFile)
+      : [...fileTree, newFile];
+    
+    setFileTree(updatedTree);
+    
+    // Update parent component
+    if (onFileTreeUpdate) {
+      await onFileTreeUpdate(parentId || undefined);
+    }
+
+    // 7. Select the new file
     onDocumentSelect({
       ...newFile,
       children: [],
       content
     });
 
-    showToast(`Saved as ${fileName} in ${parentFolder?.name || "root"}`);
-    
+    showToast(`Saved as "${fileName}" in ${parentFolder?.name || "root"}`, "success");
+
   } catch (error) {
     handleApiError(error, showToast);
   }
 };
-  
-  // Helper function to find original file
-  const findNodeById = (nodes: FileSystemNodeProps[], id: string): FileSystemNodeProps | null => {
+
+// Helper function to update tree
+const updateTreeWithNewFile = (
+  tree: FileSystemNodeProps[],
+  parentId: string,
+  newFile: FileSystemNodeProps
+): FileSystemNodeProps[] => {
+  return tree.map(node => {
+    if (node.id === parentId) {
+      return {
+        ...node,
+        children: [...(node.children || []), newFile]
+      };
+    }
+    if (node.children) {
+      return {
+        ...node,
+        children: updateTreeWithNewFile(node.children, parentId, newFile)
+      };
+    }
+    return node;
+  });
+};
+ 
+const handleSaveAs = async (name?: string) => {
+  try {
+    console.log("Current fileTree:", fileTree);
+    console.log("Current fileId:", fileId);
+    console.log("Selected node:", selectedNode);
+
+    if (!fileId) {
+      showToast("No file selected to save as");
+      return;
+    }
+
+    // Ensure fileTree is loaded and up-to-date
+    if (fileTree.length === 0 || !findNodeInTree(fileId, fileTree)) {
+      console.log("Fetching updated fileTree...");
+      if (onFileTreeUpdate) {
+        const updatedTree = await onFileTreeUpdate();
+        setFileTree(updatedTree); // Update the state
+      }
+      if (fileTree.length === 0) {
+        showToast("File system not loaded. Try again.");
+        return;
+      }
+    }
+
+    // Resolve parentId (fallback to selectedNode or root)
+    const parentId = verifyFileInTree(fileTree, fileId) 
+      ?? selectedNode?.parentId 
+      ?? findNodeInTree(fileId, fileTree)?.parentId;
+
+    if (!parentId) {
+      console.log("Saving to root directory");
+    } else {
+      console.log("Resolved parentId:", parentId);
+    }
+
+    const parentFolder = parentId ? findNodeById(fileTree, parentId) : null;
+
+    // Get filename
+    let fileName = name?.trim() || window.prompt("Enter new file name:")?.trim();
+    if (!fileName) {
+      showToast("File name is required");
+      return;
+    }
+
+    // Ensure file extension
+    if (!fileName.includes(".")) {
+      const originalExt = selectedNode?.name.split('.').pop() || "docx";
+      fileName = `${fileName}.${originalExt}`;
+    }
+
+    // Check for duplicates
+    const siblings = parentId
+      ? parentFolder?.children || []
+      : fileTree.filter(node => node.type === "FILE");
+
+    if (siblings.some(f => f.name === fileName)) {
+      const availableName = getAvailableName(fileName, siblings);
+      const useSuggestedName = window.confirm(
+        `Filename conflict!\n\n` +
+        `"${fileName}" already exists.\n\n` +
+        `We suggest using: "${availableName}"\n\n` +
+        `OK = Use suggested name\nCancel = Enter new name`
+      );
+      if (!useSuggestedName) return;
+      fileName = availableName;
+    }
+
+    // Create new file
+    const newFile = await createNode({
+      name: fileName,
+      type: "FILE",
+      parentId, // undefined = root
+      content,
+    });
+
+    // Update fileTree (with nested support)
+    setFileTree(prevTree => {
+      if (!prevTree) return []; // Ensure prevTree is defined
+      if (!parentId) return [...prevTree, newFile];
+
+      const updateTree = (nodes: FileSystemNodeProps[]): FileSystemNodeProps[] => {
+        return nodes.map(node => {
+          if (node.id === parentId) {
+            return { ...node, children: [...(node.children || []), newFile] };
+          }
+          if (node.children) {
+            return { ...node, children: updateTree(node.children) };
+          }
+          return node;
+        });
+      };
+
+      return updateTree(prevTree);
+    });
+
+    // Select the new file
+    onDocumentSelect({
+      ...newFile,
+      children: [],
+      content,
+      parentId, // Ensure parentId is set
+    });
+
+    // Refresh tree
+    if (onFileTreeUpdate) {
+      await onFileTreeUpdate(parentId);
+      await new Promise(resolve => setTimeout(resolve, 50)); // Let state update
+    }
+
+    showToast(`Saved as "${fileName}" in ${parentFolder?.name || "root"}`);
+  } catch (error) {
+    handleApiError(error, showToast);
+  }
+};
+ 
+const findNodeById = (nodes: FileSystemNodeProps[], id: string): FileSystemNodeProps | null => {
     for (const node of nodes) {
       if (node.id === id) return node;
       if (node.children) {
@@ -698,35 +776,19 @@ const handleSaveAs = async (name?: string) => {
               />
               {/* <SaveDropdown onSave={onSave} onSaveAs={onSaveAs} nodeId={nodeId} content={content} name={""} />
             */}
-               
-                 {/* <SaveDropdown
-                 onSave={async () => {
-                  if (!fileId) {
-                    console.error("❌ fileId is undefined. Can't save.");
-                    return;
-                  }
-                   console.log("✅ Saving document with fileId:", fileId);
-                  await updateNodeContent(fileId, content   ); // <-- use 'content' prop
-                   
-                } }
-                onSaveAs={handleSaveAs}
-                //onSaveAs={onSaveAs} 
-                name={""} 
-               />     */}
-
-<SaveDropdown
-  onSave={async () => {
-    if (!fileId) {
-      console.error("❌ fileId is undefined. Can't save.");
-      return;
-    }
-    console.log("✅ Saving document with fileId:", fileId);
-    await updateNodeContent(fileId, content);
-  }}
+                <SaveDropdown
+                       onSave={async () => {
+                             if (!fileId) {
+                                    console.error("❌ fileId is undefined. Can't save.");
+                                       return;
+                                         }
+                                     console.log("✅ Saving document with fileId:", fileId);
+                                      await updateNodeContent(fileId, content);
+                                       }}
    
-  onSaveAs={handleSaveAs} 
-  name={fileName || ""}
-/>
+                                          onSaveAs={handleSaveAs} 
+                                         name={fileName || ""}
+                                         />
             </div>
           </div>
         </div>
