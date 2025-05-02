@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   IndividualSignupSchema,
   OrganizationSignupSchema,
-} from "../../../lib/validation/auth";
+} from "../../../lib/validation/authValidation";
 import { SignupRequest, SignupResponse } from "../types";
 
 const validationSchemas = {

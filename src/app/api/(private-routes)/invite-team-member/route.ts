@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ErrorResponse, handleError, ErrorValidation } from "../../lib/errors";
 import { sendInviteEmail } from "../../lib/mail";
 import { invitationService } from "../../lib/services/invitationTeamMemberService";
-import { InviteRequestSchema } from "../../lib/validation/inviteTeamMember";
+import { InviteRequestSchema } from "../../lib/validation/inviteTeamMemberValidation";
 import { SuccessResponse } from "../../types";
 
 export async function POST(

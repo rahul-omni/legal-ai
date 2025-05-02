@@ -17,7 +17,7 @@ export const useInviteTemMember = () => {
     setError(null);
     try {
       const response = await apiClient.post<InviteTeamMemberRes>(
-        apiRouteConfig.publicRoutes.inviteTeamMember,
+        apiRouteConfig.privateRoutes.inviteTeamMember,
         req
       );
 
@@ -37,9 +37,23 @@ export const useInviteTemMember = () => {
 export const useFetchTeamMembers = (orgId: string) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any>(null);
 
-  const fetchTeamMembers = async () => {};
+  const fetchTeamMembers = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.get(
+        apiRouteConfig.privateRoutes.teamMembers
+      );
 
-  return { fetchTeamMembers, isLoading, error, data };
+      return response.data;
+    } catch (err) {
+      setError("Failed to invite team member");
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { fetchTeamMembers, isLoading, error };
 };
