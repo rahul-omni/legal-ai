@@ -1,9 +1,13 @@
 import { useRoleContext } from "@/context/roleContext";
 import { useUserContext } from "@/context/userContext";
-import { useInviteTemMember } from "@/hooks/api/useTeamManagement";
+import {
+  useFetchTeamMembers,
+  useInviteTemMember,
+} from "@/hooks/api/useTeamManagement";
 import { Dispatch } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { Action, InviteFormInputs, State } from "./types";
 
 export function InviteTeamModal({
   state,
@@ -15,6 +19,7 @@ export function InviteTeamModal({
   const { getAllRoles } = useRoleContext();
   const { register, handleSubmit } = useForm<InviteFormInputs>(); //s Add the type here
   const { inviteTeamMember } = useInviteTemMember();
+  const { fetchTeamMembers } = useFetchTeamMembers();
   const { userState } = useUserContext();
   const roles = getAllRoles();
 
@@ -27,7 +32,14 @@ export function InviteTeamModal({
 
     if (!res) return;
 
-    toast.success(res.successMessage);
+    const invitations = await fetchTeamMembers(
+      userState.selectedOrdMembership!.orgId
+    );
+
+    if (!invitations) return;
+    dispatch({ type: "SET_INVITED_TEAM_MEMBERS", payload: invitations });
+
+    toast.success(res.successMessage!);
   };
 
   if (!state.isModalOpen) return null;

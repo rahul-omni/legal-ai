@@ -1,6 +1,9 @@
+import { useUserContext } from "@/context/userContext";
+import { useFetchTeamMembers } from "@/hooks/api/useTeamManagement";
 import { Search, UserPlus } from "lucide-react";
-import { useReducer } from "react";
+import { useEffect, useReducer } from "react";
 import { InviteTeamModal } from "./InviteTeamModal";
+import { Action, State, TeamMember } from "./types";
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -10,10 +13,71 @@ function reducer(state: State, action: Action): State {
       return { ...state, rowsPerPage: action.payload };
     case "SET_MODAL_OPEN":
       return { ...state, isModalOpen: action.payload };
-
+    case "SET_INVITED_TEAM_MEMBERS":
+      return { ...state, invitedTeamMembers: action.payload };
     default:
       return state;
   }
+}
+
+export function TeamManagement() {
+  const [state, dispatch] = useReducer(reducer, {
+    searchQuery: "",
+    rowsPerPage: 10,
+    isModalOpen: false,
+    invitedTeamMembers: [],
+  });
+  const { userState } = useUserContext();
+  const { fetchTeamMembers } = useFetchTeamMembers();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        console.log("Fetching team members for orgId:", userState.selectedOrdMembership!.orgId);
+        const data = await fetchTeamMembers(
+          userState.selectedOrdMembership!.orgId
+        );
+        console.log("Fetched team members:", data);
+        dispatch({ type: "SET_INVITED_TEAM_MEMBERS", payload: data! });
+      } catch (error) {
+        console.error("Error fetching team members:", error);
+      }
+    })();
+  }, []);
+
+  const teamMembers: TeamMember[] = state.invitedTeamMembers.map((member) => {
+    return {
+      id: member.id,
+      name: member.email.split("@")[0],
+      email: member.email,
+      status: member.status,
+      avatarInitial: member.email.charAt(0).toUpperCase(),
+    };
+  });
+
+  const filteredMembers = teamMembers.filter(
+    (member) =>
+      member.name.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
+      member.email.toLowerCase().includes(state.searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="bg-white rounded-lg border">
+      <div className="p-4 flex justify-between items-center">
+        <SearchBar state={state} dispatch={dispatch} />
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+          onClick={() => dispatch({ type: "SET_MODAL_OPEN", payload: true })}
+        >
+          <UserPlus className="w-4 h-4" />
+          Invite Team
+        </button>
+      </div>
+      <TeamTable members={filteredMembers} />
+      <Pagination state={state} dispatch={dispatch} />
+      <InviteTeamModal state={state} dispatch={dispatch} />
+    </div>
+  );
 }
 
 function SearchBar({
@@ -69,9 +133,9 @@ function TeamTable({ members }: { members: TeamMember[] }) {
               <td className="px-6 py-4">
                 <span
                   className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    member.status === "Active"
+                    member.status === "ACCEPTED"
                       ? "bg-green-100 text-green-800"
-                      : member.status === "Pending"
+                      : member.status === "PENDING"
                         ? "bg-yellow-100 text-yellow-800"
                         : "bg-gray-100 text-gray-800"
                   }`}
@@ -128,55 +192,6 @@ function Pagination({
           <span className="text-2xl text-gray-400">»</span>
         </button>
       </div>
-    </div>
-  );
-}
-interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  status: "Active" | "Pending" | "Inactive";
-  avatarInitial: string;
-}
-export function TeamManagement() {
-  const [state, dispatch] = useReducer(reducer, {
-    searchQuery: "",
-    rowsPerPage: 10,
-    isModalOpen: false,
-  });
-
-  const teamMembers: TeamMember[] = [
-    {
-      id: "1",
-      name: "Rahul Raj",
-      email: "rahul.raj@arthmate.com",
-      status: "Active",
-      avatarInitial: "R",
-    },
-    // Add more team members as needed
-  ];
-
-  const filteredMembers = teamMembers.filter(
-    (member) =>
-      member.name.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(state.searchQuery.toLowerCase())
-  );
-
-  return (
-    <div className="bg-white rounded-lg border">
-      <div className="p-4 flex justify-between items-center">
-        <SearchBar state={state} dispatch={dispatch} />
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-          onClick={() => dispatch({ type: "SET_MODAL_OPEN", payload: true })}
-        >
-          <UserPlus className="w-4 h-4" />
-          Invite Team
-        </button>
-      </div>
-      <TeamTable members={filteredMembers} />
-      <Pagination state={state} dispatch={dispatch} />
-      <InviteTeamModal state={state} dispatch={dispatch} />
     </div>
   );
 }

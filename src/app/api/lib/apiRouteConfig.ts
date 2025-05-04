@@ -14,7 +14,7 @@ interface PrivateApiRoute {
   roles: "/roles";
   user: "/user";
   inviteTeamMember: "/invite-team-member";
-  teamMembers: "/organization/team-members";
+  teamMembers(orgId: string): `/organization/${string}/team-members`;
 }
 
 export const apiRouteConfig: {
@@ -26,7 +26,7 @@ export const apiRouteConfig: {
     nodeTree: "/system/tree",
     roles: "/roles",
     user: "/user",
-    teamMembers: "/organization/team-members",
+    teamMembers: (orgId) => `/organization/${orgId}/team-members`,
     inviteTeamMember: "/invite-team-member",
   },
   publicRoutes: {
