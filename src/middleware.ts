@@ -7,13 +7,17 @@ export function middleware(request: NextRequest) {
   const authToken = request.cookies.get("authToken")?.value;
   const verified = request.cookies.get("verified")?.value === "true";
 
-  const privateRoute = Object.values(routeConfig.privateRoutes).find((route) =>
-    request.nextUrl.pathname.startsWith(route)
+  const privateRoute = Object.values(routeConfig.privateRoutes).find(
+    (route) => {
+      const isMatch = request.nextUrl.pathname.startsWith(route);
+      return isMatch;
+    }
   );
 
-  const publicRoute = Object.values(routeConfig.publicRoutes).find((route) =>
-    request.nextUrl.pathname.startsWith(route)
-  );
+  const publicRoute = Object.values(routeConfig.publicRoutes).find((route) => {
+    const isMatch = request.nextUrl.pathname.startsWith(route);
+    return isMatch;
+  });
 
   if (request.nextUrl.pathname === "/") {
     return redirectToURL(routeConfig.publicRoutes.login);
@@ -22,11 +26,10 @@ export function middleware(request: NextRequest) {
   } else if (privateRoute && authToken && !verified) {
     return redirectToURL(routeConfig.publicRoutes.verifyEmail);
   } else if (publicRoute && authToken) {
-    redirectToURL(routeConfig.privateRoutes.projects);
+    return redirectToURL(routeConfig.privateRoutes.projects);
   }
 
   const response = NextResponse.next();
-
   if (authToken) {
     response.headers.set("Authorization", `Bearer ${authToken}`);
   }
