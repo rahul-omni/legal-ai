@@ -1,7 +1,7 @@
 "use client";
 
 import { FileSystemNodeProps } from "@/types/fileSystem";
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useMemo, useCallback } from "react";
 
 interface TabInfo {
   id: string;
@@ -18,6 +18,8 @@ interface TabsContextType {
   closeTab: (tabId: string) => void;
   updateTabContent: (tabId: string, content: string) => void;
   setActiveTabId: (tabId: string | null) => void;
+  activeTabContent: string; // Direct access to active content
+  getTabContent: (tabId: string) => string; // Helper function
 }
 
 const TabsContext = createContext<TabsContextType | undefined>(undefined);
@@ -26,6 +28,27 @@ export function TabsProvider({ children }: { children: ReactNode }) {
   const [openTabs, setOpenTabs] = useState<TabInfo[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
 
+  // Derive active content directly
+  const activeTabContent = useMemo(() => {
+    const tab = openTabs.find(t => t.id === activeTabId);
+    return tab?.content || '';
+  }, [openTabs, activeTabId]);
+
+
+  // const getTabContent = (tabId: string) => {
+  //   return openTabs.find(t => t.id === tabId)?.content || '';
+  // };
+  const getTabContent = useCallback((tabId: string) => {
+    return openTabs.find(t => t.id === tabId)?.content || '';
+  }, [openTabs]);
+
+  const updateTabContent = useCallback((tabId: string, content: string) => {
+    setOpenTabs(prev => prev.map(tab =>
+      tab.id === tabId
+        ? { ...tab, content, isUnsaved: true, lastUpdated: Date.now() }
+        : tab
+    ));
+  }, []);
   const openFileInTab = (file: FileSystemNodeProps) => {
     const existingTab = openTabs.find(tab => tab.fileId === file.id);
     if (existingTab) {
@@ -65,18 +88,18 @@ export function TabsProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateTabContent = (tabId: string, content: string) => {
-    console.log("🎯 TabsContext: Updating tab", tabId, "with content length:", content.length);
-    setOpenTabs(prev => {
-      const newTabs = prev.map(tab =>
-        tab.id === tabId
-          ? { ...tab, content, isUnsaved: true }
-          : tab
-      );
-      console.log("🎯 TabsContext: Updated tabs:", newTabs.map(t => ({ id: t.id, name: t.name, contentLength: t.content.length })));
-      return newTabs;
-    });
-  };
+  // const updateTabContent = (tabId: string, content: string) => {
+  //   console.log("🎯 TabsContext: Updating tab", tabId, "with content length:", content.length);
+  //   setOpenTabs(prev => {
+  //     const newTabs = prev.map(tab =>
+  //       tab.id === tabId
+  //         ? { ...tab, content, isUnsaved: true }
+  //         : tab
+  //     );
+  //     console.log("🎯 TabsContext: Updated tabs:", newTabs.map(t => ({ id: t.id, name: t.name, contentLength: t.content.length })));
+  //     return newTabs;
+  //   });
+  // };
 
   return (
     <TabsContext.Provider value={{
@@ -84,7 +107,9 @@ export function TabsProvider({ children }: { children: ReactNode }) {
       activeTabId,
       openFileInTab,
       closeTab,
+      activeTabContent,
       updateTabContent,
+      getTabContent,
       setActiveTabId,
     }}>
       {children}
