@@ -227,7 +227,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
       {/* Guide Lines */}
       {depth > 0 && (
         <div
-          className="absolute left-0 top-0 bottom-0 border-l border-gray-400"
+          className="absolute left-0 top-0 bottom-0 "
           style={{
             left: `${depth * 20}px`,
             opacity: 0.7,

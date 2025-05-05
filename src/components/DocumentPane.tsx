@@ -350,6 +350,9 @@ export function DocumentPane({
         // Create new content by combining existing and new
         const newContent = content + accumulatedText;
         onContentChange(newContent);
+
+         // Scroll to bottom after each update
+      quillEditor.scrollTop = quillEditor.scrollHeight;
       }
 
     } catch (error) {

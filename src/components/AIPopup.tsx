@@ -89,8 +89,8 @@ export function AIPopup({
     };
   }, []);
   
-  
 
+  
   // Use selectedNodeText wherever needed
   useEffect(() => {
     console.log("🔍 Text sent to AI Prompt:", selectedNodeText);
@@ -316,7 +316,9 @@ export function AIPopup({
         "🎯 AIPopup: About to call onGenerate with summary:",
         summary.substring(0, 100) + "..."
       );
+      setPrompt("")
       onGenerate(summary);
+      
     } catch (err) {
       console.error("Submit error:", err);
       setError("Something went wrong while processing files.");
@@ -373,7 +375,7 @@ export function AIPopup({
           className="flex-1 px-3 py-2 text-sm border border-blue-100 rounded-md resize-none 
                      focus:outline-none focus:ring-1 focus:ring-blue-200 focus:border-blue-200 
                      bg-white/70 backdrop-blur-sm text-gray-700"
-          rows={2}
+          rows={2}  
           disabled={isLoading}
         />
 
@@ -395,7 +397,7 @@ export function AIPopup({
       </form>
 
       {/* Expandable context panel - Appears above the form */}
-      {(selectedText ||
+      {(selectedText ||  
          documentall.length > 0 ||
         showContext ||
         uploadedFiles.length > 0 ||
