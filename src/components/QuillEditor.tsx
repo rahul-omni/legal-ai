@@ -1,12 +1,6 @@
-import dynamic from 'next/dynamic';
-import { useEffect } from 'react';
-import 'react-quill-new/dist/quill.snow.css';
-import "../styles/editor.css"
-// Dynamic import to avoid SSR issues
-const ReactQuill = dynamic(() => import('react-quill-new'), {
-  ssr: false,
-  loading: () => <div className="h-full w-full bg-white animate-pulse" />
-});
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
+import "../styles/editor.css";
 
 interface QuillEditorProps {
   content: string;
@@ -17,34 +11,38 @@ interface QuillEditorProps {
 const modules = {
   toolbar: [
     // Headers
-    [{ 'header': [1, 2, false] }],
-    
+    [{ header: [1, 2, false] }],
+
     // Text styling
-    ['bold', 'italic', 'underline'],
-    
+    ["bold", "italic", "underline"],
+
     // Lists and indentation
-    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    [{ 'indent': '-1'}, { 'indent': '+1' }],
-    
+    [{ list: "ordered" }, { list: "bullet" }],
+    [{ indent: "-1" }, { indent: "+1" }],
+
     // Clean formatting
-    ['clean']
+    ["clean"],
   ],
   clipboard: {
-    matchVisual: false
-  }
+    matchVisual: false,
+  },
 };
 
 const formats = [
-  'header',
-  'bold',
-  'italic',
-  'underline',
-  'list',
-  'bullet',
-  'indent'
+  "header",
+  "bold",
+  "italic",
+  "underline",
+  "list", // Includes "bullet" and "ordered"
+  "bullet",
+  "indent",
 ];
 
-export function QuillEditor({ content, onContentChange, onSelectionChange }: QuillEditorProps) {
+export function QuillEditor({
+  content,
+  onContentChange,
+  onSelectionChange,
+}: QuillEditorProps) {
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <div className="relative flex-1">
@@ -64,4 +62,4 @@ export function QuillEditor({ content, onContentChange, onSelectionChange }: Qui
       </div>
     </div>
   );
-} 
+}

@@ -285,7 +285,7 @@ const ProjectCard: FC<
 > = ({ projectHubState, project, dispatchProjectHub, loadProjects }) => {
   const router = useRouter();
   return (
-    <button
+    <div
       onClick={() => {
         if (project.type === "FOLDER") {
           dispatchProjectHub({
@@ -328,7 +328,7 @@ const ProjectCard: FC<
           </button>
         </div>
       </div>
-    </button>
+    </div>
   );
 };
 
