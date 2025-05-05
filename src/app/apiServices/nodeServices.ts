@@ -11,14 +11,14 @@ export interface CreateNodePayload {
 
 export const fetchNodes = async (
   parentId?: string
-): Promise<FileSystemNodeProps[]> => {
+): Promise<FileSystemNodeProps[] | undefined> => {
   try {
     const url = `/nodes?parentId=${parentId || ""}`;
     const response = await apiClient.get(url);
     return response.data;
   } catch (error) {
     console.error("Error fetching nodes:", error);
-    throw new Error("Failed to fetch nodes");
+    return;
   }
 };
 
@@ -31,19 +31,20 @@ export const createNodeold = async (node: CreateNodePayload) => {
   }
 };
 
-
-
-export const createNode = async (node: CreateNodePayload): Promise<FileSystemNodeProps> => {
+export const createNode = async (
+  node: CreateNodePayload
+): Promise<FileSystemNodeProps> => {
   try {
-    const response: AxiosResponse<FileSystemNodeProps> = await apiClient.post("/nodes", node);
+    const response: AxiosResponse<FileSystemNodeProps> = await apiClient.post(
+      "/nodes",
+      node
+    );
     return response.data;
   } catch (error) {
     console.error("Error uploading file:", error);
     throw new Error("Failed to upload file");
   }
 };
-
-
 
 export const fetchAllNodes = async (): Promise<FileSystemNodeProps[]> => {
   try {
@@ -76,14 +77,11 @@ export const readFile = async (
   }
 };
 
- 
-
 export const updateNodeContentwork = async (
   nodeId: string,
   content: string
 ): Promise<FileSystemNodeProps> => {
-
-  if (!nodeId){
+  if (!nodeId) {
     throw new Error("Node ID is required");
   }
   try {
@@ -97,7 +95,6 @@ export const updateNodeContentwork = async (
     throw new Error("Failed to update node content");
   }
 };
-
 
 export const updateNodeContent = async (
   nodeId: string,
