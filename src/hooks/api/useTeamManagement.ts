@@ -2,6 +2,7 @@ import {
   InviteTeamMemberReq,
   InviteTeamMemberRes,
 } from "@/app/api/(private-routes)/invite-team-member/types";
+import { OrgTeamMemberRes } from "@/app/api/(private-routes)/organization/types";
 import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
 import { apiClient } from "@/app/apiServices";
 import { useState } from "react";
@@ -33,20 +34,19 @@ export const useInviteTemMember = () => {
   return { inviteTeamMember, isLoading, error };
 };
 
-// hook to fetch invited team members
-export const useFetchTeamMembers = (orgId: string) => {
+export const useFetchTeamMembers = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTeamMembers = async () => {
+  const fetchTeamMembers = async (orgId: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get(
-        apiRouteConfig.privateRoutes.teamMembers
+      const response = await apiClient.get<OrgTeamMemberRes>(
+        `${apiRouteConfig.privateRoutes.teamMembers(orgId)}`
       );
 
-      return response.data;
+      return response.data.invitations;
     } catch (err) {
       setError("Failed to invite team member");
       return null;

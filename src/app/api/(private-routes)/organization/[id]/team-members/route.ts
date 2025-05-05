@@ -3,7 +3,7 @@ import { invitationService } from "@/app/api/lib/services/invitationTeamMemberSe
 import { NextRequest, NextResponse } from "next/server";
 import { OrgTeamMemberRes } from "../../types";
 
-export default async function GET(
+export async function GET(
   _: NextRequest,
   { params }: { params: { id: string } }
 ): Promise<NextResponse<OrgTeamMemberRes | ErrorResponse>> {

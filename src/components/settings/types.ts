@@ -1,23 +1,27 @@
-interface InviteFormInputs {
+import { Invitation, InvitationStatus } from "@prisma/client";
+
+export interface InviteFormInputs {
   email: string;
   roleId: string;
 }
 
-interface TeamMember {
+export interface TeamMember {
   id: string;
   name: string;
   email: string;
-  status: "Active" | "Pending" | "Inactive";
+  status: InvitationStatus;
   avatarInitial: string;
 }
 
-type State = {
+export type State = {
   searchQuery: string;
   rowsPerPage: number;
   isModalOpen: boolean;
+  invitedTeamMembers: Invitation[];
 };
 
-type Action =
+export type Action =
   | { type: "SET_SEARCH_QUERY"; payload: string }
   | { type: "SET_ROWS_PER_PAGE"; payload: number }
+  | { type: "SET_INVITED_TEAM_MEMBERS"; payload: Invitation[] }
   | { type: "SET_MODAL_OPEN"; payload: boolean };
