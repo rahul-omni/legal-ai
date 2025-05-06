@@ -106,9 +106,13 @@ export function DocumentPane({
     //console.log("Tree received in DocumentPane:", newTree);
   };
      
+
+  const quillRef = React.useRef<any>(null);   //  ← now visible everywhere
+
+
   const fetchUpdatedFileTree = async () => {
     try {
-      console.log("Fetching file tree...");  // This log will help us know if the function is being called.
+      //console.log("Fetching file tree...");  // This log will help us know if the function is being called.
       const tree = await fetchAllNodes();
       console.log("📦 Updated file tree inside DocumentPane:", tree);  // This is where we check the actual tree.
       setFileTree(tree);
@@ -315,51 +319,68 @@ export function DocumentPane({
     }
   };
 
-  const handleGeneratedText = async (prompt: string) => {
-    try {
-      setGenerationState({
-        isGenerating: true,
-        insertPosition: cursorIndicatorPosition || undefined
-      });
+  /* local state */
 
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
-      });
+/* the handler that AIPopup will call */
+/** ------------------------------------------------------------------
+ *  handleGeneratedText – hybrid (ref + DOM) version
+ *  ----------------------------------------------------------------- */
+const handlePromptSubmit = async (prompt: string) => {
+  /* visual “typing” indicator */
+  setGenerationState({ isGenerating: true });
 
-      if (!response.body) return;
+  try {
+    /* 1 ▸ fire the API request */
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
+    });
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let accumulatedText = '';
+    if (!res.body) return;
 
-      // Get Quill instance
-      const quillEditor = document.querySelector('.quill')?.querySelector('.ql-editor');
-      if (!quillEditor) return;
+    /* 2 ▸ set up the stream reader */
+    const reader   = res.body.getReader();
+    const decoder  = new TextDecoder();
+    let   incoming = "";
 
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+    /* 3 ▸ helper — resolve the Quill editing element               */
+    const getQuillRoot = () => {
+      /* preferred: use the ref (React‑Quill ≥ 2.x) */
+      const byRef = quillRef.current?.getEditor?.()?.root as HTMLElement | undefined;
+      if (byRef) return byRef;
 
-        // Decode and accumulate the chunk
-        const chunk = decoder.decode(value);
-        accumulatedText += chunk;
+      /* fallback: your old DOM query */
+      return document.querySelector(".quill")?.querySelector(".ql-editor") as HTMLElement | undefined;
+    };
 
-        // Create new content by combining existing and new
-        const newContent = content + accumulatedText;
-        onContentChange(newContent);
+    /* 4 ▸ read the stream */
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
 
-         // Scroll to bottom after each update
-      quillEditor.scrollTop = quillEditor.scrollHeight;
-      }
+      incoming += decoder.decode(value, { stream: true });
 
-    } catch (error) {
-      console.error('Error generating text:', error);
-    } finally {
-      setGenerationState({ isGenerating: false });
+      /* 5 ▸ update app state */
+      const newContent = content + incoming;
+      onContentChange(newContent);
+
+      /* 6 ▸ auto‑scroll */
+      const root = getQuillRoot();
+      if (root) root.scrollTop = root.scrollHeight;
     }
-  };
+
+    /* flush the final chunk (if any) */
+    if (incoming.trim()) {
+      const newContent = content + incoming;
+      onContentChange(newContent);
+    }
+  } catch (err) {
+    console.error("generation failed:", err);
+  } finally {
+    setGenerationState({ isGenerating: false });
+  }
+};
 
   const renderContent = () => {
     if (!highlightRange) return content;
@@ -806,7 +827,7 @@ const findNodeById = (nodes: FileSystemNodeProps[], id: string): FileSystemNodeP
           {showAIPopup && (
             <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50" style={{ width: '600px' }}>
               <AIPopup
-                onGenerate={handleGeneratedText}
+                onPromptSubmit={handlePromptSubmit}
                 currentContent={content}
                 selectedText={selectedText}
                 cursorPosition={cursorPosition}

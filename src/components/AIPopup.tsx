@@ -20,10 +20,10 @@ const extractTextFromDocx = async (file: File): Promise<string> => {
 GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
 
 interface AIPopupProps {
-  onGenerate: (text: string) => void;
   currentContent: string;
   selectedText: string;
   documents: any[];
+  onPromptSubmit: (prompt: string, context: string) => void;
   files: FileSystemNodeProps[];
   cursorPosition?: {
     line: number;
@@ -46,7 +46,7 @@ export const estimateTokenCount = (text: string): number => {
 };
 
 export function AIPopup({
-  onGenerate,
+  onPromptSubmit,
   currentContent,
   selectedText,
   documents,
@@ -216,113 +216,88 @@ export function AIPopup({
   };
   //console.log("uploadfile", uploadedFiles);
   //console.log("documenttre--", documentall);
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+  /** ------------------------------------------------------------------
+ *  handleSubmit  –  replace the one that’s currently in AIPopup.tsx
+ *  ------------------------------------------------------------------
+ *  ‑ Builds the *fullText* exactly like before
+ *  ‑ NO network fetch here
+ *  ‑ Hands everything to the parent (DocumentPane) through
+ *      onPromptSubmit(prompt, fullText)
+ * ------------------------------------------------------------------ */
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError("");
 
-    if (!prompt.trim()) return;
+  /* guard clause – empty prompt */
+  if (!prompt.trim()) return;
 
-    try {
-      setIsLoading(true);
-      let fileText = ""; // Context from added files
+  try {
+    setIsLoading(true);
 
-      // --- Read content from uploaded files and selected documents ---
-      // 1. Handle uploaded files (File[])
-      const fileReadPromises = uploadedFiles.map((file) => {
-        if (file.type === "application/pdf") {
-          return extractTextFromPDF(file);
-        } else if (file.name.endsWith(".docx")) {
-          return extractTextFromDocx(file);
-        } else {
-          return file.text(); // fallback for .txt or others
-        }
-      });
+    /* ───────────────────────────
+     * 1.  Read uploaded files
+     * ─────────────────────────── */
+    const uploadedTexts = await Promise.all(
+      uploadedFiles.map(async (file) => {
+        if (file.type === "application/pdf")   return extractTextFromPDF(file);
+        if (file.name.endsWith(".docx"))        return extractTextFromDocx(file);
+        return file.text();                     // txt / fallback
+      })
+    );
 
-      // 2. Handle documents (FileSystemNode[])
-      const treeFileReadPromises =  documentall.map(async (fileNode) => {
+    /* ───────────────────────────
+     * 2.  Read tree‑selected docs
+     * ─────────────────────────── */
+    const treeTexts = await Promise.all(
+      documentall.map(async (node) => {
         try {
-          const { content, name } = await readFile(fileNode.id);
-          const extension = name.split(".").pop()?.toLowerCase();
+          const { content, name } = await readFile(node.id);
           const file = new File([content], name);
-          if (extension === "pdf") {
-            return await extractTextFromPDF(file);
-          } else if (extension === "docx") {
-            return await extractTextFromDocx(file);
-          } else {
-            return await content.text(); // ✅ handle .txt or unknown text files
-          }
+
+          if (name.endsWith(".pdf"))  return extractTextFromPDF(file);
+          if (name.endsWith(".docx")) return extractTextFromDocx(file);
+          return await content.text();
         } catch (err) {
-          console.error("Error reading server file:", fileNode.name, err);
+          console.error("readFile failed:", node.name, err);
           return "";
         }
-      });
+      })
+    );
 
-      // Combine results from files
-      const results = await Promise.all([
-        ...fileReadPromises,
-        ...treeFileReadPromises,
-      ]);
-      fileText = results.filter(Boolean).join("\n\n"); // Join non-empty results
-      // console.log("🧾 Context File Text:", fileText);
+    const fileText = [...uploadedTexts, ...treeTexts]
+      .filter(Boolean)
+      .join("\n\n");
 
-      // --- Determine Primary Context ---
-      let primaryContext = "";
-      if (selectedText) {
-        console.log("Using selectedText as primary context.");
-        primaryContext = `Selected Text:\n"""\n${selectedText}\n"""`;
-      } else if (currentContent) {
-        console.log("Using currentContent as primary context.");
-        primaryContext = `Document Content:\n"""\n${currentContent}\n"""`;
-      } else {
-        console.log(
-          "No primary context (selectedText or currentContent) available."
-        );
-        // primaryContext remains ""
-      }
+    /* ───────────────────────────
+     * 3.  Build PRIMARY context
+     * ─────────────────────────── */
+    let primary = "";
+    if (selectedText)   primary = `Selected Text:\n"""\n${selectedText}\n"""`;
+    else if (currentContent)
+      primary = `Document Content:\n"""\n${currentContent}\n"""`;
 
-      // --- Combine Primary Context and File Context ---
-      // Add a separator only if both contexts exist
-      const separator =
-        primaryContext && fileText
-          ? "\n\n---\n\nAdditional Context Files:\n"
-          : "";
-      const fullText = primaryContext + separator + fileText;
+    /* ───────────────────────────
+     * 4.  Merge primary + files
+     * ─────────────────────────── */
+    const separator =
+      primary && fileText ? "\n\n---\n\nAdditional Context Files:\n" : "";
+    const fullText = primary + separator + fileText;
 
-      // The user's direct instruction
-      const finalPrompt = prompt;
+    /* ───────────────────────────
+     * 5.  Hand off to parent
+     * ─────────────────────────── */
+    onPromptSubmit(prompt.trim(), fullText);
 
-      //console.log("Submitting Full Context (text):", `'${fullText}'`);
-      //console.log("Submitting User Prompt (prompt):", `'${finalPrompt}'`);
+    /* optional: clear the input */
+    setPrompt("");
+  } catch (err) {
+    console.error("AIPopup handleSubmit error:", err);
+    setError("Something went wrong while preparing the prompt.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
-      // --- Token Estimation (Optional but recommended) ---
-      // const tokenCount = estimateTokenCount(fullText + finalPrompt);
-      // ... (handle token limit if necessary) ...
-
-      // --- Make API call ---
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: fullText, // Send the combined context here
-          prompt: finalPrompt, // Send the user's instruction here
-        }),
-      });
-
-      // ... (handle response) ...
-      const summary = await response.text();
-      if (!response.ok) throw new Error(summary);
-      console.log(
-        "🎯 AIPopup: About to call onGenerate with summary:",
-        summary.substring(0, 100) + "..."
-      );
-      onGenerate(summary);
-    } catch (err) {
-      console.error("Submit error:", err);
-      setError("Something went wrong while processing files.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleRemoveFile = (index: number) => {
     setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
