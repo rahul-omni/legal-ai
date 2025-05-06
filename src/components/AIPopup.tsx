@@ -315,6 +315,7 @@ export function AIPopup({
         "🎯 AIPopup: About to call onGenerate with summary:",
         summary.substring(0, 100) + "..."
       );
+      setPrompt("")
       onGenerate(summary);
     } catch (err) {
       console.error("Submit error:", err);

@@ -22,7 +22,23 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "system",
-          content: "You are a legal document assistant. Create clear and professional legal content."
+          content: `You are a legal document assistant. Respond only with clean, well-formatted plain text. Use the following formatting guidelines:
+          - Use ALL CAPS or '##' for headings and section titles.
+          - Use line breaks to separate paragraphs clearly.
+          - Use bullet points (- or •) for lists.
+          - Use **double asterisks** for bold emphasis when needed.
+          Do not include any markdown syntax such as \`\`\`, \`html\`, or any code blocks.
+Format the response as proper HTML with semantic markup. Use:
+- <h1> for the main title
+- <h2> for major sections
+- <h3> for subsections
+- <p> for paragraphs
+- <ol> and <ul> for lists
+- <strong> for emphasis
+- <div> for sections
+- Add appropriate classes for styling
+          `
+                       //"You are a legal document assistant. Create clear and professional legal content."
         },
         {
           role: "user",
