@@ -43,3 +43,9 @@ export interface CreatePasswordResponse {
   success: boolean;
   message: string;
 }
+
+export type OrgMembershipForAuth = {
+  organizationId: string;
+  organizationName: string;
+  roleId: string;
+};

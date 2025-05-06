@@ -1,11 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { redirectToURL } from "./app/api/lib/redirect";
+import { auth } from "./app/api/(public-routes)/auth/[...nextauth]/route";
 import { routeConfig } from "./lib/routeConfig";
 
-export function middleware(request: NextRequest) {
-  const authToken = request.cookies.get("authToken")?.value;
-  const verified = request.cookies.get("verified")?.value === "true";
+export async function middleware(request: NextRequest) {
+  const session = await auth();
 
   const privateRoute = Object.values(routeConfig.privateRoutes).find(
     (route) => {
@@ -14,34 +13,51 @@ export function middleware(request: NextRequest) {
     }
   );
 
-  const publicRoute = Object.values(routeConfig.publicRoutes).find((route) => {
-    const isMatch = request.nextUrl.pathname.startsWith(route);
-    return isMatch;
-  });
+  if (privateRoute) {
+    if (!session) {
+      return NextResponse.redirect(
+        new URL(routeConfig.publicRoutes.login, request.url)
+      );
+    }
 
-  if (request.nextUrl.pathname === "/") {
-    return redirectToURL(routeConfig.publicRoutes.login);
-  } else if (privateRoute && !authToken) {
-    return redirectToURL(routeConfig.publicRoutes.login);
-  } else if (privateRoute && authToken && !verified) {
-    return redirectToURL(routeConfig.publicRoutes.verifyEmail);
-  } else if (publicRoute && authToken) {
-    return redirectToURL(routeConfig.privateRoutes.projects);
+    // Extract organization ID from the URL
+    // e.g., /org/org_123/dashboard -> org_123
+    const orgIdMatch = request.nextUrl.pathname.match(/\/org\/([^\/]+)/);
+
+    if (orgIdMatch) {
+      const organizationId = orgIdMatch[1];
+
+      // Check if user has membership in this organization
+      const hasAccess = session.user.memberships.some(
+        (membership) => membership.organizationId === organizationId
+      );
+
+      if (!hasAccess) {
+        // User does not have access to this organization
+        return NextResponse.redirect(new URL("/unauthorized", request.url));
+      }
+    }
   }
 
-  const response = NextResponse.next();
-  if (authToken) {
-    response.headers.set("Authorization", `Bearer ${authToken}`);
-  }
+  // Protect admin routes
+  // if (request.nextUrl.pathname.startsWith("/admin/")) {
+  //   if (!session) {
+  //     return NextResponse.redirect(new URL("/auth/login", request.url));
+  //   }
 
-  return response;
+  //   // Check if user has admin role in any organization
+  //   const isAdmin = session.user.memberships.some(
+  //     (membership) => membership.roleId === "ADMIN"
+  //   );
+
+  //   if (!isAdmin) {
+  //     return NextResponse.redirect(new URL("/unauthorized", request.url));
+  //   }
+  // }
+
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    "/",
-    ...Object.values(routeConfig.privateRoutes).map(
-      (route) => `${route}/:path*`
-    ),
-  ],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

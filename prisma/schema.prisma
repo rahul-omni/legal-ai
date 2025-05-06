@@ -22,9 +22,50 @@ model User {
   nodesUpdated            FileSystemNode[] @relation("file_system_nodes_updated_by_idx")
   nodes                   FileSystemNode[] @relation("file_system_nodes_user_id_idx")
   orgMemberships          OrgMembership[]  @relation("org_memberships_user_id_idx")
-  organizationsCreated    Organization[]   @relation("Organization_createdByUser")
+  organizationsCreated    Organization[]   @relation("organization_createdByUser")
+  accounts                Account[]        @relation("account_user_id_idx")
+  sessions                Session[]        @relation("session_user_id_idx")
 
   @@map("users")
+}
+
+model Account {
+  userId            String  @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation("account_user_id_idx", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String   @db.Uuid
+  expires      DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation("session_user_id_idx", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
 }
 
 model Role {
@@ -61,7 +102,7 @@ model Organization {
   createdBy     String?         @map("created_by") @db.Uuid
   invitations   Invitation[]    @relation("organization_invitations_org_id_idx")
   members       OrgMembership[] @relation("org_memberships_org_id_idx")
-  createdByUser User?           @relation("Organization_createdByUser", fields: [createdBy], references: [id])
+  createdByUser User?           @relation("organization_createdByUser", fields: [createdBy], references: [id])
 
   @@map("organizations")
 }
