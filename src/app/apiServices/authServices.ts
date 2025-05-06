@@ -1,6 +1,6 @@
 import { User } from "@prisma/client";
-import { AxiosError } from "axios";
 import { apiClient } from ".";
+import { signIn } from "../api/(public-routes)/auth/[...nextauth]/route";
 import {
   SignupRequest,
   SignupResponse,
@@ -10,14 +10,22 @@ import { ErrorResponse } from "../api/lib/errors";
 export const login = async (userDetails: {
   email: string;
   password: string;
-}): Promise<{ token: string; user: User }> => {
+}): Promise<{ token: string; user: User } | null> => {
   try {
-    const { data } = await apiClient.post("/auth/login", userDetails);
-    const { token, user } = data;
-    return { token, user };
+    const result = await signIn("credentials", {
+      values: {
+        email: userDetails.email,
+        password: userDetails.password,
+      },
+    });
+
+    if (result) {
+      console.log("Error logging in:", result);
+    }
+
+    return result;
   } catch (error) {
-    const errorResponse = error as AxiosError<ErrorResponse>;
-    throw new Error(errorResponse.response?.data.error || "Login failed");
+    return null;
   }
 };
 
