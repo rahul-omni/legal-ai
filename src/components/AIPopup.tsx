@@ -20,10 +20,10 @@ const extractTextFromDocx = async (file: File): Promise<string> => {
 GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
 
 interface AIPopupProps {
-  onGenerate: (text: string) => void;
   currentContent: string;
   selectedText: string;
   documents: any[];
+  onPromptSubmit: (prompt: string, context: string) => void;
   files: FileSystemNodeProps[];
   cursorPosition?: {
     line: number;
@@ -46,7 +46,7 @@ export const estimateTokenCount = (text: string): number => {
 };
 
 export function AIPopup({
-  onGenerate,
+  onPromptSubmit,
   currentContent,
   selectedText,
   documents,
@@ -89,12 +89,34 @@ export function AIPopup({
     };
   }, []);
   
-
   
-  // Use selectedNodeText wherever needed
-  useEffect(() => {
-    console.log("🔍 Text sent to AI Prompt:", selectedNodeText);
-  }, [selectedNodeText]);
+   
+ 
+  // // Use selectedNodeText wherever needed
+  // useEffect(() => {
+  //   if (selectedText && localSelectedText === "") {
+  //     setLocalSelectedText(selectedText);
+       
+  //   }
+  //   console.log("🔍 Text sent to AI Prompt:", selectedNodeText);
+  // }, [selectedNodeText, selectedText]);
+  // function stripHtml(html: string): string {
+  //   const doc = new DOMParser().parseFromString(html, "text/html");
+  //   return doc.body.textContent || "";
+  // }
+  
+  // useEffect(() => {
+  //   if (selectedText  ) {
+  //     const cleanText = stripHtml(selectedText);
+  //     setLocalSelectedText(cleanText);
+  //     console.log("🔍 Cleaned selectedText sent to AI Prompt:", cleanText);
+  //   }
+  // }, [selectedText]);
+  
+  
+ 
+
+
   const handleDocumentSelect = (file: FileSystemNodeProps) => {
     const isAlreadySelected =  documentall.some((doc) => doc.id === file.id);
 
@@ -106,7 +128,6 @@ export function AIPopup({
     setDocument((prev) => [...prev, file]);
   };
 
-  console.log("documentall--", documentall);
 
   const handleAddContextClick = () => {
     setShowContext(true);
@@ -188,14 +209,14 @@ export function AIPopup({
       try {
         const data = await fetchAllNodes(); // flat array
 
-        console.log("📦 Flat fetched data:", data); // <-- Add this
+        //console.log("📦 Flat fetched data:", data); // <-- Add this
 
         const treeData = buildTree(data);
-        console.log("🌲 Built tree:", treeData); // convert to nested
+        //console.log("🌲 Built tree:", treeData); // convert to nested
         setTree(treeData);
         onTreeUpdate(treeData);
         const allFiles = getAllFiles(treeData); // collect deeply nested files
-        console.log("📄 All files (nested + flat):", allFiles);
+        //console.log("📄 All files (nested + flat):", allFiles);
         setFileNodes(allFiles); // store them in state
       } catch (error) {
         console.error("Failed to fetch tree:", error);
@@ -206,8 +227,8 @@ export function AIPopup({
 
     getTree();
   }, []);
-  console.log("tree", tree);
-  console.log("fileNodes", fileNodes); // now should show all files, nested or not!
+  //console.log("tree", tree);
+  //console.log("fileNodes", fileNodes); // now should show all files, nested or not!
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -215,117 +236,93 @@ export function AIPopup({
       setUploadedFiles((prev) => [...prev, ...Array.from(files)]);
     }
   };
-  console.log("uploadfile", uploadedFiles);
-  console.log("documenttre--", documentall);
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+  //console.log("uploadfile", uploadedFiles);
+  //console.log("documenttre--", documentall);
+  /** ------------------------------------------------------------------
+ *  handleSubmit  –  replace the one that’s currently in AIPopup.tsx
+ *  ------------------------------------------------------------------
+ *  ‑ Builds the *fullText* exactly like before
+ *  ‑ NO network fetch here
+ *  ‑ Hands everything to the parent (DocumentPane) through
+ *      onPromptSubmit(prompt, fullText)
+ * ------------------------------------------------------------------ */
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError("");
 
-    if (!prompt.trim()) return;
+  /* guard clause – empty prompt */
+  if (!prompt.trim()) return;
 
-    try {
-      setIsLoading(true);
-      let fileText = ""; // Context from added files
+  try {
+    setIsLoading(true);
 
-      // --- Read content from uploaded files and selected documents ---
-      // 1. Handle uploaded files (File[])
-      const fileReadPromises = uploadedFiles.map((file) => {
-        if (file.type === "application/pdf") {
-          return extractTextFromPDF(file);
-        } else if (file.name.endsWith(".docx")) {
-          return extractTextFromDocx(file);
-        } else {
-          return file.text(); // fallback for .txt or others
-        }
-      });
+    /* ───────────────────────────
+     * 1.  Read uploaded files
+     * ─────────────────────────── */
+    const uploadedTexts = await Promise.all(
+      uploadedFiles.map(async (file) => {
+        if (file.type === "application/pdf")   return extractTextFromPDF(file);
+        if (file.name.endsWith(".docx"))        return extractTextFromDocx(file);
+        return file.text();                     // txt / fallback
+      })
+    );
 
-      // 2. Handle documents (FileSystemNode[])
-      const treeFileReadPromises =  documentall.map(async (fileNode) => {
+    /* ───────────────────────────
+     * 2.  Read tree‑selected docs
+     * ─────────────────────────── */
+    const treeTexts = await Promise.all(
+      documentall.map(async (node) => {
         try {
-          const { content, name } = await readFile(fileNode.id);
-          const extension = name.split(".").pop()?.toLowerCase();
+          const { content, name } = await readFile(node.id);
           const file = new File([content], name);
-          if (extension === "pdf") {
-            return await extractTextFromPDF(file);
-          } else if (extension === "docx") {
-            return await extractTextFromDocx(file);
-          } else {
-            return await content.text(); // ✅ handle .txt or unknown text files
-          }
+
+          if (name.endsWith(".pdf"))  return extractTextFromPDF(file);
+          if (name.endsWith(".docx")) return extractTextFromDocx(file);
+          return await content.text();
         } catch (err) {
-          console.error("Error reading server file:", fileNode.name, err);
+          console.error("readFile failed:", node.name, err);
           return "";
         }
-      });
+      })
+    );
 
-      // Combine results from files
-      const results = await Promise.all([
-        ...fileReadPromises,
-        ...treeFileReadPromises,
-      ]);
-      fileText = results.filter(Boolean).join("\n\n"); // Join non-empty results
-      // console.log("🧾 Context File Text:", fileText);
+    const fileText = [...uploadedTexts, ...treeTexts]
+      .filter(Boolean)
+      .join("\n\n");
 
-      // --- Determine Primary Context ---
-      let primaryContext = "";
-      if (selectedText) {
-        console.log("Using selectedText as primary context.");
-        primaryContext = `Selected Text:\n"""\n${selectedText}\n"""`;
-      } else if (currentContent) {
-        console.log("Using currentContent as primary context.");
-        primaryContext = `Document Content:\n"""\n${currentContent}\n"""`;
-      } else {
-        console.log(
-          "No primary context (selectedText or currentContent) available."
-        );
-        // primaryContext remains ""
-      }
-
-      // --- Combine Primary Context and File Context ---
-      // Add a separator only if both contexts exist
-      const separator =
-        primaryContext && fileText
-          ? "\n\n---\n\nAdditional Context Files:\n"
-          : "";
-      const fullText = primaryContext + separator + fileText;
-
-      // The user's direct instruction
-      const finalPrompt = prompt;
-
-      console.log("Submitting Full Context (text):", `'${fullText}'`);
-      console.log("Submitting User Prompt (prompt):", `'${finalPrompt}'`);
-
-      // --- Token Estimation (Optional but recommended) ---
-      // const tokenCount = estimateTokenCount(fullText + finalPrompt);
-      // ... (handle token limit if necessary) ...
-
-      // --- Make API call ---
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: fullText, // Send the combined context here
-          prompt: finalPrompt, // Send the user's instruction here
-        }),
-      });
-
-      // ... (handle response) ...
-      const summary = await response.text();
-      if (!response.ok) throw new Error(summary);
-      console.log(
-        "🎯 AIPopup: About to call onGenerate with summary:",
-        summary.substring(0, 100) + "..."
-      );
-      setPrompt("")
-      onGenerate(summary);
-      
-    } catch (err) {
-      console.error("Submit error:", err);
-      setError("Something went wrong while processing files.");
-    } finally {
-      setIsLoading(false);
+    /* ───────────────────────────
+     * 3.  Build PRIMARY context
+     * ─────────────────────────── */
+    let primary = "";
+    if (selectedText)   primary = `Selected Text:\n"""\n${selectedText}\n"""`;
+    else if (currentContent)
+      primary = `Document Content:\n"""\n${currentContent}\n"""`;
+    else if (localSelectedText) {
+      primary = `Selected Text:\n"""\n${localSelectedText}\n"""`;
     }
-  };
+
+    /* ───────────────────────────
+     * 4.  Merge primary + files
+     * ─────────────────────────── */
+    const separator =
+      primary && fileText ? "\n\n---\n\nAdditional Context Files:\n" : "";
+    const fullText = primary + separator + fileText;
+
+    /* ───────────────────────────
+     * 5.  Hand off to parent
+     * ─────────────────────────── */
+    onPromptSubmit(prompt.trim(), fullText);
+
+    /* optional: clear the input */
+    setPrompt("");
+  } catch (err) {
+    console.error("AIPopup handleSubmit error:", err);
+    setError("Something went wrong while preparing the prompt.");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const handleRemoveFile = (index: number) => {
     setUploadedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
@@ -334,7 +331,9 @@ export function AIPopup({
     setDocument((prev) => prev.filter((_, i) => i !== index));
   };
 
-   
+  const handleClearText = () => {
+    setSelectedNodeText('');
+  };
   
 
   return (
@@ -375,7 +374,7 @@ export function AIPopup({
           className="flex-1 px-3 py-2 text-sm border border-blue-100 rounded-md resize-none 
                      focus:outline-none focus:ring-1 focus:ring-blue-200 focus:border-blue-200 
                      bg-white/70 backdrop-blur-sm text-gray-700"
-          rows={2}  
+          rows={2}
           disabled={isLoading}
         />
 
@@ -397,7 +396,7 @@ export function AIPopup({
       </form>
 
       {/* Expandable context panel - Appears above the form */}
-      {(selectedText ||  
+      {(selectedText ||
          documentall.length > 0 ||
         showContext ||
         uploadedFiles.length > 0 ||
@@ -405,7 +404,7 @@ export function AIPopup({
         <div className="absolute bottom-full left-0 w-full mb-2 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[300px] overflow-y-auto">
           <div className="p-3">
             {/* Selected Text with Cursor Position */}
-            {selectedText ? (
+            {selectedText || selectedNodeText ? (
               <div className="mb-2 p-2 border border-dashed border-green-300 rounded bg-green-50">
                 <div className="flex items-center justify-between mb-1">
                   <h4 className="text-xs font-semibold text-green-800">
@@ -416,6 +415,16 @@ export function AIPopup({
                       Line {cursorPosition.line}, Column {cursorPosition.column}
                     </span>
                   )}
+                   {/* Cross Icon */}
+        {selectedNodeText && (
+          <button
+            onClick={handleClearText}
+            className="text-gray-500 hover:text-gray-700"
+            aria-label="Clear Text"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
                 </div>
                 <p className="text-xs text-green-700 whitespace-pre-wrap">
                   { selectedNodeText}

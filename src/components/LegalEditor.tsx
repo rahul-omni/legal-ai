@@ -238,8 +238,8 @@ const [isLoading, setIsLoading] = useState(true);
 
   // Add this before the return statement
   const activeTab = openTabs.find(tab => tab.id === activeTabId);
-    console.log("activetab" ,activeTab)
-    console.log("Updated file tree in LegalEditor:", fileTree);
+    //console.log("activetab" ,activeTab)
+    //console.log("Updated file tree in LegalEditor:", fileTree);
   return (
     <div className="h-screen flex flex-col bg-[#f9f9f9]">
       {/* Toolbar */}
