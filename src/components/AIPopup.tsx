@@ -90,11 +90,33 @@ export function AIPopup({
   }, []);
   
   
+   
+ 
+  // // Use selectedNodeText wherever needed
+  // useEffect(() => {
+  //   if (selectedText && localSelectedText === "") {
+  //     setLocalSelectedText(selectedText);
+       
+  //   }
+  //   console.log("🔍 Text sent to AI Prompt:", selectedNodeText);
+  // }, [selectedNodeText, selectedText]);
+  // function stripHtml(html: string): string {
+  //   const doc = new DOMParser().parseFromString(html, "text/html");
+  //   return doc.body.textContent || "";
+  // }
+  
+  // useEffect(() => {
+  //   if (selectedText  ) {
+  //     const cleanText = stripHtml(selectedText);
+  //     setLocalSelectedText(cleanText);
+  //     console.log("🔍 Cleaned selectedText sent to AI Prompt:", cleanText);
+  //   }
+  // }, [selectedText]);
+  
+  
+ 
 
-  // Use selectedNodeText wherever needed
-  useEffect(() => {
-    console.log("🔍 Text sent to AI Prompt:", selectedNodeText);
-  }, [selectedNodeText]);
+
   const handleDocumentSelect = (file: FileSystemNodeProps) => {
     const isAlreadySelected =  documentall.some((doc) => doc.id === file.id);
 
@@ -275,6 +297,9 @@ const handleSubmit = async (e: React.FormEvent) => {
     if (selectedText)   primary = `Selected Text:\n"""\n${selectedText}\n"""`;
     else if (currentContent)
       primary = `Document Content:\n"""\n${currentContent}\n"""`;
+    else if (localSelectedText) {
+      primary = `Selected Text:\n"""\n${localSelectedText}\n"""`;
+    }
 
     /* ───────────────────────────
      * 4.  Merge primary + files
@@ -306,7 +331,9 @@ const handleSubmit = async (e: React.FormEvent) => {
     setDocument((prev) => prev.filter((_, i) => i !== index));
   };
 
-   
+  const handleClearText = () => {
+    setSelectedNodeText('');
+  };
   
 
   return (
@@ -377,7 +404,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         <div className="absolute bottom-full left-0 w-full mb-2 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[300px] overflow-y-auto">
           <div className="p-3">
             {/* Selected Text with Cursor Position */}
-            {selectedText ? (
+            {selectedText || selectedNodeText ? (
               <div className="mb-2 p-2 border border-dashed border-green-300 rounded bg-green-50">
                 <div className="flex items-center justify-between mb-1">
                   <h4 className="text-xs font-semibold text-green-800">
@@ -388,6 +415,16 @@ const handleSubmit = async (e: React.FormEvent) => {
                       Line {cursorPosition.line}, Column {cursorPosition.column}
                     </span>
                   )}
+                   {/* Cross Icon */}
+        {selectedNodeText && (
+          <button
+            onClick={handleClearText}
+            className="text-gray-500 hover:text-gray-700"
+            aria-label="Clear Text"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
                 </div>
                 <p className="text-xs text-green-700 whitespace-pre-wrap">
                   { selectedNodeText}
