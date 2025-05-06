@@ -103,7 +103,7 @@ export function DocumentPane({
   // This callback will be passed to AIPopup
   const handleTreeUpdate = (newTree: FileSystemNodeProps[]) => {
     setFileTree(newTree);
-    console.log("Tree received in DocumentPane:", newTree);
+    //console.log("Tree received in DocumentPane:", newTree);
   };
      
   const fetchUpdatedFileTree = async () => {
@@ -126,10 +126,9 @@ export function DocumentPane({
   
   
   //console.log("content",content);
-  console.log("filetree---",fileTree);
-  console.log("nodes+++++",nodes);
+ 
    
-  console.log("filesID",fileId);
+
   // Add this function to DocumentPane.tsx
   const verifyFileInTree = (tree: FileSystemNodeProps[], targetFileId: string) => {
     // Track both the file and its parent folder
@@ -619,9 +618,9 @@ const updateTreeWithNewFile = (
  
 const handleSaveAs = async (name?: string) => {
   try {
-    console.log("Current fileTree:", fileTree);
-    console.log("Current fileId:", fileId);
-    console.log("Selected node:", selectedNode);
+    //console.log("Current fileTree:", fileTree);
+    //console.log("Current fileId:", fileId);
+    //console.log("Selected node:", selectedNode);
 
     if (!fileId) {
       showToast("No file selected to save as");

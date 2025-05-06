@@ -89,8 +89,8 @@ export function AIPopup({
     };
   }, []);
   
-
   
+
   // Use selectedNodeText wherever needed
   useEffect(() => {
     console.log("🔍 Text sent to AI Prompt:", selectedNodeText);
@@ -106,7 +106,6 @@ export function AIPopup({
     setDocument((prev) => [...prev, file]);
   };
 
-  console.log("documentall--", documentall);
 
   const handleAddContextClick = () => {
     setShowContext(true);
@@ -188,14 +187,14 @@ export function AIPopup({
       try {
         const data = await fetchAllNodes(); // flat array
 
-        console.log("📦 Flat fetched data:", data); // <-- Add this
+        //console.log("📦 Flat fetched data:", data); // <-- Add this
 
         const treeData = buildTree(data);
-        console.log("🌲 Built tree:", treeData); // convert to nested
+        //console.log("🌲 Built tree:", treeData); // convert to nested
         setTree(treeData);
         onTreeUpdate(treeData);
         const allFiles = getAllFiles(treeData); // collect deeply nested files
-        console.log("📄 All files (nested + flat):", allFiles);
+        //console.log("📄 All files (nested + flat):", allFiles);
         setFileNodes(allFiles); // store them in state
       } catch (error) {
         console.error("Failed to fetch tree:", error);
@@ -206,8 +205,8 @@ export function AIPopup({
 
     getTree();
   }, []);
-  console.log("tree", tree);
-  console.log("fileNodes", fileNodes); // now should show all files, nested or not!
+  //console.log("tree", tree);
+  //console.log("fileNodes", fileNodes); // now should show all files, nested or not!
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -215,8 +214,8 @@ export function AIPopup({
       setUploadedFiles((prev) => [...prev, ...Array.from(files)]);
     }
   };
-  console.log("uploadfile", uploadedFiles);
-  console.log("documenttre--", documentall);
+  //console.log("uploadfile", uploadedFiles);
+  //console.log("documenttre--", documentall);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -292,8 +291,8 @@ export function AIPopup({
       // The user's direct instruction
       const finalPrompt = prompt;
 
-      console.log("Submitting Full Context (text):", `'${fullText}'`);
-      console.log("Submitting User Prompt (prompt):", `'${finalPrompt}'`);
+      //console.log("Submitting Full Context (text):", `'${fullText}'`);
+      //console.log("Submitting User Prompt (prompt):", `'${finalPrompt}'`);
 
       // --- Token Estimation (Optional but recommended) ---
       // const tokenCount = estimateTokenCount(fullText + finalPrompt);
@@ -316,9 +315,7 @@ export function AIPopup({
         "🎯 AIPopup: About to call onGenerate with summary:",
         summary.substring(0, 100) + "..."
       );
-      setPrompt("")
       onGenerate(summary);
-      
     } catch (err) {
       console.error("Submit error:", err);
       setError("Something went wrong while processing files.");
@@ -375,7 +372,7 @@ export function AIPopup({
           className="flex-1 px-3 py-2 text-sm border border-blue-100 rounded-md resize-none 
                      focus:outline-none focus:ring-1 focus:ring-blue-200 focus:border-blue-200 
                      bg-white/70 backdrop-blur-sm text-gray-700"
-          rows={2}  
+          rows={2}
           disabled={isLoading}
         />
 
@@ -397,7 +394,7 @@ export function AIPopup({
       </form>
 
       {/* Expandable context panel - Appears above the form */}
-      {(selectedText ||  
+      {(selectedText ||
          documentall.length > 0 ||
         showContext ||
         uploadedFiles.length > 0 ||
