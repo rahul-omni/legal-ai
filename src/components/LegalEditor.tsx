@@ -56,7 +56,7 @@ export default function LegalEditor() {
   // Add state for panel visibility
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(false);
-  const [showSmartPrompts, setShowSmartPrompts] = useState(true);
+  const [showSmartPrompts, setShowSmartPrompts] = useState(false);
    // In LegalEditor component
 const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(null);
 const [fileTree, setFileTree] = useState<FileSystemNodeProps[]>([]);

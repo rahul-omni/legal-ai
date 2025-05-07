@@ -647,82 +647,77 @@ const findNodeById = (nodes: FileSystemNodeProps[], id: string): FileSystemNodeP
   }, [fileId, nodes]);
   
   return (
-    <div className="h-full flex">
-      {/* Main Editor Area */}
-      <div className="flex-1 flex flex-col bg-[#f9f9f9]">
-        {/* Header */}
-        <div className="p-4 bg-[#f9f9f9]">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-gray-800/80">
-              {fileName || "New Document"} {!fileId && "(Unsaved)"}
-            </h1>
-
-            <div className="flex items-center gap-2">
-              <TranslationDropdown 
-                onTranslate={handleTranslate}
-                isLoading={isLoading("TRANSLATE_TEXT")}
-              />
-              {/* <SaveDropdown onSave={onSave} onSaveAs={onSaveAs} nodeId={nodeId} content={content} name={""} />
-            */}
-                <SaveDropdown
-                       onSave={async () => {
-                             if (!fileId) {
-                                    console.error("❌ fileId is undefined. Can't save.");
-                                       return;
-                                         }
-                                     console.log("✅ Saving document with fileId:", fileId);
-                                      await updateNodeContent(fileId, content);
-                                       }}
-   
-                                          onSaveAs={handleSaveAs} 
-                                         name={fileName || ""}
-                                         isNewFile={!fileId}
-                                         />
-            </div>
+    <div className="flex flex-col h-full">
+      {/* Compact Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="flex justify-between items-center px-3 py-1">
+          <div className="flex items-center space-x-2">
+            <h2 className="text-sm font-medium text-gray-700 truncate max-w-md">
+              {fileName || "Untitled Document"} {!fileId && "(Unsaved)"}
+            </h2>
+          </div>
+          <div className="flex items-center space-x-1">
+            <TranslationDropdown 
+              onTranslate={handleTranslate}
+              isLoading={isLoading("TRANSLATE_TEXT")}
+            />
+            <SaveDropdown
+              onSave={async () => {
+                if (!fileId) {
+                  console.error("❌ fileId is undefined. Can't save.");
+                  return;
+                }
+                console.log("✅ Saving document with fileId:", fileId);
+                await updateNodeContent(fileId, content);
+              }}
+              onSaveAs={handleSaveAs}
+              isNewFile={!fileId} 
+              name={fileName || ""}
+            />
           </div>
         </div>
+      </div>
+      
+      {/* Editor with reduced padding */}
+      <div className="flex-1 relative p-3 bg-white" ref={containerRef}>
+        <QuillEditor
+          ref={quillRef}
+          content={content}
+          onContentChange={onContentChange}
+          onSelectionChange={handleSelectionChange}
+        />
 
-        {/* Editor */}
-        <div className="flex-1 relative p-6 bg-white" ref={containerRef}>
-          <QuillEditor
-            ref={quillRef}
-            content={content}
-            onContentChange={onContentChange}
-            onSelectionChange={handleSelectionChange}
-          />
+        {showAIPopup && (
+          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50" style={{ width: '600px' }}>
+            <AIPopup
+              onPromptSubmit={handlePromptSubmit}
+              currentContent={content}
+              selectedText={selectedText}
+              cursorPosition={cursorPosition}
+              cursorIndicatorPosition={cursorIndicatorPosition}
+              documents={[]}
+              files={[]}
+              onTreeUpdate={handleTreeUpdate} 
+            />
+          </div>
+        )}
 
-          {showAIPopup && (
-            <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50" style={{ width: '600px' }}>
-              <AIPopup
-                onPromptSubmit={handlePromptSubmit}
-                currentContent={content}
-                selectedText={selectedText}
-                cursorPosition={cursorPosition}
-                cursorIndicatorPosition={cursorIndicatorPosition}
-                documents={[]}
-                files={[]}
-                onTreeUpdate={handleTreeUpdate} 
-              />
+        {/* Loading animation */}
+        {generationState.isGenerating && cursorIndicatorPosition && (
+          <div 
+            className="pointer-events-none absolute z-50"
+            style={{
+              top: `${cursorIndicatorPosition.coords.top - 8}px`,
+              left: `${cursorIndicatorPosition.coords.left}px`,
+            }}
+          >
+            <div className="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-full shadow-lg">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse [animation-delay:150ms]" />
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse [animation-delay:300ms]" />
             </div>
-          )}
-
-          {/* Loading animation */}
-          {generationState.isGenerating && cursorIndicatorPosition && (
-            <div 
-              className="pointer-events-none absolute z-50"
-              style={{
-                top: `${cursorIndicatorPosition.coords.top - 8}px`,
-                left: `${cursorIndicatorPosition.coords.left}px`,
-              }}
-            >
-              <div className="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-full shadow-lg">
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse [animation-delay:150ms]" />
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse [animation-delay:300ms]" />
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
