@@ -4,6 +4,7 @@ import { useRoleContext } from "@/context/roleContext";
 import { useUserContext } from "@/context/userContext";
 import useRoles from "@/hooks/api/useRoles";
 import useUser from "@/hooks/api/useUser";
+import { useSession } from "next-auth/react";
 import { FC, ReactNode, useEffect } from "react";
 
 const PrivatePages: FC<{
@@ -13,6 +14,9 @@ const PrivatePages: FC<{
   const { roles: roleList } = useRoles();
   const { dispatchUser } = useUserContext();
   const { fetchUser } = useUser();
+  const session = useSession();
+
+  console.log(session, "session in private pages");
 
   useEffect(() => {
     userApiCall();
@@ -40,6 +44,14 @@ const PrivatePages: FC<{
   useEffect(() => {
     setRole(roleList || []);
   }, [roleList]);
+
+  if (session.status === "loading" || session.status === "unauthenticated") {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="flex">

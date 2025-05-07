@@ -1,32 +1,29 @@
 import { apiClient } from ".";
-import { signIn } from "next-auth/react"; // Changed import to use client-side version
+import { signIn as nextAuthSignIn } from "next-auth/react"; // Changed import to use client-side version
 import {
   SignupRequest,
   SignupResponse,
 } from "../api/(public-routes)/auth/types";
 import { ErrorResponse } from "../api/lib/errors";
 
-export const login = async (userDetails: {
+export const login = async (credentials: {
   email: string;
   password: string;
 }) => {
   try {
-    console.log("Attempting to sign in with:", {
-      email: userDetails.email,
-      password: userDetails.password,
-    });
-
-    const result = await signIn("credentials", {
-      email: userDetails.email,
-      password: userDetails.password,
+    const result = await nextAuthSignIn("credentials", {
+      ...credentials,
       redirect: false,
-      // callbackUrl: routeConfig.privateRoutes.projects,
     });
 
-    console.log("Sign-in result:", result);
-    return result;
+    if (result?.error) {
+      console.log("Login error:", result.error);
+    }
+
+    return { success: result.ok };
   } catch (error) {
-    console.error("Error during sign-in:", error);
+    console.error("Login error:", error);
+    throw error;
   }
 };
 

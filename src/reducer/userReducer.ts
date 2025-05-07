@@ -1,5 +1,5 @@
-import { clearAuthCookie, setAuthCookie } from "@/lib/auth";
 import { OrgMembership, User } from "@prisma/client";
+import { signOut } from "next-auth/react";
 
 export interface UserStateProps {
   user?: User;
@@ -48,9 +48,7 @@ const reducer = (
       };
     }
     case "LOGOUT_USER":
-      localStorage.removeItem("userId");
-      localStorage.removeItem("userEmail");
-      clearAuthCookie();
+      signOut();
       return {
         ...state,
         user: undefined,
@@ -62,3 +60,4 @@ const reducer = (
 };
 
 export { initialState, reducer };
+

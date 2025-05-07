@@ -1,20 +1,28 @@
+import { routeConfig } from "@/lib/routeConfig";
+import { NextResponse } from "next/server";
 import { auth } from "./app/api/(public-routes)/auth/[...nextauth]/route";
-import { routeConfig } from "./lib/routeConfig";
 
 export default auth((req) => {
-  const privateRoute = Object.values(routeConfig.privateRoutes).find(
-    (route) => {
-      const isMatch = req.nextUrl.pathname.startsWith(route);
-      return isMatch;
-    }
+  const { pathname } = req.nextUrl;
+
+  // Skip auth for public routes
+  const isPublicRoute = Object.values(routeConfig.publicRoutes).some((route) =>
+    pathname.startsWith(route)
   );
 
-  if (!req.auth && privateRoute) {
-    const newUrl = new URL(routeConfig.publicRoutes.login, req.nextUrl.origin);
-    return Response.redirect(newUrl);
+  if (isPublicRoute) {
+    return NextResponse.next();
   }
+
+  if (!req.auth) {
+    return NextResponse.redirect(
+      new URL(routeConfig.publicRoutes.login, req.nextUrl.origin)
+    );
+  }
+
+  return NextResponse.next();
 });
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
 };

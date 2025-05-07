@@ -1,7 +1,6 @@
 "use client";
 import { login } from "@/app/apiServices/authServices";
 import { loadingContext } from "@/context/loadingContext";
-import { useUserContext } from "@/context/userContext";
 import { routeConfig } from "@/lib/routeConfig";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -12,7 +11,6 @@ export default function LoginPage({}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { dispatchUser } = useUserContext();
   const { startLoading, stopLoading, isLoading } = loadingContext();
   const emailParam = useSearchParams().get("email") || "";
   const redirectedFromParam = useSearchParams().get("from") || "";
@@ -31,12 +29,8 @@ export default function LoginPage({}) {
 
     try {
       startLoading("LOGGING_IN");
-      const data = await login({ email, password });
-
-      // dispatchUser({
-      //   type: "LOGIN_USER",
-      //   payload: { user, token },
-      // });
+      const loggedIn = await login({ email, password });
+      if (!loggedIn.success) return;
       router.push(routeConfig.privateRoutes.projects);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Login failed");
