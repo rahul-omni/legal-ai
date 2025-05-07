@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { db } from "@/app/api/lib/db";
 import { Invitation, InvitationStatus } from "@prisma/client";
 import {
   InviteTeamMemberReq,
@@ -9,7 +9,7 @@ import { ErrorNotFound } from "../errors";
 import {
   generateVerificationToken,
   getTokenExpiry,
-} from "../verificationTokens";
+} from "../../helper/verificationTokens";
 import { organizationService } from "./organizationService";
 
 class InvitationService {

@@ -1,5 +1,5 @@
 import mammoth from 'mammoth';
-import { db } from './db';
+import { db } from '../app/api/lib/db';
 import { Document } from '@prisma/client';
 
 export interface FileData {

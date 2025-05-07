@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db } from "@/app/api/lib/db";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { userFromSession } from "@/lib/auth";
 import { NextAuthRequest } from "next-auth";

@@ -1,5 +1,5 @@
 // lib/auth-options.ts
-import { db } from "@/lib/db";
+import { db } from "@/app/api/lib/db";
 import bcrypt from "bcryptjs";
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";

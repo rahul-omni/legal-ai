@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { db } from "@/app/api/lib/db";
 import { OrgMembership, User } from "@prisma/client";
 import { Transaction } from "../../types";
 import { ErrorNotFound } from "../errors";

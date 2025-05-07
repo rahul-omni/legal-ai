@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { db } from "@/app/api/lib/db";
 import { Organization } from "@prisma/client";
 
 class OrganizationService {
