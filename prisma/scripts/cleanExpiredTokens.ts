@@ -1,5 +1,5 @@
 import { logger } from "@/app/api/lib/logger";
-import { db } from "@/lib/db";
+import { db } from "@/app/api/lib/db";
 import { schedule } from "node-cron";
 
 // Run daily at 3 AM

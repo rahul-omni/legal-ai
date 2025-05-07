@@ -1,13 +1,12 @@
 import { orgMembershipService } from "@/app/api/lib/services/orgMembershipService";
 import { userService } from "@/app/api/lib/services/userService";
-import { db } from "@/lib/db";
+import { db } from "@/app/api/lib/db";
 import { routeConfig } from "@/lib/routeConfig";
 import { Invitation, User } from "@prisma/client";
-import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
 import { ErrorApp, handleError } from "../../../lib/errors";
 import { logger } from "../../../lib/logger";
-import { redirectToURL } from "../../../lib/redirect";
+import { redirectToURL } from "../../../helper/redirect";
 import { invitationService } from "../../../lib/services/invitationTeamMemberService";
 import { Transaction } from "../../../types";
 
@@ -39,7 +38,6 @@ export async function GET(req: NextRequest) {
     const userEmail = await processInvitationAcceptance(invite);
 
     logger.info(`Redirecting to create password page for email: ${userEmail}`);
-    cookies().set("verified", "true");
     return redirectSuccess(routeConfig.publicRoutes.createPassword, userEmail);
   } catch (error) {
     logger.error(`Error handling GET request`);
@@ -48,7 +46,6 @@ export async function GET(req: NextRequest) {
 }
 
 const redirectSuccess = (url: string, userEmail: string) => {
-  cookies().set("verified", "true");
   return redirectToURL(url + `?email=${userEmail}`);
 };
 

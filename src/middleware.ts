@@ -1,47 +1,30 @@
-import type { NextRequest } from "next/server";
+import { routeConfig } from "@/lib/routeConfig";
+import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
-import { redirectToURL } from "./app/api/lib/redirect";
-import { routeConfig } from "./lib/routeConfig";
+import { auth } from "./app/api/[...nextauth]/route";
+import { redirectToURL } from "./app/api/helper/redirect";
 
-export function middleware(request: NextRequest) {
-  const authToken = request.cookies.get("authToken")?.value;
-  const verified = request.cookies.get("verified")?.value === "true";
+export default auth((req: NextAuthRequest) => {
+  const { pathname } = req.nextUrl;
 
-  const privateRoute = Object.values(routeConfig.privateRoutes).find(
-    (route) => {
-      const isMatch = request.nextUrl.pathname.startsWith(route);
-      return isMatch;
-    }
+  const isPublicRoute = Object.values(routeConfig.publicRoutes).some((route) =>
+    pathname.startsWith(route)
+  );
+  const isPrivateRoute = Object.values(routeConfig.privateRoutes).some(
+    (route) => pathname.startsWith(route)
   );
 
-  const publicRoute = Object.values(routeConfig.publicRoutes).find((route) => {
-    const isMatch = request.nextUrl.pathname.startsWith(route);
-    return isMatch;
-  });
-
-  if (request.nextUrl.pathname === "/") {
+  if (pathname === "/") {
     return redirectToURL(routeConfig.publicRoutes.login);
-  } else if (privateRoute && !authToken) {
+  } else if (isPrivateRoute && !req.auth) {
     return redirectToURL(routeConfig.publicRoutes.login);
-  } else if (privateRoute && authToken && !verified) {
-    return redirectToURL(routeConfig.publicRoutes.verifyEmail);
-  } else if (publicRoute && authToken) {
+  } else if (isPublicRoute && req.auth) {
     return redirectToURL(routeConfig.privateRoutes.projects);
   }
 
-  const response = NextResponse.next();
-  if (authToken) {
-    response.headers.set("Authorization", `Bearer ${authToken}`);
-  }
-
-  return response;
-}
+  return NextResponse.next();
+});
 
 export const config = {
-  matcher: [
-    "/",
-    ...Object.values(routeConfig.privateRoutes).map(
-      (route) => `${route}/:path*`
-    ),
-  ],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };

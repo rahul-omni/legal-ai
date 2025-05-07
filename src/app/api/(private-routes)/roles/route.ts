@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ErrorResponse, handleError } from "../lib/errors";
-import { roleService } from "../lib/services/roleService";
+import { ErrorResponse, handleError } from "../../lib/errors";
+import { roleService } from "../../lib/services/roleService";
 import { RoleResponse } from "./types";
 
 export async function GET(

@@ -1,30 +1,10 @@
-import { verifyToken as verifyJwdToken } from "@/app/api/lib/jsonWebToken";
+import { ErrorAuth } from "@/app/api/lib/errors";
+import { NextAuthRequest } from "next-auth";
 
-export const userIdFromHeader = (request: Request) => {
-  const authToken = request.headers
-    .get("Authorization")
-    ?.replace("Bearer ", "");
-
-  if (!authToken) {
-    throw new Error("No auth token provided");
+export const userFromSession = async (request: NextAuthRequest) => {
+  if (!request.auth) {
+    throw new ErrorAuth("User not authenticated");
   }
 
-  const { user } = verifyJwdToken(authToken);
-  console.log(user, "user from token");
-
-  return user.id;
+  return request.auth.user;
 };
-
-export function getAuthCookie() {
-  const match = document.cookie.match(/authToken=([^;]+)/);
-  return match ? match[1] : null;
-}
-
-export function setAuthCookie(token: string, isVerified?: boolean) {
-  document.cookie = `authToken=${token}; path=/; max-age=${60 * 60 * 24}`;
-}
-
-export function clearAuthCookie() {
-  document.cookie = "verified=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-  document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-}

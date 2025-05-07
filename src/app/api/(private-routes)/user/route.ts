@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { userService } from "../lib/services/userService";
+import { ErrorResponse, handleError } from "../../lib/errors";
+import { userService } from "../../lib/services/userService";
 import { UserResponse } from "./types";
-import { ErrorResponse, handleError } from "../lib/errors";
 
 export async function GET(
   request: NextRequest
