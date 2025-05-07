@@ -1,16 +1,10 @@
-import { verifyToken as verifyJwdToken } from "@/app/api/lib/jsonWebToken";
+import { ErrorAuth } from "@/app/api/lib/errors";
+import { NextAuthRequest } from "next-auth";
 
-export const userIdFromHeader = (request: Request) => {
-  const authToken = request.headers
-    .get("Authorization")
-    ?.replace("Bearer ", "");
-
-  if (!authToken) {
-    throw new Error("No auth token provided");
+export const userFromSession = async (request: NextAuthRequest) => {
+  if (!request.auth) {
+    throw new ErrorAuth("User not authenticated");
   }
 
-  const { user } = verifyJwdToken(authToken);
-  console.log(user, "user from token");
-
-  return user.id;
+  return request.auth.user;
 };

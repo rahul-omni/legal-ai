@@ -3,7 +3,7 @@ import { signIn as nextAuthSignIn } from "next-auth/react"; // Changed import to
 import {
   SignupRequest,
   SignupResponse,
-} from "../api/(public-routes)/auth/types";
+} from "../api/auth/types";
 import { ErrorResponse } from "../api/lib/errors";
 
 export const login = async (credentials: {
