@@ -1,5 +1,5 @@
 import { userFromSession } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { db } from "@/app/api/lib/db";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
 import { auth } from "../../[...nextauth]/route";

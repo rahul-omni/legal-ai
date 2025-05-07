@@ -3,7 +3,7 @@ import {
   ErrorResponse,
   handleError,
 } from "@/app/api/lib/errors";
-import { db } from "@/lib/db";
+import { db } from "@/app/api/lib/db";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { logger } from "../../../lib/logger";
@@ -11,7 +11,7 @@ import { sendVerificationEmail } from "../../../lib/mail";
 import {
   generateVerificationToken,
   getTokenExpiry,
-} from "../../../lib/verificationTokens";
+} from "../../../helper/verificationTokens";
 import { IndividualSignupRequest, IndividualSignupResponse } from "../types";
 
 export default async function handler(

@@ -1,8 +1,8 @@
-import { db } from "@/lib/db";
+import { db } from "@/app/api/lib/db";
 import { routeConfig } from "@/lib/routeConfig";
 import { NextRequest, NextResponse } from "next/server";
 import { logger } from "../../../lib/logger";
-import { redirectToURL } from "../../../lib/redirect";
+import { redirectToURL } from "../../../helper/redirect";
 
 export async function GET(req: NextRequest) {
   try {

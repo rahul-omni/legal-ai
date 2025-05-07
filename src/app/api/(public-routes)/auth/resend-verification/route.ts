@@ -1,7 +1,7 @@
-import { db } from "@/lib/db";
+import { db } from "@/app/api/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { sendVerificationEmail } from "../../../lib/mail";
-import { generateVerificationToken, getTokenExpiry } from "../../../lib/verificationTokens";
+import { generateVerificationToken, getTokenExpiry } from "../../../helper/verificationTokens";
 
 export async function POST(req: NextRequest) {
   try {
