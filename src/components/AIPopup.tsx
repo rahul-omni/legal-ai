@@ -91,32 +91,14 @@ export function AIPopup({
   
   
    
- 
-  // // Use selectedNodeText wherever needed
-  // useEffect(() => {
-  //   if (selectedText && localSelectedText === "") {
-  //     setLocalSelectedText(selectedText);
-       
-  //   }
-  //   console.log("🔍 Text sent to AI Prompt:", selectedNodeText);
-  // }, [selectedNodeText, selectedText]);
-  // function stripHtml(html: string): string {
-  //   const doc = new DOMParser().parseFromString(html, "text/html");
-  //   return doc.body.textContent || "";
-  // }
-  
-  // useEffect(() => {
-  //   if (selectedText  ) {
-  //     const cleanText = stripHtml(selectedText);
-  //     setLocalSelectedText(cleanText);
-  //     console.log("🔍 Cleaned selectedText sent to AI Prompt:", cleanText);
-  //   }
-  // }, [selectedText]);
   
   
- 
-
-
+  useEffect(() => {
+    
+      console.log("🔍 Cleaned selectedText sent to AI Prompt:",  selectedText);
+     
+  }, [selectedText]);
+  
   const handleDocumentSelect = (file: FileSystemNodeProps) => {
     const isAlreadySelected =  documentall.some((doc) => doc.id === file.id);
 
@@ -297,9 +279,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     if (selectedText)   primary = `Selected Text:\n"""\n${selectedText}\n"""`;
     else if (currentContent)
       primary = `Document Content:\n"""\n${currentContent}\n"""`;
-    else if (localSelectedText) {
-      primary = `Selected Text:\n"""\n${localSelectedText}\n"""`;
-    }
+    
 
     /* ───────────────────────────
      * 4.  Merge primary + files
