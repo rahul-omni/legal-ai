@@ -107,9 +107,18 @@ export function DocumentPane({
   };
      
 
-  const quillRef = React.useRef<any>(null);   //  ← now visible everywhere
+
+  
+  // useEffect(() => {
+  //   console.log("Fetching file tree on mount...");
+  //   fetchUpdatedFileTree();
+  // }, []);
+  
+  
+  //console.log("content",content);
  
- 
+   
+
   // Add this function to DocumentPane.tsx
   const verifyFileInTree = (tree: FileSystemNodeProps[], targetFileId: string) => {
     // Track both the file and its parent folder
@@ -148,7 +157,7 @@ export function DocumentPane({
     return null;
   };
 
- 
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (saveDropdownRef.current && !saveDropdownRef.current.contains(event.target as Node)) {
@@ -233,8 +242,6 @@ export function DocumentPane({
     return () => textarea.removeEventListener('scroll', handleScroll);
   }, [selectedText]);
 
- 
-  
 
   const handleTranslate = async (vendor: TranslationVendor, language: string) => {
     try {
@@ -261,95 +268,150 @@ export function DocumentPane({
     }
   };
 
+
+
+
+
+
   /* local state */
 
 /* the handler that AIPopup will call */
 /** ------------------------------------------------------------------
  *  handleGeneratedText – hybrid (ref + DOM) version
  *  ----------------------------------------------------------------- */
+/** ------------------------------------------------------------------
+ *  handleGeneratedText – your ORIGINAL code + caret insertion patch
+ *  ----------------------------------------------------------------- */
+/** ------------------------------------------------------------------
+ *  handlePromptSubmit – stream + insert‑at‑caret  (DOM‑only version)
+ *  ----------------------------------------------------------------- */
+
+const quillRef = useRef<any>(null);           // ✅ direct Quill ref
+const caretIdxRef = useRef<number | null>(null);
+const quillInstRef = useRef<any>(null);  
+
 const handlePromptSubmit = async (prompt: string) => {
-  /* visual “typing” indicator */
+  if (!prompt.trim()) return;
+
   setGenerationState({ isGenerating: true });
 
+  const getQuill = () => quillRef.current?.getEditor?.();
+
   try {
-    /* 1 ▸ fire the API request */
+    // 1. Call your API
     const res = await fetch("/api/generate", {
-      method: "POST",
+      method : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
+      body   : JSON.stringify({ prompt }),
     });
+    if (!res.body) throw new Error("No stream returned");
 
-    if (!res.body) return;
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
 
-    /* 2 ▸ set up the stream reader */
-    const reader   = res.body.getReader();
-    const decoder  = new TextDecoder();
-    let   incoming = "";
+    // 2. Resolve Quill
+    const q0 = getQuill();
 
-    /* 3 ▸ helper — resolve the Quill editing element               */
-    const getQuillRoot = () => {
-      /* preferred: use the ref (React‑Quill ≥ 2.x) */
-      const byRef = quillRef.current?.getEditor?.()?.root as HTMLElement | undefined;
-      if (byRef) return byRef;
+    if (!q0) {
+      // Retry after 100ms
+      setTimeout(() => handlePromptSubmit(prompt), 100);
+      setGenerationState({ isGenerating: false });
+      return;
+    }
 
-      /* fallback: your old DOM query */
-      return document.querySelector(".quill")?.querySelector(".ql-editor") as HTMLElement | undefined;
-    };
+    console.log("✅ Quill instance ready:", q0);
 
-    /* 4 ▸ read the stream */
+    // 3. Determine where to insert
+    const endOfDoc = q0.getLength?.();
+    const startIdx = caretIdxRef.current ??
+                     q0.getSelection()?.index ??
+                     (endOfDoc ? endOfDoc - 1 : undefined) ??
+                     0;
+
+    console.log("📌 Insert starts at index:", startIdx);
+
+    let htmlFallback = content;  // fallback string if needed
+    let insertPos    = startIdx;
+
+    // 4. Stream insert
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
 
-      incoming += decoder.decode(value, { stream: true });
+      const chunk = decoder.decode(value, { stream: true });
 
-      /* 5 ▸ update app state */
-      const newContent = content + incoming;
-      onContentChange(newContent);
+      const quill = getQuill();
+      if (quill && startIdx !== null) {
+        quill.insertText(insertPos, chunk, "api");
+        insertPos += chunk.length;
+        quill.setSelection(insertPos, 0, "api");
 
-      /* 6 ▸ auto‑scroll */
-      const root = getQuillRoot();
-      if (root) root.scrollTop = root.scrollHeight;
+        // Auto-scroll to bottom
+        const root = quill.root as HTMLElement;
+        root.scrollTop = root.scrollHeight;
+      } else {
+        // fallback path
+        htmlFallback += chunk;
+        onContentChange(htmlFallback);
+      }
     }
 
-    /* flush the final chunk (if any) */
-    if (incoming.trim()) {
-      const newContent = content + incoming;
-      onContentChange(newContent);
+    if (!quillRef.current) {
+      onContentChange(htmlFallback);
     }
   } catch (err) {
-    console.error("generation failed:", err);
+    console.error("❌ Generation failed:", err);
   } finally {
     setGenerationState({ isGenerating: false });
   }
 };
 
- 
 
- 
+/*────────────────────────────── */
+/*  state                                                    */
+const [caretIdx, setCaretIdx] = useState<number | null>(null);
+const lastCaret = useRef<number | null>(null);
 
-  const handleSelectionChange = (range: { index: number; length: number } | null) => {
-    if (!range) {
-      setSelectedText('');
-      return;
-    }
 
-    if (range.length > 0) {
-      // Get selected text from Quill
-      setSelectedText(content.slice(range.index, range.index + range.length));
-    } else {
-      setSelectedText('');
-      // Update cursor position
-      setCursorPosition({
-        line: 1, // Quill doesn't provide line numbers easily
-        column: range.index,
-        coords: { // We'll need to calculate this differently for Quill
-          top: 0,
-          left: 0
-        }
-      });
-    }
-  };
+
+
+
+/* ────────────────────────────────────────────────────────── */
+/*  Quill selection handler                                   */
+const handleSelectionChange = (
+  range: { index: number; length: number } | null
+) => {
+  const quill = quillRef.current?.getEditor?.();
+  if (!quill) {
+    console.log("❌ Quill instance not found");
+    return;
+  }
+
+  if (!range) {
+    // Editor blurred, clear selected text
+    setSelectedText("");
+    return;
+  }
+
+  // 💾 Track caret position (only for a real caret, not selection)
+  if (range.length === 0) {
+    caretIdxRef.current = range.index;
+    setCaretIdx(range.index);
+  }
+
+  // Track selected text
+  if (range.length > 0) {
+    const selected = quill.getText(range.index, range.length);
+    setSelectedText(selected);
+  } else {
+    setSelectedText("");
+  }
+
+  // Optional: track last position no matter what
+  lastCaret.current = range.index;
+};
+
+
 
   const checkDuplicateInTree = (
     nodes: FileSystemNodeProps[],
@@ -368,7 +430,7 @@ const handlePromptSubmit = async (prompt: string) => {
 
   
 
-
+  
   const updateNodeChildren = (
     nodes: FileSystemNodeProps[],
     children: FileSystemNodeProps[],
@@ -402,7 +464,8 @@ const handlePromptSubmit = async (prompt: string) => {
   return null;
 };
 
- 
+// Gets the effective parent ID for saving
+
 const getAvailableName = (name: string, siblings: FileSystemNodeProps[]) => {
   const base = name.replace(/\..+$/, '');
   const ext = name.split('.').pop() || '';
@@ -414,7 +477,7 @@ const getAvailableName = (name: string, siblings: FileSystemNodeProps[]) => {
   
   return `${base}_${counter}.${ext}`;
 };
- 
+
 
 // Helper function to update tree
 const updateTreeWithNewFile = (
@@ -621,6 +684,7 @@ const findNodeById = (nodes: FileSystemNodeProps[], id: string): FileSystemNodeP
         {/* Editor */}
         <div className="flex-1 relative p-6 bg-white" ref={containerRef}>
           <QuillEditor
+            ref={quillRef}
             content={content}
             onContentChange={onContentChange}
             onSelectionChange={handleSelectionChange}
