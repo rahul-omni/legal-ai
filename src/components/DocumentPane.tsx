@@ -98,7 +98,7 @@ export function DocumentPane({
      const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(null);
     
      const [fileTree, setFileTree] = useState<FileSystemNodeProps[]>([]);
-     const [currentParentId, setCurrentParentId] = useState<string | null>(null);
+ 
        
   // This callback will be passed to AIPopup
   const handleTreeUpdate = (newTree: FileSystemNodeProps[]) => {
@@ -108,31 +108,8 @@ export function DocumentPane({
      
 
   const quillRef = React.useRef<any>(null);   //  ← now visible everywhere
-
-
-  const fetchUpdatedFileTree = async () => {
-    try {
-      //console.log("Fetching file tree...");  // This log will help us know if the function is being called.
-      const tree = await fetchAllNodes();
-      console.log("📦 Updated file tree inside DocumentPane:", tree);  // This is where we check the actual tree.
-      setFileTree(tree);
-    } catch (error) {
-      handleApiError(error, showToast);
-      console.error("Error fetching file tree:", error);  // Log error if something goes wrong
-    }
-  };
-  
-  
-  // useEffect(() => {
-  //   console.log("Fetching file tree on mount...");
-  //   fetchUpdatedFileTree();
-  // }, []);
-  
-  
-  //console.log("content",content);
  
-   
-
+ 
   // Add this function to DocumentPane.tsx
   const verifyFileInTree = (tree: FileSystemNodeProps[], targetFileId: string) => {
     // Track both the file and its parent folder
@@ -171,18 +148,7 @@ export function DocumentPane({
     return null;
   };
 
-// In DocumentPane.tsx, inside the component
-// useEffect(() => {
-//   if (fileTree.length > 0 && fileId) {
-//     console.log("🔍 Checking fileId in tree...");
-//     const parentId = verifyFileInTree(fileTree, fileId);
-//     console.log("Parent ID of current file:", parentId);
-    
-//     // Store the parentId in state
-//     setCurrentParentId(parentId);
-//   }
-// }, [fileTree, fileId]);
-  // Handle click outside for save dropdown
+ 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (saveDropdownRef.current && !saveDropdownRef.current.contains(event.target as Node)) {
@@ -267,32 +233,8 @@ export function DocumentPane({
     return () => textarea.removeEventListener('scroll', handleScroll);
   }, [selectedText]);
 
-  // Update cursor indicator when cursor position changes
-  const handleCursorChange = () => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      
-      if (start !== end) {
-        const currentSelection = textarea.value.substring(start, end);
-        setSelectedText(currentSelection);
-        setCursorIndicatorPosition(null);
-      } else {
-        setSelectedText("");
-        const position = calculateCursorPosition(textarea);
-        const coords = getCaretCoordinates(textarea, start);
-        
-        setCursorIndicatorPosition({
-          ...position,
-          coords: coords
-        });
-      }
-      
-      const position = calculateCursorPosition(textarea);
-      setCursorPosition(position);
-    }
-  };
+ 
+  
 
   const handleTranslate = async (vendor: TranslationVendor, language: string) => {
     try {
@@ -382,29 +324,9 @@ const handlePromptSubmit = async (prompt: string) => {
   }
 };
 
-  const renderContent = () => {
-    if (!highlightRange) return content;
+ 
 
-    return (
-      <>
-        {content.slice(0, highlightRange.start)}
-        <span className="highlight-new-text">
-          {content.slice(highlightRange.start, highlightRange.end)}
-        </span>
-        {content.slice(highlightRange.end)}
-      </>
-    );
-  };
-
-  const handleRiskClick = (risk: RiskFinding) => {
-    if (textareaRef.current) {
-      textareaRef.current.focus();
-      textareaRef.current.setSelectionRange(
-        risk.location.start,
-        risk.location.end
-      );
-    }
-  };
+ 
 
   const handleSelectionChange = (range: { index: number; length: number } | null) => {
     if (!range) {
@@ -446,40 +368,7 @@ const handlePromptSubmit = async (prompt: string) => {
 
   
 
-  const handleAddDocument = (newDoc: FileSystemNodeProps, parentId: string | null) => {
-    // Check the entire tree for a duplicate before adding
-    if (checkDuplicateInTree(nodes, newDoc.name, newDoc.type)) {
-      console.log("Duplicate found, showing alert and skipping addition.");
-      alert(`A document named "${newDoc.name}" already exists somewhere in your tree.`);
-      return; // Exit early – don't add duplicate
-    }
-    console.log("Not duplicate, proceeding to add.");
-    const addRecursively = (nodes: FileSystemNodeProps[]): FileSystemNodeProps[] => {
-      return nodes.map((node) => {
-        if (node.id === parentId && node.type === "FOLDER") {
-          const children = node.children || [];
-          return {
-            ...node,
-            children: [...children, newDoc],
-          };
-        }
-        if (node.type === "FOLDER" && node.children?.length) {
-          return {
-            ...node,
-            children: addRecursively(node.children),
-          };
-        }
-        return node;
-      });
-    };
-  
-    // Add at root level if no parent
-    if (!parentId) {
-      setNodes([...nodes, newDoc]);
-    } else {
-      setNodes(addRecursively(nodes));
-    }
-  };
+
   const updateNodeChildren = (
     nodes: FileSystemNodeProps[],
     children: FileSystemNodeProps[],
@@ -513,23 +402,7 @@ const handlePromptSubmit = async (prompt: string) => {
   return null;
 };
 
-// Gets the effective parent ID for saving
-const getEffectiveParentId = (): string | null => {
-  // Case 1: Explicit folder selection
-  if (selectedNode?.type === "FOLDER") return selectedNode.id;
-  
-  // Case 2: Saving existing file (use its parent)
-  if (fileId) {
-    const originalFile = findNodeInTree(fileId, nodes);
-    if (originalFile) return originalFile.parentId ?? null;
-  }
-  
-  // Case 3: File is selected (use its parent)
-  if (selectedNode?.type === "FILE") return selectedNode.parentId ?? null;
-  
-  // Case 4: No selection
-  return null;
-};
+ 
 const getAvailableName = (name: string, siblings: FileSystemNodeProps[]) => {
   const base = name.replace(/\..+$/, '');
   const ext = name.split('.').pop() || '';
@@ -541,78 +414,7 @@ const getAvailableName = (name: string, siblings: FileSystemNodeProps[]) => {
   
   return `${base}_${counter}.${ext}`;
 };
-const handleSaveAs1 = async (name?: string) => {
-  try {
-    if (!fileId) {
-      showToast("No file selected to save as", "error");
-      return;
-    }
-
-    // 1. Get current file's location
-    const parentId = verifyFileInTree(fileTree, fileId) ?? null;
-    const parentFolder = parentId ? findNodeById(fileTree, parentId) : null;
-
-    // 2. Get and validate filename
-    let fileName = name?.trim() || window.prompt("Enter new file name:")?.trim();
-    if (!fileName) {
-      showToast("File name is required", "error");
-      return;
-    }
-
-    // 3. Add extension if missing
-    if (!fileName.includes(".")) {
-      const originalExt = selectedNode?.name.split('.').pop() || "docx";
-      fileName = `${fileName}.${originalExt}`;
-    }
-
-    // 4. Check for duplicates
-    const siblings = parentId 
-      ? parentFolder?.children || []
-      : fileTree.filter(node => node.type === "FILE");
-
-    if (siblings.some(f => f.name === fileName)) {
-      const availableName = getAvailableName(fileName, siblings);
-      const useSuggestedName = window.confirm(
-        `"${fileName}" exists in ${parentFolder?.name || "root"}.\nUse "${availableName}"?`
-      );
-      if (!useSuggestedName) return;
-      fileName = availableName;
-    }
-
-    // 5. Create new file
-    const newFile = await createNode({
-      name: fileName,
-      type: "FILE",
-      parentId: parentId || undefined,
-      content
-    });
-
-    // 6. Update UI IMMEDIATELY (two-way sync)
-    // Update local state
-    const updatedTree = parentId
-      ? updateTreeWithNewFile(fileTree, parentId, newFile)
-      : [...fileTree, newFile];
-    
-    setFileTree(updatedTree);
-    
-    // Update parent component
-    if (onFileTreeUpdate) {
-      await onFileTreeUpdate(parentId || undefined);
-    }
-
-    // 7. Select the new file
-    onDocumentSelect({
-      ...newFile,
-      children: [],
-      content
-    });
-
-    showToast(`Saved as "${fileName}" in ${parentFolder?.name || "root"}`, "success");
-
-  } catch (error) {
-    handleApiError(error, showToast);
-  }
-};
+ 
 
 // Helper function to update tree
 const updateTreeWithNewFile = (
