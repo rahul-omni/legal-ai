@@ -2,6 +2,7 @@ import React, { forwardRef, useImperativeHandle, useRef } from "react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import "../styles/editor.css";
+ 
 
 interface QuillEditorProps {
   content: string;
@@ -9,12 +10,46 @@ interface QuillEditorProps {
   onSelectionChange?: (range: { index: number; length: number } | null) => void;
 }
 
+
+
+
+// const modules = {
+//   toolbar: [
+//     // Headers
+//     [{ header: [1, 2, false] }],
+
+//     // Text styling
+//     ["bold", "italic", "underline"],
+
+//     // Lists and indentation
+//     [{ list: "ordered" }, { list: "bullet" }],
+//     [{ indent: "-1" }, { indent: "+1" }],
+
+//     // Clean formatting
+//     ["clean"],
+//   ],
+//   clipboard: {
+//     matchVisual: false,
+//   },
+// };
+
+// const formats = [
+//   "header",
+//   "bold",
+//   "italic",
+//   "underline",
+//   "list", // Includes "bullet" and "ordered"
+//   "bullet",
+//   "indent",
+// ];
+
 const modules = {
   toolbar: [
     [{ header: [1, 2, false] }],
     ["bold", "italic", "underline"],
     [{ list: "ordered" }, { list: "bullet" }],
     [{ indent: "-1" }, { indent: "+1" }],
+    [{ align: [] }], // ✅ alignment
     ["clean"],
   ],
   clipboard: {
@@ -30,7 +65,9 @@ const formats = [
   "list",
   "bullet",
   "indent",
+  "align", // ✅ make sure Quill recognizes alignment
 ];
+
 
 export const QuillEditor = forwardRef<any, QuillEditorProps>(
   ({ content, onContentChange, onSelectionChange }, ref) => {

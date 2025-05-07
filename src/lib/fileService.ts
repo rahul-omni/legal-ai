@@ -20,7 +20,8 @@ export class FileService {
     if (fileName.endsWith('.docx')) {
       try {
         const arrayBuffer = await file.arrayBuffer();
-        const result = await mammoth.extractRawText({ arrayBuffer });
+      //  const result = await mammoth.extractRawText({ arrayBuffer });
+        const result = await mammoth.convertToHtml({ arrayBuffer });
         return result.value;
       } catch (error) {
         console.error('Error parsing Word document:', error);
