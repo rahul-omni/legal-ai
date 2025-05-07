@@ -33,9 +33,12 @@ export function TeamManagement() {
   useEffect(() => {
     (async () => {
       try {
-        console.log("Fetching team members for orgId:", userState.selectedOrdMembership!.orgId);
+        console.log(
+          "Fetching team members for orgId:",
+          userState.selectedOrdMembership?.organizationId
+        );
         const data = await fetchTeamMembers(
-          userState.selectedOrdMembership!.orgId
+          userState.selectedOrdMembership!.organizationId
         );
         console.log("Fetched team members:", data);
         dispatch({ type: "SET_INVITED_TEAM_MEMBERS", payload: data! });

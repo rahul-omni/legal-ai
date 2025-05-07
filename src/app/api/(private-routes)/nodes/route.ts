@@ -2,9 +2,9 @@ import { userFromSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
-import { auth } from "../[...nextauth]/route";
+import { auth } from "../../[...nextauth]/route";
 import { FileSystemNode, FileType } from "@prisma/client";
-import { ErrorValidation } from "../lib/errors";
+import { ErrorValidation } from "../../lib/errors";
 
 // Error handling utility
 function handleError(error: unknown, message: string, status = 500) {

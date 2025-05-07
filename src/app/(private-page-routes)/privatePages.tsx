@@ -13,33 +13,22 @@ const PrivatePages: FC<{
   const { setRole } = useRoleContext();
   const { roles: roleList } = useRoles();
   const { dispatchUser } = useUserContext();
-  const { fetchUser } = useUser();
+
   const session = useSession();
 
   console.log(session, "session in private pages");
 
   useEffect(() => {
-    userApiCall();
-  }, []);
-
-  const userApiCall = async () => {
-    const userEmail = localStorage.getItem("userEmail") || "";
-    if (!userEmail) return;
-
-    const data = await fetchUser(userEmail);
-
-    if (!data) return;
-
-    if (!data) {
-      dispatchUser({ type: "LOGOUT_USER" });
-      return;
-    }
-
+    if (!session.data?.user) return;
+    const { memberships, ...user } = session.data.user;
     dispatchUser({
       type: "FETCH_USER",
-      payload: { orgMemberships: data.orgMemberships, user: data.user },
+      payload: {
+        orgMemberships: session.data.user.memberships,
+        user: session.data.user,
+      },
     });
-  };
+  }, [session]);
 
   useEffect(() => {
     setRole(roleList || []);

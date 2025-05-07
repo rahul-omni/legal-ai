@@ -1,17 +1,20 @@
-import { OrgMembership, User } from "@prisma/client";
+import { OrgMembershipForAuth } from "@/app/api/(public-routes)/auth/types";
+import { User } from "next-auth";
 import { signOut } from "next-auth/react";
+
+
 
 export interface UserStateProps {
   user?: User;
   hasAnyOrganization: boolean;
-  orgMemberships?: OrgMembership[];
-  selectedOrdMembership?: OrgMembership;
+  orgMemberships?: OrgMembershipForAuth[];
+  selectedOrdMembership?: OrgMembershipForAuth;
 }
 
 export type UserActionType =
   | {
       type: "FETCH_USER";
-      payload: { user: User; orgMemberships: OrgMembership[] };
+      payload: { user: User; orgMemberships: OrgMembershipForAuth[] };
     }
   | {
       type: "LOGIN_USER";
@@ -31,8 +34,6 @@ const reducer = (
 ): UserStateProps => {
   switch (action.type) {
     case "LOGIN_USER": {
-      localStorage.setItem("userId", action.payload.user.id);
-      localStorage.setItem("userEmail", action.payload.user.email);
       return {
         ...state,
         user: action.payload.user,
@@ -44,7 +45,7 @@ const reducer = (
         user: action.payload.user,
         hasAnyOrganization: action.payload.orgMemberships.length > 0,
         orgMemberships: action.payload.orgMemberships,
-        selectedOrdMembership: action.payload.orgMemberships[0],
+        selectedOrdMembership: action.payload.orgMemberships?.[0],
       };
     }
     case "LOGOUT_USER":

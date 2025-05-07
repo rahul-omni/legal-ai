@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { userFromSession } from "@/lib/auth";
 import { NextAuthRequest } from "next-auth";
-import { auth } from "../../[...nextauth]/route";
+import { auth } from "../../../[...nextauth]/route";
 
 // Recursive function to build a nested tree structure
 async function buildTree(parentId: string | null, userId: string) {

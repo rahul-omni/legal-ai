@@ -8,7 +8,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ): Promise<NextResponse<OrgTeamMemberRes | ErrorResponse>> {
   try {
-    const { id: orgId } = params;
+    const param = await params;
+    const { id: orgId } = param;
 
     const invitations = await invitationService.organizationInvitations(orgId);
 
