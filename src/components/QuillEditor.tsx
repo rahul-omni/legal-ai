@@ -10,41 +10,6 @@ interface QuillEditorProps {
   onSelectionChange?: (range: { index: number; length: number } | null) => void;
 }
 
-<<<<<<< HEAD
-
-
-
-// const modules = {
-//   toolbar: [
-//     // Headers
-//     [{ header: [1, 2, false] }],
-
-//     // Text styling
-//     ["bold", "italic", "underline"],
-
-//     // Lists and indentation
-//     [{ list: "ordered" }, { list: "bullet" }],
-//     [{ indent: "-1" }, { indent: "+1" }],
-
-//     // Clean formatting
-//     ["clean"],
-//   ],
-//   clipboard: {
-//     matchVisual: false,
-//   },
-// };
-
-// const formats = [
-//   "header",
-//   "bold",
-//   "italic",
-//   "underline",
-//   "list", // Includes "bullet" and "ordered"
-//   "bullet",
-//   "indent",
-// ];
-
-=======
 // Update the font list in both places
 const fontList = [
   'arial', 
@@ -65,7 +30,6 @@ const fontList = [
 ];
 
 // Define the Quill modules with toolbar options
->>>>>>> 0cc9339 (mostly css changes)
 const modules = {
   toolbar: [
     [{ header: [1, 2, false] }],
