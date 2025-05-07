@@ -654,7 +654,7 @@ const findNodeById = (nodes: FileSystemNodeProps[], id: string): FileSystemNodeP
         <div className="p-4 bg-[#f9f9f9]">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-gray-800/80">
-              {fileName || "New Document"}
+              {fileName || "New Document"} {!fileId && "(Unsaved)"}
             </h1>
 
             <div className="flex items-center gap-2">
@@ -676,6 +676,7 @@ const findNodeById = (nodes: FileSystemNodeProps[], id: string): FileSystemNodeP
    
                                           onSaveAs={handleSaveAs} 
                                          name={fileName || ""}
+                                         isNewFile={!fileId}
                                          />
             </div>
           </div>

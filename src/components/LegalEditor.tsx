@@ -61,6 +61,13 @@ export default function LegalEditor() {
 const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(null);
 const [fileTree, setFileTree] = useState<FileSystemNodeProps[]>([]);
 const [isLoading, setIsLoading] = useState(true);
+const [tabs, setTabs] = useState<Array<{
+  id: string;
+  name: string;
+  content: string;
+  fileId?: string;
+  parentId?: string;
+}>>([]); 
 //const fileExplorerRef = useRef<{ refreshNodes: (parentId?: string) => void }>(null);
   // Add these states
   const {
@@ -187,6 +194,20 @@ const [isLoading, setIsLoading] = useState(true);
       alert("Failed to translate text");
     }
   };
+
+   // Create a new empty file/tab
+   const handleNewFile = () => {
+    const newTab = {
+      id: `temp-${Date.now()}`, // Temporary ID for unsaved files
+      name: "Untitled Document",
+      content: "",
+      fileId: undefined // No fileId until saved
+    };
+    
+    setTabs([...tabs, newTab]);
+    setActiveTabId(newTab.id);
+  };
+
 
   const handleSave = async () => {
     if (!selectedFile) return;
@@ -342,9 +363,11 @@ const [isLoading, setIsLoading] = useState(true);
 
             {/* New Tab Button */}
             <button
-              onClick={() => {
-                // addNewTab();
-              }}
+              // onClick={() => {
+              //   // addNewTab();
+              //   alert("New Tab Clicked");
+              // }}
+              onClick={handleNewFile}
               className="h-full px-2 text-gray-500 hover:bg-gray-100 transition-colors border-l border-gray-200"
             >
               <Plus className="w-3.5 h-3.5" />
