@@ -20,7 +20,10 @@ export class FileService {
     if (fileName.endsWith('.docx')) {
       try {
         const arrayBuffer = await file.arrayBuffer();
+<<<<<<< HEAD
       //  const result = await mammoth.extractRawText({ arrayBuffer });
+=======
+>>>>>>> 0cc9339 (mostly css changes)
         const result = await mammoth.convertToHtml({ arrayBuffer });
         return result.value;
       } catch (error) {

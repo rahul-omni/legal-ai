@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle, useRef } from "react";
+import React, { forwardRef, useImperativeHandle, useRef, useEffect } from "react";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import "../styles/editor.css";
@@ -10,6 +10,7 @@ interface QuillEditorProps {
   onSelectionChange?: (range: { index: number; length: number } | null) => void;
 }
 
+<<<<<<< HEAD
 
 
 
@@ -43,9 +44,33 @@ interface QuillEditorProps {
 //   "indent",
 // ];
 
+=======
+// Update the font list in both places
+const fontList = [
+  'arial', 
+  'times-new-roman', 
+  'georgia', 
+  'courier-new',
+  'comic-sans',
+  'pacifico',
+  'lobster',
+  'impact',
+  'dancing-script',
+  'montserrat',
+  'open-sans',
+  'oswald',
+  'playfair-display',
+  'raleway',
+  'roboto-slab'
+];
+
+// Define the Quill modules with toolbar options
+>>>>>>> 0cc9339 (mostly css changes)
 const modules = {
   toolbar: [
     [{ header: [1, 2, false] }],
+    [{ font: fontList }],
+    [{ size: ["small", false, "large", "huge"] }],
     ["bold", "italic", "underline"],
     [{ list: "ordered" }, { list: "bullet" }],
     [{ indent: "-1" }, { indent: "+1" }],
@@ -59,6 +84,8 @@ const modules = {
 
 const formats = [
   "header",
+  "font",
+  "size",
   "bold",
   "italic",
   "underline",
@@ -72,6 +99,36 @@ const formats = [
 export const QuillEditor = forwardRef<any, QuillEditorProps>(
   ({ content, onContentChange, onSelectionChange }, ref) => {
     const innerQuillRef = useRef<any>(null);
+    const editorContainerRef = useRef<HTMLDivElement>(null);
+
+    // Register fonts when the component mounts
+    useEffect(() => {
+      if (typeof window !== 'undefined') {
+        const Quill = ReactQuill.Quill;
+        if (Quill) {
+          try {
+            // Register font format
+            const Font = Quill.import('formats/font');
+            // Set whitelist of font names
+            Font.whitelist = fontList;
+            Quill.register(Font, true);
+          } catch (error) {
+            console.error("Error registering Quill fonts:", error);
+          }
+        }
+      }
+    }, []);
+
+    // Handle font changes to prevent UI breaking
+    const handleEditorChange = (value: string) => {
+      // Ensure the editor container maintains its dimensions
+      if (editorContainerRef.current) {
+        editorContainerRef.current.style.height = '100%';
+      }
+      
+      // Pass the content change to the parent component
+      onContentChange(value);
+    };
 
     // Expose .getEditor() to parent via ref
     useImperativeHandle(ref, () => ({
@@ -81,12 +138,15 @@ export const QuillEditor = forwardRef<any, QuillEditorProps>(
     return (
       <div className="h-full flex flex-col overflow-hidden">
         <div className="relative flex-1">
-          <div className="absolute inset-0 bg-white shadow-paper transform-gpu perspective-1000 editor-container">
+          <div 
+            ref={editorContainerRef}
+            className="absolute inset-0 bg-white shadow-paper transform-gpu perspective-1000 editor-container"
+          >
             <ReactQuill
               ref={innerQuillRef}
               theme="snow"
               value={content}
-              onChange={onContentChange}
+              onChange={handleEditorChange}
               onChangeSelection={onSelectionChange}
               modules={modules}
               formats={formats}
