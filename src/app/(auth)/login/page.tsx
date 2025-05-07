@@ -31,11 +31,12 @@ export default function LoginPage({}) {
 
     try {
       startLoading("LOGGING_IN");
-      const { token, user } = await login({ email, password });
-      dispatchUser({
-        type: "LOGIN_USER",
-        payload: { user, token },
-      });
+      const data = await login({ email, password });
+
+      // dispatchUser({
+      //   type: "LOGIN_USER",
+      //   payload: { user, token },
+      // });
       router.push(routeConfig.privateRoutes.projects);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Login failed");

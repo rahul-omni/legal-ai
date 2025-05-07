@@ -28,7 +28,7 @@ declare module "next-auth/jwt" {
   }
 }
 
-export const signInSchema = object({
+const signInSchema = object({
   email: string({ required_error: "Email is required" })
     .min(1, "Email is required")
     .email("Invalid email"),
@@ -39,17 +39,18 @@ export const signInSchema = object({
 });
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  // Note: Credentials provider doesn't work with the Adapter
+  // Using both can cause conflicts - comment out adapter when using Credentials
+  // adapter: PrismaAdapter(db),
   providers: [
     Credentials({
-      // You can specify which fields should be submitted, by adding keys to the `credentials` object.
-      // e.g. domain, username, password, 2FA token, etc.
       credentials: {
         email: {},
         password: {},
       },
       authorize: async (credentials) => {
         try {
-          if (credentials.email || credentials.password) {
+          if (!credentials?.email || !credentials.password) {
             return null;
           }
 
@@ -86,6 +87,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             })),
           };
         } catch (error) {
+          console.error("Authentication error:", error);
           return null;
         }
       },
@@ -110,11 +112,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   pages: {
-    signIn: "/auth/login",
-    error: "/auth/error",
+    signIn: "/login", // Uncomment to redirect to your custom login page
+    error: "/auth/error", // Uncomment for custom error page
   },
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
+  secret: process.env.NEXTAUTH_SECRET || "YOUR_SECRET_SHOULD_BE_IN_ENV",
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
 });
+
+export { handlers as GET, handlers as POST };

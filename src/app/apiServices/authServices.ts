@@ -1,6 +1,5 @@
-import { User } from "@prisma/client";
 import { apiClient } from ".";
-import { signIn } from "../api/(public-routes)/auth/[...nextauth]/route";
+import { signIn } from "next-auth/react"; // Changed import to use client-side version
 import {
   SignupRequest,
   SignupResponse,
@@ -10,22 +9,24 @@ import { ErrorResponse } from "../api/lib/errors";
 export const login = async (userDetails: {
   email: string;
   password: string;
-}): Promise<{ token: string; user: User } | null> => {
+}) => {
   try {
-    const result = await signIn("credentials", {
-      values: {
-        email: userDetails.email,
-        password: userDetails.password,
-      },
+    console.log("Attempting to sign in with:", {
+      email: userDetails.email,
+      password: userDetails.password,
     });
 
-    if (result) {
-      console.log("Error logging in:", result);
-    }
+    const result = await signIn("credentials", {
+      email: userDetails.email,
+      password: userDetails.password,
+      redirect: false,
+      // callbackUrl: routeConfig.privateRoutes.projects,
+    });
 
+    console.log("Sign-in result:", result);
     return result;
   } catch (error) {
-    return null;
+    console.error("Error during sign-in:", error);
   }
 };
 
