@@ -1,5 +1,5 @@
 
-import { CreatePasswordResponse, SignupRequest } from "@/app/api/(public-routes)/auth/types";
+import { CreatePasswordResponse, SignupRequest } from "@/app/api/auth/types";
 import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
 import { apiClient } from "@/app/apiServices";
 import { routeConfig } from "@/lib/routeConfig";

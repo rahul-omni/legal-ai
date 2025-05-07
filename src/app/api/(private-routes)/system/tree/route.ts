@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { FileSystemNodeProps } from "@/types/fileSystem";
-import { userIdFromHeader } from "@/lib/auth";
+import { userFromSession } from "@/lib/auth";
+import { NextAuthRequest } from "next-auth";
+import { auth } from "../../../[...nextauth]/route";
 
 // Recursive function to build a nested tree structure
 async function buildTree(parentId: string | null, userId: string) {
@@ -25,19 +27,12 @@ async function buildTree(parentId: string | null, userId: string) {
 }
 
 // GET: Fetch entire file system tree for a user
-export async function GET(request: Request) {
+export async function retrieveFileTreeStructure(request: NextAuthRequest) {
   try {
-    const userId = userIdFromHeader(request);
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 }
-      );
-    }
+    const sessionUser = await userFromSession(request);
 
     // Build tree starting from root (NULL parentId)
-    const tree = await buildTree(null, userId);
+    const tree = await buildTree(null, sessionUser.id);
     return NextResponse.json(tree);
   } catch (error) {
     return NextResponse.json(
@@ -46,3 +41,5 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export const GET = auth(retrieveFileTreeStructure);

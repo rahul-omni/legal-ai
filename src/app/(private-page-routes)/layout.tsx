@@ -1,6 +1,7 @@
 import { RoleProvider } from "@/context/roleContext";
 import { TabsProvider } from "@/context/tabsContext";
 import type { Metadata } from "next";
+import { SessionProvider } from "next-auth/react";
 import PrivatePages from "./privatePages";
 
 export const metadata: Metadata = {
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <TabsProvider>
       <RoleProvider>
-        <PrivatePages children={children} />
+        <SessionProvider>
+          <PrivatePages children={children} />
+        </SessionProvider>
       </RoleProvider>
     </TabsProvider>
   );

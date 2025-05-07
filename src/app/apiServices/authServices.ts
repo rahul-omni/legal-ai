@@ -1,23 +1,29 @@
-import { User } from "@prisma/client";
-import { AxiosError } from "axios";
 import { apiClient } from ".";
+import { signIn as nextAuthSignIn } from "next-auth/react"; // Changed import to use client-side version
 import {
   SignupRequest,
   SignupResponse,
-} from "../api/(public-routes)/auth/types";
+} from "../api/auth/types";
 import { ErrorResponse } from "../api/lib/errors";
 
-export const login = async (userDetails: {
+export const login = async (credentials: {
   email: string;
   password: string;
-}): Promise<{ token: string; user: User }> => {
+}) => {
   try {
-    const { data } = await apiClient.post("/auth/login", userDetails);
-    const { token, user } = data;
-    return { token, user };
+    const result = await nextAuthSignIn("credentials", {
+      ...credentials,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      console.log("Login error:", result.error);
+    }
+
+    return { success: result.ok };
   } catch (error) {
-    const errorResponse = error as AxiosError<ErrorResponse>;
-    throw new Error(errorResponse.response?.data.error || "Login failed");
+    console.error("Login error:", error);
+    throw error;
   }
 };
 
