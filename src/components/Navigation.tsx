@@ -10,6 +10,7 @@ import {
   FolderKanban,
   Gavel,
   Settings,
+  Clock,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -45,6 +46,11 @@ const navigationItems = [
     name: "Due Diligence",
     href: "/due-diligence",
     icon: ClipboardCheck,
+  },
+  {
+    name: "Pending Reviews",
+    href: "/pending-reviews",
+    icon: Clock,
   },
 ];
 
