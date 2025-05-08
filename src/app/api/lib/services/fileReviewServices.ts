@@ -1,10 +1,5 @@
 import { db } from "@/app/api/lib/db";
-import {
-  FileReview,
-  ReviewComment,
-  FileReviewStatus,
-  User,
-} from "@prisma/client";
+import { FileReview, FileReviewStatus, ReviewComment } from "@prisma/client";
 import { ErrorNotFound, ErrorValidation } from "../errors";
 
 interface CreateReviewInput {
@@ -81,15 +76,12 @@ class ReviewService {
     }
   }
 
-  async getReviewById(
-    id: string,
-    userId: string
-  ): Promise<FileReview & { comments: ReviewComment[] }> {
+  async getReviewById(id: string, userId: string): Promise<FileReview> {
     try {
       const review = await db.fileReview.findUnique({
         where: { id },
         include: {
-          comments: {
+          fileReviewComments: {
             include: { user: true },
             orderBy: { createdAt: "asc" },
           },
@@ -151,7 +143,7 @@ class ReviewService {
 
       return await db.reviewComment.create({
         data: {
-          reviewId: data.reviewId,
+          fileReviewId: data.reviewId,
           userId: data.userId,
           content: data.content,
         },
@@ -170,10 +162,10 @@ class ReviewService {
     try {
       const comment = await db.reviewComment.findUnique({
         where: { id: commentId },
-        include: { review: true },
+        include: { fileReview: true },
       });
 
-      if (!comment || comment.review.reviewerId !== userId) {
+      if (!comment || comment.fileReview.reviewerId !== userId) {
         throw new ErrorNotFound("Comment not found or access denied");
       }
 
