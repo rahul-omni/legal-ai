@@ -21,7 +21,7 @@ import { createNewFile, createNode, CreateNodePayload, fetchAllNodes, fetchNodes
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { handleApiError } from "@/helper/handleApiError";
 import { useToast } from "./ui/toast";
- 
+
 interface DocumentPaneProps {
   content: string;
   onContentChange: (content: string) => void;
@@ -765,10 +765,10 @@ useEffect(() => {
 
         {showAIPopup && (
           <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50" style={{ width: '600px' }}>
-            <AIPopup
+          <AIPopup
               onPromptSubmit={handlePromptSubmit}
-              currentContent={content}
-              selectedText={selectedText}
+            currentContent={content}
+            selectedText={selectedText}
               cursorPosition={cursorPosition}
               cursorIndicatorPosition={cursorIndicatorPosition}
               documents={[]}
