@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { FileSystemNodeProps } from "@/types/fileSystem";
-import { useToast } from "./ui/toast";
 import { handleApiError } from "@/helper/handleApiError";
-import { Clock, FileText, User, CheckCircle, XCircle, Filter, X } from "lucide-react";
+import { CheckCircle, Clock, FileText, User, X, XCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useToast } from "./ui/toast";
 
 interface ReviewItem {
   id: string;
@@ -24,9 +23,13 @@ export function PendingReviews() {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { showToast } = useToast();
-  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending");
-  
-  const [previewDocument, setPreviewDocument] = useState<ReviewItem | null>(null);
+  const [filter, setFilter] = useState<
+    "all" | "pending" | "approved" | "rejected"
+  >("pending");
+
+  const [previewDocument, setPreviewDocument] = useState<ReviewItem | null>(
+    null
+  );
   const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
@@ -42,7 +45,7 @@ export function PendingReviews() {
     console.log("Fetching pending reviews...");
     try {
       setIsLoading(true);
-      
+
       // This will be replaced with an actual API call
       // For now, we'll use mock data
       const allMockReviews: ReviewItem[] = [
@@ -51,7 +54,8 @@ export function PendingReviews() {
           documentId: "doc1",
           documentName: "Contract Agreement v2.docx",
           documentType: "docx",
-          documentUrl: "https://docs.google.com/document/d/13zMJxruaqB_NYpy_5w0Z-R6RVMOR5nfj3ogMSGbfA68/preview",
+          documentUrl:
+            "https://docs.google.com/document/d/13zMJxruaqB_NYpy_5w0Z-R6RVMOR5nfj3ogMSGbfA68/preview",
           senderId: "user1",
           senderName: "John Doe",
           sentAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
@@ -75,7 +79,8 @@ export function PendingReviews() {
           documentId: "doc3",
           documentName: "Employment Agreement.docx",
           documentType: "docx",
-          documentUrl: "https://docs.google.com/document/d/1wRvoLiTyhwMSOMiqf1tvsNLF_GQzJYCQXgWJ4Qdg0Hw/preview",
+          documentUrl:
+            "https://docs.google.com/document/d/1wRvoLiTyhwMSOMiqf1tvsNLF_GQzJYCQXgWJ4Qdg0Hw/preview",
           senderId: "user3",
           senderName: "Robert Johnson",
           sentAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
@@ -86,35 +91,38 @@ export function PendingReviews() {
           documentId: "doc4",
           documentName: "Lease Agreement.docx",
           documentType: "docx",
-          documentUrl: "https://docs.google.com/document/d/1Wt_GxmKbQWA_D4CxWorHJ7KjcGCJMUNzZwzUWwL58Qk/preview",
+          documentUrl:
+            "https://docs.google.com/document/d/1Wt_GxmKbQWA_D4CxWorHJ7KjcGCJMUNzZwzUWwL58Qk/preview",
           senderId: "user1",
           senderName: "John Doe",
           sentAt: new Date(Date.now() - 345600000).toISOString(), // 4 days ago
           status: "approved",
-          comments: "Looks good, approved."
+          comments: "Looks good, approved.",
         },
         {
           id: "rev5",
           documentId: "doc5",
           documentName: "Service Contract.pdf",
           documentType: "pdf",
-          documentUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+          documentUrl:
+            "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
           senderId: "user2",
           senderName: "Jane Smith",
           sentAt: new Date(Date.now() - 432000000).toISOString(), // 5 days ago
           status: "rejected",
-          comments: "Needs revision on section 3."
+          comments: "Needs revision on section 3.",
         },
       ];
-      
+
       // Add a small delay to simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       // Filter reviews based on selected filter
-      const filteredReviews = filter === "all" 
-        ? allMockReviews 
-        : allMockReviews.filter(review => review.status === filter);
-      
+      const filteredReviews =
+        filter === "all"
+          ? allMockReviews
+          : allMockReviews.filter((review) => review.status === filter);
+
       console.log("Reviews fetched:", filteredReviews);
       setReviews(filteredReviews);
     } catch (error) {
@@ -130,12 +138,12 @@ export function PendingReviews() {
     // Navigate to the editor with the selected document
     router.push(`/?documentId=${documentId}`);
   };
-  
+
   const handleOpenPreview = (review: ReviewItem) => {
     setPreviewDocument(review);
     setShowPreview(true);
   };
-  
+
   const handleClosePreview = () => {
     setShowPreview(false);
     setPreviewDocument(null);
@@ -143,16 +151,14 @@ export function PendingReviews() {
 
   const handleApproveReview = async (reviewId: string) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-      
+      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate API call
+
       showToast(`Approved review: ${reviewId}`);
-      
+
       // Update local state
-      setReviews(prevReviews => 
-        prevReviews.map(review => 
-          review.id === reviewId 
-            ? { ...review, status: "approved" } 
-            : review
+      setReviews((prevReviews) =>
+        prevReviews.map((review) =>
+          review.id === reviewId ? { ...review, status: "approved" } : review
         )
       );
     } catch (error) {
@@ -162,20 +168,22 @@ export function PendingReviews() {
 
   const handleRejectReview = async (reviewId: string) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-      
+      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate API call
+
       // Prompt for comments
-      const userComments = window.prompt("Please provide a reason for rejection:");
+      const userComments = window.prompt(
+        "Please provide a reason for rejection:"
+      );
       // Convert null to undefined to match our type
       const comments = userComments === null ? undefined : userComments;
-      
+
       showToast(`Rejected review: ${reviewId}`);
-      
+
       // Update local state
-      setReviews(prevReviews => 
-        prevReviews.map(review => 
-          review.id === reviewId 
-            ? { ...review, status: "rejected", comments } 
+      setReviews((prevReviews) =>
+        prevReviews.map((review) =>
+          review.id === reviewId
+            ? { ...review, status: "rejected", comments }
             : review
         )
       );
@@ -185,21 +193,21 @@ export function PendingReviews() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const getDaysRemaining = (dueDate?: string) => {
     if (!dueDate) return null;
-    
+
     const now = new Date();
     const due = new Date(dueDate);
     const diffTime = due.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     return diffDays;
   };
 
@@ -207,10 +215,10 @@ export function PendingReviews() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Pending Reviews</h1>
-        
+
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-500">Filter:</span>
-          <select 
+          <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as any)}
             className="border border-gray-300 rounded-md px-3 py-1 text-sm"
@@ -222,12 +230,12 @@ export function PendingReviews() {
           </select>
         </div>
       </div>
-      
+
       {/* Debug info */}
       <div className="mb-4 text-sm text-gray-500">
         Loading state: {isLoading ? "Loading..." : "Not loading"}
       </div>
-      
+
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -241,22 +249,40 @@ export function PendingReviews() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Document
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Sent By
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Date Received
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Status
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Due Date
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Actions
                 </th>
               </tr>
@@ -264,14 +290,14 @@ export function PendingReviews() {
             <tbody className="bg-white divide-y divide-gray-200">
               {reviews.map((review) => {
                 const daysRemaining = getDaysRemaining(review.dueDate);
-                
+
                 return (
                   <tr key={review.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <FileText className="flex-shrink-0 h-5 w-5 text-gray-400" />
                         <div className="ml-3">
-                          <div 
+                          <div
                             className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600"
                             onClick={() => handleOpenPreview(review)}
                           >
@@ -279,7 +305,8 @@ export function PendingReviews() {
                           </div>
                           {review.comments && (
                             <div className="text-xs text-gray-500 mt-1">
-                              <span className="font-medium">Comments:</span> {review.comments}
+                              <span className="font-medium">Comments:</span>{" "}
+                              {review.comments}
                             </div>
                           )}
                         </div>
@@ -289,7 +316,9 @@ export function PendingReviews() {
                       <div className="flex items-center">
                         <User className="flex-shrink-0 h-5 w-5 text-gray-400" />
                         <div className="ml-3">
-                          <div className="text-sm text-gray-900">{review.senderName}</div>
+                          <div className="text-sm text-gray-900">
+                            {review.senderName}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -297,12 +326,17 @@ export function PendingReviews() {
                       {formatDate(review.sentAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        review.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        review.status === 'approved' ? 'bg-green-100 text-green-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {review.status.charAt(0).toUpperCase() + review.status.slice(1)}
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          review.status === "pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : review.status === "approved"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {review.status.charAt(0).toUpperCase() +
+                          review.status.slice(1)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -310,24 +344,33 @@ export function PendingReviews() {
                         <div className="flex items-center">
                           <Clock className="flex-shrink-0 h-5 w-5 text-gray-400" />
                           <div className="ml-3">
-                            <div className="text-sm text-gray-900">{formatDate(review.dueDate)}</div>
-                            {daysRemaining !== null && review.status === 'pending' && (
-                              <div className={`text-xs ${
-                                daysRemaining < 0 ? 'text-red-600' : 
-                                daysRemaining <= 1 ? 'text-orange-600' : 
-                                'text-green-600'
-                              }`}>
-                                {daysRemaining < 0 
-                                  ? `Overdue by ${Math.abs(daysRemaining)} day${Math.abs(daysRemaining) !== 1 ? 's' : ''}` 
-                                  : daysRemaining === 0 
-                                    ? 'Due today' 
-                                    : `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining`}
-                              </div>
-                            )}
+                            <div className="text-sm text-gray-900">
+                              {formatDate(review.dueDate)}
+                            </div>
+                            {daysRemaining !== null &&
+                              review.status === "pending" && (
+                                <div
+                                  className={`text-xs ${
+                                    daysRemaining < 0
+                                      ? "text-red-600"
+                                      : daysRemaining <= 1
+                                        ? "text-orange-600"
+                                        : "text-green-600"
+                                  }`}
+                                >
+                                  {daysRemaining < 0
+                                    ? `Overdue by ${Math.abs(daysRemaining)} day${Math.abs(daysRemaining) !== 1 ? "s" : ""}`
+                                    : daysRemaining === 0
+                                      ? "Due today"
+                                      : `${daysRemaining} day${daysRemaining !== 1 ? "s" : ""} remaining`}
+                                </div>
+                              )}
                           </div>
                         </div>
                       ) : (
-                        <span className="text-sm text-gray-500">No deadline</span>
+                        <span className="text-sm text-gray-500">
+                          No deadline
+                        </span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -338,7 +381,7 @@ export function PendingReviews() {
                         >
                           Review
                         </button>
-                        {review.status === 'pending' && (
+                        {review.status === "pending" && (
                           <>
                             <button
                               onClick={() => handleApproveReview(review.id)}
@@ -363,47 +406,58 @@ export function PendingReviews() {
           </table>
         </div>
       )}
-      
+
       {/* Document Preview Modal */}
       {showPreview && previewDocument && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl w-4/5 h-4/5 flex flex-col">
             <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="text-lg font-semibold">{previewDocument.documentName}</h3>
-              <button 
+              <h3 className="text-lg font-semibold">
+                {previewDocument.documentName}
+              </h3>
+              <button
                 onClick={handleClosePreview}
                 className="p-1 rounded-full hover:bg-gray-100"
               >
                 <X className="h-6 w-6" />
               </button>
             </div>
-            
+
             <div className="flex-1 overflow-auto p-4">
-              <iframe 
-                src={previewDocument.documentUrl} 
+              <iframe
+                src={previewDocument.documentUrl}
                 className="w-full h-full border-0"
                 title={previewDocument.documentName}
                 allowFullScreen
               />
             </div>
-            
+
             <div className="p-4 border-t flex justify-between">
               <div>
                 <p className="text-sm text-gray-600">
-                  Sent by: <span className="font-medium">{previewDocument.senderName}</span>
+                  Sent by:{" "}
+                  <span className="font-medium">
+                    {previewDocument.senderName}
+                  </span>
                 </p>
                 <p className="text-sm text-gray-600">
-                  Status: <span className={`font-medium ${
-                    previewDocument.status === 'pending' ? 'text-yellow-600' :
-                    previewDocument.status === 'approved' ? 'text-green-600' :
-                    'text-red-600'
-                  }`}>
-                    {previewDocument.status.charAt(0).toUpperCase() + previewDocument.status.slice(1)}
+                  Status:{" "}
+                  <span
+                    className={`font-medium ${
+                      previewDocument.status === "pending"
+                        ? "text-yellow-600"
+                        : previewDocument.status === "approved"
+                          ? "text-green-600"
+                          : "text-red-600"
+                    }`}
+                  >
+                    {previewDocument.status.charAt(0).toUpperCase() +
+                      previewDocument.status.slice(1)}
                   </span>
                 </p>
               </div>
-              
-              {previewDocument.status === 'pending' && (
+
+              {previewDocument.status === "pending" && (
                 <div className="flex space-x-2">
                   <button
                     onClick={() => {
@@ -433,4 +487,4 @@ export function PendingReviews() {
       )}
     </div>
   );
-} 
+}
