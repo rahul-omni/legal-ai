@@ -1,8 +1,5 @@
 import { OrgMembershipForAuth } from "@/app/api/(public-routes)/auth/types";
 import { User } from "next-auth";
-import { signOut } from "next-auth/react";
-
-
 
 export interface UserStateProps {
   user?: User;
@@ -48,12 +45,12 @@ const reducer = (
         selectedOrdMembership: action.payload.orgMemberships?.[0],
       };
     }
-    case "LOGOUT_USER":
-      signOut();
+    case "LOGOUT_USER": {
       return {
         ...state,
         user: undefined,
       };
+    }
 
     default:
       return state;
@@ -61,4 +58,3 @@ const reducer = (
 };
 
 export { initialState, reducer };
-
