@@ -15,6 +15,11 @@ interface PrivateApiRoute {
   user: "/user";
   inviteTeamMember: "/invite-team-member";
   teamMembers(orgId: string): `/organization/${string}/team-members`;
+  reviews: "/reviews";
+  reviewDetails(reviewId: string): `/reviews/${string}`;
+  reviewStatus(reviewId: string): `/reviews/${string}/status`;
+  reviewComments(reviewId: string): `/reviews/${string}/comments`;
+  resolveComment(commentId: string): `/reviews/comments/${string}/resolve`;
 }
 
 export const apiRouteConfig: {
@@ -28,6 +33,11 @@ export const apiRouteConfig: {
     user: "/user",
     teamMembers: (orgId) => `/organization/${orgId}/team-members`,
     inviteTeamMember: "/invite-team-member",
+    reviews: "/reviews",
+    reviewDetails: (reviewId) => `/reviews/${reviewId}`,
+    reviewStatus: (reviewId) => `/reviews/${reviewId}/status`,
+    reviewComments: (reviewId) => `/reviews/${reviewId}/comments`,
+    resolveComment: (commentId) => `/reviews/comments/${commentId}/resolve`,
   },
   publicRoutes: {
     login: "/auth/login",

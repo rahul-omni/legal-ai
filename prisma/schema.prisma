@@ -23,9 +23,13 @@ model User {
   nodes                   FileSystemNode[] @relation("file_system_nodes_user_id_idx")
   orgMemberships          OrgMembership[]  @relation("org_memberships_user_id_idx")
   organizationsCreated    Organization[]   @relation("organization_createdByUser")
+  filesToReview           FileReview[]     @relation("reviewer_reviews")
+  filesReviewRequests     FileReview[]     @relation("requester_reviews")
+  fileReviewComments      ReviewComment[]  @relation("reviewer_comment")
 
   @@map("users")
 }
+
 model Role {
   id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        RoleName     @unique
@@ -61,6 +65,7 @@ model Organization {
   invitations   Invitation[]    @relation("organization_invitations_org_id_idx")
   members       OrgMembership[] @relation("org_memberships_org_id_idx")
   createdByUser User?           @relation("organization_createdByUser", fields: [createdBy], references: [id])
+  reviewFiles   FileReview[]    @relation("organization_file_review")
 
   @@map("organizations")
 }
@@ -112,12 +117,55 @@ model FileSystemNode {
   children      FileSystemNode[] @relation("file_system_node_hierarchy")
   updatedByUser User?            @relation("file_system_nodes_updated_by_idx", fields: [updatedBy], references: [id])
   user          User?            @relation("file_system_nodes_user_id_idx", fields: [userId], references: [id])
+  FileReview    FileReview[]     @relation("file_review")
 
   @@index([createdBy])
   @@index([updatedBy])
   @@index([parentId])
   @@index([userId])
   @@map("file_system_nodes")
+}
+
+model FileReview {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fileId      String           @map("file_id") @db.Uuid
+  reviewerId  String           @map("reviewer_id") @db.Uuid
+  requesterId String           @map("requester_id") @db.Uuid
+  orgId       String           @map("organization_id") @db.Uuid
+  status      FileReviewStatus @default(PENDING)
+  dueDate     DateTime?        @map("due_date")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  fileReviewComments ReviewComment[] @relation("file_review_comments")
+  file               FileSystemNode  @relation("file_review", fields: [fileId], references: [id])
+  organization       Organization    @relation("organization_file_review", fields: [orgId], references: [id])
+  reviewer           User            @relation("reviewer_reviews", fields: [reviewerId], references: [id])
+  requester          User            @relation("requester_reviews", fields: [requesterId], references: [id])
+
+  @@map("file_reviews")
+}
+
+model ReviewComment {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fileReviewId String   @map("review_id") @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  content      String
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  resolved     Boolean  @default(false)
+
+  fileReview FileReview @relation("file_review_comments", fields: [fileReviewId], references: [id])
+  user       User       @relation("reviewer_comment", fields: [userId], references: [id])
+
+  @@map("review_comments")
+}
+
+enum FileReviewStatus {
+  PENDING
+  IN_REVIEW
+  COMPLETED
+  DECLINED
 }
 
 enum FileType {

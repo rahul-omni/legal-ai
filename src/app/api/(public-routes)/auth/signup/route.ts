@@ -6,14 +6,14 @@ import {
 } from "@/app/api/lib/errors";
 import { NextRequest, NextResponse } from "next/server";
 import {
-  IndividualSignupSchema,
-  OrganizationSignupSchema,
+  individualSignupSchema,
+  organizationSignupSchema,
 } from "../../../lib/validation/authValidation";
 import { SignupRequest, SignupResponse } from "../types";
 
 const validationSchemas = {
-  individual: IndividualSignupSchema,
-  organization: OrganizationSignupSchema,
+  individual: individualSignupSchema,
+  organization: organizationSignupSchema,
 };
 
 export async function POST(

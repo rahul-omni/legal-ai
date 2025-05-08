@@ -1,87 +1,17 @@
 import { userFromSession } from "@/lib/auth";
-import { db } from "@/app/api/lib/db";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "../../[...nextauth]/route";
-import { FileSystemNode, FileType } from "@prisma/client";
-import { ErrorValidation } from "../../lib/errors";
+import { handleError } from "../../lib/errors";
+import { fileSystemNodeService } from "../../lib/services/fileSystemNodeService";
 
-// Error handling utility
-function handleError(error: unknown, message: string, status = 500) {
-  console.error(message, error);
-  return NextResponse.json({ error: message }, { status });
-}
-
-// ===== Node Services =====
-
-async function getNodesByParentId(
-  userId: string,
-  parentId: string | null
-): Promise<FileSystemNode[]> {
-  return db.fileSystemNode.findMany({
-    where: {
-      parentId: parentId || null,
-      userId,
-    },
-    orderBy: { type: "desc" },
-  });
-}
-
-async function findExistingNode(
-  userId: string,
-  name: string,
-  type: FileType,
-  content: string | null,
-  parentId: string | null
-): Promise<FileSystemNode | null> {
-  return db.fileSystemNode.findFirst({
-    where: {
-      name,
-      type,
-      userId,
-      content: type === "FILE" ? content || "" : null,
-      parentId: parentId || null,
-    },
-  });
-}
-
-async function createNode(
-  userId: string,
-  name: string,
-  type: FileType,
-  content: string | null,
-  parentId: string | null
-): Promise<FileSystemNode> {
-  return db.fileSystemNode.create({
-    data: {
-      name,
-      type,
-      content: type === "FILE" ? content || "" : null,
-      parentId: parentId || null,
-      userId,
-    },
-  });
-}
-
-// ===== Validation =====
-
-function validateNodeInput(
-  name: string,
-  type: string,
-  content: string | null
-): string | null {
-  if (!name || !type) {
-    return "Name and type are required";
-  }
-
-  if (type === "FILE" && !content) {
-    return "Content is required for files";
-  }
-
-  return null;
-}
-
-// ===== Controllers =====
+const nodeInputSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  type: z.enum(["FILE", "FOLDER"], { required_error: "Type is required" }),
+  content: z.string().nullable(),
+  parentId: z.string().uuid().nullable(),
+});
 
 async function getNodesController(request: NextAuthRequest) {
   try {
@@ -89,26 +19,25 @@ async function getNodesController(request: NextAuthRequest) {
     const { searchParams } = new URL(request.url);
     const parentId = searchParams.get("parentId");
 
-    const nodes = await getNodesByParentId(sessionUser.id, parentId);
+    const nodes = await fileSystemNodeService.findNodesByParentId(
+      sessionUser.id,
+      parentId
+    );
+
     return NextResponse.json(nodes);
   } catch (error) {
-    return handleError(error, "Failed to fetch nodes");
+    return handleError(error);
   }
 }
 
 async function createNodeController(request: NextAuthRequest) {
   try {
     const sessionUser = await userFromSession(request);
-    const { name, type, parentId, content } = await request.json();
+    const body = await request.json();
 
-    // Validate input
-    const validationError = validateNodeInput(name, type, content);
-    if (validationError) {
-      throw new ErrorValidation("Invalid input");
-    }
+    const { name, type, parentId, content } = nodeInputSchema.parse(body);
 
-    // Check for duplicates
-    const existingNode = await findExistingNode(
+    const existingNode = await fileSystemNodeService.findExistingNode(
       sessionUser.id,
       name,
       type,
@@ -123,22 +52,19 @@ async function createNodeController(request: NextAuthRequest) {
       );
     }
 
-    // Create the node
-    const newNode = await createNode(
-      sessionUser.id,
+    const newNode = await fileSystemNodeService.createNode({
+      userId: sessionUser.id,
       name,
       type,
       content,
-      parentId
-    );
+      parentId,
+    });
 
     return NextResponse.json(newNode);
   } catch (error) {
-    return handleError(error, "Failed to create node");
+    return handleError(error);
   }
 }
-
-// ===== Route Handlers =====
 
 export const GET = auth(getNodesController);
 export const POST = auth(createNodeController);

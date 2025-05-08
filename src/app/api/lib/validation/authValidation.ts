@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const IndividualSignupSchema = z.object({
+export const individualSignupSchema = z.object({
   name: z
     .string()
     .min(1)
@@ -14,7 +14,7 @@ export const IndividualSignupSchema = z.object({
   roleId: z.string().uuid().optional(),
 });
 
-export const OrganizationSignupSchema = z.object({
+export const organizationSignupSchema = z.object({
   orgName: z
     .string()
     .min(1)
@@ -31,7 +31,7 @@ export const OrganizationSignupSchema = z.object({
   roleId: z.string().uuid().optional(),
 });
 
-export const signInSchema = z.object({
+export const logInSchema = z.object({
   email: z
     .string({ required_error: "Email is required" })
     .min(1, "Email is required")

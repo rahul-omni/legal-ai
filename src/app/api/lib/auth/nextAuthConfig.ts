@@ -3,7 +3,7 @@ import { db } from "@/app/api/lib/db";
 import bcrypt from "bcryptjs";
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { signInSchema } from "../validation/authValidation";
+import { logInSchema } from "../validation/authValidation";
 
 export const authOptions: NextAuthConfig = {
   providers: [
@@ -16,7 +16,7 @@ export const authOptions: NextAuthConfig = {
       async authorize(credentials) {
         try {
           const { email, password } =
-            await signInSchema.parseAsync(credentials);
+            await logInSchema.parseAsync(credentials);
 
           const user = await db.user.findUnique({
             where: { email },
