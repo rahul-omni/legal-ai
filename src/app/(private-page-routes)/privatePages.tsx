@@ -3,7 +3,6 @@ import { Navigation } from "@/components/Navigation";
 import { useRoleContext } from "@/context/roleContext";
 import { useUserContext } from "@/context/userContext";
 import useRoles from "@/hooks/api/useRoles";
-import useUser from "@/hooks/api/useUser";
 import { useSession } from "next-auth/react";
 import { FC, ReactNode, useEffect } from "react";
 

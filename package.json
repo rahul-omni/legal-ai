@@ -42,6 +42,7 @@
     "moment": "^2.30.1",
     "next": "^15.3.2",
     "next-auth": "^5.0.0-beta.27",
+    "next-nprogress-bar": "^2.4.7",
     "node-cron": "^3.0.3",
     "openai": "^4.97.0",
     "pdf-parse": "^1.1.1",

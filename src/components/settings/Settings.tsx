@@ -1,7 +1,7 @@
 import { useUserContext } from "@/context/userContext";
 import { routeConfig } from "@/lib/routeConfig";
 import { signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next-nprogress-bar";
 import { useState } from "react";
 import { GeneralSettings } from "./GeneralSettings";
 import { TeamManagement } from "./TeamManagement";

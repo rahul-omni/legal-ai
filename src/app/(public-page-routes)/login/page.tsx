@@ -2,7 +2,8 @@
 import { login } from "@/app/apiServices/authServices";
 import { loadingContext } from "@/context/loadingContext";
 import { routeConfig } from "@/lib/routeConfig";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next-nprogress-bar";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -31,7 +32,7 @@ export default function LoginPage({}) {
       startLoading("LOGGING_IN");
       const loggedIn = await login({ email, password });
       if (!loggedIn.success) return;
-      router.push(routeConfig.privateRoutes.projects);
+      router.replace(routeConfig.privateRoutes.projects);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Login failed");
       setError(err instanceof Error ? err.message : "Login failed");
