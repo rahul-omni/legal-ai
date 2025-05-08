@@ -25,6 +25,7 @@ export function InviteTeamModal({
 
   const onSubmit: SubmitHandler<InviteFormInputs> = async (data) => {
     dispatch({ type: "SET_MODAL_OPEN", payload: false });
+    console.log("userstate", userState);
     const res = await inviteTeamMember({
       ...data,
       orgId: userState.selectedOrdMembership!.organizationId,
