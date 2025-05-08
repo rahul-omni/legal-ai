@@ -16,8 +16,6 @@ const PrivatePages: FC<{
 
   const session = useSession();
 
-  console.log(session, "session in private pages");
-
   useEffect(() => {
     if (!session.data?.user) return;
     const { memberships, ...user } = session.data.user;
