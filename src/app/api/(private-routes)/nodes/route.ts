@@ -1,19 +1,23 @@
 import { userFromSession } from "@/lib/auth";
+import { FileType } from "@prisma/client";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "../../[...nextauth]/route";
-import { handleError } from "../../lib/errors";
+import { ErrorValidation, handleError } from "../../lib/errors";
+import { logger } from "../../lib/logger";
 import { fileSystemNodeService } from "../../lib/services/fileSystemNodeService";
 
 const nodeInputSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  type: z.enum(["FILE", "FOLDER"], { required_error: "Type is required" }),
-  content: z.string().nullable(),
-  parentId: z.string().uuid().nullable(),
+  type: z.nativeEnum(FileType, { required_error: "Type is required" }),
+  content: z.string().nullable().optional(),
+  parentId: z.string().uuid().nullable().optional(),
 });
 
-async function getNodesController(request: NextAuthRequest) {
+async function getNodesController(
+  request: NextAuthRequest,
+) {
   try {
     const sessionUser = await userFromSession(request);
     const { searchParams } = new URL(request.url);
@@ -32,20 +36,45 @@ async function getNodesController(request: NextAuthRequest) {
 
 async function createNodeController(request: NextAuthRequest) {
   try {
-    const sessionUser = await userFromSession(request);
-    const body = await request.json();
+    logger.info("createNodeController: Start processing request");
 
-    const { name, type, parentId, content } = nodeInputSchema.parse(body);
+    const sessionUser = await userFromSession(request);
+    logger.info("createNodeController: Retrieved session user", sessionUser);
+
+    const body = await request.json();
+    logger.info("createNodeController: Parsed request body", body);
+
+    let parsedInput;
+    try {
+      parsedInput = await nodeInputSchema.parseAsync(body);
+    } catch (validationError) {
+      logger.warn("createNodeController: Validation failed", validationError);
+      throw new ErrorValidation("Invalid request data");
+    }
+
+    const { name, type, parentId, content } = parsedInput;
+
+    logger.info("createNodeController: Validated input", {
+      name,
+      type,
+      parentId,
+      content: content ?? null,
+    });
 
     const existingNode = await fileSystemNodeService.findExistingNode(
       sessionUser.id,
       name,
       type,
-      content,
-      parentId
+      content ?? null,
+      parentId ?? null
+    );
+    logger.info(
+      "createNodeController: Checked for existing node",
+      existingNode
     );
 
     if (existingNode) {
+      logger.warn("createNodeController: Duplicate node detected");
       return NextResponse.json(
         { error: "Duplicate file is present" },
         { status: 409 }
@@ -56,12 +85,14 @@ async function createNodeController(request: NextAuthRequest) {
       userId: sessionUser.id,
       name,
       type,
-      content,
-      parentId,
+      content: content ?? null,
+      parentId: parentId ?? null,
     });
+    logger.info("createNodeController: Created new node", newNode);
 
     return NextResponse.json(newNode);
   } catch (error) {
+    logger.error("createNodeController: Error occurred", error);
     return handleError(error);
   }
 }
