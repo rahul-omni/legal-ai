@@ -6,9 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
     "seed": "node -r esbuild-register prisma/seed.ts",
-    "clean-tokens": "node -r esbuild-register prisma/scripts/cleanExpiredTokens.ts"
+    "clean-tokens": "node -r esbuild-register prisma/scripts/cleanExpiredTokens.ts",
+    "lint": "next lint",
+    "ts-lint": "npx tsc --noEmit --project tsconfig.json --pretty",
+    "es-lint": "npx eslint ./src/app/api --ext .js,.jsx,.ts,.tsx --format table"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.9.0",
@@ -60,6 +62,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.26.0",
     "@tailwindcss/typography": "^0.5.16",
     "@types/dompurify": "^3.2.0",
     "@types/jsonwebtoken": "^9.0.9",
@@ -67,7 +70,12 @@
     "@types/node-cron": "^3.0.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@typescript-eslint/eslint-plugin": "^8.32.0",
+    "@typescript-eslint/parser": "^8.32.0",
     "autoprefixer": "^10.4.21",
+    "eslint": "^9.26.0",
+    "eslint-config-next": "^15.3.2",
+    "eslint-formatter-table": "^7.32.1",
     "postcss": "^8.5.3",
     "prisma": "^6.7.0",
     "tailwindcss": "^3.3.0",

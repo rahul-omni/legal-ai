@@ -12,8 +12,7 @@ class RoleService {
         },
       });
       return roles;
-    } catch (error) {
-      console.error("Failed to find roles:", error);
+    } catch {
       throw new Error("Failed to fetch roles from the database");
     }
   }

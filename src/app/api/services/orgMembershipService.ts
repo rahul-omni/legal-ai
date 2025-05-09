@@ -1,6 +1,6 @@
 import { db } from "@/app/api/lib/db";
-import { Transaction } from "../../types";
-import { ErrorApp } from "../errors";
+import { ErrorApp } from "../lib/errors";
+import { Transaction } from "../types";
 
 class OrgMembershipService {
   async createOrgMembership(
@@ -19,7 +19,7 @@ class OrgMembershipService {
           roleId,
         },
       });
-    } catch (error) {
+    } catch {
       throw new ErrorApp("Failed to create organization membership");
     }
   }

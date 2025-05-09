@@ -1,7 +1,7 @@
 import { db } from "@/app/api/lib/db";
 import { FileSystemNode, FileType } from "@prisma/client";
-import { Transaction } from "../../types";
-import { ErrorNotFound } from "../errors";
+import { Transaction } from "../types";
+import { ErrorNotFound } from "../lib/errors";
 
 interface CreateNodeInput {
   userId: string;
@@ -17,8 +17,7 @@ class FileSystemNodeService {
       return await db.fileSystemNode.findUnique({
         where: { id },
       });
-    } catch (error) {
-      console.error("Failed to find node by ID:", error);
+    } catch {
       throw new Error("Failed to find node in the database");
     }
   }
@@ -35,8 +34,7 @@ class FileSystemNodeService {
         },
         orderBy: { type: "desc" },
       });
-    } catch (error) {
-      console.error("Failed to find nodes by parent ID:", error);
+    } catch {
       throw new Error("Failed to find nodes in the database");
     }
   }
@@ -50,8 +48,7 @@ class FileSystemNodeService {
       return await prisma.fileSystemNode.create({
         data: node,
       });
-    } catch (error) {
-      console.error("Failed to create node:", error);
+    } catch {
       throw new Error("Failed to create node in the database");
     }
   }
@@ -62,8 +59,7 @@ class FileSystemNodeService {
         where: { id: node.id },
         data: node,
       });
-    } catch (error) {
-      console.error("Failed to update node:", error);
+    } catch {
       throw new ErrorNotFound("Node not found");
     }
   }
@@ -73,8 +69,7 @@ class FileSystemNodeService {
       return await db.fileSystemNode.delete({
         where: { id },
       });
-    } catch (error) {
-      console.error("Failed to delete node:", error);
+    } catch {
       throw new ErrorNotFound("Node not found");
     }
   }
@@ -96,8 +91,7 @@ class FileSystemNodeService {
           parentId: parentId || null,
         },
       });
-    } catch (error) {
-      console.error("Failed to find existing node:", error);
+    } catch {
       throw new Error("Failed to find existing node in the database");
     }
   }

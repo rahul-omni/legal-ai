@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { ErrorResponse, handleError } from "../../lib/errors";
-import { roleService } from "../../lib/services/roleService";
+import { roleService } from "../../services/roleService";
 import { RoleResponse } from "./types";
 
-export async function GET(
-  request: NextRequest
-): Promise<NextResponse<RoleResponse | ErrorResponse>> {
+export async function GET(): Promise<
+  NextResponse<RoleResponse | ErrorResponse>
+> {
   try {
     // Fetch all roles with their associated permissions
     const roles = (await roleService.findAllRoles()).map((role) => ({

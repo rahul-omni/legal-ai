@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "../../[...nextauth]/route";
 import { handleError } from "../../lib/errors";
-import { reviewService } from "../../lib/services/fileReviewServices";
+import { reviewService } from "../../services/fileReviewServices";
 
 const createReviewSchema = z.object({
   fileId: z.string().uuid(),

@@ -7,7 +7,7 @@ export const logger = createLogger({
   format: format.combine(
     format.timestamp(),
     format.errors({ stack: true }), // Include stack trace for errors
-    format.printf(({ timestamp: _, level, message, stack }) => {
+    format.printf(({ level, message, stack }) => {
       const folderName = path.basename(__dirname);
       const fileName = path.basename(__filename);
       const filePath = path.join(folderName, fileName);

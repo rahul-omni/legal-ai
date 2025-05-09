@@ -1,7 +1,7 @@
 import { db } from "@/app/api/lib/db";
 import { OrgMembership, User } from "@prisma/client";
-import { Transaction } from "../../types";
-import { ErrorNotFound } from "../errors";
+import { ErrorNotFound } from "../lib/errors";
+import { Transaction } from "../types";
 
 type UserWithOrganizations = User & {
   orgMemberships: OrgMembership[];
@@ -13,8 +13,7 @@ class UserService {
       return await db.user.findUnique({
         where: { email },
       });
-    } catch (error) {
-      console.error("Failed to find user by email:", error);
+    } catch {
       throw new Error("Failed to find user in the database");
     }
   }
@@ -29,7 +28,7 @@ class UserService {
       });
 
       return user;
-    } catch (error) {
+    } catch {
       throw new ErrorNotFound("User not found");
     }
   }
@@ -40,8 +39,7 @@ class UserService {
       return await prisma.user.create({
         data: user,
       });
-    } catch (error) {
-      console.error("Failed to create user:", error);
+    } catch {
       throw new Error("Failed to create user in the database");
     }
   }
@@ -54,7 +52,7 @@ class UserService {
           password: { not: null },
         },
       });
-    } catch (error) {
+    } catch {
       throw new ErrorNotFound("User not found");
     }
   }
@@ -65,7 +63,7 @@ class UserService {
         where: { id: user.id },
         data: user,
       });
-    } catch (error) {
+    } catch {
       throw new ErrorNotFound("User not found");
     }
   }

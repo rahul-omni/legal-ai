@@ -1,9 +1,9 @@
-import { apiClient } from ".";
 import { signIn as nextAuthSignIn } from "next-auth/react"; // Changed import to use client-side version
+import { apiClient } from ".";
 import {
   SignupRequest,
   SignupResponse,
-} from "../api/auth/types";
+} from "../api/(public-routes)/auth/types";
 import { ErrorResponse } from "../api/lib/errors";
 
 export const login = async (credentials: {

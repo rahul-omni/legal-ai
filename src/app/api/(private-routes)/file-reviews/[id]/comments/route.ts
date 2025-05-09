@@ -1,6 +1,6 @@
 import { auth } from "@/app/api/[...nextauth]/route";
 import { handleError } from "@/app/api/lib/errors";
-import { reviewService } from "@/app/api/lib/services/fileReviewServices";
+import { reviewService } from "@/app/api/services/fileReviewServices";
 import { userFromSession } from "@/lib/auth";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";

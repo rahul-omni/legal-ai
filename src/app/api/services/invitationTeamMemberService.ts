@@ -3,13 +3,13 @@ import { Invitation, InvitationStatus } from "@prisma/client";
 import {
   InviteTeamMemberReq,
   InviteTeamMemberRes,
-} from "../../(private-routes)/invite-team-member/types";
-import { Transaction } from "../../types";
-import { ErrorNotFound } from "../errors";
+} from "../(private-routes)/invite-team-member/types";
 import {
   generateVerificationToken,
   getTokenExpiry,
-} from "../../helper/verificationTokens";
+} from "../helper/verificationTokens";
+import { ErrorNotFound } from "../lib/errors";
+import { Transaction } from "../types";
 import { organizationService } from "./organizationService";
 
 class InvitationService {
@@ -34,7 +34,7 @@ class InvitationService {
       // Check if invitation already exists updating the token and expiry date
       const existedInvitation = await this.checkInvitationExists(email, orgId);
 
-      if (!!existedInvitation) {
+      if (existedInvitation) {
         const invitation = await this.updateInvitationToken(
           existedInvitation.id
         );

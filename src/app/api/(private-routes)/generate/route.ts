@@ -72,7 +72,6 @@ Format the response as proper HTML with semantic markup. Use:
     });
 
   } catch (error: any) {
-    console.error('OpenAI API error:', error);
     return new Response(error.message || 'An error occurred', { status: 500 });
   }
 } 

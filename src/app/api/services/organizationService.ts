@@ -16,8 +16,7 @@ class OrganizationService {
       }
 
       return org;
-    } catch (error) {
-      console.error("Failed to fetch organization details:", error);
+    } catch {
       throw new Error("Failed to fetch organization details");
     }
   }

@@ -1,5 +1,5 @@
 import { ErrorResponse, handleError } from "@/app/api/lib/errors";
-import { invitationService } from "@/app/api/lib/services/invitationTeamMemberService";
+import { invitationService } from "@/app/api/services/invitationTeamMemberService";
 import { NextRequest, NextResponse } from "next/server";
 import { OrgTeamMemberRes } from "../../types";
 

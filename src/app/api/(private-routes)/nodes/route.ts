@@ -6,7 +6,7 @@ import { z } from "zod";
 import { auth } from "../../[...nextauth]/route";
 import { ErrorValidation, handleError } from "../../lib/errors";
 import { logger } from "../../lib/logger";
-import { fileSystemNodeService } from "../../lib/services/fileSystemNodeService";
+import { fileSystemNodeService } from "../../services/fileSystemNodeService";
 
 const nodeInputSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -15,9 +15,7 @@ const nodeInputSchema = z.object({
   parentId: z.string().uuid().nullable().optional(),
 });
 
-async function getNodesController(
-  request: NextAuthRequest,
-) {
+async function getNodesController(request: NextAuthRequest) {
   try {
     const sessionUser = await userFromSession(request);
     const { searchParams } = new URL(request.url);

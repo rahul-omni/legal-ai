@@ -1,14 +1,14 @@
+import { userService } from "@/app/api/services/userService";
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
-  ErrorResponse,
-  handleError,
   ErrorNotFound,
+  ErrorResponse,
   ErrorValidation,
+  handleError,
 } from "../../../lib/errors";
 import { logger } from "../../../lib/logger";
-import { userService } from "../../../lib/services/userService";
 import { CreatePasswordResponse } from "../types";
 
 const CreatePasswordSchema = z.object({
@@ -41,7 +41,6 @@ export async function POST(
 
     if (userDetails.password) {
       logger.warn(`Password already set for user: ${email}`);
-      const { password: _, ...user } = userDetails;
       return NextResponse.json({
         success: true,
         message: "Password already set",

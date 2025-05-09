@@ -1,6 +1,6 @@
 import { db } from "@/app/api/lib/db";
 import { FileReview, FileReviewStatus, ReviewComment } from "@prisma/client";
-import { ErrorNotFound, ErrorValidation } from "../errors";
+import { ErrorNotFound, ErrorValidation } from "../lib/errors";
 
 interface CreateReviewInput {
   fileId: string;
