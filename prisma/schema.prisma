@@ -9,23 +9,23 @@ datasource db {
 }
 
 model User {
-  id                      String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                      String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                    String?
-  email                   String           @unique
+  email                   String              @unique
   password                String?
-  isVerified              Boolean?         @default(false) @map("is_verified")
-  createdAt               DateTime?        @default(now()) @map("created_at")
-  updatedAt               DateTime?        @updatedAt @map("updated_at")
-  verificationToken       String?          @unique @map("verification_token")
-  verificationTokenExpiry DateTime?        @map("verification_token_expiry")
-  nodesCreated            FileSystemNode[] @relation("file_system_nodes_created_by_idx")
-  nodesUpdated            FileSystemNode[] @relation("file_system_nodes_updated_by_idx")
-  nodes                   FileSystemNode[] @relation("file_system_nodes_user_id_idx")
-  orgMemberships          OrgMembership[]  @relation("org_memberships_user_id_idx")
-  organizationsCreated    Organization[]   @relation("organization_createdByUser")
-  filesToReview           FileReview[]     @relation("reviewer_reviews")
-  filesReviewRequests     FileReview[]     @relation("requester_reviews")
-  fileReviewComments      ReviewComment[]  @relation("reviewer_comment")
+  isVerified              Boolean?            @default(false) @map("is_verified")
+  createdAt               DateTime?           @default(now()) @map("created_at")
+  updatedAt               DateTime?           @updatedAt @map("updated_at")
+  verificationToken       String?             @unique @map("verification_token")
+  verificationTokenExpiry DateTime?           @map("verification_token_expiry")
+  nodesCreated            FileSystemNode[]    @relation("file_system_nodes_created_by_idx")
+  nodesUpdated            FileSystemNode[]    @relation("file_system_nodes_updated_by_idx")
+  nodes                   FileSystemNode[]    @relation("file_system_nodes_user_id_idx")
+  orgMemberships          OrgMembership[]     @relation("org_memberships_user_id_idx")
+  organizationsCreated    Organization[]      @relation("organization_createdByUser")
+  filesToReview           FileReview[]        @relation("reviewer_reviews")
+  filesReviewRequests     FileReview[]        @relation("requester_reviews")
+  fileReviewComments      FileReviewComment[] @relation("reviewer_comment")
 
   @@map("users")
 }
@@ -137,16 +137,16 @@ model FileReview {
   createdAt   DateTime         @default(now()) @map("created_at")
   updatedAt   DateTime         @updatedAt @map("updated_at")
 
-  fileReviewComments ReviewComment[] @relation("file_review_comments")
-  file               FileSystemNode  @relation("file_review", fields: [fileId], references: [id])
-  organization       Organization    @relation("organization_file_review", fields: [orgId], references: [id])
-  reviewer           User            @relation("reviewer_reviews", fields: [reviewerId], references: [id])
-  requester          User            @relation("requester_reviews", fields: [requesterId], references: [id])
+  fileReviewComments FileReviewComment[] @relation("file_review_comments")
+  file               FileSystemNode      @relation("file_review", fields: [fileId], references: [id])
+  organization       Organization        @relation("organization_file_review", fields: [orgId], references: [id])
+  reviewer           User                @relation("reviewer_reviews", fields: [reviewerId], references: [id])
+  requester          User                @relation("requester_reviews", fields: [requesterId], references: [id])
 
   @@map("file_reviews")
 }
 
-model ReviewComment {
+model FileReviewComment {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   fileReviewId String   @map("review_id") @db.Uuid
   userId       String   @map("user_id") @db.Uuid
