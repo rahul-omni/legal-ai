@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-export default function LoginPage({}) {
+export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -102,7 +102,7 @@ export default function LoginPage({}) {
           </button>
         </p>
         <p className="text-sm text-gray-600 mt-4">
-          Don't have an account?{" "}
+          {`Don't have an account?`}{" "}
           <button
             onClick={() => router.push(routeConfig.publicRoutes.signup)}
             className="text-primary hover:underline"

@@ -14,7 +14,7 @@ export default function IndividualForm({
   onSubmit,
   isLoading,
 }: {
-  onSubmit: (data: FormData) => void;
+  onSubmit: (_data: FormData) => void;
   isLoading: boolean;
 }) {
   const {

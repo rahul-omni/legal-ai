@@ -18,7 +18,7 @@ export default function RootLayout({
     <TabsProvider>
       <RoleProvider>
         <SessionProvider>
-          <PrivatePages children={children} />
+          <PrivatePages>{children}</PrivatePages>
         </SessionProvider>
       </RoleProvider>
     </TabsProvider>

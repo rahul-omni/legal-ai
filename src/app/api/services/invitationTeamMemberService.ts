@@ -19,8 +19,7 @@ class InvitationService {
         where: { orgId },
       });
       return invitations;
-    } catch (error) {
-      console.error("Failed to fetch organization invitations:", error);
+    } catch {
       throw new ErrorNotFound("Invitations");
     }
   }
@@ -70,8 +69,7 @@ class InvitationService {
             status: true,
           },
         })
-        .catch((error) => {
-          console.error("Failed to create invitation:", error);
+        .catch(() => {
           throw new Error("Failed to create invitation in the database");
         });
 
@@ -85,11 +83,8 @@ class InvitationService {
         successMessage: "Invitation created successfully",
         orgName: org.name,
       };
-    } catch (error) {
-      console.error("Invitation creation failed:", error);
-      throw error instanceof Error
-        ? error
-        : new Error("An unexpected error occurred during invitation creation");
+    } catch {
+      throw new ErrorNotFound("Invitations");
     }
   }
 
@@ -102,8 +97,7 @@ class InvitationService {
         where: { email, orgId },
       });
       return invitation;
-    } catch (error) {
-      console.error("Failed to check invitation existence:", error);
+    } catch {
       throw new Error("Failed to check invitation existence in the database");
     }
   }
@@ -116,8 +110,7 @@ class InvitationService {
         where: { id: invitationId },
         data: { token, expiresAt },
       });
-    } catch (error) {
-      console.error("Failed to update invitation token:", error);
+    } catch {
       throw new Error("Failed to update invitation token in the database");
     }
   }
@@ -133,7 +126,6 @@ class InvitationService {
     tx?: Transaction
   ) {
     const prisma = tx || db;
-    console.log("Updating invitation status to ACCEPTED for ID:", invitationId);
     try {
       const updatedInvitation = await prisma.invitation.update({
         where: { id: invitationId },
@@ -143,14 +135,8 @@ class InvitationService {
           expiresAt: null,
         },
       });
-      console.log("Invitation status updated successfully:", updatedInvitation);
       return updatedInvitation;
-    } catch (error) {
-      console.error(
-        "Failed to update invitation status to ACCEPTED for ID:",
-        invitationId,
-        error
-      );
+    } catch {
       throw new Error("Failed to update invitation status in the database");
     }
   }
@@ -163,8 +149,7 @@ class InvitationService {
           status: InvitationStatus.ACCEPTED,
         },
       });
-    } catch (error) {
-      console.error("Failed to find accepted invitation by email:", error);
+    } catch {
       throw new Error("Failed to find accepted invitation in the database");
     }
   }
