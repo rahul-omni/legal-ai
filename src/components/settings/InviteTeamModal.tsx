@@ -27,13 +27,13 @@ export function InviteTeamModal({
     dispatch({ type: "SET_MODAL_OPEN", payload: false });
     const res = await inviteTeamMember({
       ...data,
-      orgId: userState.selectedOrdMembership!.orgId,
+      orgId: userState.selectedOrdMembership!.organizationId,
     });
 
     if (!res) return;
 
     const invitations = await fetchTeamMembers(
-      userState.selectedOrdMembership!.orgId
+      userState.selectedOrdMembership!.organizationId
     );
 
     if (!invitations) return;
