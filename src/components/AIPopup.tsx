@@ -35,6 +35,8 @@ interface AIPopupProps {
     column: number;
   } | null;
   onTreeUpdate: (tree: FileSystemNodeProps[]) => void; 
+  // ✅ NEW: Add this to control AIPopup visibility
+  isFolderPickerOpen?: boolean;
 }
 const MAX_TOKENS = 16000;
 
@@ -53,8 +55,11 @@ export function AIPopup({
   files,
   cursorPosition,
   cursorIndicatorPosition,
+  isFolderPickerOpen,
+  
   onTreeUpdate
 }: AIPopupProps) {
+  if (isFolderPickerOpen) return null;
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -68,6 +73,8 @@ export function AIPopup({
   const [documentall, setDocument] = useState<FileSystemNodeProps[]>([]); // Array to store multiple files
   const [selectedNodeText, setSelectedNodeText] = useState("");
 
+
+ 
   useEffect(() => {
     const handleSelection = () => {
       const selection = window.getSelection();
@@ -90,8 +97,8 @@ export function AIPopup({
   }, []);
   
   
-   
   
+ 
   
   useEffect(() => {
     

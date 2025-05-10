@@ -28,12 +28,14 @@ interface FileExplorerProps {
   onDocumentSelect: (file: FileSystemNodeProps) => void;
   onPdfParsed: (text: string) => void;
   fileTree: FileSystemNodeProps[]; 
+  isFolderPickerOpen?: boolean;
 }
 
 export const FileExplorerV2: FC<FileExplorerProps> = ({
   selectedDocument,
   onDocumentSelect,
   onPdfParsed,
+  isFolderPickerOpen,
   fileTree
 }) => {
   const params = useParams();
@@ -356,11 +358,14 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
     }
   };
 
+ 
   return (
     <div className="h-full flex flex-col bg-[#f9f9f9]">
       {/* Header */}
       <div className="p-4 bg-[#f9f9f9] sticky top-0 z-10">
         {/* Search */}
+
+        {isFolderPickerOpen ? 
         <div className="relative mb-3">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
@@ -372,9 +377,10 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-        </div>
+        </div>: null}
 
         {/* Files Header */}
+        {isFolderPickerOpen ?
         <div className="flex items-center justify-between">
           <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500/80">
             FILES
@@ -407,7 +413,9 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
               accept=".txt,.doc,.docx,.pdf"
             />
           </div>
-        </div>
+        </div>:null}
+    
+    
       </div>
 
       {/* File Tree */}

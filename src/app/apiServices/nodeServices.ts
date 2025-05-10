@@ -120,3 +120,30 @@ export const updateNodeContent = async (
     throw new Error("Failed to update node content");
   }
 };
+
+
+export const createNewFile = async (
+  payload:  CreateNodePayload
+): Promise<FileSystemNodeProps> => {
+  // Set default values
+  const { type, ...restPayload } = payload; // Exclude 'type' from payload
+  const createPayload = {
+    type: 'FILE' as const,
+    content: '',
+    ...restPayload,
+  };
+
+  try {
+    const response: AxiosResponse<FileSystemNodeProps> = await apiClient.post(
+      '/nodes',
+      createPayload
+    );
+
+    console.log("New file created:", response.data);
+    
+    return response.data;
+  } catch (error) {
+    console.error("Error creating new file:", error);
+    throw new Error("Failed to create new file");
+  }
+};

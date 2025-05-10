@@ -17,7 +17,7 @@ import { CursorTracker } from "./CursorTracker";
 import { SaveDropdown } from "./SaveDropdown";
 import { TranslationDropdown } from "./TranslationDropdown";
 import { QuillEditor } from './QuillEditor';
-import { createNode, CreateNodePayload, fetchAllNodes, fetchNodes, updateNodeContent } from "@/app/apiServices/nodeServices";
+import { createNewFile, createNode, CreateNodePayload, fetchAllNodes, fetchNodes, updateNodeContent } from "@/app/apiServices/nodeServices";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { handleApiError } from "@/helper/handleApiError";
 import { useToast } from "./ui/toast";
@@ -26,14 +26,23 @@ interface DocumentPaneProps {
   content: string;
   onContentChange: (content: string) => void;
   fileName: string;
-  //onSave: () => Promise<void>;
-  onSave: (fileId?: string | null) => void;
-  onSaveAs: () => Promise<void>;
   fileId?: string | null;
   onDocumentSelect: (doc: FileSystemNodeProps) => void;
    onFileTreeUpdate: (parentId?: string) => Promise<FileSystemNodeProps[]>;
   //onFileTreeUpdate?: () => Promise<void>;
+  isNewFile?: boolean;
   node :FileSystemNodeProps[]
+  onFileCreated?: (fileId: string) => void; // Add this new prop
+  onInitiateSave?: (
+    name: string,
+    content: string,
+    parentId: string | null,
+    fileId: string | null,
+    callback?: (newFile: FileSystemNodeProps) => void
+  ) => void;
+  
+  // ✅ NEW: Add this to control AIPopup visibility
+  isFolderPickerOpen?: boolean;
   // userId: string;
   // documents: any[];
   // files: any[];
@@ -53,11 +62,13 @@ export function DocumentPane({
   content,
   onContentChange,
   fileName,
-  onSave,
-  onSaveAs,
   fileId,
   onDocumentSelect,
   onFileTreeUpdate,
+  isNewFile = !fileId,
+  onFileCreated,
+  onInitiateSave,
+  isFolderPickerOpen,
   node
   // userId,
   // documents,
@@ -107,8 +118,7 @@ export function DocumentPane({
   };
      
 
-
-  
+ 
   // useEffect(() => {
   //   console.log("Fetching file tree on mount...");
   //   fetchUpdatedFileTree();
@@ -646,14 +656,82 @@ const findNodeById = (nodes: FileSystemNodeProps[], id: string): FileSystemNodeP
     }
   }, [fileId, nodes]);
   
+  const [isSaving, setIsSaving] = useState(false);
+  // In DocumentPane.tsx
+  const [localFileName, setLocalFileName] = useState(fileName || "Untitled");
+  const [localContent, setLocalContent] = useState(content);
+   
+// Sync with parent when props change
+useEffect(() => {
+  setLocalContent(content);
+  setLocalFileName(fileName || "Untitled");
+}, [content, fileName, fileId]);
+
+  // Handle saving for both new and existing files
+ 
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      if (!fileId) {
+        let newName = prompt("Create new file name:", localFileName);
+        if (!newName) {
+          setIsSaving(false);
+          return;
+        }
+  
+      // ✅ Enforce `.docx` extension directly on `newName`
+      if (!newName.includes(".")) {
+        newName = `${newName}.docx`;
+      }
+
+        let parentId: string | null = null;
+          
+          if (onInitiateSave) {
+            onInitiateSave(newName, localContent, parentId, null, (newFile) => {
+              if (onFileCreated) onFileCreated(newFile.id);
+            });
+            return;
+          }
+        // fallback if folder picker isn't used
+        const newNode = await createNewFile({
+          name: newName,
+          content: localContent,
+          parentId,
+          type: "FILE",
+        });
+  
+        setLocalFileName(newName);
+        if (onFileCreated) onFileCreated(newNode.id);
+        showToast("File created successfully", "success");
+        return newNode.id;
+      } else {
+        await updateNodeContent(fileId, localContent);
+        showToast("File saved successfully", "success");
+        return fileId;
+      }
+    } catch (error) {
+      showToast(error.message || "Failed to save", "error");
+      console.error("Save error:", error);
+      throw error;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  const handleEditorChange = (newContent: string) => {
+    setLocalContent(newContent);
+    onContentChange(newContent);
+  };
   return (
+    <>
+         
     <div className="flex flex-col h-full">
       {/* Compact Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="flex justify-between items-center px-3 py-1">
           <div className="flex items-center space-x-2">
             <h2 className="text-sm font-medium text-gray-700 truncate max-w-md">
-              {fileName || "Untitled Document"} {!fileId && "(Unsaved)"}
+              { localFileName || "Untitled Document"} {!fileId && "(Unsaved)"}
             </h2>
           </div>
           <div className="flex items-center space-x-1">
@@ -662,17 +740,13 @@ const findNodeById = (nodes: FileSystemNodeProps[], id: string): FileSystemNodeP
               isLoading={isLoading("TRANSLATE_TEXT")}
             />
             <SaveDropdown
-              onSave={async () => {
-                if (!fileId) {
-                  console.error("❌ fileId is undefined. Can't save.");
-                  return;
-                }
-                console.log("✅ Saving document with fileId:", fileId);
-                await updateNodeContent(fileId, content);
-              }}
+              
+              onSave={handleSave}
               onSaveAs={handleSaveAs}
               isNewFile={!fileId} 
-              name={fileName || ""}
+              name={localFileName || ""}
+              isSaving={isSaving}
+              
             />
           </div>
         </div>
@@ -682,8 +756,10 @@ const findNodeById = (nodes: FileSystemNodeProps[], id: string): FileSystemNodeP
       <div className="flex-1 relative p-3 bg-white" ref={containerRef}>
         <QuillEditor
           ref={quillRef}
-          content={content}
-          onContentChange={onContentChange}
+         // content={content}
+          content={ localContent}
+          onContentChange={handleEditorChange}
+         // onContentChange={onContentChange}
           onSelectionChange={handleSelectionChange}
         />
 
@@ -698,6 +774,7 @@ const findNodeById = (nodes: FileSystemNodeProps[], id: string): FileSystemNodeP
               documents={[]}
               files={[]}
               onTreeUpdate={handleTreeUpdate} 
+              isFolderPickerOpen={isFolderPickerOpen}
             />
           </div>
         )}
@@ -720,6 +797,7 @@ const findNodeById = (nodes: FileSystemNodeProps[], id: string): FileSystemNodeP
         )}
       </div>
     </div>
+    </>
   );
 }
 
