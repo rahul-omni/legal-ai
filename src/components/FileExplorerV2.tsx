@@ -35,7 +35,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
   selectedDocument,
   onDocumentSelect,
   onPdfParsed,
-  isFolderPickerOpen,
+  isFolderPickerOpen = false,
   fileTree
 }) => {
   const params = useParams();
@@ -291,12 +291,17 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
                 className="flex items-center gap-1 opacity-0 group-hover:opacity-100 
                             transition-opacity"
               >
+
+{isFolderPickerOpen !== true &&(
                 <label
                   htmlFor={`file-${node.id}`}
                   className="p-1 rounded-md hover:bg-gray-200/70 cursor-pointer"
                 >
+                  
                   <FilePlus className="w-4 h-4 text-gray-500/80" />
                 </label>
+)}
+
                 <input
                   id={`file-${node.id}`}
                   type="file"
@@ -365,7 +370,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
       <div className="p-4 bg-[#f9f9f9] sticky top-0 z-10">
         {/* Search */}
 
-        {isFolderPickerOpen ? 
+        {isFolderPickerOpen !== true &&(
         <div className="relative mb-3">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
@@ -377,10 +382,11 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-        </div>: null}
+        </div>
+         )}
 
         {/* Files Header */}
-        {isFolderPickerOpen ?
+        {isFolderPickerOpen !== true &&(
         <div className="flex items-center justify-between">
           <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500/80">
             FILES
@@ -413,7 +419,8 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
               accept=".txt,.doc,.docx,.pdf"
             />
           </div>
-        </div>:null}
+        </div>
+        )}
     
     
       </div>

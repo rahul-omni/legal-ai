@@ -347,6 +347,7 @@ const handleNewFile = () => {
           }}
           selectedDocument={selectedFile}
           onPdfParsed={() => {}}
+          isFolderPickerOpen={true} // ✅ tell the explorer it’s in picker mode
         />
       </div>
       <div className="flex justify-between mt-4">
@@ -410,7 +411,7 @@ const handleNewFile = () => {
                 setSelectedNode(file); // Update selected node
               }}
               onPdfParsed={handlePdfParsed}
-              isFolderPickerOpen={folderPickerState.show}
+              isFolderPickerOpen={ false} // ✅ tell the explorer it’s NOT in picker mode
             />
 
             <button
