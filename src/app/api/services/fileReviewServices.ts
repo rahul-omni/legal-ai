@@ -1,5 +1,9 @@
 import { db } from "@/app/api/lib/db";
-import { FileReview, FileReviewStatus, ReviewComment } from "@prisma/client";
+import {
+  FileReview,
+  FileReviewComment,
+  FileReviewStatus,
+} from "@prisma/client";
 import { ErrorNotFound, ErrorValidation } from "../lib/errors";
 
 interface CreateReviewInput {
@@ -20,23 +24,27 @@ class ReviewService {
   async createReview(data: CreateReviewInput): Promise<FileReview> {
     try {
       // Verify file exists and belongs to requester
+      console.debug("Fetching file with ID:", data.fileId, "for requester:", data.requesterId);
       const file = await db.fileSystemNode.findUnique({
         where: { id: data.fileId, userId: data.requesterId },
       });
 
       if (!file) {
+        console.error("File not found or access denied for file ID:", data.fileId);
         throw new ErrorNotFound("File not found or access denied");
       }
 
-      // Verify reviewer is in same organization
+      console.debug("Verifying reviewer membership in organization:", data.orgId);
       const reviewerMembership = await db.orgMembership.findFirst({
         where: { userId: data.reviewerId, orgId: data.orgId },
       });
 
       if (!reviewerMembership) {
+        console.error("Reviewer is not in the organization:", data.orgId);
         throw new ErrorValidation("Reviewer is not in your organization");
       }
 
+      console.debug("Creating file review for file ID:", data.fileId);
       return await db.fileReview.create({
         data: {
           fileId: data.fileId,
@@ -47,9 +55,8 @@ class ReviewService {
           status: "PENDING",
         },
       });
-    } catch (error) {
-      console.error("Failed to create review:", error);
-      throw error;
+    } catch {
+      throw new Error("Failed to create review");
     }
   }
 
@@ -70,8 +77,7 @@ class ReviewService {
         },
         orderBy: { createdAt: "desc" },
       });
-    } catch (error) {
-      console.error("Failed to get reviews:", error);
+    } catch {
       throw new Error("Failed to fetch reviews");
     }
   }
@@ -99,9 +105,8 @@ class ReviewService {
       }
 
       return review;
-    } catch (error) {
-      console.error("Failed to get review:", error);
-      throw error;
+    } catch {
+      throw new Error("Failed to get review:");
     }
   }
 
@@ -121,13 +126,12 @@ class ReviewService {
         where: { id },
         data: { status },
       });
-    } catch (error) {
-      console.error("Failed to update review status:", error);
-      throw error;
+    } catch {
+      throw new Error("Failed to update review status");
     }
   }
 
-  async addComment(data: CreateCommentInput): Promise<ReviewComment> {
+  async addComment(data: CreateCommentInput): Promise<FileReviewComment> {
     try {
       const review = await db.fileReview.findUnique({
         where: { id: data.reviewId },
@@ -141,7 +145,7 @@ class ReviewService {
         throw new ErrorNotFound("Review not found or access denied");
       }
 
-      return await db.reviewComment.create({
+      return await db.fileReviewComment.create({
         data: {
           fileReviewId: data.reviewId,
           userId: data.userId,
@@ -149,18 +153,17 @@ class ReviewService {
         },
         include: { user: true },
       });
-    } catch (error) {
-      console.error("Failed to add comment:", error);
-      throw error;
+    } catch {
+      throw new Error("Failed to add comment");
     }
   }
 
   async resolveComment(
     commentId: string,
     userId: string
-  ): Promise<ReviewComment> {
+  ): Promise<FileReviewComment> {
     try {
-      const comment = await db.reviewComment.findUnique({
+      const comment = await db.fileReviewComment.findUnique({
         where: { id: commentId },
         include: { fileReview: true },
       });
@@ -169,13 +172,12 @@ class ReviewService {
         throw new ErrorNotFound("Comment not found or access denied");
       }
 
-      return await db.reviewComment.update({
+      return await db.fileReviewComment.update({
         where: { id: commentId },
         data: { resolved: true },
       });
-    } catch (error) {
-      console.error("Failed to resolve comment:", error);
-      throw error;
+    } catch {
+      throw new Error("Failed to resolve comment");
     }
   }
 }

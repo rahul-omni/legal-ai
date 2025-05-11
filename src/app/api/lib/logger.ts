@@ -7,13 +7,19 @@ export const logger = createLogger({
   format: format.combine(
     format.timestamp(),
     format.errors({ stack: true }), // Include stack trace for errors
-    format.printf(({ level, message, stack }) => {
+    format.printf((info) => {
       const folderName = path.basename(__dirname);
       const fileName = path.basename(__filename);
       const filePath = path.join(folderName, fileName);
 
-      const istTimestamp = formatDate(new Date(), "dd-MM-yy HH:mm:ss");
-      return `${istTimestamp} [${level}] [${filePath}]: ${stack || message}`;
+      // Extract message, stack, and the rest as context
+      const { level, message, stack, timestamp, ...context } = info;
+      const istTimestamp = formatDate(timestamp as string, "dd-MM-yy HH:mm:ss");
+      // Remove winston internal symbols if present
+      const contextStr = Object.keys(context).length
+        ? " " + JSON.stringify(context)
+        : "";
+      return `${istTimestamp} [${level}] [${filePath}]: ${stack || message}${contextStr}`;
     })
   ),
   transports: [

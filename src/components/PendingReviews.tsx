@@ -1,7 +1,9 @@
 import { handleApiError } from "@/helper/handleApiError";
-import { CheckCircle, Clock, FileText, User, X, XCircle } from "lucide-react";
+import { CheckCircle, Clock, FileText, User, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Modal } from "./ui/Modal";
+import { ModalButton, ModalFooter } from "./ui/ModalButton";
 import { useToast } from "./ui/toast";
 
 interface ReviewItem {
@@ -33,16 +35,12 @@ export function PendingReviews() {
   const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
-    console.log("PendingReviews component mounted");
     fetchPendingReviews();
   }, [filter]);
 
-  useEffect(() => {
-    console.log("isLoading state changed:", isLoading);
-  }, [isLoading]);
+  useEffect(() => {}, [isLoading]);
 
   const fetchPendingReviews = async () => {
-    console.log("Fetching pending reviews...");
     try {
       setIsLoading(true);
 
@@ -123,13 +121,10 @@ export function PendingReviews() {
           ? allMockReviews
           : allMockReviews.filter((review) => review.status === filter);
 
-      console.log("Reviews fetched:", filteredReviews);
       setReviews(filteredReviews);
     } catch (error) {
-      console.error("Error fetching reviews:", error);
       handleApiError(error, showToast);
     } finally {
-      console.log("Setting isLoading to false");
       setIsLoading(false);
     }
   };
@@ -407,32 +402,14 @@ export function PendingReviews() {
         </div>
       )}
 
-      {/* Document Preview Modal */}
-      {showPreview && previewDocument && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-4/5 h-4/5 flex flex-col">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="text-lg font-semibold">
-                {previewDocument.documentName}
-              </h3>
-              <button
-                onClick={handleClosePreview}
-                className="p-1 rounded-full hover:bg-gray-100"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-auto p-4">
-              <iframe
-                src={previewDocument.documentUrl}
-                className="w-full h-full border-0"
-                title={previewDocument.documentName}
-                allowFullScreen
-              />
-            </div>
-
-            <div className="p-4 border-t flex justify-between">
+      {previewDocument && (
+        <Modal
+          isOpen={showPreview}
+          onClose={handleClosePreview}
+          title={previewDocument.documentName}
+          size="full"
+          footer={
+            <ModalFooter>
               <div>
                 <p className="text-sm text-gray-600">
                   Sent by:{" "}
@@ -459,31 +436,40 @@ export function PendingReviews() {
 
               {previewDocument.status === "pending" && (
                 <div className="flex space-x-2">
-                  <button
+                  <ModalButton
+                    type="button"
+                    variant="primary"
                     onClick={() => {
                       handleApproveReview(previewDocument.id);
                       handleClosePreview();
                     }}
-                    className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors flex items-center"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Approve
-                  </button>
-                  <button
+                  </ModalButton>
+                  <ModalButton
+                    type="button"
+                    variant="danger"
                     onClick={() => {
                       handleRejectReview(previewDocument.id);
                       handleClosePreview();
                     }}
-                    className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors flex items-center"
                   >
                     <XCircle className="h-4 w-4 mr-2" />
                     Reject
-                  </button>
+                  </ModalButton>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
+            </ModalFooter>
+          }
+        >
+          <iframe
+            src={previewDocument.documentUrl}
+            className="w-full h-full border-0"
+            title={previewDocument.documentName}
+            allowFullScreen
+          />
+        </Modal>
       )}
     </div>
   );

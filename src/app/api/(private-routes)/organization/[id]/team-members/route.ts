@@ -19,7 +19,6 @@ export async function GET(
       successMessage: "Fetched organization invitations successfully",
     });
   } catch (error) {
-    console.error("Failed to fetch organization invitations:", error);
     return handleError(error);
   }
 }

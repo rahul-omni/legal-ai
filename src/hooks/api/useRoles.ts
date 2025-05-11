@@ -1,5 +1,5 @@
+import { RoleResponse } from "@/app/api/(private-routes)/roles/types";
 import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
-import { RoleResponse } from "@/app/api/roles/types";
 import { apiClient } from "@/app/apiServices";
 import { Role } from "@prisma/client";
 import { useEffect, useState } from "react";

@@ -14,12 +14,15 @@ interface PrivateApiRoute {
   roles: "/roles";
   user: "/user";
   inviteTeamMember: "/invite-team-member";
-  teamMembers(orgId: string): `/organization/${string}/team-members`;
+  teamMembers(_orgId: string): `/organization/${string}/team-members`;
   reviews: "/reviews";
-  reviewDetails(reviewId: string): `/reviews/${string}`;
-  reviewStatus(reviewId: string): `/reviews/${string}/status`;
-  reviewComments(reviewId: string): `/reviews/${string}/comments`;
-  resolveComment(commentId: string): `/reviews/comments/${string}/resolve`;
+  reviewDetails(_reviewId: string): `/reviews/${string}`;
+  reviewStatus(_reviewId: string): `/reviews/${string}/status`;
+  reviewComments(_reviewId: string): `/reviews/${string}/comments`;
+  resolveComment(_commentId: string): `/reviews/comments/${string}/resolve`;
+  resolveComment(_commentId: string): `/reviews/comments/${string}/resolve`;
+  organization(_orgId: string): `/organization/${string}`;
+  fileReviewReq: `/file-reviews`;
 }
 
 export const apiRouteConfig: {
@@ -38,6 +41,8 @@ export const apiRouteConfig: {
     reviewStatus: (reviewId) => `/reviews/${reviewId}/status`,
     reviewComments: (reviewId) => `/reviews/${reviewId}/comments`,
     resolveComment: (commentId) => `/reviews/comments/${commentId}/resolve`,
+    organization: (ordId) => `/organization/${ordId}`,
+    fileReviewReq: `/file-reviews`,
   },
   publicRoutes: {
     login: "/auth/login",
