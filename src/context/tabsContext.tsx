@@ -20,6 +20,12 @@ interface TabsContextType {
   setActiveTabId: (tabId: string | null) => void;
   activeTabContent: string; // Direct access to active content
   getTabContent: (tabId: string) => string; // Helper function
+  createNewTab: () => void; // ⬅️ NEW
+  //updateTabName: (tabId: string, newName: string) => void;
+  //updateTabName: (tabId: string, updates: Partial<TabInfo>) => void; //
+  updateTabName: (tabId: string, name: string, fileId?: string) => void;
+
+
 }
 
 const TabsContext = createContext<TabsContextType | undefined>(undefined);
@@ -88,19 +94,31 @@ export function TabsProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // const updateTabContent = (tabId: string, content: string) => {
-  //   console.log("🎯 TabsContext: Updating tab", tabId, "with content length:", content.length);
-  //   setOpenTabs(prev => {
-  //     const newTabs = prev.map(tab =>
-  //       tab.id === tabId
-  //         ? { ...tab, content, isUnsaved: true }
-  //         : tab
-  //     );
-  //     console.log("🎯 TabsContext: Updated tabs:", newTabs.map(t => ({ id: t.id, name: t.name, contentLength: t.content.length })));
-  //     return newTabs;
-  //   });
-  // };
-
+ 
+  const createNewTab = () => {
+    const newTab: TabInfo = {
+      id: `temp-${Date.now()}`,
+      fileId: null,
+      name: "Untitled Document",
+      content: "",
+      isUnsaved: true,
+    };
+  
+    setOpenTabs((prev) => [...prev, newTab]);
+    setActiveTabId(newTab.id);
+  };
+  
+ 
+  const updateTabName = useCallback((tabId: string, name: string, fileId?: string) => {
+    setOpenTabs(prev =>
+      prev.map(tab =>
+        tab.id === tabId
+          ? { ...tab, name, fileId: fileId ?? tab.fileId, isUnsaved: false }
+          : tab
+      )
+    );
+  }, []);
+  
   return (
     <TabsContext.Provider value={{
       openTabs,
@@ -108,6 +126,8 @@ export function TabsProvider({ children }: { children: ReactNode }) {
       openFileInTab,
       closeTab,
       activeTabContent,
+      updateTabName,
+      createNewTab,
       updateTabContent,
       getTabContent,
       setActiveTabId,

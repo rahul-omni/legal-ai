@@ -41,28 +41,6 @@ export async function GET(
     );
   }
 }
-// GET: Fetch a single node by ID
-// export async function GET(
-//   request: NextRequest,
-//   { params }: { params: { id: string } }
-// ) {
-//   try {
-//     const node = await db.fileSystemNode.findUnique({
-//       where: { id: params.id },
-//     });
-
-//     if (!node) {
-//       return NextResponse.json({ error: "Node not found" }, { status: 404 });
-//     }
-
-//     return NextResponse.json(node);
-//   } catch (error) {
-//     return NextResponse.json(
-//       { error: "Failed to fetch node" },
-//       { status: 500 }
-//     );
-//   }
-// }
 
 // PUT: Update a node (rename, move, etc.)
 export async function PUT(

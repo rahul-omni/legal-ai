@@ -5,12 +5,18 @@ import { RiskAnalyzer, RiskFinding } from "@/lib/riskAnalyzer";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { useEffect, useRef, useState } from "react";
 import { DocumentPane } from "./DocumentPane";
-import {  FileExplorerV2 } from "./FileExplorerV2";
+import { FileExplorerV2 } from "./FileExplorerV2";
 import { PanelLeft, PanelRightOpen, X, Plus } from "lucide-react";
 import { useTabs } from "@/context/tabsContext";
 import { SmartPrompts } from "./SmartPrompts";
-import { SmartPromptsPanel } from './SmartPromptsPanel';
-import { fetchAllNodes, fetchNodes } from "@/app/apiServices/nodeServices";
+import { SmartPromptsPanel } from "./SmartPromptsPanel";
+import {
+  createNewFile,
+  fetchAllNodes,
+  fetchNodes,
+  updateNodeContent,
+} from "@/app/apiServices/nodeServices";
+import { FileType } from "@prisma/client";
 
 // Add this interface near the top
 interface TabInfo {
@@ -41,7 +47,6 @@ const indianLanguages: LanguageOption[] = [
 ];
 
 export default function LegalEditor() {
- 
   const [files, setFiles] = useState<FileSystemNodeProps[]>([]);
   const [selectedFile, setSelectedFile] = useState<FileSystemNodeProps>();
   const [documentContent, setDocumentContent] = useState(
@@ -57,12 +62,22 @@ export default function LegalEditor() {
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(false);
   const [showSmartPrompts, setShowSmartPrompts] = useState(false);
-   // In LegalEditor component
-const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(null);
-const [fileTree, setFileTree] = useState<FileSystemNodeProps[]>([]);
-const [isLoading, setIsLoading] = useState(true);
-//const fileExplorerRef = useRef<{ refreshNodes: (parentId?: string) => void }>(null);
-  // Add these states
+  // In LegalEditor component
+  const [selectedNode, setSelectedNode] = useState<FileSystemNodeProps | null>(
+    null
+  );
+  const [fileTree, setFileTree] = useState<FileSystemNodeProps[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [tabs, setTabs] = useState<
+    Array<{
+      id: string;
+      name: string;
+      content: string;
+      fileId?: string;
+      parentId?: string;
+    }>
+  >([]);
+   // Add these states
   const {
     openTabs,
     activeTabId,
@@ -70,30 +85,48 @@ const [isLoading, setIsLoading] = useState(true);
     closeTab,
     updateTabContent,
     setActiveTabId,
+    createNewTab,
+    updateTabName
   } = useTabs();
 
   const loadDocuments = async () => {};
- 
+
   const [refreshKey, setRefreshKey] = useState(0); // Add this state
- 
+
   const fetchUpdatedFileTree = async (parentId?: string) => {
     try {
-      const tree = parentId 
+      const tree = parentId
         ? await fetchNodes(parentId)
         : await fetchAllNodes();
-      
-       
-        setFileTree(tree);
-        setRefreshKey(n => n + 1);
-       
-      
+
+      setFileTree(tree);
+      setRefreshKey((n) => n + 1);
+
       return tree;
     } catch (error) {
       handleApiError(error, showToast);
       return [];
     }
   };
+  const [folderPickerState, setFolderPickerState] = useState<{
+    show: boolean;
+    fileData: {
+      name: string;
+      content: string;
+      parentId: string | null;
+      fileId: string // Optional, include only if used elsewhere
+      callback?: (newFile: FileSystemNodeProps) => void;
+    } | null;
+  }>({ show: false, fileData: null });
   
+
+// Modified handleNewFile function
+const handleNewFile = () => {
+
+  createNewTab()
+};
+
+ 
  
   useEffect(() => {
     loadDocuments(); // Only load documents, don't show popup
@@ -110,8 +143,6 @@ const [isLoading, setIsLoading] = useState(true);
       selectedFile.content = newContent;
     }
   };
-
-  
 
   const showToast = (
     message: string,
@@ -188,15 +219,6 @@ const [isLoading, setIsLoading] = useState(true);
     }
   };
 
-  const handleSave = async () => {
-    if (!selectedFile) return;
-  };
-
-  const handleSaveAs = async () => {
-    const newName = prompt("Enter new file name:", selectedFile?.name || "");
-    if (!newName) return;
-  };
-
   const handleAnalyzeRisks = async () => {
     try {
       startLoading("RISK_ANALYZE");
@@ -236,13 +258,48 @@ const [isLoading, setIsLoading] = useState(true);
     setDocumentContent(text);
   };
 
+  console.log("openTabs", openTabs);
+  
   // Add this before the return statement
-  const activeTab = openTabs.find(tab => tab.id === activeTabId);
-    //console.log("activetab" ,activeTab)
-    //console.log("Updated file tree in LegalEditor:", fileTree);
+  const activeTab = openTabs.find((tab) => tab.id === activeTabId);
+
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+
+  const foldersOnly = fileTree.filter(
+    (node) => node.type === "FOLDER" || node.id === "root"
+  );
+   
+  const handleInitiateSave = (
+    name: string,
+    content: string,
+    parentId: string | null,
+    fileId: string ,
+    callback?: (newFile: FileSystemNodeProps) => void
+  ) => {
+    console.log("Initiating save with name:", name, "and content length:", content.length);
+    setFolderPickerState({
+      show: true,
+      fileData: {
+        name,
+        content,
+        parentId, // 👈 Include it here
+        fileId,   // Optional, include only if used elsewhere
+        callback: (newFile: FileSystemNodeProps) => {
+          updateTabName(activeTabId, newFile.name, newFile.id);
+          setRefreshKey((n) => n + 1);
+          console.log("✔️ Name updated in context:", newFile.name);
+          if (callback) callback(newFile); // Call back to DocumentPane
+        },
+      },
+    });
+  };
+  console.log("Selected folder ID:", selectedFolderId);
+  
+
   return (
     <div className="h-screen flex flex-col bg-[#f9f9f9]">
       {/* Toolbar */}
+      
       <div className="absolute top-0 right-0 z-50 flex gap-1 p-2">
         <div className="flex gap-1 bg-[#f9f9f9] shadow-sm rounded p-1">
           <button
@@ -266,6 +323,71 @@ const [isLoading, setIsLoading] = useState(true);
         </div>
       </div>
 
+        {/* Folder Picker Modal */}
+  
+{folderPickerState.show && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-lg w-1/2 max-h-[80vh] flex flex-col">
+      <h3 className="text-lg font-medium mb-4">Select Save Location</h3>
+      <div className="flex-1 overflow-auto">
+        <FileExplorerV2 
+          key={`folder-picker-${refreshKey}`} // 🔑 Key change = full reload
+          fileTree={foldersOnly}
+          onDocumentSelect={(node) => {
+            if (node.type === 'FOLDER') {
+              console.log("Selected folder:", node , node.id);
+              
+              setSelectedFolderId(node.id);
+            } else if (node.type === 'FILE' && node.parentId) {
+              // File selected — use its parent folder as save location
+              setSelectedFolderId(node.parentId);
+            } else if (node.id === 'root') {
+              setSelectedFolderId(null); // save in root
+            }
+          }}
+          selectedDocument={selectedFile}
+          onPdfParsed={() => {}}
+          isFolderPickerOpen={true} // ✅ tell the explorer it’s in picker mode
+        />
+      </div>
+      <div className="flex justify-between mt-4">
+
+      <button
+  onClick={() => {
+    if (folderPickerState.fileData?.callback) {
+      const newNodePayload = {
+        name: folderPickerState.fileData.name,
+        content: folderPickerState.fileData.content,
+        fileId: folderPickerState.fileData.fileId,
+        parentId: selectedFolderId ?? null,
+        type: "FILE",
+      };
+      createNewFile({ ...newNodePayload, type: "FILE" as FileType }).then((newFile) => {
+        if (folderPickerState.fileData && folderPickerState.fileData.callback) {
+          folderPickerState.fileData.callback(newFile);
+        }
+        setFolderPickerState({ show: false, fileData: null });
+      });
+    }
+  }}
+  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+>
+  Save Here
+</button>
+ 
+        <button 
+          onClick={() => setFolderPickerState({ show: false, fileData: null })}
+          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+
       {/* Main content */}
       <div className="flex flex-1">
         {/* Left Panel - File Explorer */}
@@ -279,38 +401,43 @@ const [isLoading, setIsLoading] = useState(true);
               !showLeftPanel && "invisible"
             }`}
           >
-            {/* <FileExplorerV2
-              selectedDocument={selectedFile}
-              onDocumentSelect={handleFileSelect}
-              onPdfParsed={handlePdfParsed}
-              onNodeSelect={(node) => {
-                setSelectedNode(node);
-                console.log("Node selected:", node);
-              }}
-            //  files ={files}
-            /> */}
-            
             <FileExplorerV2
-          // key={fileTree.length}
-         key={`file-explorer-${refreshKey}`} // 🔑 Key change = full reload
-         
-            fileTree={fileTree}
-  selectedDocument={selectedFile}
-  onDocumentSelect={(file) => {
-    handleFileSelect(file);
-    setSelectedNode(file); // Update selected node
-  }}
-  
-  onPdfParsed={handlePdfParsed}
-    
-/>
+              // key={fileTree.length}
+              key={`file-explorer-${refreshKey}`} // 🔑 Key change = full reload
+              fileTree={fileTree}
+              selectedDocument={selectedFile}
+              onDocumentSelect={(file) => {
+                handleFileSelect(file);
+                setSelectedNode(file); // Update selected node
+              }}
+              onPdfParsed={handlePdfParsed}
+              isFolderPickerOpen={ false} // ✅ tell the explorer it’s NOT in picker mode
+            />
+
+            <button
+              onClick={() =>
+                setFolderPickerState({ show: false, fileData: null })
+              }
+              className="mt-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+            >
+              Cancel
+            </button>
           </div>
         </div>
 
         {/* Middle Panel - Document Editor */}
         <div className="flex-1 bg-white flex flex-col">
           {/* Tab Bar */}
+
           <div className="flex items-center h-9 border-b border-gray-200 bg-gray-50/80">
+            {/* New Tab Button */}
+            <button
+              
+              onClick={handleNewFile}
+              className="h-full px-2 text-gray-500 hover:bg-gray-100 transition-colors border-l border-gray-200"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
             <div className="flex-1 flex items-center">
               {openTabs.map((tab) => (
                 <div
@@ -323,9 +450,15 @@ const [isLoading, setIsLoading] = useState(true);
                                 : "text-gray-500 hover:bg-gray-100"
                             }`}
                 >
+                  {/* <span className="text-xs font-medium truncate max-w-[100px]">
+                    {tab.name} {tab.isUnsaved && "•"}  {!tab.fileId && <span className="text-gray-500"> (Unsaved)</span>}
+                  </span> */}
                   <span className="text-xs font-medium truncate max-w-[100px]">
-                    {tab.name} {tab.isUnsaved && "•"}
-                  </span>
+  {tab.name === "Untitled Document" && !tab.fileId ? "New" : tab.name}
+  {tab.isUnsaved && "•"}
+  {!tab.fileId && <span className="text-gray-500"> (Unsaved)</span>}
+</span>
+
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -339,40 +472,30 @@ const [isLoading, setIsLoading] = useState(true);
                 </div>
               ))}
             </div>
-
-            {/* New Tab Button */}
-            <button
-              onClick={() => {
-                // addNewTab();
-              }}
-              className="h-full px-2 text-gray-500 hover:bg-gray-100 transition-colors border-l border-gray-200"
-            >
-              <Plus className="w-3.5 h-3.5" />
-            </button>
           </div>
 
           {/* Editor Wrapper */}
           <div className="flex-1 flex flex-col min-h-0">
             {activeTabId ? (
               <DocumentPane
-              key={activeTabId}
+                key={activeTabId}
                 onDocumentSelect={handleFileSelect}
                 content={activeTab?.content || ""}
                 onContentChange={(newContent) => {
                   if (activeTabId) {
                     updateTabContent(activeTabId, newContent);
                   }
-                } }
-                fileName={activeTab?.name || "Untitled"}
-                onSave={handleSave}
-                onSaveAs={handleSaveAs}
+                }}
+                fileName={activeTab?.name || ""}
                 fileId={activeTab?.fileId || ""}
-                 node={[]}                 
+                node={[]}
+                onInitiateSave={handleInitiateSave}
                 //  onFileTreeUpdate={async () => {
                 //   await reloadFileExplorer();
                 //   return []; // Return empty array to satisfy type
                 // }}
-               onFileTreeUpdate={fetchUpdatedFileTree}
+                onFileTreeUpdate={fetchUpdatedFileTree}
+                isFolderPickerOpen={folderPickerState.show}
                 
               />
             ) : (
@@ -404,7 +527,12 @@ const [isLoading, setIsLoading] = useState(true);
             <SmartPromptsPanel />
           </div>
         </div>
+
       </div>
+
+
+      
+
     </div>
   );
 }
