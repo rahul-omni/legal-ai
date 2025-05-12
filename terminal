@@ -1,0 +1,14 @@
+curl -i -X POST \
+  https://graph.facebook.com/v22.0/631635870026113/messages \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "messaging_product": "whatsapp",
+    "recipient_type": "individual",
+    "to": "918431209936",
+    "type": "text",
+    "text": {
+      "preview_url": false,
+      "body": "Hello, this is a test message"
+    }
+  }' 

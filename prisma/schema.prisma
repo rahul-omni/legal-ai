@@ -194,3 +194,31 @@ enum InvitationStatus {
   EXPIRED
   ACTIVE
 }
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  company   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cases     Case[]
+}
+
+model Case {
+  id           String   @id @default(cuid())
+  title        String
+  number       String   @unique
+  status       String   @default("Active") // Active, Pending, Closed
+  court        String?
+  nextHearing  DateTime?
+  practice     String?
+  tags         String?  // Store as JSON string
+  billingRate  Float?
+  billingType  String?  // Hourly, Fixed, Contingency
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  client       Client   @relation(fields: [clientId], references: [id])
+  clientId     String
+}

@@ -11,6 +11,7 @@ import {
   Gavel,
   Settings,
   Clock,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -37,20 +38,16 @@ const navigationItems = [
     href: "/analytics",
     icon: BarChart2,
   },
-  {
-    name: "Document Assembly",
-    href: "/assembly",
-    icon: FileStack,
-  },
-  {
-    name: "Due Diligence",
-    href: "/due-diligence",
-    icon: ClipboardCheck,
-  },
+  
   {
     name: "Pending Reviews",
     href: "/pending-reviews",
     icon: Clock,
+  },
+  {
+    name: "Clients",
+    href: "/clients",
+    icon: Users,
   },
 ];
 
