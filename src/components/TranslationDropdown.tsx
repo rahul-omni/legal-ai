@@ -5,16 +5,26 @@ import { OPENAI_LANGUAGES, SARVAM_LANGUAGES, TranslationVendor } from '@/lib/tra
 interface TranslationDropdownProps {
   onTranslate: (vendor: TranslationVendor, language: string) => Promise<void>;
   isLoading: boolean;
+  selectedLanguage: string;
+  onLanguageChange: (language: string) => void;
+  selectedVendor: TranslationVendor;
+  onVendorChange: (vendor: TranslationVendor) => void;
 }
 
-export function TranslationDropdown({ onTranslate, isLoading }: TranslationDropdownProps) {
+export function TranslationDropdown({ 
+  onTranslate, 
+  isLoading,
+  selectedLanguage,
+  onLanguageChange,
+  selectedVendor,
+  onVendorChange
+}: TranslationDropdownProps) {
   const [showDropdown, setShowDropdown] = useState(false);
-  const [vendor, setVendor] = useState<TranslationVendor>('openai');
-  const [language, setLanguage] = useState('en-IN');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleTranslate = async () => {
-    await onTranslate(vendor, language);
+    console.log("Translating to:", selectedLanguage);
+    await onTranslate(selectedVendor, selectedLanguage);
   };
 
   return (
@@ -44,8 +54,8 @@ export function TranslationDropdown({ onTranslate, isLoading }: TranslationDropd
                       ring-opacity-5 bg-white z-50">
           <div className="p-3">
             <select
-              value={vendor}
-              onChange={(e) => setVendor(e.target.value as TranslationVendor)}
+              value={selectedVendor}
+              onChange={(e) => onVendorChange(e.target.value as TranslationVendor)}
               className="w-full px-2 py-1.5 text-sm border rounded-md mb-3"
             >
               <option value="openai">OpenAI</option>
@@ -53,11 +63,11 @@ export function TranslationDropdown({ onTranslate, isLoading }: TranslationDropd
             </select>
 
             <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
+              value={selectedLanguage}
+              onChange={(e) => onLanguageChange(e.target.value)}
               className="w-full px-2 py-1.5 text-sm border rounded-md"
             >
-              {vendor === "sarvam"
+              {selectedVendor === "sarvam"
                 ? SARVAM_LANGUAGES.map(lang => (
                     <option key={lang.code} value={lang.code}>{lang.name}</option>
                   ))
