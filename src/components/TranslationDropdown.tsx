@@ -9,19 +9,26 @@ import { useRef, useState } from "react";
 interface TranslationDropdownProps {
   onTranslate: (_vendor: TranslationVendor, _language: string) => Promise<void>;
   isLoading: boolean;
+  selectedLanguage: string;
+  onLanguageChange: (language: string) => void;
+  selectedVendor: TranslationVendor;
+  onVendorChange: (vendor: TranslationVendor) => void;
 }
 
-export function TranslationDropdown({
-  onTranslate,
+export function TranslationDropdown({ 
+  onTranslate, 
   isLoading,
+  selectedLanguage,
+  onLanguageChange,
+  selectedVendor,
+  onVendorChange
 }: TranslationDropdownProps) {
   const [showDropdown, setShowDropdown] = useState(false);
-  const [vendor, setVendor] = useState<TranslationVendor>("openai");
-  const [language, setLanguage] = useState("en-IN");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleTranslate = async () => {
-    await onTranslate(vendor, language);
+    console.log("Translating to:", selectedLanguage);
+    await onTranslate(selectedVendor, selectedLanguage);
   };
 
   return (
@@ -47,59 +54,35 @@ export function TranslationDropdown({
       </div>
 
       {showDropdown && (
-        <DropdownMenu
-          vendor={vendor}
-          language={language}
-          setVendor={setVendor}
-          setLanguage={setLanguage}
-        />
+        <div className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg ring-1 ring-black
+                      ring-opacity-5 bg-white z-50">
+          <div className="p-3">
+            <select
+              value={selectedVendor}
+              onChange={(e) => onVendorChange(e.target.value as TranslationVendor)}
+              className="w-full px-2 py-1.5 text-sm border rounded-md mb-3"
+            >
+              <option value="openai">OpenAI</option>
+              <option value="sarvam">Sarvam AI</option>
+            </select>
+
+            <select
+              value={selectedLanguage}
+              onChange={(e) => onLanguageChange(e.target.value)}
+              className="w-full px-2 py-1.5 text-sm border rounded-md"
+            >
+              {selectedVendor === "sarvam"
+                ? SARVAM_LANGUAGES.map(lang => (
+                    <option key={lang.code} value={lang.code}>{lang.name}</option>
+                  ))
+                : OPENAI_LANGUAGES.map(lang => (
+                    <option key={lang.value} value={lang.value}>{lang.label}</option>
+                  ))
+              }
+            </select>
+          </div>
+        </div>
       )}
     </div>
   );
-}
-
-const DropdownMenu = ({
-  vendor,
-  language,
-  setVendor,
-  setLanguage,
-}: {
-  vendor: TranslationVendor;
-  language: string;
-  setVendor: (_vendor: TranslationVendor) => void;
-  setLanguage: (_language: string) => void;
-}) => (
-  <div
-    className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg ring-1 ring-black
-                ring-opacity-5 bg-white z-50"
-  >
-    <div className="p-3">
-      <select
-        value={vendor}
-        onChange={(e) => setVendor(e.target.value as TranslationVendor)}
-        className="w-full px-2 py-1.5 text-sm border rounded-md mb-3"
-      >
-        <option value="openai">OpenAI</option>
-        <option value="sarvam">Sarvam AI</option>
-      </select>
-
-      <select
-        value={language}
-        onChange={(e) => setLanguage(e.target.value)}
-        className="w-full px-2 py-1.5 text-sm border rounded-md"
-      >
-        {vendor === "sarvam"
-          ? SARVAM_LANGUAGES.map((lang) => (
-              <option key={lang.code} value={lang.code}>
-                {lang.name}
-              </option>
-            ))
-          : OPENAI_LANGUAGES.map((lang) => (
-              <option key={lang.value} value={lang.value}>
-                {lang.label}
-              </option>
-            ))}
-      </select>
-    </div>
-  </div>
-);
+} 

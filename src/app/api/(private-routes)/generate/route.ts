@@ -22,11 +22,8 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "system",
-          content: `You are a legal document assistant. Respond only with clean, well-formatted rich text. Use the following formatting guidelines:
-          - Use ALL CAPS for headings and section titles.
-          - Use bold for important terms and phrases.
-          - Use bullet points (- or •) for lists.
-          Do not include any syntax such as \`\`\`, \`html\`, or any code blocks.
+          content: `You are a legal document assistant. Respond only with clean, well-formatted rich text. 
+
           `
                        //"You are a legal document assistant. Create clear and professional legal content."
         },

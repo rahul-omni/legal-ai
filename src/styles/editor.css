@@ -84,7 +84,7 @@
   min-height: 60vh;
   height: 100%;
   overflow: auto !important;
-  font-family: 'Roboto Slab', Times New Roman, Times, serif;
+  font-family: 'Times New Roman', Times, serif !important;
   font-size: 16px;
   line-height: 1.8;
   padding: 28px 20px 96px 20px; /* Increased bottom padding to 96px */
@@ -132,11 +132,7 @@
 }
 
 /* Font family options - these class names must match exactly what Quill generates */
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="arial"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="arial"]::before {
-  content: "Arial";
-  font-family: "Arial", sans-serif;
-}
+
 
 .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="times-new-roman"]::before,
 .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="times-new-roman"]::before {
@@ -293,4 +289,10 @@
 
 .ql-font-roboto-slab {
   font-family: "Roboto Slab", serif;
+}
+
+/* Make Times New Roman the default selected font in the font picker */
+.ql-snow .ql-picker.ql-font .ql-picker-label::before {
+  content: "Times New Roman";
+  font-family: 'Times New Roman', Times, serif;
 }

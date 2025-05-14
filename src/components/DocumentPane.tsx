@@ -15,7 +15,6 @@ import { createNewFile, createNode, CreateNodePayload, fetchAllNodes, fetchNodes
  
  
 import { useToast } from "./ui/toast";
-import { ReviewRequestModal } from "./ReviewRequestModal";
 
 interface DocumentPaneProps {
   content: string;
@@ -80,7 +79,7 @@ export function DocumentPane({
   } | null>(null);
   const [translationVendor, setTranslationVendor] =
     useState<TranslationVendor>("openai");
-  const [selectedLanguage, setSelectedLanguage] = useState("en-IN");
+  const [selectedLanguage, setSelectedLanguage] = useState("hi-IN");
   const { isLoading, startLoading, stopLoading } = loadingContext();
   const [showTranslateDropdown, setShowTranslateDropdown] = useState(false);
   const translationDropdownRef = useRef<HTMLDivElement>(null);
@@ -251,13 +250,17 @@ export function DocumentPane({
     language: string
   ) => {
     try {
+      setSelectedLanguage(language);
       startLoading("TRANSLATE_TEXT");
+      
       const response = await fetch("/api/translate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({
           vendor,
-          sourceText: content,
+          sourceText: selectedText || content,
           targetLanguage: language,
           mode: "formal",
         }),
@@ -265,18 +268,41 @@ export function DocumentPane({
 
       if (!response.ok) throw new Error("Translation failed");
       const data = await response.json();
+      
+      console.log("Translated text:", data.translation);
+      console.log("Raw translation response:", data);
+      console.log("Translation text type:", typeof data.translation);
+      console.log("First 10 characters:", Array.from(data.translation).slice(0, 10).map(c => c.charCodeAt(0)));
+      
+      // For Quill editor, use the HTML paste method
+      if (quillRef.current) {
+        const quill = quillRef.current.getEditor();
+        
+        // Clear the editor if needed
+        // quill.setText('');
+        
+        // Insert the translated text with proper encoding
+        quill.clipboard.dangerouslyPasteHTML(data.translation);
+      } else {
+        // Fallback to the regular content change
       onContentChange(data.translation);
+      }
     } catch (error) {
       console.error("Translation error:", error);
-      alert("Failed to translate text");
+      showToast("Failed to translate text", "error");
     } finally {
       stopLoading("TRANSLATE_TEXT");
     }
   };
 
-  const quillRef = useRef<any>(null);
-  const caretIdxRef = useRef<number | null>(null);
-  const quillInstRef = useRef<any>(null);
+
+
+
+
+
+const quillRef = useRef<any>(null);           // ✅ direct Quill ref
+const caretIdxRef = useRef<number | null>(null);
+const quillInstRef = useRef<any>(null);  
 
   const handlePromptSubmit = async (prompt: string) => {
     if (!prompt.trim()) return;
@@ -285,16 +311,35 @@ export function DocumentPane({
 
     const getQuill = () => quillRef.current?.getEditor?.();
 
-    try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      });
-      if (!res.body) throw new Error("No stream returned");
+  try {
+    // Determine what text to send as context
+    let contextText;
+    
+    // If there's selected text, use that as the context
+    if (selectedText) {
+      contextText = selectedText;
+    } 
+    // Otherwise use the entire document content
+    else {
+      contextText = quillRef.current ? 
+        quillRef.current.getEditor().getText() : 
+        content;
+    }
+    
+    // Call API with both prompt and context
+    const res = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        prompt,
+        text: contextText
+      }),
+    });
+    
+    if (!res.body) throw new Error("No stream returned");
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
 
       const q0 = getQuill();
 
@@ -330,13 +375,15 @@ export function DocumentPane({
           insertPos += chunk.length;
           quill.setSelection(insertPos, 0, "api");
 
-          const root = quill.root as HTMLElement;
-          root.scrollTop = root.scrollHeight;
-        } else {
-          htmlFallback += chunk;
-          onContentChange(htmlFallback);
-        }
+        // Auto-scroll to bottom
+        const root = quill.root as HTMLElement;
+        //root.scrollTop = root.scrollHeight;
+      } else {
+        // fallback path
+        htmlFallback += chunk;
+        onContentChange(htmlFallback);
       }
+    }
 
       if (!quillRef.current) {
         onContentChange(htmlFallback);
@@ -693,15 +740,11 @@ useEffect(() => {
             <TranslationDropdown
               onTranslate={handleTranslate}
               isLoading={isLoading("TRANSLATE_TEXT")}
+              selectedLanguage={selectedLanguage}
+              onLanguageChange={setSelectedLanguage}
+              selectedVendor={translationVendor}
+              onVendorChange={setTranslationVendor}
             />
-            <button
-              onClick={onFileReviewRequest}
-              className="ml-2 px-3 py-1.5 text-sm bg-green-50 text-green-600 rounded-lg
-                   hover:bg-green-100 transition-colors"
-            >
-              Review Request
-            </button>
-
             <SaveDropdown
               
               onSave={handleSave}
@@ -726,14 +769,11 @@ useEffect(() => {
         />
 
         {showAIPopup && (
-          <div
-            className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
-            style={{ width: "600px" }}
-          >
-            <AIPopup
+          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50" style={{ width: '600px' }}>
+          <AIPopup
               onPromptSubmit={handlePromptSubmit}
-              currentContent={content}
-              selectedText={selectedText}
+            currentContent={content}
+            selectedText={selectedText}
               cursorPosition={cursorPosition}
               cursorIndicatorPosition={cursorIndicatorPosition}
               documents={[]}
