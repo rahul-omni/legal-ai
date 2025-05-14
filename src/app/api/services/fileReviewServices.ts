@@ -5,11 +5,13 @@ import {
   FileReviewStatus,
 } from "@prisma/client";
 import { ErrorNotFound, ErrorValidation } from "../lib/errors";
+import { NextResponse } from "next/dist/server/web/spec-extension/response";
 
 interface CreateReviewInput {
   fileId: string;
   reviewerId: string;
   requesterId: string;
+  //reviewerEmail: string;
   orgId: string;
   dueDate?: Date;
 }
@@ -21,44 +23,153 @@ interface CreateCommentInput {
 }
 
 class ReviewService {
-  async createReview(data: CreateReviewInput): Promise<FileReview> {
-    try {
-      // Verify file exists and belongs to requester
-      console.debug("Fetching file with ID:", data.fileId, "for requester:", data.requesterId);
-      const file = await db.fileSystemNode.findUnique({
-        where: { id: data.fileId, userId: data.requesterId },
-      });
-
-      if (!file) {
-        console.error("File not found or access denied for file ID:", data.fileId);
-        throw new ErrorNotFound("File not found or access denied");
-      }
-
-      console.debug("Verifying reviewer membership in organization:", data.orgId);
-      const reviewerMembership = await db.orgMembership.findFirst({
-        where: { userId: data.reviewerId, orgId: data.orgId },
-      });
-
-      if (!reviewerMembership) {
-        console.error("Reviewer is not in the organization:", data.orgId);
-        throw new ErrorValidation("Reviewer is not in your organization");
-      }
-
-      console.debug("Creating file review for file ID:", data.fileId);
-      return await db.fileReview.create({
-        data: {
-          fileId: data.fileId,
-          reviewerId: data.reviewerId,
-          requesterId: data.requesterId,
-          orgId: data.orgId,
-          dueDate: data.dueDate,
-          status: "PENDING",
-        },
-      });
-    } catch {
-      throw new Error("Failed to create review");
+  
+   
+  async  createReview(data: CreateReviewInput): Promise<FileReview> {
+    console.log("Starting review creation with:", data);
+     debugger
+    // 1. Validate input
+    if (!data.fileId || !data.requesterId || !data.reviewerId || !data.orgId) {
+      throw new Error("Missing required fields");
     }
+  
+    
+   
+    // 3. Verify file access
+    const file = await db.fileSystemNode.findFirst({
+      where: { 
+        id: data.fileId, 
+        userId: data.requesterId 
+      }
+    });
+  
+    if (!file) {
+      throw new Error("File not found or access denied");
+    }
+  
+    // 4. Verify organization permissions
+    const isAuthorized = await db.orgMembership.findFirst({
+      where: {
+        userId: data.reviewerId,
+        orgId: data.orgId
+      }
+    });
+
+    
+  
+    if (!isAuthorized) {
+      throw new Error("Reviewer is not a member of this organization");
+    }
+  
+    // 5. Create the review
+    console.log("Creating review with reviewerId:", data.reviewerId);
+    debugger
+    const newReview = await db.fileReview.create({
+      data: {
+        fileId: data.fileId,
+        reviewerId: data.reviewerId,
+        requesterId: data.requesterId,
+        orgId: data.orgId,
+        dueDate: data.dueDate,
+        status: "PENDING"
+      }
+    });
+  
+    console.log("Review created successfully:", newReview);
+    return newReview;
   }
+  
+ 
+  async getFullReviews(userId: string) {
+    // Fetch reviews with related file data from FileSystemNode
+     console.log("Fetching reviews for user:", userId);  // Debug log to check userId
+      if (!userId) {
+        return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+      }
+        const reviews = await db.fileReview.findMany({
+      where: {
+        reviewerId: userId,  // Filter by reviewerId
+      },
+      include: {
+        file: {
+          select: {
+            id: true,            // File ID from FileSystemNode
+            name: true,          // Name of the file
+            content: true,       // Content of the file (if present)
+            type: true,          // Type (FILE or FOLDER)
+            parentId: true,      // Parent ID if it's part of a folder structure
+             createdAt: true,  // Creation date
+            updatedAt: true,  // Last updated date
+            
+            createdBy:true,
+            user: {
+              select: {
+                id: true,        // User ID
+                name: true,      // User name
+                email: true,     // User email
+                createdAt: true, // User creation date
+                updatedAt: true, // User last updated date
+              },
+            },
+             
+          },
+        },
+        requester: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            createdAt: true,
+            updatedAt: true,
+            
+            
+          },
+        },
+        reviewer: {
+          select: {
+            id: true,
+            email: true,
+            createdAt: true,
+            updatedAt: true,
+             
+          },
+        },
+      },
+    });
+  
+   //  const  reviews = await db.fileReview.findMany({})
+    // Check if no reviews are found
+    if (!reviews || reviews.length === 0) {
+      return NextResponse.json({ error: "No reviews found" }, { status: 404 });
+    }
+  
+    // Check for missing related data
+    // for (const review of reviews) {
+    //   if (!review.fileId || !review.requesterId || !review.reviewerId) {
+    //     throw new ErrorNotFound("Related data not found for review " + review.id);
+    //   }
+    // }
+  
+    // Validate all reviews have required relations
+    const invalidReviews = reviews.filter(
+      review => !review.fileId || !review.requesterId || !review.reviewerId
+    );
+    
+    if (invalidReviews.length > 0) {
+      throw new Error(
+        `Missing relation data for reviews: ${
+          invalidReviews.map(r => r.id).join(', ')
+        }`
+      );
+    }
+    console.log("Found", reviews.length, "reviews for user", userId);
+        return reviews
+   // return NextResponse.json(reviews);  // Return the reviews in JSON format
+  }
+  
+  
+
+                                                  
 
   async getReviewsForUser(
     userId: string,

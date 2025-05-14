@@ -14,13 +14,19 @@ import { organizationService } from "./organizationService";
 
 class InvitationService {
   async organizationInvitations(orgId: string) {
+    console.log('Received orgId:', orgId); // Verify the ID format
+     
+
+  if (!orgId) throw new Error("No orgId provided");
     try {
+
       const invitations = await db.invitation.findMany({
         where: { orgId },
       });
+      console.log("Fetched invitations:", invitations);
       return invitations;
     } catch {
-      throw new ErrorNotFound("Invitations");
+      throw new ErrorNotFound("Invitations Error in fetching invitations");
     }
   }
 

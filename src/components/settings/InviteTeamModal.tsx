@@ -7,16 +7,18 @@ import {
 import { Dispatch } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { Action, InviteFormInputs, State } from "./types";
+import { Action, InviteFormInputs, State, TeamMember } from "./types";
 import { Modal } from "../ui/Modal";
 import { ModalButton, ModalFooter } from "../ui/ModalButton";
 
 export function InviteTeamModal({
   state,
   dispatch,
+  teamMembers,
 }: {
   state: State;
   dispatch: Dispatch<Action>;
+  teamMembers: TeamMember[]; 
 }) {
   const { getAllRoles } = useRoleContext();
   const { register, handleSubmit } = useForm<InviteFormInputs>(); 

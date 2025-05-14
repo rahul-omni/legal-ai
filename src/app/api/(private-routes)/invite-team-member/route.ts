@@ -37,3 +37,29 @@ export async function POST(
     return handleError(error);
   }
 }
+
+
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { orgId: string } }
+): Promise<NextResponse<SuccessResponse | ErrorResponse>> {
+  try {
+    const orgId = params.orgId;
+    console.log("Received orgId in GET:", orgId);
+    if (!orgId) {
+      return NextResponse.json(
+        { error: "Organization ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const invitations = await invitationService.organizationInvitations(orgId);
+   //return NextResponse.json(invitations, { status: 200 });
+   
+    return NextResponse.json({ data: invitations, successMessage: "Invitations retrieved successfully" }, { status: 200 });
+  } catch (error) {
+    console.error("Error in GET invitations:", error);
+    return handleError(error);
+  }
+}

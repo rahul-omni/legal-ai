@@ -63,7 +63,8 @@ export function TeamManagement() {
       member.name.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
       member.email.toLowerCase().includes(state.searchQuery.toLowerCase())
   );
-
+  
+  
   return (
     <div className="bg-white rounded-lg border">
       <div className="p-4 flex justify-between items-center">
@@ -78,7 +79,7 @@ export function TeamManagement() {
       </div>
       <TeamTable members={filteredMembers} />
       <Pagination state={state} dispatch={dispatch} />
-      <InviteTeamModal state={state} dispatch={dispatch} />
+      <InviteTeamModal state={state} dispatch={dispatch} teamMembers={teamMembers} />
     </div>
   );
 }
@@ -106,7 +107,11 @@ function SearchBar({
   );
 }
 
+
+
 function TeamTable({ members }: { members: TeamMember[] }) {
+  console.log("members", members);
+  
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
