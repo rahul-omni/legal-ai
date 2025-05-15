@@ -127,13 +127,8 @@ const handleNewFile = () => {
   createNewTab()
 };
 
-useEffect(() => {
-  if (isNewFileMode && activeTabId) {
-    // If we're in new file mode but a file is now active, reset
-    setIsNewFileMode(true);
-  }
-}, [activeTabId, isNewFileMode]);
- 
+
+
  
   useEffect(() => {
     loadDocuments(); // Only load documents, don't show popup
