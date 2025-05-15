@@ -29,6 +29,7 @@ interface FileExplorerProps {
   onPdfParsed: (text: string) => void;
   fileTree: FileSystemNodeProps[]; 
   isFolderPickerOpen?: boolean;
+  isNewFileMode?: boolean;
 }
 
 export const FileExplorerV2: FC<FileExplorerProps> = ({

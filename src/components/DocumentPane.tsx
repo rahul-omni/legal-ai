@@ -38,6 +38,7 @@ interface DocumentPaneProps {
   
   // ✅ NEW: Add this to control AIPopup visibility
   isFolderPickerOpen?: boolean;
+  isNewFileMode?: boolean;
   // userId: string;
   // documents: any[];
   // files: any[];
@@ -63,6 +64,7 @@ export function DocumentPane({
   onFileCreated,
   onInitiateSave,
   isFolderPickerOpen,
+  isNewFileMode,
   node
   // userId,
   // documents,
@@ -619,6 +621,7 @@ const quillInstRef = useRef<any>(null);
   };
 
   const onFileReviewRequest = () => {
+    
     setShowReviewModal(true);
   };
 
@@ -746,6 +749,14 @@ useEffect(() => {
               selectedVendor={translationVendor}
               onVendorChange={setTranslationVendor}
             />
+
+           {!isNewFileMode && (   <button
+              onClick={onFileReviewRequest}
+              className="ml-2 px-3 py-1.5 text-sm bg-green-50 text-green-600 rounded-lg
+                   hover:bg-green-100 transition-colors"
+            >
+              Review Request
+            </button>)}
             <SaveDropdown
               
               onSave={handleSave}

@@ -119,13 +119,20 @@ export default function LegalEditor() {
     } | null;
   }>({ show: false, fileData: null });
   
-
+ // In your parent component (or state management)
+const [isNewFileMode, setIsNewFileMode] = useState(false)
 // Modified handleNewFile function
 const handleNewFile = () => {
-
+  setIsNewFileMode(true); // Set the mode to new file
   createNewTab()
 };
 
+useEffect(() => {
+  if (isNewFileMode && activeTabId) {
+    // If we're in new file mode but a file is now active, reset
+    setIsNewFileMode(true);
+  }
+}, [activeTabId, isNewFileMode]);
  
  
   useEffect(() => {
@@ -133,6 +140,7 @@ const handleNewFile = () => {
   }, []);
 
   const handleFileSelect = (file: FileSystemNodeProps) => {
+    setIsNewFileMode(false); // Reset after saving
     openFileInTab(file);
   };
 
@@ -412,6 +420,7 @@ const handleNewFile = () => {
               }}
               onPdfParsed={handlePdfParsed}
               isFolderPickerOpen={ false} // ✅ tell the explorer it’s NOT in picker mode
+              isNewFileMode={isNewFileMode} // <-- Pass the state her
             />
 
             <button
@@ -496,6 +505,7 @@ const handleNewFile = () => {
                 // }}
                 onFileTreeUpdate={fetchUpdatedFileTree}
                 isFolderPickerOpen={folderPickerState.show}
+                isNewFileMode={isNewFileMode} // <-- Pass the state her
                 
               />
             ) : (
