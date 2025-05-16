@@ -329,7 +329,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
       </div>
 
       {/* Children */}
-      {node.isExpanded && node.children !== undefined && (
+      {/* {node.isExpanded && node.children !== undefined && (
         <div className="ml-5">
           {node.children.length > 0 ? (
             node.children.map((child) => renderNode(child, depth + 1))
@@ -339,7 +339,19 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
             </div>
           )}
         </div>
-      )}
+      )} */}
+      {/* Children */}
+{node.isExpanded && Array.isArray(node.children) && (
+  <div className="ml-5">
+    {node.children.length > 0 ? (
+      node.children.map((child) => renderNode(child, depth + 1))
+    ) : (
+      <div className="text-xs text-gray-400 italic ml-6 mt-1">
+        Empty folder
+      </div>
+    )}
+  </div>
+)}
     </div>
   );
 
@@ -433,9 +445,19 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
             <div className="animate-spin mr-2">⏳</div> Loading...
           </div>
         ) : (
+          // <div className="space-y-0.5">
+          //   {nodes.map((node) => renderNode(node))}
+          // </div>
+
           <div className="space-y-0.5">
-            {nodes.map((node) => renderNode(node))}
-          </div>
+      {Array.isArray(nodes) && nodes.length > 0 ? (
+        nodes.map((node) => renderNode(node))
+      ) : (
+        <div className="text-center text-gray-500 py-4">
+          No files found
+        </div>
+      )}
+    </div>
         )}
       </div>
     </div>

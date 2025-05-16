@@ -93,21 +93,45 @@ export default function LegalEditor() {
 
   const [refreshKey, setRefreshKey] = useState(0); // Add this state
 
-  const fetchUpdatedFileTree = async (parentId?: string) => {
-    try {
-      const tree = parentId
-        ? await fetchNodes(parentId)
-        : await fetchAllNodes();
+  // const fetchUpdatedFileTree = async (parentId?: string) => {
+  //   try {
+  //     const tree = parentId
+  //       ? await fetchNodes(parentId)
+  //       : await fetchAllNodes();
 
-      setFileTree(tree);
-      setRefreshKey((n) => n + 1);
+  //     setFileTree(tree);
+  //     setRefreshKey((n) => n + 1);
 
-      return tree;
-    } catch (error) {
-      handleApiError(error, showToast);
-      return [];
-    }
-  };
+  //     return tree;
+  //   } catch (error) {
+  //     handleApiError(error, showToast);
+  //     return [];
+  //   }
+  // };
+
+  const isCalledRef = useRef(false);
+
+const fetchUpdatedFileTree = async (parentId?: string) => {
+  if (isCalledRef.current) return;
+  isCalledRef.current = true;
+  
+  try {
+    const tree = parentId
+      ? await fetchNodes(parentId)
+      : await fetchAllNodes();
+
+    //setFileTree(tree);
+     // Ensure we always set an array, even if response is undefined
+     setFileTree(Array.isArray(tree) ? tree : []);
+    setRefreshKey((n) => n + 1);
+    return tree;
+  } catch (error) {
+    handleApiError(error, showToast);
+    return [];
+  } finally {
+    isCalledRef.current = false;
+  }
+};
   const [folderPickerState, setFolderPickerState] = useState<{
     show: boolean;
     fileData: {

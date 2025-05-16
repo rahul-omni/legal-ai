@@ -9,19 +9,53 @@ export interface CreateNodePayload {
   content?: string;
 }
 
+// export const fetchNodes = async (
+//   parentId?: string
+// ): Promise<FileSystemNodeProps[] | undefined> => {
+//   try {
+//     const url = `/nodes?parentId=${parentId || ""}`;
+//     const response = await apiClient.get(url);
+//     return response.data;
+//   } catch (error) {
+//     console.error("Error fetching nodes:", error);
+//     return;
+//   }
+// };
+// Create a module-level cache
+const requestCache = new Map<string, Promise<FileSystemNodeProps[]>>();
+
 export const fetchNodes = async (
   parentId?: string
-): Promise<FileSystemNodeProps[] | undefined> => {
+): Promise<FileSystemNodeProps[]> => { // Always return array, not undefined
+  const url = `/nodes?parentId=${parentId || ""}`;
+  
+  // Return cached promise if available
+  if (requestCache.has(url)) {
+    return requestCache.get(url)!;
+  }
+
   try {
-    const url = `/nodes?parentId=${parentId || ""}`;
-    const response = await apiClient.get(url);
-    return response.data;
+    // Create and cache the request promise
+    const requestPromise = apiClient.get(url).then(response => {
+      // Validate response is an array
+      if (!Array.isArray(response.data)) {
+        throw new Error('Invalid response format: expected array');
+      }
+      return response.data;
+    }).finally(() => {
+      // Clean up cache after request completes (success or failure)
+      requestCache.delete(url);
+    });
+
+    requestCache.set(url, requestPromise);
+    
+    return await requestPromise;
   } catch (error) {
     console.error("Error fetching nodes:", error);
-    return;
+    return []; // Return empty array instead of undefined
   }
 };
-
+ 
 export const createNodeold = async (node: CreateNodePayload) => {
   try {
     await apiClient.post("/nodes", node);
