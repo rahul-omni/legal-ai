@@ -120,18 +120,6 @@ class ReviewService {
       },
     });
 
-    if (!reviews || reviews.length === 0) {
-      throw new ErrorNotFound("No reviews found for user " + userId);
-    }
-
-    const invalidReviews = reviews.filter(
-      (review) => !review.fileId || !review.requesterId || !review.reviewerId
-    );
-
-    if (invalidReviews.length > 0) {
-      throw new ErrorValidation("Missing relation data for reviews");
-    }
-
     return reviews;
   }
 

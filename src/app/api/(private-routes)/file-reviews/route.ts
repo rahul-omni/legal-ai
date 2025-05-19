@@ -28,10 +28,6 @@ export const GET = auth(async (request: NextAuthRequest) => {
 
     const reviews = await reviewService.getFullReviews(sessionUser.id);
 
-    if (!reviews || reviews.length === 0) {
-      return NextResponse.json({ error: "No reviews found" }, { status: 404 });
-    }
-    // console.log("Fetched reviews route:", reviews);
     return NextResponse.json(reviews);
   } catch (error) {
     return handleError(error);
