@@ -86,7 +86,7 @@ async function createNodeController(request: NextAuthRequest) {
       content: content ?? null,
       parentId: parentId ?? null,
     });
-    logger.info("createNodeController: Created new node", newNode);
+   /// logger.info("createNodeController: Created new node", newNode);
 
     return NextResponse.json(newNode);
   } catch (error) {
