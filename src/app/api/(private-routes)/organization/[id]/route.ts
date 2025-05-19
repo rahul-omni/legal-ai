@@ -37,7 +37,9 @@ export const GET = auth(async function (request: NextAuthRequest, context) {
       { count: organizationUsers.length }
     );
 
-    return NextResponse.json(organizationUsers);
+    return NextResponse.json(
+      organizationUsers.filter((user) => user.userId !== sessionUser.id)
+    );
   } catch (error) {
     logger.error("getOrganizationUsersController: Error occurred", error);
     return handleError(error);
@@ -51,7 +53,12 @@ async function getOrganizationUsers(organizationId: string) {
       orgId: organizationId,
     },
     include: {
-      user: true,
+      user: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
     },
   });
 

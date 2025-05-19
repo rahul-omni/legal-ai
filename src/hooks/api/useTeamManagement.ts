@@ -34,11 +34,11 @@ export const useInviteTemMember = () => {
   return { inviteTeamMember, isLoading, error };
 };
 
-export const useFetchTeamMembers = () => {
+export const useFetchInvitations = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTeamMembers = async (orgId: string) => {
+  const fetchInvitations = async (orgId: string) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -55,5 +55,5 @@ export const useFetchTeamMembers = () => {
     }
   };
 
-  return { fetchTeamMembers, isLoading, error };
+  return { fetchInvitations, isLoading, error };
 };

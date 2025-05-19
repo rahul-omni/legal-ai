@@ -1,5 +1,5 @@
 import { useUserContext } from "@/context/userContext";
-import { useFetchTeamMembers } from "@/hooks/api/useTeamManagement";
+import { useFetchInvitations } from "@/hooks/api/useTeamManagement";
 import { Search, UserPlus } from "lucide-react";
 import { useEffect, useReducer } from "react";
 import { InviteTeamModal } from "./InviteTeamModal";
@@ -28,7 +28,7 @@ export function TeamManagement() {
     invitedTeamMembers: [],
   });
   const { userState } = useUserContext();
-  const { fetchTeamMembers } = useFetchTeamMembers();
+  const { fetchInvitations } = useFetchInvitations();
 
   useEffect(() => {
     (async () => {
@@ -37,7 +37,7 @@ export function TeamManagement() {
           "Fetching team members for orgId:",
           userState.selectedOrdMembership?.organizationId
         );
-        const data = await fetchTeamMembers(
+        const data = await fetchInvitations(
           userState.selectedOrdMembership!.organizationId
         );
         console.log("Fetched team members:", data);

@@ -18,37 +18,6 @@ class UserService {
     }
   }
 
-  async findUserById(userId: string): Promise<User | null> {
-    try {
-      return await db.user.findUnique({
-        where: { id: userId },
-      });
-    } catch {
-      throw new ErrorNotFound(`User with ID ${userId} not found`);
-    }
-  }
-
-
-  async findUserByIdWithOrgs(userId: string): Promise<UserWithOrganizations | null> {
-    try {
-      return await db.user.findUnique({
-        where: { id: userId },
-        include: {
-          orgMemberships: {
-            include: {
-              organization: true,
-              role: true,
-            },
-          },
-        },
-      });
-    } catch (error) {
-      throw new ErrorNotFound(`User with ID ${userId} not found`);
-    }
-  }
- 
-    
-
   async findUserByEmailWithOrgs(
     email: string
   ): Promise<UserWithOrganizations | null> {
