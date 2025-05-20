@@ -23,7 +23,7 @@ interface PrivateApiRoute {
   resolveComment(_commentId: string): `/reviews/comments/${string}/resolve`;
   organization(_orgId: string): `/organization/${string}`;
   fileReviewReq: `/file-reviews`;
-  
+
   organizationInvitations(orgId: string): `/organization/${string}/invitations`;
 }
 
@@ -45,12 +45,9 @@ export const apiRouteConfig: {
     resolveComment: (commentId) => `/reviews/comments/${commentId}/resolve`,
     organization: (ordId) => `/organization/${ordId}`,
     fileReviewReq: `/file-reviews`,
-   // organizationInvitations: (orgId) => `/organization/${orgId}/invitations`,
-     
-      organizationInvitations: (orgId: string) =>
-        `/organization/${orgId}/invitations`,
-     
-    
+    // organizationInvitations: (orgId) => `/organization/${orgId}/invitations`,
+    organizationInvitations: (orgId: string) =>
+      `/organization/${orgId}/invitations`,
   },
   publicRoutes: {
     login: "/auth/login",

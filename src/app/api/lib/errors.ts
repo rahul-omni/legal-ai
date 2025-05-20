@@ -40,7 +40,7 @@ export class ErrorAlreadyExists extends ErrorApp {
 }
 
 export class ErrorValidation extends ErrorApp {
-  constructor(details: any) {
+  constructor(details?: any) {
     super("Validation failed", 422, details);
   }
 }

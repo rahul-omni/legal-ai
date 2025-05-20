@@ -625,10 +625,6 @@ const quillInstRef = useRef<any>(null);
     setShowReviewModal(true);
   };
 
-  const handleReviewSubmit = (userId: string) => {
-    showToast(`Review requested from user ID: ${userId}`);
-  };
-
   const findNodeById = (
     nodes: FileSystemNodeProps[],
     id: string
@@ -817,7 +813,6 @@ useEffect(() => {
         isOpen={showReviewModal}
         fileId={fileId!}
         onClose={() => setShowReviewModal(false)}
-        onSubmit={handleReviewSubmit}
       />
     </div>
     </>

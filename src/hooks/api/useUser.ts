@@ -1,5 +1,5 @@
+import { UserResponse } from "@/app/api/(private-routes)/user/types";
 import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
-import { UserResponse } from "@/app/api/user/types";
 import { apiClient } from "@/app/apiServices";
 import { useState } from "react";
 

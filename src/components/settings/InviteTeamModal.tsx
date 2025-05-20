@@ -1,7 +1,7 @@
 import { useRoleContext } from "@/context/roleContext";
 import { useUserContext } from "@/context/userContext";
 import {
-  useFetchTeamMembers,
+  useFetchInvitations,
   useInviteTemMember,
 } from "@/hooks/api/useTeamManagement";
 import { Dispatch } from "react";
@@ -23,7 +23,7 @@ export function InviteTeamModal({
   const { getAllRoles } = useRoleContext();
   const { register, handleSubmit } = useForm<InviteFormInputs>(); 
   const { inviteTeamMember } = useInviteTemMember();
-  const { fetchTeamMembers } = useFetchTeamMembers();
+  const { fetchInvitations } = useFetchInvitations();
   const { userState } = useUserContext();
   const roles = getAllRoles();
 
@@ -41,7 +41,7 @@ export function InviteTeamModal({
 
     if (!res) return;
 
-    const invitations = await fetchTeamMembers(
+    const invitations = await fetchInvitations(
       userState.selectedOrdMembership!.organizationId
     );
 
