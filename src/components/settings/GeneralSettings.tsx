@@ -18,13 +18,13 @@ export function GeneralSettings({ onLogout }: GeneralSettingsProps) {
         <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center text-2xl font-bold text-gray-500">
           {userState.user?.name
             ? charFromName(userState.user.name)
-            : charFromEmail(userState.user!.email!)}
+            : charFromEmail(userState.user?.email ?? "")}
         </div>
         <div>
           <div className="text-base font-semibold text-gray-800 capitalize">
-            {userState.user!.name}
+            {userState.user?.name}
           </div>
-          <div className="text-sm text-gray-500">{userState.user!.email}</div>
+          <div className="text-sm text-gray-500">{userState.user?.email}</div>
         </div>
       </div>
 
