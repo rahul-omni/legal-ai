@@ -209,6 +209,7 @@ const Breadcrumbs: FC<
   );
 };
 
+ 
 const ProjectToolbar: FC<ProjectReducerProps> = ({
   projectHubState,
   dispatchProjectHub,
@@ -216,6 +217,8 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
 }) => {
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef2 = useRef<HTMLInputElement>(null); // New ref for Upload Files 2
+  const [isUploading, setIsUploading] = useState(false);
 
   const extractTextFromPDF = async (file: File): Promise<string> => {
     try {
@@ -239,17 +242,17 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    parentId?: string
+    isRootLevel: boolean
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setIsUploading(true);
     try {
       let content: string;
 
       if (file.type === "application/pdf") {
         content = await extractTextFromPDF(file);
-        //onPdfParsed(content);
         showToast("PDF Parsed Successfully");
       } else {
         content = await FileService.parseFile(file);
@@ -258,26 +261,25 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
       const newFile: CreateNodePayload = {
         name: file.name,
         type: "FILE",
-        parentId,
+        parentId: isRootLevel ? undefined : projectHubState.selectedProject?.id,
         content,
       };
 
-      console.log("newFile", newFile);
-
       await createNode(newFile);
-      // Refresh the project list after successful upload
-      await loadProjects(parentId);
-      // await refreshNodes(parentId);
+      await loadProjects(isRootLevel ? undefined : projectHubState.selectedProject?.id);
+      showToast("File uploaded successfully");
     } catch (error) {
       handleApiError(error, showToast);
+    } finally {
+      setIsUploading(false);
+      if (e.target) e.target.value = '';
     }
   };
-  console.log("projectHubState", projectHubState);
 
   return (
     <div className="border-b bg-white px-6 py-3 flex items-center justify-between">
       <div className="flex items-center gap-3">
-        {!projectHubState.selectedProject && (
+        {!projectHubState.selectedProject ? (
           <>
             <button
               onClick={() => {
@@ -295,20 +297,42 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
             <button
               title="Upload File"
               onClick={() => fileInputRef.current?.click()}
-              className="px-3 py-1.5 border border-gray-200 rounded-md flex items-center gap-2 hover:bg-gray-50 transition-colors text-sm"
+              disabled={isUploading}
+              className={`px-3 py-1.5 border border-gray-200 rounded-md flex items-center gap-2 ${
+                isUploading ? 'bg-gray-100 cursor-not-allowed' : 'hover:bg-gray-50'
+              } transition-colors text-sm`}
             >
               <Upload className="w-3.5 h-3.5" />
-              Upload Files 1
+              Upload Files 
             </button>
           </>
+        ) : (
+          <button
+            title="Upload File"
+            onClick={() => fileInputRef2.current?.click()}
+            disabled={isUploading}
+            className={`px-3 py-1.5 border border-gray-200 rounded-md flex items-center gap-2 ${
+              isUploading ? 'bg-gray-100 cursor-not-allowed' : 'hover:bg-gray-50'
+            } transition-colors text-sm`}
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Upload Files 
+          </button>
         )}
 
-        {/* Keep the hidden file input */}
+        {/* Hidden file inputs */}
         <input
           type="file"
           ref={fileInputRef}
           className="hidden"
-          onChange={handleFileUpload}
+          onChange={(e) => handleFileUpload(e, true)} // true for root level
+          accept=".txt,.doc,.docx,.pdf"
+        />
+        <input
+          type="file"
+          ref={fileInputRef2}
+          className="hidden"
+          onChange={(e) => handleFileUpload(e, false)} // false for folder level
           accept=".txt,.doc,.docx,.pdf"
         />
       </div>
@@ -330,8 +354,6 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
     </div>
   );
 };
-
- 
 
 const EmptyProject: FC<
   ProjectReducerProps & { loadProjects: (parentId?: string) => void }
@@ -400,14 +422,14 @@ const EmptyProject: FC<
         )}
       </div>
       <h3 className="text-lg font-medium text-gray-900 mb-1">
-        {projectHubState.selectedProject ? "No file yet" : "No projects yet"}
+        {projectHubState.selectedProject ? "" : "No projects yet"}
       </h3>
       {!projectHubState.selectedProject && (
         <p className="text-gray-500 mb-4">
           Create your first project to get started
         </p>
       )}
-      {projectHubState.selectedProject && (
+      {/* {projectHubState.selectedProject && (
         <>
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -424,7 +446,8 @@ const EmptyProject: FC<
             accept=".txt,.doc,.docx,.pdf"
           />
         </>
-      )}
+      )
+      } */}
 
       {!projectHubState.selectedProject && (
         <>
