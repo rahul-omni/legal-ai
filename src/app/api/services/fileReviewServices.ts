@@ -94,8 +94,10 @@ class ReviewService {
                 id: true, // User ID
                 name: true, // User name
                 email: true, // User email
+                mobileNumber: true, // User mobile number
                 createdAt: true, // User creation date
                 updatedAt: true, // User last updated date
+                countryCode: true, // User country code
               },
             },
           },
@@ -119,7 +121,8 @@ class ReviewService {
         },
       },
     });
-
+    
+   
     return reviews;
   }
 

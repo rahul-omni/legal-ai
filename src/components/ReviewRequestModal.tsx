@@ -25,6 +25,8 @@ export const ReviewRequestModal = ({
     useAxios();
 
   useEffect(() => {
+    console.log("Fetching org users",reviewers);
+    
     const fetchOrgUsers = async () => {
       await fetchData(
         apiRouteConfig.privateRoutes.organization(
@@ -130,6 +132,9 @@ export const ReviewRequestModal = ({
                         </p>
                         <p className="text-sm text-gray-500">
                           {member.user.email}
+                        </p>
+                         <p className="text-sm text-gray-500">
+                           📞 {member.user.countryCode} {member.user.mobileNumber}
                         </p>
                       </div>
                     </div>
