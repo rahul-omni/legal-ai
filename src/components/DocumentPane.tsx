@@ -9,25 +9,19 @@ import { loadingContext } from "@/context/loadingContext";
 import { handleApiError } from "@/helper/handleApiError";
 import { TranslationVendor } from "@/lib/translation/types";
 import { FileSystemNodeProps } from "@/types/fileSystem";
+import { $generateNodesFromDOM } from "@lexical/html";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $generateNodesFromDOM } from "@lexical/html";
-import {
-  $createTextNode,
-  $getRoot,
-  $isParagraphNode,
-  EditorState,
-} from "lexical";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { $getRoot, EditorState } from "lexical";
+import { useEffect, useRef, useState } from "react";
 import { AIPopup } from "./AIPopup";
+import { DocumentPaneTopBar } from "./DocumentPaneTopBar";
 import { ReviewRequestModal } from "./ReviewRequestModal";
-import { SaveDropdown } from "./SaveDropdown";
-import { TranslationDropdown } from "./TranslationDropdown";
 import { useToast } from "./ui/toast";
 
 //#region Types & Interfaces
@@ -198,23 +192,6 @@ export function DocumentPane({
     onError,
   };
 
-  // Insert HTML content into Lexical editor on mount or when localContent changes
-  function EditorInitializer() {
-    const [editor] = useLexicalComposerContext();
-    useEffect(() => {
-      if (!localContent) return;
-      editor.update(() => {
-        const parser = new DOMParser();
-        const dom = parser.parseFromString(localContent, "text/html");
-        const nodes = $generateNodesFromDOM(editor, dom);
-        const root = $getRoot();
-        root.clear();
-        root.append(...nodes);
-      });
-    }, [editor, localContent]);
-    return null;
-  }
-
   const handleTranslate = async (
     vendor: TranslationVendor,
     language: string
@@ -240,7 +217,7 @@ export function DocumentPane({
       } else {
         onContentChange(data.translation);
       }
-    } catch (error) {
+    } catch {
       showToast("Failed to translate text", "error");
     } finally {
       stopLoading("TRANSLATE_TEXT");
@@ -445,43 +422,25 @@ export function DocumentPane({
   return (
     <>
       <div className="flex flex-col h-full">
-        <div className="bg-white border-b border-gray-200">
-          <div className="flex justify-between items-center px-3 py-1">
-            <div className="flex items-center space-x-2">
-              <h2 className="text-sm font-medium text-gray-700 truncate max-w-md">
-                {localFileName || "Untitled Document"} {!fileId && "(Unsaved)"}
-              </h2>
-            </div>
-            <div className="flex items-center space-x-1">
-              <TranslationDropdown
-                onTranslate={handleTranslate}
-                isLoading={isLoading("TRANSLATE_TEXT")}
-                selectedLanguage={selectedLanguage}
-                onLanguageChange={setSelectedLanguage}
-                selectedVendor={translationVendor}
-                onVendorChange={setTranslationVendor}
-              />
-              {!isNewFileMode && (
-                <button
-                  onClick={onFileReviewRequest}
-                  className="ml-2 px-3 py-1.5 text-sm bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
-                >
-                  Review Request
-                </button>
-              )}
-              <SaveDropdown
-                onSave={handleSave}
-                onSaveAs={handleSaveAs}
-                isNewFile={!fileId}
-                name={localFileName || ""}
-                isSaving={isSaving}
-              />
-            </div>
-          </div>
-        </div>
+        {/* Top Bar extracted to modular component */}
+        <DocumentPaneTopBar
+          localFileName={localFileName}
+          fileId={fileId}
+          isNewFileMode={isNewFileMode}
+          handleTranslate={handleTranslate}
+          isLoading={isLoading("TRANSLATE_TEXT")}
+          selectedLanguage={selectedLanguage}
+          setSelectedLanguage={setSelectedLanguage}
+          translationVendor={translationVendor}
+          setTranslationVendor={setTranslationVendor}
+          onFileReviewRequest={onFileReviewRequest}
+          handleSave={handleSave}
+          handleSaveAs={handleSaveAs}
+          isSaving={isSaving}
+        />
         <div className="flex-1 relative p-3 bg-white">
           <LexicalComposer initialConfig={initialConfig}>
-            <EditorInitializer />
+            <EditorInitializer localContent={localContent} />
             <div className="editor-inner">
               <RichTextPlugin
                 contentEditable={
@@ -530,4 +489,23 @@ export function DocumentPane({
   );
 
   //#endregion
+}
+
+// Insert HTML content into Lexical editor on mount or when localContent changes
+function EditorInitializer({ localContent }: { localContent: string }) {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    if (!localContent) return;
+    editor.update(() => {
+      const parser = new DOMParser();
+      const dom = parser.parseFromString(localContent, "text/html");
+      const nodes = $generateNodesFromDOM(editor, dom);
+      const root = $getRoot();
+      root.clear();
+      root.append(...nodes);
+    });
+  }, [editor, localContent]);
+
+  return null;
 }

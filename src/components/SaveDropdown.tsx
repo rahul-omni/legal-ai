@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 
 interface SaveDropdownProps {
   onSave: () => void;
-  onSaveAs: () => Promise<void>;
+  onSaveAs: () => void;
   isNewFile?: boolean;
   name?: string;
   isSaving?: boolean;
