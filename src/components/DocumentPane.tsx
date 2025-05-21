@@ -9,9 +9,22 @@ import { loadingContext } from "@/context/loadingContext";
 import { handleApiError } from "@/helper/handleApiError";
 import { TranslationVendor } from "@/lib/translation/types";
 import { FileSystemNodeProps } from "@/types/fileSystem";
-import { useEffect, useRef, useState } from "react";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { $generateNodesFromDOM } from "@lexical/html";
+import {
+  $createTextNode,
+  $getRoot,
+  $isParagraphNode,
+  EditorState,
+} from "lexical";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AIPopup } from "./AIPopup";
-import { QuillEditor } from "./QuillEditor";
 import { ReviewRequestModal } from "./ReviewRequestModal";
 import { SaveDropdown } from "./SaveDropdown";
 import { TranslationDropdown } from "./TranslationDropdown";
@@ -136,6 +149,8 @@ export function DocumentPane({
   const quillRef = useRef<any>(null);
   const caretIdxRef = useRef<number | null>(null);
 
+  console.log("localContent", localContent);
+
   //#endregion
 
   //#region Effects
@@ -172,6 +187,33 @@ export function DocumentPane({
 
   const handleTreeUpdate = (newTree: FileSystemNodeProps[]) =>
     setFileTree(newTree);
+
+  function onError(error: any) {
+    console.error(error);
+  }
+
+  const initialConfig = {
+    namespace: "MyEditor",
+    theme: {},
+    onError,
+  };
+
+  // Insert HTML content into Lexical editor on mount or when localContent changes
+  function EditorInitializer() {
+    const [editor] = useLexicalComposerContext();
+    useEffect(() => {
+      if (!localContent) return;
+      editor.update(() => {
+        const parser = new DOMParser();
+        const dom = parser.parseFromString(localContent, "text/html");
+        const nodes = $generateNodesFromDOM(editor, dom);
+        const root = $getRoot();
+        root.clear();
+        root.append(...nodes);
+      });
+    }, [editor, localContent]);
+    return null;
+  }
 
   const handleTranslate = async (
     vendor: TranslationVendor,
@@ -396,6 +438,9 @@ export function DocumentPane({
   //#endregion
 
   //#region Render
+  const onChange = (editorState: EditorState) => {
+    // Handle editor state changes if needed
+  };
 
   return (
     <>
@@ -435,12 +480,19 @@ export function DocumentPane({
           </div>
         </div>
         <div className="flex-1 relative p-3 bg-white">
-          <QuillEditor
-            ref={quillRef}
-            content={localContent}
-            onContentChange={handleEditorChange}
-            onSelectionChange={handleSelectionChange}
-          />
+          <LexicalComposer initialConfig={initialConfig}>
+            <EditorInitializer />
+            <div className="editor-inner">
+              <RichTextPlugin
+                contentEditable={
+                  <ContentEditable className="content-editable" />
+                }
+                ErrorBoundary={LexicalErrorBoundary}
+              />
+              <OnChangePlugin onChange={onChange} />
+              <HistoryPlugin />
+            </div>
+          </LexicalComposer>
           <div
             className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
             style={{ width: "600px" }}
