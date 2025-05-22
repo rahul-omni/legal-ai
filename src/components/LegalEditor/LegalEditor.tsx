@@ -3,7 +3,7 @@ import { fetchAllNodes, fetchNodes } from "@/app/apiServices/nodeServices";
 import { useTabs } from "@/context/tabsContext";
 import { handleApiError } from "@/helper/handleApiError";
 import { FileSystemNodeProps } from "@/types/fileSystem";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { SmartPromptsPanel } from "../SmartPromptsPanel";
 import { DocumentEditorPanel } from "./components/DocumentEditorPanel";
 import { FileExplorerPanel } from "./components/FileExplorerPanel";
@@ -13,14 +13,14 @@ import { useDocumentState } from "./reducers/documentReducer";
 import { useFileState } from "./reducers/fileReducer";
 import { useFolderPickerState } from "./reducers/folderPickerReducer";
 import { useUIState } from "./reducers/uiReducer";
+import toast from "react-hot-toast";
 
 export function LegalEditor() {
   const { state: uiState, dispatch: uiDispatch } = useUIState();
   const { state: fileState, dispatch: fileDispatch } = useFileState();
   const { state: folderPickerState, dispatch: folderPickerDispatch } =
     useFolderPickerState();
-  const { state: documentState, dispatch: documentDispatch } =
-    useDocumentState();
+  const { dispatch: documentDispatch } = useDocumentState();
 
   const {
     openTabs,
@@ -64,10 +64,6 @@ export function LegalEditor() {
     }
   };
 
-  useEffect(() => {
-    fetchUpdatedFileTree();
-  }, []);
-
   // Handlers
   const handleFileSelect = (file: FileSystemNodeProps) => {
     fileDispatch({ type: "SET_NEW_FILE_MODE", payload: false });
@@ -84,8 +80,7 @@ export function LegalEditor() {
     message: string,
     type: "success" | "error" = "success"
   ) => {
-    console.log(`${type}: ${message}`);
-    // Implement actual toast functionality
+    toast[type](message);
   };
 
   return (
