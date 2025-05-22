@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
+import { useState } from "react";
 
 interface AIAssistantProps {
   currentContent: string;
@@ -15,36 +15,40 @@ interface PromptSuggestion {
 
 const PROMPT_SUGGESTIONS: PromptSuggestion[] = [
   {
-    id: 'chronology',
+    id: "chronology",
     text: "Create chronology of events in table format",
-    prompt: "Create a detailed chronology of events from this case document in a table format with columns for Date, Event, and Significance. Make it comprehensive and well-organized."
+    prompt:
+      "Create a detailed chronology of events from this case document in a table format with columns for Date, Event, and Significance. Make it comprehensive and well-organized.",
   },
   {
-    id: 'confidentiality',
+    id: "confidentiality",
     text: "Create a confidentiality clause",
-    prompt: "Add a confidentiality clause"
+    prompt: "Add a confidentiality clause",
   },
   {
-    id: 'payment',
+    id: "payment",
     text: "Add a payment terms section",
-    prompt: "Add a payment terms section"
+    prompt: "Add a payment terms section",
   },
   {
-    id: 'liability',
+    id: "liability",
     text: "Make the liability section more strict",
-    prompt: "Make the liability section more strict"
+    prompt: "Make the liability section more strict",
   },
   {
-    id: 'force-majeure',
+    id: "force-majeure",
     text: "Add a force majeure clause",
-    prompt: "Add a force majeure clause"
-  }
+    prompt: "Add a force majeure clause",
+  },
 ];
 
-export function AIAssistant({ currentContent, onUpdateDocument }: AIAssistantProps) {
-  const [prompt, setPrompt] = useState('');
+export function AIAssistant({
+  currentContent,
+  onUpdateDocument,
+}: AIAssistantProps) {
+  const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,27 +56,27 @@ export function AIAssistant({ currentContent, onUpdateDocument }: AIAssistantPro
 
     try {
       setIsLoading(true);
-      const response = await fetch('/api/generate', {
-        method: 'POST',
+      const response = await fetch("/api/generate", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           text: currentContent,
-          prompt: prompt
-        })
+          prompt: prompt,
+        }),
       });
-
+      debugger;
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to process request');
+        throw new Error(data.error || "Failed to process request");
       }
 
       onUpdateDocument(data.summary);
-      setPrompt('');
+      setPrompt("");
     } catch (error) {
-      console.error('AI Assistant error:', error);
-      alert(error instanceof Error ? error.message : 'Something went wrong');
+      console.error("AI Assistant error:", error);
+      alert(error instanceof Error ? error.message : "Something went wrong");
     } finally {
       setIsLoading(false);
     }
@@ -84,9 +88,7 @@ export function AIAssistant({ currentContent, onUpdateDocument }: AIAssistantPro
         <h3 className="text-sm font-medium text-gray-900">AI Assistant</h3>
       </div>
       <div className="flex-1 overflow-auto p-4">
-        <p className="text-sm text-gray-500 mb-4">
-          Common actions:
-        </p>
+        <p className="text-sm text-gray-500 mb-4">Common actions:</p>
         <div className="space-y-2 mb-4">
           {PROMPT_SUGGESTIONS.map((suggestion) => (
             <button
@@ -114,10 +116,10 @@ export function AIAssistant({ currentContent, onUpdateDocument }: AIAssistantPro
             disabled={isLoading || !prompt.trim()}
             className="px-4 py-1.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 disabled:opacity-50 transition-colors"
           >
-            {isLoading ? 'Processing...' : 'Send'}
+            {isLoading ? "Processing..." : "Send"}
           </button>
         </div>
       </form>
     </div>
   );
-} 
+}

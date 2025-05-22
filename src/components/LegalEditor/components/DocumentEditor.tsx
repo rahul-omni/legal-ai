@@ -1,0 +1,140 @@
+import { $generateNodesFromDOM } from "@lexical/html";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import {
+  $createTextNode,
+  $getRoot,
+  $getSelection,
+  EditorState,
+  LexicalEditor,
+} from "lexical";
+import { FC, RefObject, useEffect, useRef, useState } from "react";
+
+interface DocumentEditorProps {
+  localContent: string;
+  handleSelectionChange?: (
+    _editorState: EditorState,
+    _selectedText: string
+  ) => void;
+  editorRef: RefObject<LexicalEditor | null>;
+  onSelectedTextChange?: (_text: string) => void;
+}
+
+export const DocumentEditor: FC<DocumentEditorProps> = ({
+  localContent,
+  editorRef,
+  handleSelectionChange,
+  onSelectedTextChange,
+}) => {
+  const [selectedText, setSelectedText] = useState("");
+  const caretPositionRef = useRef<{ index: number; length: number } | null>(
+    null
+  );
+
+  const initialConfig = {
+    namespace: "MyEditor",
+    theme: {},
+    onError,
+  };
+
+  function onError(error: any) {
+    console.log("Editor error:", error);
+  }
+
+  const handleEditorSelectionChange = (editorState: EditorState) => {
+    editorState.read(() => {
+      const selection = $getSelection();
+      if (!selection) {
+        setSelectedText("");
+        if (onSelectedTextChange) onSelectedTextChange("");
+        return;
+      }
+
+      if (selection.getTextContent().length === 0) {
+        caretPositionRef.current = {
+          index: selection.anchor.offset,
+          length: 0,
+        };
+      } else {
+        const text = selection.getTextContent();
+        setSelectedText(text);
+        if (onSelectedTextChange) onSelectedTextChange(text);
+      }
+    });
+
+    // Also call the parent handler if provided
+    if (handleSelectionChange) {
+      handleSelectionChange(editorState, selectedText);
+    }
+  };
+
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      <EditorInitializer
+        localContent={localContent}
+        setEditorRef={(editor) => {
+          editorRef.current = editor;
+        }}
+      />
+      <div className="editor-inner">
+        <RichTextPlugin
+          contentEditable={<ContentEditable className="content-editable" />}
+          ErrorBoundary={LexicalErrorBoundary}
+        />
+        <OnChangePlugin onChange={handleEditorSelectionChange} />
+        <HistoryPlugin />
+      </div>
+    </LexicalComposer>
+  );
+};
+
+// Add a public method to the Editor component through its ref
+export function insertTextAtSelection(editor: LexicalEditor, text: string) {
+  editor.update(() => {
+    const selection = $getSelection();
+    if (selection) {
+      selection.insertText(text);
+    } else {
+      const root = $getRoot();
+      const lastChild = root.getLastChild();
+      if (lastChild) {
+        lastChild.select(lastChild.getTextContentSize(), 0);
+        $getSelection()?.insertText(text);
+      } else {
+        const textNode = $createTextNode(text);
+        root.append(textNode);
+      }
+    }
+  });
+}
+
+function EditorInitializer({
+  localContent,
+  setEditorRef,
+}: {
+  localContent: string;
+  setEditorRef: (_editor: LexicalEditor) => void;
+}) {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    setEditorRef(editor);
+
+    if (!localContent) return;
+    editor.update(() => {
+      const parser = new DOMParser();
+      const dom = parser.parseFromString(localContent, "text/html");
+      const nodes = $generateNodesFromDOM(editor, dom);
+      const root = $getRoot();
+      root.clear();
+      root.append(...nodes);
+    });
+  }, [editor, localContent]);
+
+  return null;
+}

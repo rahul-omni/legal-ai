@@ -10,19 +10,13 @@ import { handleApiError } from "@/helper/handleApiError";
 import { TranslationVendor } from "@/lib/translation/types";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { $generateNodesFromDOM } from "@lexical/html";
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
-import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
-import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { $getRoot, EditorState } from "lexical";
+import { $getRoot, $getSelection, EditorState, LexicalEditor } from "lexical";
 import { useEffect, useRef, useState } from "react";
+import { useToast } from "../../ui/toast";
 import { AIPopup } from "./AIPopup";
+import { DocumentEditor, insertTextAtSelection } from "./DocumentEditor";
 import { DocumentPaneTopBar } from "./DocumentPaneTopBar";
 import { ReviewRequestModal } from "./ReviewRequestModal";
-import { useToast } from "../../ui/toast";
 
 //#region Types & Interfaces
 
@@ -140,10 +134,7 @@ export function DocumentPane({
   const [localFileName, setLocalFileName] = useState(fileName || "Untitled");
   const [localContent, setLocalContent] = useState(content);
 
-  const quillRef = useRef<any>(null);
-  const caretIdxRef = useRef<number | null>(null);
-
-  console.log("localContent", localContent);
+  const editorRef = useRef<LexicalEditor>(null);
 
   //#endregion
 
@@ -182,16 +173,6 @@ export function DocumentPane({
   const handleTreeUpdate = (newTree: FileSystemNodeProps[]) =>
     setFileTree(newTree);
 
-  function onError(error: any) {
-    console.error(error);
-  }
-
-  const initialConfig = {
-    namespace: "MyEditor",
-    theme: {},
-    onError,
-  };
-
   const handleTranslate = async (
     vendor: TranslationVendor,
     language: string
@@ -211,9 +192,21 @@ export function DocumentPane({
       });
       if (!response.ok) throw new Error("Translation failed");
       const data = await response.json();
-      if (quillRef.current) {
-        const quill = quillRef.current.getEditor();
-        quill.clipboard.dangerouslyPasteHTML(data.translation);
+
+      if (editorRef.current) {
+        editorRef.current.update(() => {
+          const selection = $getSelection();
+          if (selection) {
+            selection.insertText(data.translation);
+          } else {
+            const root = $getRoot();
+            root.clear();
+            const parser = new DOMParser();
+            const dom = parser.parseFromString(data.translation, "text/html");
+            const nodes = $generateNodesFromDOM(editorRef.current!, dom);
+            root.append(...nodes);
+          }
+        });
       } else {
         onContentChange(data.translation);
       }
@@ -227,68 +220,42 @@ export function DocumentPane({
   const handlePromptSubmit = async (prompt: string) => {
     if (!prompt.trim()) return;
     setGenerationState({ isGenerating: true });
-    const getQuill = () => quillRef.current?.getEditor?.();
+
     try {
-      const contextText =
-        selectedText ||
-        (quillRef.current ? quillRef.current.getEditor().getText() : content);
+      const contextText = selectedText || content;
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, text: contextText }),
       });
+
       if (!res.body) throw new Error("No stream returned");
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      const q0 = getQuill();
-      if (!q0) {
+
+      if (!editorRef.current) {
         setTimeout(() => handlePromptSubmit(prompt), 100);
         setGenerationState({ isGenerating: false });
         return;
       }
-      const endOfDoc = q0.getLength?.();
-      const startIdx =
-        caretIdxRef.current ??
-        q0.getSelection()?.index ??
-        (endOfDoc ? endOfDoc - 1 : undefined) ??
-        0;
-      let htmlFallback = content;
-      let insertPos = startIdx;
+
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
+
         const chunk = decoder.decode(value, { stream: true });
-        const quill = getQuill();
-        if (quill && startIdx !== null) {
-          quill.insertText(insertPos, chunk, "api");
-          insertPos += chunk.length;
-          quill.setSelection(insertPos, 0, "api");
-        } else {
-          htmlFallback += chunk;
-          onContentChange(htmlFallback);
+
+        if (editorRef.current) {
+          insertTextAtSelection(editorRef.current, chunk);
         }
       }
-      if (!quillRef.current) onContentChange(htmlFallback);
     } finally {
       setGenerationState({ isGenerating: false });
     }
   };
 
-  const handleSelectionChange = (
-    range: { index: number; length: number } | null
-  ) => {
-    const quill = quillRef.current?.getEditor?.();
-    if (!quill) return;
-    if (!range) {
-      setSelectedText("");
-      return;
-    }
-    if (range.length === 0) {
-      caretIdxRef.current = range.index;
-    }
-    setSelectedText(
-      range.length > 0 ? quill.getText(range.index, range.length) : ""
-    );
+  const handleSelectionChange = (editorState: EditorState, text: string) => {
+    setSelectedText(text);
   };
 
   const handleSaveAs = async (name?: string) => {
@@ -399,15 +366,9 @@ export function DocumentPane({
       }
     } catch (error: any) {
       showToast(error.message || "Failed to save", "error");
-      throw error;
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleEditorChange = (newContent: string) => {
-    setLocalContent(newContent);
-    onContentChange(newContent);
   };
 
   const onFileReviewRequest = () => setShowReviewModal(true);
@@ -415,14 +376,10 @@ export function DocumentPane({
   //#endregion
 
   //#region Render
-  const onChange = (editorState: EditorState) => {
-    // Handle editor state changes if needed
-  };
 
   return (
     <>
       <div className="flex flex-col h-full">
-        {/* Top Bar extracted to modular component */}
         <DocumentPaneTopBar
           localFileName={localFileName}
           fileId={fileId}
@@ -439,19 +396,13 @@ export function DocumentPane({
           isSaving={isSaving}
         />
         <div className="flex-1 relative p-3 bg-white">
-          <LexicalComposer initialConfig={initialConfig}>
-            <EditorInitializer localContent={localContent} />
-            <div className="editor-inner">
-              <RichTextPlugin
-                contentEditable={
-                  <ContentEditable className="content-editable" />
-                }
-                ErrorBoundary={LexicalErrorBoundary}
-              />
-              <OnChangePlugin onChange={onChange} />
-              <HistoryPlugin />
-            </div>
-          </LexicalComposer>
+          <DocumentEditor
+            localContent={localContent}
+            editorRef={editorRef}
+            handleSelectionChange={handleSelectionChange}
+            onSelectedTextChange={setSelectedText}
+          />
+
           <div
             className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
             style={{ width: "600px" }}
@@ -461,23 +412,13 @@ export function DocumentPane({
               currentContent={content}
               selectedText={selectedText}
               cursorPosition={undefined}
-              // cursorIndicatorPosition={cursorIndicatorPosition}
               documents={[]}
               files={[]}
               onTreeUpdate={handleTreeUpdate}
               isFolderPickerOpen={isFolderPickerOpen}
             />
           </div>
-
-          {generationState.isGenerating && (
-            <div className="pointer-events-none absolute z-50">
-              <div className="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-full shadow-lg">
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse [animation-delay:150ms]" />
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse [animation-delay:300ms]" />
-              </div>
-            </div>
-          )}
+          <GenerationIndicator isGenerating={generationState.isGenerating} />
         </div>
         <ReviewRequestModal
           isOpen={showReviewModal}
@@ -491,20 +432,15 @@ export function DocumentPane({
   //#endregion
 }
 
-function EditorInitializer({ localContent }: { localContent: string }) {
-  const [editor] = useLexicalComposerContext();
-
-  useEffect(() => {
-    if (!localContent) return;
-    editor.update(() => {
-      const parser = new DOMParser();
-      const dom = parser.parseFromString(localContent, "text/html");
-      const nodes = $generateNodesFromDOM(editor, dom);
-      const root = $getRoot();
-      root.clear();
-      root.append(...nodes);
-    });
-  }, [editor, localContent]);
-
-  return null;
+function GenerationIndicator({ isGenerating }: { isGenerating: boolean }) {
+  if (!isGenerating) return null;
+  return (
+    <div className="pointer-events-none absolute z-50">
+      <div className="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-full shadow-lg">
+        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse [animation-delay:150ms]" />
+        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse [animation-delay:300ms]" />
+      </div>
+    </div>
+  );
 }
