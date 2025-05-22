@@ -491,7 +491,6 @@ export function DocumentPane({
   //#endregion
 }
 
-// Insert HTML content into Lexical editor on mount or when localContent changes
 function EditorInitializer({ localContent }: { localContent: string }) {
   const [editor] = useLexicalComposerContext();
 
