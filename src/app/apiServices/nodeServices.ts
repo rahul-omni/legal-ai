@@ -9,26 +9,13 @@ export interface CreateNodePayload {
   content?: string;
 }
 
-// export const fetchNodes = async (
-//   parentId?: string
-// ): Promise<FileSystemNodeProps[] | undefined> => {
-//   try {
-//     const url = `/nodes?parentId=${parentId || ""}`;
-//     const response = await apiClient.get(url);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error fetching nodes:", error);
-//     return;
-//   }
-// };
-// Create a module-level cache
 const requestCache = new Map<string, Promise<FileSystemNodeProps[]>>();
 
 export const fetchNodes = async (
   parentId?: string
-): Promise<FileSystemNodeProps[]> => { // Always return array, not undefined
+): Promise<FileSystemNodeProps[]> => {
   const url = `/nodes?parentId=${parentId || ""}`;
-  
+
   // Return cached promise if available
   if (requestCache.has(url)) {
     return requestCache.get(url)!;
@@ -36,26 +23,29 @@ export const fetchNodes = async (
 
   try {
     // Create and cache the request promise
-    const requestPromise = apiClient.get(url).then(response => {
-      // Validate response is an array
-      if (!Array.isArray(response.data)) {
-        throw new Error('Invalid response format: expected array');
-      }
-      return response.data;
-    }).finally(() => {
-      // Clean up cache after request completes (success or failure)
-      requestCache.delete(url);
-    });
+    const requestPromise = apiClient
+      .get(url)
+      .then((response) => {
+        // Validate response is an array
+        if (!Array.isArray(response.data)) {
+          throw new Error("Invalid response format: expected array");
+        }
+        return response.data;
+      })
+      .finally(() => {
+        // Clean up cache after request completes (success or failure)
+        requestCache.delete(url);
+      });
 
     requestCache.set(url, requestPromise);
-    
+
     return await requestPromise;
   } catch (error) {
     console.error("Error fetching nodes:", error);
     return []; // Return empty array instead of undefined
   }
 };
- 
+
 export const createNodeold = async (node: CreateNodePayload) => {
   try {
     await apiClient.post("/nodes", node);
@@ -155,26 +145,25 @@ export const updateNodeContent = async (
   }
 };
 
-
 export const createNewFile = async (
-  payload:  CreateNodePayload
+  payload: CreateNodePayload
 ): Promise<FileSystemNodeProps> => {
   // Set default values
   const { type, ...restPayload } = payload; // Exclude 'type' from payload
   const createPayload = {
-    type: 'FILE' as const,
-    content: '',
+    type: "FILE" as const,
+    content: "",
     ...restPayload,
   };
 
   try {
     const response: AxiosResponse<FileSystemNodeProps> = await apiClient.post(
-      '/nodes',
+      "/nodes",
       createPayload
     );
 
     console.log("New file created:", response.data);
-    
+
     return response.data;
   } catch (error) {
     console.error("Error creating new file:", error);
