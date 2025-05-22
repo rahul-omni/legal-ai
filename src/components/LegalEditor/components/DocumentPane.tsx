@@ -22,7 +22,7 @@ import { useEffect, useRef, useState } from "react";
 import { AIPopup } from "./AIPopup";
 import { DocumentPaneTopBar } from "./DocumentPaneTopBar";
 import { ReviewRequestModal } from "./ReviewRequestModal";
-import { useToast } from "./ui/toast";
+import { useToast } from "../../ui/toast";
 
 //#region Types & Interfaces
 

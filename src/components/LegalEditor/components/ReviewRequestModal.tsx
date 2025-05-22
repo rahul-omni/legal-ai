@@ -4,7 +4,7 @@ import useAxios from "@/hooks/api/useAxios";
 import { OrgMembership, User } from "@prisma/client";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Modal } from "./ui/Modal";
+import { Modal } from "../../ui/Modal";
 import { charFromEmail, nameFromEmail } from "@/helper/texts";
 
 type OrgMembershipRes = (OrgMembership & { user: Partial<User> })[];

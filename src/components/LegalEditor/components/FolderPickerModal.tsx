@@ -9,7 +9,6 @@ import {
 } from "../reducers/folderPickerReducer";
 
 interface FolderPickerModalProps {
-  foldersOnly: FileSystemNodeProps[];
   refreshKey: number;
   selectedFile?: FileSystemNodeProps;
   folderPickerState: FolderPickerState;
@@ -18,7 +17,6 @@ interface FolderPickerModalProps {
 }
 
 export function FolderPickerModal({
-  foldersOnly,
   refreshKey,
   selectedFile,
   folderPickerState,

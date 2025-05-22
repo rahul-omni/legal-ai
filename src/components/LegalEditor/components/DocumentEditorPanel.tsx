@@ -1,5 +1,5 @@
 import { FileSystemNodeProps } from "@/types/fileSystem";
-import { DocumentPane } from "../../DocumentPane";
+import { DocumentPane } from "./DocumentPane";
 import { TabBar } from "./TabBar";
 
 interface TabInfo {

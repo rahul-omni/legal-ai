@@ -9,7 +9,7 @@ import { ArrowUp, FilePlus, Paperclip, X } from "lucide-react";
 import mammoth from "mammoth";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import { useEffect, useState } from "react";
-import TreeNode from "./TreeNode";
+import TreeNode from "../../TreeNode";
 
 const extractTextFromDocx = async (file: File): Promise<string> => {
   const arrayBuffer = await file.arrayBuffer();

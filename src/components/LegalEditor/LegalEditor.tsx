@@ -15,11 +15,12 @@ import { useFolderPickerState } from "./reducers/folderPickerReducer";
 import { useUIState } from "./reducers/uiReducer";
 
 export function LegalEditor() {
-  
   const { state: uiState, dispatch: uiDispatch } = useUIState();
   const { state: fileState, dispatch: fileDispatch } = useFileState();
-  const { state: folderPickerState, dispatch: folderPickerDispatch } = useFolderPickerState();
-  const { state: documentState, dispatch: documentDispatch } = useDocumentState();
+  const { state: folderPickerState, dispatch: folderPickerDispatch } =
+    useFolderPickerState();
+  const { state: documentState, dispatch: documentDispatch } =
+    useDocumentState();
 
   const {
     openTabs,
@@ -45,7 +46,9 @@ export function LegalEditor() {
 
     try {
       fileDispatch({ type: "SET_LOADING", payload: true });
-      const tree = parentId ? await fetchNodes(parentId) : await fetchAllNodes();
+      const tree = parentId
+        ? await fetchNodes(parentId)
+        : await fetchAllNodes();
       const normalizedTree = Array.isArray(tree) ? tree : [];
 
       fileDispatch({ type: "SET_FILE_TREE", payload: normalizedTree });
@@ -77,15 +80,13 @@ export function LegalEditor() {
     createNewTab();
   };
 
-  const showToast = (message: string, type: "success" | "error" = "success") => {
+  const showToast = (
+    message: string,
+    type: "success" | "error" = "success"
+  ) => {
     console.log(`${type}: ${message}`);
     // Implement actual toast functionality
   };
-
-  // Get folders only for the folder picker
-  const foldersOnly = fileState.fileTree.filter(
-    (node) => node.type === "FOLDER" || node.id === "root"
-  );
 
   return (
     <div className="h-screen flex flex-col bg-[#f9f9f9]">
@@ -94,18 +95,21 @@ export function LegalEditor() {
         showLeftPanel={uiState.showLeftPanel}
         showSmartPrompts={uiState.showSmartPrompts}
         onToggleLeftPanel={() => uiDispatch({ type: "TOGGLE_LEFT_PANEL" })}
-        onToggleSmartPrompts={() => uiDispatch({ type: "TOGGLE_SMART_PROMPTS" })}
+        onToggleSmartPrompts={() =>
+          uiDispatch({ type: "TOGGLE_SMART_PROMPTS" })
+        }
       />
 
       {/* Folder Picker Modal */}
       {folderPickerState.show && (
         <FolderPickerModal
-          foldersOnly={foldersOnly}
           refreshKey={fileState.refreshKey}
           selectedFile={fileState.selectedFile}
           folderPickerState={folderPickerState}
           folderPickerDispatch={folderPickerDispatch}
-          refreshFileExplorer={() => fileDispatch({ type: "INCREMENT_REFRESH_KEY" })}
+          refreshFileExplorer={() =>
+            fileDispatch({ type: "INCREMENT_REFRESH_KEY" })
+          }
         />
       )}
 
@@ -118,7 +122,9 @@ export function LegalEditor() {
           refreshKey={fileState.refreshKey}
           isNewFileMode={fileState.isNewFileMode}
           onDocumentSelect={handleFileSelect}
-          onPdfParsed={(text) => documentDispatch({ type: "SET_CONTENT", payload: text })}
+          onPdfParsed={(text) =>
+            documentDispatch({ type: "SET_CONTENT", payload: text })
+          }
         />
 
         {/* Middle Panel - Document Editor */}

@@ -1,5 +1,5 @@
-import { TranslationDropdown } from "./TranslationDropdown";
-import { SaveDropdown } from "./SaveDropdown";
+import { TranslationDropdown } from "../../TranslationDropdown";
+import { SaveDropdown } from "../../SaveDropdown";
 import { TranslationVendor } from "@/lib/translation/types";
 import { Dispatch, SetStateAction } from "react";
 
