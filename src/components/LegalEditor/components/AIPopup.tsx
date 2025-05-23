@@ -13,10 +13,8 @@ GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2
 // Type definitions
 interface AIPopupProps {
   currentContent: string;
-  selectedText: string;
-  documents: any[];
-  onPromptSubmit: (prompt: string, context: string) => void;
-  files: FileSystemNodeProps[];
+  selectedText?: string;
+  onPromptSubmit: (_prompt: string, _context: string) => void;
   cursorPosition?: {
     line: number;
     column: number;
@@ -26,7 +24,7 @@ interface AIPopupProps {
     line: number;
     column: number;
   } | null;
-  onTreeUpdate: (tree: FileSystemNodeProps[]) => void;
+  onTreeUpdate: (_tree: FileSystemNodeProps[]) => void;
   isFolderPickerOpen?: boolean;
 }
 
@@ -96,7 +94,6 @@ export function AIPopup({
   onPromptSubmit,
   currentContent,
   selectedText,
-  files,
   cursorPosition,
   cursorIndicatorPosition,
   isFolderPickerOpen,

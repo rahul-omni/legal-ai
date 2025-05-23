@@ -38,10 +38,7 @@ import { FC, RefObject, useCallback, useEffect, useRef, useState } from "react";
 
 interface DocumentEditorProps {
   localContent: string;
-  handleSelectionChange?: (
-    _editorState: EditorState,
-    _selectedText: string
-  ) => void;
+  handleSelectionChange: (_selectedText?: string) => void;
   editorRef: RefObject<LexicalEditor | null>;
   onSelectedTextChange?: (_text: string) => void;
 }
@@ -52,7 +49,6 @@ export const DocumentEditor: FC<DocumentEditorProps> = ({
   handleSelectionChange,
   onSelectedTextChange,
 }) => {
-  const [selectedText, setSelectedText] = useState("");
   const caretPositionRef = useRef<{ index: number; length: number } | null>(
     null
   );
@@ -68,10 +64,11 @@ export const DocumentEditor: FC<DocumentEditorProps> = ({
   }
 
   const handleEditorSelectionChange = (editorState: EditorState) => {
+    let text: string | undefined;
     editorState.read(() => {
       const selection = $getSelection();
       if (!selection) {
-        setSelectedText("");
+        text = undefined;
         if (onSelectedTextChange) onSelectedTextChange("");
         return;
       }
@@ -82,16 +79,12 @@ export const DocumentEditor: FC<DocumentEditorProps> = ({
           length: 0,
         };
       } else {
-        const text = selection.getTextContent();
-        setSelectedText(text);
+        text = selection.getTextContent();
         if (onSelectedTextChange) onSelectedTextChange(text);
       }
     });
 
-    // Also call the parent handler if provided
-    if (handleSelectionChange) {
-      handleSelectionChange(editorState, selectedText);
-    }
+    handleSelectionChange(text);
   };
 
   return (

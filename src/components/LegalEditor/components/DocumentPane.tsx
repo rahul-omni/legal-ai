@@ -116,7 +116,7 @@ export function DocumentPane({
 }: DocumentPaneProps) {
   //#region State & Refs
 
-  const [selectedText, setSelectedText] = useState("");
+  const [selectedText, setSelectedText] = useState<string>();
   const [translationVendor, setTranslationVendor] =
     useState<TranslationVendor>("openai");
   const [selectedLanguage, setSelectedLanguage] = useState("hi-IN");
@@ -254,7 +254,7 @@ export function DocumentPane({
     }
   };
 
-  const handleSelectionChange = (editorState: EditorState, text: string) => {
+  const handleSelectionChange = (text?: string) => {
     setSelectedText(text);
   };
 
@@ -412,8 +412,6 @@ export function DocumentPane({
               currentContent={content}
               selectedText={selectedText}
               cursorPosition={undefined}
-              documents={[]}
-              files={[]}
               onTreeUpdate={handleTreeUpdate}
               isFolderPickerOpen={isFolderPickerOpen}
             />
