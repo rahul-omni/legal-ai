@@ -1,5 +1,3 @@
-
-
 import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
 import { useUserContext } from "@/context/userContext";
 import useAxios from "@/hooks/api/useAxios";
@@ -126,21 +124,21 @@ export const ReviewRequestModal = ({
       );
 
       // 2. Only proceed with notifications if review request was successful
-    try {
-      if (selectedReviewer?.mobileNumber) {
-        setWhatsappLoading(true);
-        await sendWhatsAppNotification(selectedReviewer);
-        toast.success("Document and notification sent successfully");
-      } else {
-        toast.success("Document sent successfully (no notification sent)");
+      try {
+        if (selectedReviewer?.mobileNumber) {
+          setWhatsappLoading(true);
+          await sendWhatsAppNotification(selectedReviewer);
+          toast.success("Document and notification sent successfully");
+        } else {
+          toast.success("Document sent successfully (no notification sent)");
+        }
+      } catch (whatsappError) {
+        console.error("Notification failed:", whatsappError);
+        toast.success("Document sent successfully (notification failed)");
+      } finally {
+        setWhatsappLoading(false);
       }
-    } catch (whatsappError) {
-      console.error("Notification failed:", whatsappError);
-      toast.success("Document sent successfully (notification failed)");
-    } finally {
-      setWhatsappLoading(false);
-    }
-      
+
       onClose();
     } catch (error) {
       console.error("Review request failed:", error);

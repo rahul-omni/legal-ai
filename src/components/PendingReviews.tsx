@@ -1,3 +1,4 @@
+
 import { handleApiError } from "@/helper/handleApiError";
 import { CheckCircle, Clock, FileText, User, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -8,6 +9,7 @@ import { useToast } from "./ui/toast";
 import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
 import { apiClient } from "@/app/apiServices";
 import DOMPurify from "dompurify";
+import toast from "react-hot-toast";
 
 interface ReviewItem {
   id: string;
@@ -31,37 +33,25 @@ export function PendingReviews() {
   const [filter, setFilter] = useState<
     "all" | "pending" | "approved" | "rejected"
   >("pending");
-
-  // const [previewDocument, setPreviewDocument] = useState<ReviewItem | null>(
-  //   null
-  // );
-  const [previewDocument, setPreviewDocument] = useState(null);
+  const [previewDocument, setPreviewDocument] = useState<any>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [pendingReviews, setPendingReviews] = useState<any[]>([]);
+  const [rejectComment, setRejectComment] = useState("");
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [currentReviewId, setCurrentReviewId] = useState("");
 
   useEffect(() => {
     fetchPendingReviews();
   }, [filter]);
 
-  useEffect(() => {}, [isLoading]);
-
   const fetchPendingReviews = async () => {
     try {
       setIsLoading(true);
-
-      // This will be replaced with an actual API call
-      // For now, we'll use mock data
-
-      // Add a small delay to simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Filter reviews based on selected filter
-      // const filteredReviews =
-      //   filter === "all"
-      //     ? allMockReviews
-      //     : allMockReviews.filter((review) => review.status === filter);
-
-      // setReviews(filteredReviews);
+      const data = await getFileReviewDetails();
+      if (!data || data.length === 0) {
+        showToast("No pending reviews found");
+      }
+      setPendingReviews(data);
     } catch (error) {
       handleApiError(error, showToast);
     } finally {
@@ -70,23 +60,12 @@ export function PendingReviews() {
   };
 
   const handleOpenDocument = (documentId: string) => {
-    // Navigate to the editor with the selected document
     router.push(`/?documentId=${documentId}`);
   };
 
-  const handleOpenPreview = (review) => {
-    console.log("Opening preview with data:", review);
+  const handleOpenPreview = (review: any) => {
     setPreviewDocument(review);
     setShowPreview(true);
-  };
-  const handleOpenPreview1 = (reviewId: string) => {
-    const reviewToPreview = pendingReviews.find(
-      (review) => review.id === reviewId
-    );
-    if (reviewToPreview) {
-      setPreviewDocument(reviewToPreview);
-      setShowPreview(true);
-    }
   };
 
   const handleClosePreview = () => {
@@ -94,92 +73,157 @@ export function PendingReviews() {
     setPreviewDocument(null);
   };
 
-  console.log("reviewdocument:", previewDocument);
-
   const getFileReviewDetails = async () => {
     try {
-      console.log(
-        "API route used:",
-        apiRouteConfig.privateRoutes.fileReviewReq
-      );
-
       const response = await apiClient.get(
         apiRouteConfig.privateRoutes.fileReviewReq
       );
-      // Handle non-200 responses
       if (response.status !== 200) {
         throw new Error(response.data?.error || "Failed to fetch reviews");
       }
-
-      console.log("File review details data:", response.data);
       return response.data || [];
     } catch (error: any) {
       console.error("Error fetching file review details:", error);
       showToast("Error fetching file review details");
-      return []; // fallback to empty
+      return [];
     }
   };
 
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        const data = await getFileReviewDetails();
-        if (!data || data.length === 0) {
-          showToast("No pending reviews found");
-        }
-        setPendingReviews(data);
-      } catch (error) {
-        console.error("Failed to load reviews:", error);
-      }
-    };
-
-    fetchReviews();
-  }, []);
-
-  console.log("Pending reviews (after state update):", pendingReviews);
+  ;
 
   const handleApproveReview = async (reviewId: string) => {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate API call
+  try {
+    // Optimistic update
+    setPendingReviews(prevReviews =>
+      prevReviews.map(review =>
+        review.id === reviewId ? { ...review, status: "COMPLETED" } : review
+      )
+    );
 
-      showToast(`Approved review: ${reviewId}`);
-
-      // Update local state
-      setReviews((prevReviews) =>
-        prevReviews.map((review) =>
-          review.id === reviewId ? { ...review, status: "approved" } : review
-        )
-      );
-    } catch (error) {
-      handleApiError(error, showToast);
+    // Use the correct API endpoint from your config
+    const response = await apiClient.put(
+      apiRouteConfig.privateRoutes.reviewStatus(reviewId),
+      { status: "COMPLETED" } // Make sure this matches your backend enum
+    );
+    
+    if (response.status !== 200) {
+      throw new Error("Failed to approve review");
     }
+
+    showToast("Review approved successfully");
+  } catch (error) {
+    // Revert optimistic update on error
+    setPendingReviews(prevReviews =>
+      prevReviews.map(review =>
+        review.id === reviewId ? { ...review, status: "PENDING" } : review
+      )
+    );
+    handleApiError(error, showToast);
+  } finally {
+    handleClosePreview();
+  }
+};
+
+  const openRejectModal = (reviewId: string) => {
+    setCurrentReviewId(reviewId);
+    setShowRejectModal(true);
   };
 
-  const handleRejectReview = async (reviewId: string) => {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate API call
+ // Update the handleRejectReview function
+  const handleRejectReview = async () => {
+  if (!rejectComment) {
+    showToast("Please provide a reason for rejection");
+    return;
+  }
 
-      // Prompt for comments
-      const userComments = window.prompt(
-        "Please provide a reason for rejection:"
-      );
-      // Convert null to undefined to match our type
-      const comments = userComments === null ? undefined : userComments;
+  try {
+    // Optimistic update (status only first)
+    setPendingReviews(prevReviews =>
+      prevReviews.map(review =>
+        review.id === currentReviewId 
+          ? { ...review, status: "DECLINED" } 
+          : review
+      )
+    );
 
-      showToast(`Rejected review: ${reviewId}`);
+    // First update status
+    const statusResponse = await apiClient.put(
+      `${apiRouteConfig.privateRoutes.fileReviewReq}/${currentReviewId}/status`,
+      { status: "DECLINED" }
+    );
 
-      // Update local state
-      setReviews((prevReviews) =>
-        prevReviews.map((review) =>
-          review.id === reviewId
-            ? { ...review, status: "rejected", comments }
-            : review
-        )
-      );
-    } catch (error) {
-      handleApiError(error, showToast);
+    if (statusResponse.status !== 200) {
+      throw new Error("Status update failed");
     }
-  };
+
+    // Then add comment (with optimistic update)
+    const tempComment = {
+      id: `temp-${Date.now()}`,
+      content: rejectComment,
+      createdAt: new Date().toISOString()
+    };
+
+    setPendingReviews(prevReviews =>
+      prevReviews.map(review =>
+        review.id === currentReviewId
+          ? {
+              ...review,
+              fileReviewComments: [
+                ...(review.fileReviewComments || []),
+                tempComment
+              ]
+            }
+          : review
+      )
+    );
+
+    const commentResponse = await apiClient.post(
+      `${apiRouteConfig.privateRoutes.fileReviewReq}/${currentReviewId}/comments`,
+      { content: rejectComment }
+    );
+
+    if (commentResponse.status !== 201) {
+      throw new Error("Comment failed");
+    }
+
+    // Final update with real comment
+    setPendingReviews(prevReviews =>
+  prevReviews.map(review =>
+    review.id === currentReviewId
+      ? {
+          ...review,
+          fileReviewComments: [
+            ...(review.fileReviewComments?.filter(c => c.id !== tempComment.id) || []),
+            commentResponse.data
+          ]
+        }
+      : review
+  )
+);
+
+    toast.success("Review rejected successfully");
+  } catch (error) {
+    // Revert both changes on error
+    setPendingReviews(prevReviews =>
+      prevReviews.map(review =>
+        review.id === currentReviewId
+          ? {
+              ...review,
+              status: "PENDING",
+              fileReviewComments: review.fileReviewComments?.filter(
+                c => !c.id?.startsWith('temp-')
+              )
+            }
+          : review
+      )
+    );
+    handleApiError(error, showToast);
+  } finally {
+    setShowRejectModal(false);
+    setRejectComment("");
+    handleClosePreview();
+  }
+};
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -191,12 +235,10 @@ export function PendingReviews() {
 
   const getDaysRemaining = (dueDate?: string) => {
     if (!dueDate) return null;
-
     const now = new Date();
     const due = new Date(dueDate);
     const diffTime = due.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
     return diffDays;
   };
 
@@ -204,7 +246,6 @@ export function PendingReviews() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Pending Reviews</h1>
-
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-500">Filter:</span>
           <select
@@ -233,40 +274,22 @@ export function PendingReviews() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Document
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Sent By
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date Received
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Due Date
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -275,8 +298,6 @@ export function PendingReviews() {
               {Array.isArray(pendingReviews) && pendingReviews.length > 0 ? (
                 pendingReviews.map((review) => {
                   const daysRemaining = getDaysRemaining(review.dueDate);
-                  console.log("Review item:", review);
-
                   return (
                     <tr key={review.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -289,6 +310,7 @@ export function PendingReviews() {
                             >
                               {review.file.name}
                             </div>
+
                             {review.comments && (
                               <div className="text-xs text-gray-500 mt-1">
                                 <span className="font-medium">Comments:</span>{" "}
@@ -314,9 +336,9 @@ export function PendingReviews() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            review.status === "pending"
+                            review.status === "PENDING"
                               ? "bg-yellow-100 text-yellow-800"
-                              : review.status === "approved"
+                              : review.status === "COMPLETED"
                                 ? "bg-green-100 text-green-800"
                                 : "bg-red-100 text-red-800"
                           }`}
@@ -376,9 +398,7 @@ export function PendingReviews() {
                                 <CheckCircle className="h-4 w-4" />
                               </button>
                               <button
-                                onClick={() =>
-                                  handleRejectReview(review.file.id)
-                                }
+                                onClick={() => openRejectModal(review.id)}
                                 className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-md transition-colors"
                               >
                                 <XCircle className="h-4 w-4" />
@@ -402,11 +422,12 @@ export function PendingReviews() {
         </div>
       )}
 
-      {/* {previewDocument && (
+      {/* Preview Modal */}
+      {previewDocument && (
         <Modal
           isOpen={showPreview}
           onClose={handleClosePreview}
-          title={previewDocument.file?.name}
+          title={previewDocument.file?.name || "Document Preview"}
           size="full"
           footer={
             <ModalFooter>
@@ -414,35 +435,32 @@ export function PendingReviews() {
                 <p className="text-sm text-gray-600">
                   Sent by:{" "}
                   <span className="font-medium">
-                    {previewDocument.requester.name}
+                    {previewDocument.requester?.name || "Unknown"}
                   </span>
                 </p>
                 <p className="text-sm text-gray-600">
                   Status:{" "}
                   <span
                     className={`font-medium ${
-                      previewDocument.status === "pending"
+                      previewDocument.status === "PENDING"
                         ? "text-yellow-600"
-                        : previewDocument.status === "approved"
+                        : previewDocument.status === "COMPLETED"
                           ? "text-green-600"
                           : "text-red-600"
                     }`}
                   >
-                    {previewDocument.status.charAt(0).toUpperCase() +
-                      previewDocument.status.slice(1)}
+                    {previewDocument.status?.charAt(0).toUpperCase() +
+                      previewDocument.status?.slice(1) || "Pending"}
                   </span>
                 </p>
               </div>
 
-              {previewDocument.status === "pending" && (
+              {previewDocument.status === "PENDING" && (
                 <div className="flex space-x-2">
                   <ModalButton
                     type="button"
                     variant="primary"
-                    onClick={() => {
-                      handleApproveReview(previewDocument.id);
-                      handleClosePreview();
-                    }}
+                    onClick={() => handleApproveReview(previewDocument.id)}
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Approve
@@ -450,10 +468,7 @@ export function PendingReviews() {
                   <ModalButton
                     type="button"
                     variant="danger"
-                    onClick={() => {
-                      handleRejectReview(previewDocument.id);
-                      handleClosePreview();
-                    }}
+                    onClick={() => openRejectModal(previewDocument.id)}
                   >
                     <XCircle className="h-4 w-4 mr-2" />
                     Reject
@@ -463,116 +478,87 @@ export function PendingReviews() {
             </ModalFooter>
           }
         >
-          <iframe
-            src={previewDocument.documentUrl}
-            className="w-full h-full border-0"
-            title={previewDocument.documentName}
-            allowFullScreen
-          />
-        </Modal>
-      )} */}
-
-      {previewDocument &&
-        (console.log("Current preview document:", previewDocument), // <-- Se
-        (
-          <Modal
-            isOpen={showPreview}
-            onClose={handleClosePreview}
-            title={previewDocument.file?.name || "Document Preview"}
-            size="full"
-            footer={
-              <ModalFooter>
-                <div>
-                  <p className="text-sm text-gray-600">
-                    Sent by:{" "}
-                    <span className="font-medium">
-                      {previewDocument.requester?.name || "Unknown"}
-                    </span>
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Status:{" "}
-                    <span
-                      className={`font-medium ${
-                        previewDocument.status === "pending"
-                          ? "text-yellow-600"
-                          : previewDocument.status === "approved"
-                            ? "text-green-600"
-                            : "text-red-600"
-                      }`}
-                    >
-                      {previewDocument.status?.charAt(0).toUpperCase() +
-                        previewDocument.status?.slice(1) || "Pending"}
-                    </span>
-                  </p>
-                </div>
-
-                {previewDocument.status === "pending" && (
-                  <div className="flex space-x-2">
-                    <ModalButton
-                      type="button"
-                      variant="primary"
-                      onClick={() => {
-                        handleApproveReview(previewDocument.id);
-                        handleClosePreview();
-                      }}
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Approve
-                    </ModalButton>
-                    <ModalButton
-                      type="button"
-                      variant="danger"
-                      onClick={() => {
-                        handleRejectReview(previewDocument.id);
-                        handleClosePreview();
-                      }}
-                    >
-                      <XCircle className="h-4 w-4 mr-2" />
-                      Reject
-                    </ModalButton>
-                  </div>
+          <div className="p-4 h-full">
+            {previewDocument.file?.content ? (
+              <div className="border rounded-lg h-full p-4 overflow-auto">
+                {previewDocument.file.name.endsWith(".pdf") ? (
+                  <iframe
+                    src={`data:application/pdf;base64,${btoa(previewDocument.file.content)}`}
+                    className="w-full h-full border-0"
+                    title={previewDocument.file.name}
+                  />
+                ) : (
+                  <div
+                    className="prose max-w-none"
+                    dangerouslySetInnerHTML={{
+                      __html: previewDocument.file.content,
+                    }}
+                  />
                 )}
-              </ModalFooter>
-            }
-          >
-            {/* {previewDocument.file?.content ? (
-      <iframe
-        src={previewDocument.file.content}
-        className="w-full h-full border-0"
-        title={previewDocument.file.name}
-        allowFullScreen
-      />
-    ) : (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-gray-500">No document content available</p>
-      </div>
-    )} */}
-            <div className="p-4 h-full">
-              {previewDocument.file?.content ? (
-                <div className="border rounded-lg h-full p-4 overflow-auto">
-                  {previewDocument.file.name.endsWith(".pdf") ? (
-                    <iframe
-                      src={`data:application/pdf;base64,${btoa(previewDocument.file.content)}`}
-                      className="w-full h-full border-0"
-                      title={previewDocument.file.name}
-                    />
-                  ) : (
-                    <div
-                      className="prose max-w-none"
-                      dangerouslySetInnerHTML={{
-                        __html: previewDocument.file.content,
-                      }}
-                    />
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <p>No content available</p>
-                </div>
-              )}
-            </div>
-          </Modal>
-        ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p>No content available</p>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+
+      {/* Reject Comment Modal 
+      // Update the Modal footer in the reject confirmation modal
+      */}
+<Modal
+  isOpen={showRejectModal}
+  onClose={() => setShowRejectModal(false)}
+  title="Reject Review"
+  footer={
+    <ModalFooter>
+      <ModalButton
+        type="button"
+        variant="secondary"
+        onClick={() => setShowRejectModal(false)}
+        disabled={isLoading}
+      >
+        Cancel
+      </ModalButton>
+      <ModalButton
+        type="button"
+        variant="danger"
+        onClick={handleRejectReview}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <span className="flex items-center">
+            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Processing...
+          </span>
+        ) : (
+          <>
+            <XCircle className="h-4 w-4 mr-2" />
+            Confirm Reject
+          </>
+        )}
+      </ModalButton>
+    </ModalFooter>
+  }
+>
+  <div className="space-y-4">
+    <p className="text-sm text-gray-600">
+      Please provide a reason for rejecting this review:
+    </p>
+    <textarea
+      className="w-full h-32 p-2 border border-gray-300 rounded-md"
+      placeholder="Enter rejection reason..."
+      value={rejectComment}
+      onChange={(e) => setRejectComment(e.target.value)}
+      disabled={isLoading}
+    />
+  </div>
+</Modal>
     </div>
   );
 }

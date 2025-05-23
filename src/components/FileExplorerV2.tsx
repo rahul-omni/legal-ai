@@ -22,6 +22,7 @@ import { useParams } from "next/navigation";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import { FC, useEffect, useRef, useState } from "react";
 import { useToast } from "./ui/toast";
+import toast from "react-hot-toast";
 
 interface FileExplorerProps {
   selectedDocument?: FileSystemNodeProps;
@@ -188,11 +189,17 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
 
     try {
       let content: string;
+      
+      const isPDF = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+      console.log("isPDF:", isPDF);
+      
+      if ( isPDF) {
+        console.log("File type:", file.type);
 
-      if (file.type === "application/pdf") {
         content = await extractTextFromPDF(file);
         onPdfParsed(content);
-        showToast("PDF Parsed Successfully");
+        
+        toast.success("PDF Upload Successfully");
       } else {
         content = await FileService.parseFile(file);
       }
@@ -429,7 +436,9 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
               ref={fileInputRef}
               className="hidden"
               onChange={handleFileUpload}
-              accept=".txt,.doc,.docx,.pdf"
+              //accept=".txt,.doc,.docx,.pdf"
+              accept=".txt,.doc,.docx,.pdf,application/pdf"
+
             />
           </div>
         </div>

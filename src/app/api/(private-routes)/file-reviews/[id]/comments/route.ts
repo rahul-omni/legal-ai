@@ -11,20 +11,46 @@ const addCommentSchema = z.object({
 });
 
 export const POST = auth(async (request: NextAuthRequest, context) => {
-  const { params } = context;
-  const { id } = params as unknown as { id: string };
+  // const { params } = context;
+  // console.log("params", params);
+  // const { id } = params as unknown as { id: string };
+
+  
   try {
+
+    // Ensure async context before accessing params
+    await Promise.resolve();
+    
+    // Now safely access params
+    const params = await context.params;
+    const reviewId = params?.id;
+    
+    if (!reviewId) {
+      return NextResponse.json(
+        { error: "Review ID is required" },
+        { status: 400 }
+      );
+    }
     const sessionUser = await userFromSession(request);
     const body = await request.json();
 
     const { content } = await addCommentSchema.parseAsync(body);
 
     const comment = await reviewService.addComment({
-      reviewId: id,
+      reviewId,
       userId: sessionUser.id,
       content,
     });
+    if (!comment) {
+      return NextResponse.json(
+        { error: "Failed to add comment" },
+        { status: 500 }
+      );
+    }
 
+    console.log("comment");
+    
+    
     return NextResponse.json(comment, { status: 201 });
   } catch (error) {
     return handleError(error);

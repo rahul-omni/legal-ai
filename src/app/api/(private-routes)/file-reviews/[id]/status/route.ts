@@ -26,7 +26,15 @@ export const PUT = auth(async (request: NextAuthRequest, context) => {
       sessionUser.id,
       status
     );
+     
+    if (!updatedReview) {
+      return NextResponse.json(
+        { error: "Failed to update review" },
+        { status: 500 }
+      );
+    }
 
+    console.log("Updated review:", );
     return NextResponse.json(updatedReview);
   } catch (error) {
     return handleError(error);

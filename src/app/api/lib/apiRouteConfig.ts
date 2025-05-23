@@ -16,14 +16,13 @@ interface PrivateApiRoute {
   inviteTeamMember: "/invite-team-member";
   teamMembers(_orgId: string): `/organization/${string}/team-members`;
   reviews: "/reviews";
-  reviewDetails(_reviewId: string): `/reviews/${string}`;
-  reviewStatus(_reviewId: string): `/reviews/${string}/status`;
-  reviewComments(_reviewId: string): `/reviews/${string}/comments`;
-  resolveComment(_commentId: string): `/reviews/comments/${string}/resolve`;
-  resolveComment(_commentId: string): `/reviews/comments/${string}/resolve`;
+  
   organization(_orgId: string): `/organization/${string}`;
   fileReviewReq: `/file-reviews`;
-
+  reviewDetails(_reviewId: string): `/file-reviews/${string}`;
+  reviewStatus(_reviewId: string): `/file-reviews/${string}/status`;
+  reviewComments(_reviewId: string): `/file-reviews/${string}/comments`;
+  resolveComment(_commentId: string): `/file-reviews/comments/${string}/resolve`;
   organizationInvitations(orgId: string): `/organization/${string}/invitations`;
 }
 
@@ -39,12 +38,13 @@ export const apiRouteConfig: {
     teamMembers: (orgId) => `/organization/${orgId}/team-members`,
     inviteTeamMember: "/invite-team-member",
     reviews: "/reviews",
-    reviewDetails: (reviewId) => `/reviews/${reviewId}`,
-    reviewStatus: (reviewId) => `/reviews/${reviewId}/status`,
-    reviewComments: (reviewId) => `/reviews/${reviewId}/comments`,
-    resolveComment: (commentId) => `/reviews/comments/${commentId}/resolve`,
-    organization: (ordId) => `/organization/${ordId}`,
     fileReviewReq: `/file-reviews`,
+    reviewDetails: (reviewId) => `/file-reviews/${reviewId}`,
+    reviewStatus: (reviewId) => `/file-reviews/${reviewId}/status`,
+    reviewComments: (reviewId) => `/file-reviews/${reviewId}/comments`,
+    resolveComment: (commentId) => `/file-reviews/comments/${commentId}/resolve`,
+    organization: (ordId) => `/organization/${ordId}`,
+    
     // organizationInvitations: (orgId) => `/organization/${orgId}/invitations`,
     organizationInvitations: (orgId: string) =>
       `/organization/${orgId}/invitations`,
