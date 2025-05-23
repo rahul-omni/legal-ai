@@ -3,12 +3,9 @@ import { fetchAllNodes, readFile } from "@/app/apiServices/nodeServices";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { ArrowUp, FilePlus, Paperclip, X } from "lucide-react";
 import mammoth from "mammoth";
-import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
+import { getDocument } from "pdfjs-dist";
 import { useEffect, useState } from "react";
 import TreeNode from "../../TreeNode";
-
-// Configure PDF.js worker
-GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
 
 // Type definitions
 interface AIPopupProps {
@@ -71,23 +68,6 @@ const buildTree = (flatNodes: FileSystemNodeProps[]): FileSystemNodeProps[] => {
   });
 
   return roots;
-};
-
-// Get all files from a nested tree structure
-const getAllFiles = (nodes: FileSystemNodeProps[]): FileSystemNodeProps[] => {
-  let result: FileSystemNodeProps[] = [];
-
-  for (const node of nodes) {
-    if (node.type === "FILE") {
-      result.push(node);
-    }
-
-    if (node.type === "FOLDER" && node.children && node.children.length > 0) {
-      result = result.concat(getAllFiles(node.children));
-    }
-  }
-
-  return result;
 };
 
 export function AIPopup({

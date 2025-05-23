@@ -14,6 +14,9 @@ import { useFileState } from "./reducers/fileReducer";
 import { useFolderPickerState } from "./reducers/folderPickerReducer";
 import { useUIState } from "./reducers/uiReducer";
 import toast from "react-hot-toast";
+import { GlobalWorkerOptions } from "pdfjs-dist";
+
+GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
 
 export function LegalEditor() {
   const { state: uiState, dispatch: uiDispatch } = useUIState();

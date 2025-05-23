@@ -9,12 +9,11 @@ import { FileService } from "@/lib/fileService";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { extractTextFromPDF } from "@/utils/pdfUtils";
 import { useParams } from "next/navigation";
-import { GlobalWorkerOptions } from "pdfjs-dist";
 import { FC, useEffect, useRef, useState } from "react";
 import { useToast } from "../../ui/toast";
+import { FileExplorerHeader } from "./FileHeader";
 import FileNode from "./FileNode";
 import FolderNode from "./FolderNode";
-import { FileExplorerHeader } from "./FileHeader";
 
 interface FileExplorerProps {
   selectedDocument?: FileSystemNodeProps;
@@ -36,8 +35,6 @@ export const FileExplorer: FC<FileExplorerProps> = ({
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
 
   useEffect(() => {
     fetchRootNodes();
