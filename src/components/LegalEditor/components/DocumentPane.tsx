@@ -10,7 +10,7 @@ import { handleApiError } from "@/helper/handleApiError";
 import { TranslationVendor } from "@/lib/translation/types";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { $generateNodesFromDOM } from "@lexical/html";
-import { $getRoot, $getSelection, EditorState, LexicalEditor } from "lexical";
+import { $getRoot, $getSelection, LexicalEditor } from "lexical";
 import { useEffect, useRef, useState } from "react";
 import { useToast } from "../../ui/toast";
 import { AIPopup } from "./AIPopup";
@@ -169,9 +169,6 @@ export function DocumentPane({
   //#endregion
 
   //#region Handlers
-
-  const handleTreeUpdate = (newTree: FileSystemNodeProps[]) =>
-    setFileTree(newTree);
 
   const handleTranslate = async (
     vendor: TranslationVendor,
@@ -412,7 +409,6 @@ export function DocumentPane({
               currentContent={content}
               selectedText={selectedText}
               cursorPosition={undefined}
-              onTreeUpdate={handleTreeUpdate}
               isFolderPickerOpen={isFolderPickerOpen}
             />
           </div>

@@ -22,7 +22,6 @@ interface AIPopupProps {
     line: number;
     column: number;
   } | null;
-  onTreeUpdate: (_tree: FileSystemNodeProps[]) => void;
   isFolderPickerOpen?: boolean;
 }
 
@@ -48,29 +47,6 @@ const extractTextFromPDF = async (file: File): Promise<string> => {
   return fullText;
 };
 
-// Tree building utility
-const buildTree = (flatNodes: FileSystemNodeProps[]): FileSystemNodeProps[] => {
-  const map = new Map<string, FileSystemNodeProps>();
-  const roots: FileSystemNodeProps[] = [];
-
-  flatNodes.forEach((node) => {
-    map.set(node.id, { ...node, children: node.children ?? [] });
-  });
-
-  flatNodes.forEach((node) => {
-    if (node.parentId) {
-      const parent = map.get(node.parentId);
-      if (parent) {
-        parent.children!.push(map.get(node.id)!);
-      }
-    } else {
-      roots.push(map.get(node.id)!);
-    }
-  });
-
-  return roots;
-};
-
 export function AIPopup({
   onPromptSubmit,
   currentContent,
@@ -78,7 +54,6 @@ export function AIPopup({
   cursorPosition,
   cursorIndicatorPosition,
   isFolderPickerOpen,
-  onTreeUpdate,
 }: AIPopupProps) {
   // Core state
   const [prompt, setPrompt] = useState("");
