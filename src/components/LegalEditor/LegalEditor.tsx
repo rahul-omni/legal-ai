@@ -4,7 +4,7 @@ import { useTabs } from "@/context/tabsContext";
 import { handleApiError } from "@/helper/handleApiError";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { GlobalWorkerOptions } from "pdfjs-dist";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { SmartPromptsPanel } from "../SmartPromptsPanel";
 import { DocumentEditorPanel } from "./components/DocumentEditorPanel";
@@ -35,6 +35,10 @@ export function LegalEditor() {
     createNewTab,
     updateTabName,
   } = useTabs();
+
+  useEffect(() => {
+    fetchUpdatedFileTree();
+  }, []);
 
   // Refs
   const isCalledRef = useRef(false);
