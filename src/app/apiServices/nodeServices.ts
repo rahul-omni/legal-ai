@@ -2,6 +2,7 @@ import { FileSystemNodeProps } from "@/types/fileSystem";
 import { FileType } from "@prisma/client";
 import { apiClient } from ".";
 import { AxiosResponse } from "axios";
+import { apiRouteConfig } from "../api/lib/apiRouteConfig";
 export interface CreateNodePayload {
   name: string;
   type: FileType;
@@ -72,7 +73,7 @@ export const createNode = async (
 
 export const fetchAllNodes = async (): Promise<FileSystemNodeProps[]> => {
   try {
-    const response = await apiClient.get("/system/tree");
+    const response = await apiClient.get(apiRouteConfig.privateRoutes.nodeTree);
     return response.data;
   } catch (error) {
     console.error("Error fetching all nodes:", error);

@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import { useReducer, createContext, useContext, ReactNode } from "react";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 
 // Define state type
@@ -11,7 +11,7 @@ export interface FileState {
 }
 
 // Define action types
-export type FileAction = 
+export type FileAction =
   | { type: "SET_FILE_TREE"; payload: FileSystemNodeProps[] }
   | { type: "SET_SELECTED_FILE"; payload: FileSystemNodeProps | undefined }
   | { type: "SET_LOADING"; payload: boolean }
@@ -36,8 +36,16 @@ function fileReducer(state: FileState, action: FileAction): FileState {
   }
 }
 
-// Custom hook
-export function useFileState() {
+// --- Context for sharing state and dispatch ---
+
+type FileContextType = {
+  state: FileState;
+  dispatch: React.Dispatch<FileAction>;
+};
+
+const FileContext = createContext<FileContextType | undefined>(undefined);
+
+export function FileProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(fileReducer, {
     fileTree: [],
     selectedFile: undefined,
@@ -46,5 +54,17 @@ export function useFileState() {
     isNewFileMode: false,
   });
 
-  return { state, dispatch };
+  return (
+    <FileContext.Provider value={{ state, dispatch }}>
+      {children}
+    </FileContext.Provider>
+  );
+}
+
+export function useFileContext() {
+  const context = useContext(FileContext);
+  if (!context) {
+    throw new Error("useFileContext must be used within a FileProvider");
+  }
+  return context;
 }

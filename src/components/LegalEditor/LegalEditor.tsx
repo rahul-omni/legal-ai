@@ -3,24 +3,24 @@ import { fetchAllNodes, fetchNodes } from "@/app/apiServices/nodeServices";
 import { useTabs } from "@/context/tabsContext";
 import { handleApiError } from "@/helper/handleApiError";
 import { FileSystemNodeProps } from "@/types/fileSystem";
-import { useRef } from "react";
+import { GlobalWorkerOptions } from "pdfjs-dist";
+import { useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 import { SmartPromptsPanel } from "../SmartPromptsPanel";
 import { DocumentEditorPanel } from "./components/DocumentEditorPanel";
 import { FileExplorerPanel } from "./components/FileExplorerPanel";
 import { FolderPickerModal } from "./components/FolderPickerModal";
 import { Toolbar } from "./components/Toolbar";
 import { useDocumentState } from "./reducers/documentReducer";
-import { useFileState } from "./reducers/fileReducer";
+import { useFileContext } from "./reducers/fileReducer";
 import { useFolderPickerState } from "./reducers/folderPickerReducer";
 import { useUIState } from "./reducers/uiReducer";
-import toast from "react-hot-toast";
-import { GlobalWorkerOptions } from "pdfjs-dist";
 
 GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
 
 export function LegalEditor() {
   const { state: uiState, dispatch: uiDispatch } = useUIState();
-  const { state: fileState, dispatch: fileDispatch } = useFileState();
+  const { state: fileState, dispatch: fileDispatch } = useFileContext();
   const { state: folderPickerState, dispatch: folderPickerDispatch } =
     useFolderPickerState();
   const { dispatch: documentDispatch } = useDocumentState();
@@ -35,6 +35,10 @@ export function LegalEditor() {
     createNewTab,
     updateTabName,
   } = useTabs();
+
+  useEffect(() => {
+    fetchUpdatedFileTree();
+  }, []);
 
   // Refs
   const isCalledRef = useRef(false);

@@ -1,11 +1,12 @@
 "use client";
-import { fetchAllNodes, readFile } from "@/app/apiServices/nodeServices";
+import { readFile } from "@/app/apiServices/nodeServices";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { ArrowUp, FilePlus, Paperclip, X } from "lucide-react";
 import mammoth from "mammoth";
 import { getDocument } from "pdfjs-dist";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import TreeNode from "../../TreeNode";
+import { useFileContext } from "../reducers/fileReducer";
 
 // Type definitions
 interface AIPopupProps {
@@ -83,34 +84,13 @@ export function AIPopup({
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showContext, setShowContext] = useState(false);
+  const { state: fileState } = useFileContext();
 
   // File handling state
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [selectedDocuments, setSelectedDocuments] = useState<
     FileSystemNodeProps[]
   >([]);
-
-  // Tree state
-  const [tree, setTree] = useState<FileSystemNodeProps[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Load file system tree on mount
-  useEffect(() => {
-    const loadFileTree = async () => {
-      try {
-        const data = await fetchAllNodes();
-        const treeData = buildTree(data);
-        setTree(treeData);
-        onTreeUpdate(treeData);
-      } catch (error) {
-        console.error("Failed to fetch file tree:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadFileTree();
-  }, [onTreeUpdate]);
 
   // Document selection handler
   const handleDocumentSelect = (file: FileSystemNodeProps) => {
@@ -344,12 +324,8 @@ export function AIPopup({
             {/* File Tree Context */}
             {showContext && (
               <div className="mb-2 border border-gray-200 rounded bg-white">
-                {loading ? (
-                  <p className="text-xs text-gray-500 text-center py-2">
-                    Loading files...
-                  </p>
-                ) : tree.length > 0 ? (
-                  tree.map((node) => (
+                {fileState.fileTree.length > 0 ? (
+                  fileState.fileTree.map((node) => (
                     <TreeNode
                       key={node.id}
                       node={node}
