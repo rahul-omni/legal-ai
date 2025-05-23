@@ -10,35 +10,18 @@ export interface CreateNodePayload {
   content?: string;
 }
 
-const requestCache = new Map<string, Promise<FileSystemNodeProps[]>>();
-
 export const fetchNodes = async (
   parentId?: string
 ): Promise<FileSystemNodeProps[]> => {
-  const url = `/nodes?parentId=${parentId || ""}`;
-
-  // Return cached promise if available
-  if (requestCache.has(url)) {
-    return requestCache.get(url)!;
-  }
+  const url = `${apiRouteConfig.privateRoutes.nodes}?parentId=${parentId || ""}`;
 
   try {
-    // Create and cache the request promise
-    const requestPromise = apiClient
-      .get(url)
-      .then((response) => {
-        // Validate response is an array
-        if (!Array.isArray(response.data)) {
-          throw new Error("Invalid response format: expected array");
-        }
-        return response.data;
-      })
-      .finally(() => {
-        // Clean up cache after request completes (success or failure)
-        requestCache.delete(url);
-      });
-
-    requestCache.set(url, requestPromise);
+    const requestPromise = apiClient.get(url).then((response) => {
+      if (!Array.isArray(response.data)) {
+        throw new Error("Invalid response format: expected array");
+      }
+      return response.data;
+    });
 
     return await requestPromise;
   } catch (error) {
@@ -49,7 +32,7 @@ export const fetchNodes = async (
 
 export const createNodeold = async (node: CreateNodePayload) => {
   try {
-    await apiClient.post("/nodes", node);
+    await apiClient.post(apiRouteConfig.privateRoutes.nodes, node);
   } catch (error) {
     console.error("Error uploading file:", error);
     throw new Error("Failed to upload file");
@@ -61,7 +44,7 @@ export const createNode = async (
 ): Promise<FileSystemNodeProps> => {
   try {
     const response: AxiosResponse<FileSystemNodeProps> = await apiClient.post(
-      "/nodes",
+      apiRouteConfig.privateRoutes.nodes,
       node
     );
     return response.data;
@@ -85,9 +68,12 @@ export const readFile = async (
   nodeId: string
 ): Promise<{ content: Blob; name: string }> => {
   try {
-    const response = await apiClient.get(`/nodes/${nodeId}`, {
-      responseType: "blob",
-    });
+    const response = await apiClient.get(
+      apiRouteConfig.privateRoutes.node(nodeId),
+      {
+        responseType: "blob",
+      }
+    );
     const blob = response.data as Blob;
 
     const contentDisposition = response.headers["content-disposition"];
@@ -111,7 +97,7 @@ export const updateNodeContentwork = async (
   }
   try {
     const response: AxiosResponse<FileSystemNodeProps> = await apiClient.put(
-      `/nodes/${nodeId}`,
+      apiRouteConfig.privateRoutes.node(nodeId),
       { content }
     );
     return response.data;
@@ -135,7 +121,7 @@ export const updateNodeContent = async (
     if (name) payload.name = name;
 
     const response: AxiosResponse<FileSystemNodeProps> = await apiClient.put(
-      `/nodes/${nodeId}`,
+      apiRouteConfig.privateRoutes.node(nodeId),
       payload
     );
 
@@ -159,7 +145,7 @@ export const createNewFile = async (
 
   try {
     const response: AxiosResponse<FileSystemNodeProps> = await apiClient.post(
-      "/nodes",
+      apiRouteConfig.privateRoutes.nodes,
       createPayload
     );
 

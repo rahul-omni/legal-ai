@@ -9,7 +9,8 @@ interface PublicApiRoute {
 }
 
 interface PrivateApiRoute {
-  node: "/nodes";
+  nodes: "/nodes";
+  node: (_nodeId: string) => `/node/${string}`;
   nodeTree: "/system/tree";
   roles: "/roles";
   user: "/user";
@@ -32,7 +33,8 @@ export const apiRouteConfig: {
   publicRoutes: PublicApiRoute;
 } = {
   privateRoutes: {
-    node: "/nodes",
+    nodes: "/nodes",
+    node: (nodeId: string) => `/node/${nodeId}`,
     nodeTree: "/system/tree",
     roles: "/roles",
     user: "/user",
@@ -45,7 +47,6 @@ export const apiRouteConfig: {
     resolveComment: (commentId) => `/reviews/comments/${commentId}/resolve`,
     organization: (ordId) => `/organization/${ordId}`,
     fileReviewReq: `/file-reviews`,
-    // organizationInvitations: (orgId) => `/organization/${orgId}/invitations`,
     organizationInvitations: (orgId: string) =>
       `/organization/${orgId}/invitations`,
   },
