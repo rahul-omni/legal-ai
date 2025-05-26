@@ -57,10 +57,13 @@ async function getOrganizationUsers(organizationId: string) {
         select: {
           name: true,
           email: true,
+          mobileNumber: true,
+          countryCode: true,
         },
       },
     },
   });
-
+   console.log("getOrganizationUsers: memberships", memberships);
+   
   return memberships;
 }

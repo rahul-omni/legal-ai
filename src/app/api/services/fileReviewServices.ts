@@ -94,8 +94,10 @@ class ReviewService {
                 id: true, // User ID
                 name: true, // User name
                 email: true, // User email
+                mobileNumber: true, // User mobile number
                 createdAt: true, // User creation date
                 updatedAt: true, // User last updated date
+                countryCode: true, // User country code
               },
             },
           },
@@ -119,7 +121,8 @@ class ReviewService {
         },
       },
     });
-
+    
+   
     return reviews;
   }
 
@@ -195,11 +198,12 @@ class ReviewService {
   }
 
   async addComment(data: CreateCommentInput): Promise<FileReviewComment> {
+     console.log('Attempting to add comment with data:', data);
     try {
       const review = await db.fileReview.findUnique({
         where: { id: data.reviewId },
       });
-
+      console.log('Found review:', review);
       if (
         !review ||
         (review.reviewerId !== data.userId &&
@@ -214,7 +218,17 @@ class ReviewService {
           userId: data.userId,
           content: data.content,
         },
-        include: { user: true },
+        include: { user: 
+          {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              mobileNumber: true,
+              countryCode: true,
+            },
+          },
+         },
       });
     } catch {
       throw new Error("Failed to add comment");

@@ -18,13 +18,15 @@ model User {
   updatedAt               DateTime?           @updatedAt @map("updated_at")
   verificationToken       String?             @unique @map("verification_token")
   verificationTokenExpiry DateTime?           @map("verification_token_expiry")
+  countryCode             String              @default("+91") @map("country_code")
+  mobileNumber            String              @default("0000000000") @map("mobile_number")
+  filesReviewRequests     FileReview[]        @relation("requester_reviews")
+  filesToReview           FileReview[]        @relation("reviewer_reviews")
   nodesCreated            FileSystemNode[]    @relation("file_system_nodes_created_by_idx")
   nodesUpdated            FileSystemNode[]    @relation("file_system_nodes_updated_by_idx")
   nodes                   FileSystemNode[]    @relation("file_system_nodes_user_id_idx")
   orgMemberships          OrgMembership[]     @relation("org_memberships_user_id_idx")
   organizationsCreated    Organization[]      @relation("organization_createdByUser")
-  filesToReview           FileReview[]        @relation("reviewer_reviews")
-  filesReviewRequests     FileReview[]        @relation("requester_reviews")
   fileReviewComments      FileReviewComment[] @relation("reviewer_comment")
 
   @@map("users")
@@ -62,16 +64,16 @@ model Organization {
   createdAt     DateTime        @default(now()) @map("created_at")
   updatedAt     DateTime        @updatedAt @map("updated_at")
   createdBy     String?         @map("created_by") @db.Uuid
+  reviewFiles   FileReview[]    @relation("organization_file_review")
   invitations   Invitation[]    @relation("organization_invitations_org_id_idx")
   members       OrgMembership[] @relation("org_memberships_org_id_idx")
   createdByUser User?           @relation("organization_createdByUser", fields: [createdBy], references: [id])
-  reviewFiles   FileReview[]    @relation("organization_file_review")
 
   @@map("organizations")
 }
 
 model OrgMembership {
-  id        String       @id @default(uuid())
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId    String       @map("user_id") @db.Uuid
   orgId     String       @map("organization_id") @db.Uuid
   createdAt DateTime     @default(now()) @map("created_at")
@@ -85,7 +87,7 @@ model OrgMembership {
 }
 
 model Invitation {
-  id           String           @id @default(uuid())
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email        String
   token        String?          @unique
   expiresAt    DateTime?        @map("expires_at")
@@ -112,12 +114,12 @@ model FileSystemNode {
   createdBy     String?          @map("created_by") @db.Uuid
   updatedBy     String?          @map("updated_by") @db.Uuid
   userId        String?          @map("user_id") @db.Uuid
+  FileReview    FileReview[]     @relation("file_review")
   createdByUser User?            @relation("file_system_nodes_created_by_idx", fields: [createdBy], references: [id])
   parent        FileSystemNode?  @relation("file_system_node_hierarchy", fields: [parentId], references: [id])
   children      FileSystemNode[] @relation("file_system_node_hierarchy")
   updatedByUser User?            @relation("file_system_nodes_updated_by_idx", fields: [updatedBy], references: [id])
   user          User?            @relation("file_system_nodes_user_id_idx", fields: [userId], references: [id])
-  FileReview    FileReview[]     @relation("file_review")
 
   @@index([createdBy])
   @@index([updatedBy])
@@ -127,36 +129,34 @@ model FileSystemNode {
 }
 
 model FileReview {
-  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  fileId      String           @map("file_id") @db.Uuid
-  reviewerId  String           @map("reviewer_id") @db.Uuid
-  requesterId String           @map("requester_id") @db.Uuid
-  orgId       String           @map("organization_id") @db.Uuid
-  status      FileReviewStatus @default(PENDING)
-  dueDate     DateTime?        @map("due_date")
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
-
-  fileReviewComments FileReviewComment[] @relation("file_review_comments")
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fileId             String              @map("file_id") @db.Uuid
+  reviewerId         String              @map("reviewer_id") @db.Uuid
+  requesterId        String              @map("requester_id") @db.Uuid
+  orgId              String              @map("organization_id") @db.Uuid
+  status             FileReviewStatus    @default(PENDING)
+  dueDate            DateTime?           @map("due_date")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
   file               FileSystemNode      @relation("file_review", fields: [fileId], references: [id])
   organization       Organization        @relation("organization_file_review", fields: [orgId], references: [id])
-  reviewer           User                @relation("reviewer_reviews", fields: [reviewerId], references: [id])
   requester          User                @relation("requester_reviews", fields: [requesterId], references: [id])
+  reviewer           User                @relation("reviewer_reviews", fields: [reviewerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  fileReviewComments FileReviewComment[] @relation("file_review_comments")
 
   @@map("file_reviews")
 }
 
 model FileReviewComment {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  fileReviewId String   @map("review_id") @db.Uuid
-  userId       String   @map("user_id") @db.Uuid
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fileReviewId String     @map("review_id") @db.Uuid
+  userId       String     @map("user_id") @db.Uuid
   content      String
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-  resolved     Boolean  @default(false)
-
-  fileReview FileReview @relation("file_review_comments", fields: [fileReviewId], references: [id])
-  user       User       @relation("reviewer_comment", fields: [userId], references: [id])
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  resolved     Boolean    @default(false)
+  fileReview   FileReview @relation("file_review_comments", fields: [fileReviewId], references: [id])
+  user         User       @relation("reviewer_comment", fields: [userId], references: [id])
 
   @@map("review_comments")
 }
@@ -199,32 +199,4 @@ enum InvitationStatus {
   ACCEPTED
   EXPIRED
   ACTIVE
-}
-
-model Client {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  phone     String?
-  company   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  cases     Case[]
-}
-
-model Case {
-  id           String   @id @default(cuid())
-  title        String
-  number       String   @unique
-  status       String   @default("Active") // Active, Pending, Closed
-  court        String?
-  nextHearing  DateTime?
-  practice     String?
-  tags         String?  // Store as JSON string
-  billingRate  Float?
-  billingType  String?  // Hourly, Fixed, Contingency
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  client       Client   @relation(fields: [clientId], references: [id])
-  clientId     String
 }

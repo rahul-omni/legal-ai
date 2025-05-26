@@ -1,7 +1,13 @@
 "use client";
-import { createNode, fetchNodes } from "@/app/apiServices/nodeServices";
+import {
+  createNode,
+  CreateNodePayload,
+  fetchNodes,
+} from "@/app/apiServices/nodeServices";
+import { useToast } from "@/components/ui/toast";
 import { useUserContext } from "@/context/userContext";
 import { handleApiError } from "@/helper/handleApiError";
+import { FileService } from "@/lib/fileService";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import {
   File,
@@ -15,7 +21,8 @@ import {
 } from "lucide-react";
 import moment from "moment";
 import { useRouter } from "next/navigation";
-import { Dispatch, FC, useEffect, useReducer, useState } from "react";
+import { getDocument } from "pdfjs-dist";
+import { Dispatch, FC, useEffect, useReducer, useRef, useState } from "react";
 
 interface ProjectHubProps {
   projects: FileSystemNodeProps[];
@@ -40,6 +47,7 @@ type ProjectHubAction =
 interface ProjectReducerProps {
   projectHubState: ProjectHubProps;
   dispatchProjectHub: Dispatch<ProjectHubAction>;
+  loadProjects: (parentId?: string) => void;
 }
 
 const reducer = (
@@ -101,6 +109,7 @@ export default function ProjectHub() {
         <ProjectToolbar
           projectHubState={projectHubState}
           dispatchProjectHub={dispatchProjectHub}
+          loadProjects={loadProjects}
         />
 
         <Breadcrumbs
@@ -116,29 +125,41 @@ export default function ProjectHub() {
                 <SekeletonProjectCard key={key} />
               ))}
             </div>
-          ) : projectHubState.projects.length === 0 ? (
-            <EmptyProject
-              projectHubState={projectHubState}
-              dispatchProjectHub={dispatchProjectHub}
-            />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {projectHubState.projects.map((project) => (
-                <ProjectCard
-                  loadProjects={loadProjects}
-                  project={project}
+            <>
+              {/* Show files if they exist */}
+              {projectHubState.projects.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {projectHubState.projects.map((project) => (
+                    <ProjectCard
+                      loadProjects={loadProjects}
+                      project={project}
+                      projectHubState={projectHubState}
+                      dispatchProjectHub={dispatchProjectHub}
+                      key={project.id}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Always show EmptyProject when a folder is selected to display the upload button */}
+              {(projectHubState.selectedProject ||
+                projectHubState.projects.length === 0) && (
+                <EmptyProject
                   projectHubState={projectHubState}
                   dispatchProjectHub={dispatchProjectHub}
-                  key={project.id}
+                  loadProjects={loadProjects}
                 />
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>
       <NewProjectModal
         projectHubState={projectHubState}
         dispatchProjectHub={dispatchProjectHub}
+        loadProjects={loadProjects}
+         
       />
     </>
   );
@@ -188,31 +209,132 @@ const Breadcrumbs: FC<
   );
 };
 
+ 
 const ProjectToolbar: FC<ProjectReducerProps> = ({
   projectHubState,
   dispatchProjectHub,
+  loadProjects,
 }) => {
+  const { showToast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef2 = useRef<HTMLInputElement>(null); // New ref for Upload Files 2
+  const [isUploading, setIsUploading] = useState(false);
+
+  const extractTextFromPDF = async (file: File): Promise<string> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await getDocument({ data: arrayBuffer }).promise;
+      let fullHtml = "";
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const text = content.items.map((item: any) => item.str).join(" ");
+        fullHtml += `<p><strong>Page ${i}:</strong><br>${text.replace(/\n/g, "<br>")}</p>`;
+      }
+
+      return fullHtml;
+    } catch (error) {
+      console.error("Error extracting PDF text:", error);
+      throw error;
+    }
+  };
+
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    isRootLevel: boolean
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      let content: string;
+
+      if (file.type === "application/pdf") {
+        content = await extractTextFromPDF(file);
+        showToast("PDF Parsed Successfully");
+      } else {
+        content = await FileService.parseFile(file);
+      }
+
+      const newFile: CreateNodePayload = {
+        name: file.name,
+        type: "FILE",
+        parentId: isRootLevel ? undefined : projectHubState.selectedProject?.id,
+        content,
+      };
+
+      await createNode(newFile);
+      await loadProjects(isRootLevel ? undefined : projectHubState.selectedProject?.id);
+      showToast("File uploaded successfully");
+    } catch (error) {
+      handleApiError(error, showToast);
+    } finally {
+      setIsUploading(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
   return (
     <div className="border-b bg-white px-6 py-3 flex items-center justify-between">
       <div className="flex items-center gap-3">
-        {!projectHubState.selectedProject && (
+        {!projectHubState.selectedProject ? (
+          <>
+            <button
+              onClick={() => {
+                dispatchProjectHub({
+                  type: "SET_IS_NEW_PROJECT_MODAL_OPEN",
+                  payload: true,
+                });
+              }}
+              className="px-3 py-1.5 bg-gray-900 text-white rounded-md flex items-center gap-2 hover:bg-gray-800 transition-colors text-sm"
+            >
+              <FolderPlus className="w-3.5 h-3.5" />
+              New Project
+            </button>
+
+            <button
+              title="Upload File"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className={`px-3 py-1.5 border border-gray-200 rounded-md flex items-center gap-2 ${
+                isUploading ? 'bg-gray-100 cursor-not-allowed' : 'hover:bg-gray-50'
+              } transition-colors text-sm`}
+            >
+              <Upload className="w-3.5 h-3.5" />
+              Upload Files 
+            </button>
+          </>
+        ) : (
           <button
-            onClick={() => {
-              dispatchProjectHub({
-                type: "SET_IS_NEW_PROJECT_MODAL_OPEN",
-                payload: true,
-              });
-            }}
-            className="px-3 py-1.5 bg-gray-900 text-white rounded-md flex items-center gap-2 hover:bg-gray-800 transition-colors text-sm"
+            title="Upload File"
+            onClick={() => fileInputRef2.current?.click()}
+            disabled={isUploading}
+            className={`px-3 py-1.5 border border-gray-200 rounded-md flex items-center gap-2 ${
+              isUploading ? 'bg-gray-100 cursor-not-allowed' : 'hover:bg-gray-50'
+            } transition-colors text-sm`}
           >
-            <FolderPlus className="w-3.5 h-3.5" />
-            New Project
+            <Upload className="w-3.5 h-3.5" />
+            Upload Files 
           </button>
         )}
-        <button className="px-3 py-1.5 border border-gray-200 rounded-md flex items-center gap-2 hover:bg-gray-50 transition-colors text-sm">
-          <Upload className="w-3.5 h-3.5" />
-          Upload Files
-        </button>
+
+        {/* Hidden file inputs */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          onChange={(e) => handleFileUpload(e, true)} // true for root level
+          accept=".txt,.doc,.docx,.pdf"
+        />
+        <input
+          type="file"
+          ref={fileInputRef2}
+          className="hidden"
+          onChange={(e) => handleFileUpload(e, false)} // false for folder level
+          accept=".txt,.doc,.docx,.pdf"
+        />
       </div>
       <div className="relative">
         <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -233,10 +355,63 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
   );
 };
 
-const EmptyProject: FC<ProjectReducerProps> = ({
-  projectHubState,
-  dispatchProjectHub,
-}) => {
+const EmptyProject: FC<
+  ProjectReducerProps & { loadProjects: (parentId?: string) => void }
+> = ({ projectHubState, dispatchProjectHub, loadProjects }) => {
+  const { showToast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const extractTextFromPDF = async (file: File): Promise<string> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await getDocument({ data: arrayBuffer }).promise;
+      let fullHtml = "";
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const text = content.items.map((item: any) => item.str).join(" ");
+        fullHtml += `<p><strong>Page ${i}:</strong><br>${text.replace(/\n/g, "<br>")}</p>`;
+      }
+
+      return fullHtml;
+    } catch (error) {
+      console.error("Error extracting PDF text:", error);
+      throw error;
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      let content: string;
+      if (file.type === "application/pdf") {
+        content = await extractTextFromPDF(file);
+        showToast("PDF Parsed Successfully");
+      } else {
+        content = await FileService.parseFile(file);
+      }
+
+      const newFile: CreateNodePayload = {
+        name: file.name,
+        type: "FILE",
+        parentId: projectHubState.selectedProject?.id,
+        content,
+      };
+      console.log("newFile2", newFile);
+
+      await createNode(newFile);
+      await loadProjects(projectHubState.selectedProject?.id);
+      showToast("File uploaded successfully");
+    } catch (error) {
+      handleApiError(error, showToast);
+    } finally {
+      if (e.target) e.target.value = "";
+    }
+  };
+
   return (
     <div className="text-center py-12">
       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -247,36 +422,55 @@ const EmptyProject: FC<ProjectReducerProps> = ({
         )}
       </div>
       <h3 className="text-lg font-medium text-gray-900 mb-1">
-        {projectHubState.selectedProject ? "No file yet" : "No projects yet"}
+        {projectHubState.selectedProject ? "" : "No projects yet"}
       </h3>
       {!projectHubState.selectedProject && (
         <p className="text-gray-500 mb-4">
           Create your first project to get started
         </p>
       )}
-      {projectHubState.selectedProject ? (
-        <button className="px-3 py-1.5 border border-gray-200 rounded-md flex items-center gap-2 hover:bg-gray-50 transition-colors text-sm mx-auto">
-          <Upload className="w-3.5 h-3.5" />
-          Upload Files
-        </button>
-      ) : (
-        <button
-          onClick={() =>
-            dispatchProjectHub({
-              type: "SET_IS_NEW_PROJECT_MODAL_OPEN",
-              payload: true,
-            })
-          }
-          className="px-3 py-1.5 bg-gray-900 text-white rounded-md flex items-center gap-2 hover:bg-gray-800 transition-colors text-sm mx-auto"
-        >
-          <FolderPlus className="w-3.5 h-3.5" />
-          New Project
-        </button>
+      {/* {projectHubState.selectedProject && (
+        <>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="px-3 py-1.5 border border-gray-200 rounded-md flex items-center gap-2 hover:bg-gray-50 transition-colors text-sm mx-auto"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Upload Files 2
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleFileUpload}
+            accept=".txt,.doc,.docx,.pdf"
+          />
+        </>
+      )
+      } */}
+
+      {!projectHubState.selectedProject && (
+        <>
+          <p className="text-gray-500 mb-4">
+            Create your first project to get started
+          </p>
+          <button
+            onClick={() =>
+              dispatchProjectHub({
+                type: "SET_IS_NEW_PROJECT_MODAL_OPEN",
+                payload: true,
+              })
+            }
+            className="px-3 py-1.5 bg-gray-900 text-white rounded-md flex items-center gap-2 hover:bg-gray-800 transition-colors text-sm mx-auto"
+          >
+            <FolderPlus className="w-3.5 h-3.5" />
+            New Project
+          </button>
+        </>
       )}
     </div>
   );
 };
-
 const ProjectCard: FC<
   ProjectReducerProps & {
     project: FileSystemNodeProps;
