@@ -42,7 +42,7 @@ const PrivatePages: FC<{
   return (
     <div className="flex">
       <Navigation />
-      <div className="flex-1">{children}</div>
+      <div className="h-screen overflow-auto flex-1">{children}</div>
     </div>
   );
 };

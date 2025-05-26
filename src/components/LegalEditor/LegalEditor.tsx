@@ -91,7 +91,7 @@ export function LegalEditor() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[#f9f9f9]">
+    <>
       {/* Toolbar */}
       <Toolbar
         showLeftPanel={uiState.showLeftPanel}
@@ -116,7 +116,7 @@ export function LegalEditor() {
       )}
 
       {/* Main content */}
-      <div className="flex flex-1">
+      <div className="h-screen flex flex-1">
         {/* Left Panel - File Explorer */}
         <FileExplorerPanel
           showLeftPanel={uiState.showLeftPanel}
@@ -179,6 +179,6 @@ export function LegalEditor() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

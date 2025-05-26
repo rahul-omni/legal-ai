@@ -107,7 +107,7 @@
 }
 
 .editor-inner {
-  height: calc(100vh - 130px);
+  height: calc(100vh - 144px);
   padding-bottom: 140px;
   overflow: auto;
   background: #fff;
