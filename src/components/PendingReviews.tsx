@@ -98,54 +98,47 @@ export function PendingReviews() {
     }
   };
 
- const handleOpenPreview = async (review: any) => {
-  const fileName = review.file.name;
-  const isPDF = fileName.toLowerCase().endsWith(".pdf");
+  const handleOpenPreview = async (review: any) => {
+  const fileName = review.file.name.toLowerCase();
+  const isPDF = fileName.endsWith(".pdf");
 
   try {
+    let previewContent = {
+      ...review,
+      file: {
+        ...review.file,
+        type: isPDF ? "pdf" : "docx",
+        content: review.file.content
+      }
+    };
+
     if (isPDF) {
       const original = review.file.originalContent;
       let pdfContent = "";
 
-      // Handle different PDF content types
       if (typeof original === "string") {
         if (original.startsWith("data:application/pdf")) {
           pdfContent = original;
         } else if (/^[A-Za-z0-9+/]+={0,2}$/.test(original)) {
+          // Ensure proper base64 data URI format
           pdfContent = `data:application/pdf;base64,${original}`;
         } else if (original.startsWith("http") || original.startsWith("/")) {
           pdfContent = encodeURI(original);
-        } else {
-          // Fallback to text content if PDF parsing fails
-          pdfContent = review.file.content || "";
+        } else if (original.startsWith("%PDF-")) {
+          // Raw PDF data
+          pdfContent = original;
         }
-      } else if (review.file.content) {
-        pdfContent = review.file.content;
       }
 
-      setPreviewDocument({ 
-        ...review, 
-        file: { 
-          ...review.file, 
-          type: pdfContent ? "pdf" : "pdf-text", 
-          content: pdfContent 
-        } 
-      });
-    } else {
-      setPreviewDocument({ 
-        ...review, 
-        file: { 
-          ...review.file, 
-          type: "docx", 
-          content: review.file.content 
-        } 
-      });
+      previewContent.file.content = pdfContent || review.file.content;
+      previewContent.file.type = pdfContent ? "pdf" : "pdf-text";
     }
 
+    setPreviewDocument(previewContent);
     setShowPreview(true);
   } catch (error) {
     console.error("Error opening preview:", error);
-    showToast(`Failed to open document: ${(error as Error).message}`);
+    showToast(`Failed to open document: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 };
 
@@ -744,7 +737,7 @@ export function PendingReviews() {
       <div className="h-full flex flex-col">
         <div className="flex-grow overflow-auto bg-white p-4">
           {previewDocument.file.content ? (
-            <div className="border rounded-lg h-full p-4 overflow-auto">
+            <div className="h-full p-4 overflow-auto">
               {previewDocument.file.type === "pdf" ? (
                 <PdfViewer content={previewDocument.file.content} />
               ) : previewDocument.file.type === "pdf-text" ? (
