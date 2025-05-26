@@ -36,7 +36,7 @@ export function TabBar({
           <div
             key={tab.id}
             onClick={() => onTabClick(tab.id)}
-            className={`group flex items-center h-full px-3 border-r border-gray-200 cursor-pointer
+            className={`group flex items-center h-full px-3 py-1 rounded border-r border-gray-200 cursor-pointer
                       ${
                         activeTabId === tab.id
                           ? "bg-white text-gray-700 border-b-0"
