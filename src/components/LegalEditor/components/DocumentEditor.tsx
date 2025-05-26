@@ -13,7 +13,7 @@ import {
 } from "lexical";
 import { FC, RefObject, useRef } from "react";
 import { ToolbarPlugin } from "./lexical/ToolbarPlugin";
-import { initialConfig } from "./lexical/initalConfig";
+import { initialConfig } from "./lexical/initialConfig";
 import { EditorInitializer } from "./lexical/EditorInitializer";
 import "./lexical/lexical.css";
 
