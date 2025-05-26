@@ -68,6 +68,7 @@ export default function LegalEditor() {
   );
   const [fileTree, setFileTree] = useState<FileSystemNodeProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pdfBlobOrUrl, setPdfBlobOrUrl] = useState<File | string | null>(null);
   const [tabs, setTabs] = useState<
     Array<{
       id: string;
@@ -440,7 +441,8 @@ const handleNewFile = () => {
               onPdfParsed={handlePdfParsed}
               isFolderPickerOpen={ false} // ✅ tell the explorer it’s NOT in picker mode
               isNewFileMode={isNewFileMode} // <-- Pass the state her
-            />
+              onPdfFileUpload={setPdfBlobOrUrl}
+           />
 
             <button
               onClick={() =>
@@ -525,7 +527,7 @@ const handleNewFile = () => {
                 onFileTreeUpdate={fetchUpdatedFileTree}
                 isFolderPickerOpen={folderPickerState.show}
                 isNewFileMode={isNewFileMode} // <-- Pass the state her
-                
+                pdfBlobOrUrl={pdfBlobOrUrl}
               />
             ) : (
               <div className="flex-1 flex items-center justify-center bg-gray-50">

@@ -31,6 +31,7 @@ interface FileExplorerProps {
   fileTree: FileSystemNodeProps[]; 
   isFolderPickerOpen?: boolean;
   isNewFileMode?: boolean;
+  onPdfFileUpload?: (file: File) => void;
 }
 
 export const FileExplorerV2: FC<FileExplorerProps> = ({
@@ -38,6 +39,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
   onDocumentSelect,
   onPdfParsed,
   isFolderPickerOpen = false,
+  onPdfFileUpload,
   fileTree
 }) => {
   const params = useParams();
@@ -139,25 +141,7 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
     });
   };
 
-  const extractTextFromPDF1 = async (file: File): Promise<string> => {
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await getDocument({ data: arrayBuffer }).promise;
-      let fullText = "";
-
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const text = content.items.map((item: any) => item.str).join(" ");
-        fullText += `\n\nPage ${i}:\n${text}`;
-      }
-
-      return fullText;
-    } catch (error) {
-      console.error("Error extracting PDF text:", error);
-      throw error;
-    }
-  };
+   
 
   const extractTextFromPDF = async (file: File): Promise<string> => {
     try {
@@ -179,44 +163,36 @@ export const FileExplorerV2: FC<FileExplorerProps> = ({
     }
   };
   
+  
+ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, parentId?: string) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-  const handleFileUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    parentId?: string
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  try {
+    // Process through unified interface
+    const content = await FileService.parseFile(file);
+    
+    const newFile: CreateNodePayload = {
+      name: file.name,
+      type: "FILE",
+      parentId,
+      content,
+    };
 
-    try {
-      let content: string;
-      
-      const isPDF = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-      console.log("isPDF:", isPDF);
-      
-      if ( isPDF) {
-        console.log("File type:", file.type);
-
-        content = await extractTextFromPDF(file);
-        onPdfParsed(content);
-        
-        toast.success("PDF Upload Successfully");
-      } else {
-        content = await FileService.parseFile(file);
-      }
-
-      const newFile: CreateNodePayload = {
-        name: file.name,
-        type: "FILE",
-        parentId,
-        content,
-      };
-
-      await createNode(newFile);
-      await refreshNodes(parentId);
-    } catch (error) {
-      handleApiError(error, showToast);
+    await createNode(newFile);
+    await refreshNodes(parentId);
+    
+    // Special handling if needed
+    if (file.type === "application/pdf") {
+      onPdfFileUpload?.(content); // Pass the processed content
     }
-  };
+
+    toast.success(`${file.name} uploaded successfully`);
+  } catch (error) {
+    handleApiError(error, showToast);
+  }
+};
+  
 
   const refreshNodes = async (parentId?: string, fileId?: string) => {
     const children = await fetchNodes(parentId);

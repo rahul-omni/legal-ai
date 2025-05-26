@@ -11,12 +11,13 @@ import { QuillEditor } from "./QuillEditor";
 import { SaveDropdown } from "./SaveDropdown";
 import { TranslationDropdown } from "./TranslationDropdown";
  
-import { createNewFile, createNode, CreateNodePayload, fetchAllNodes, fetchNodes, updateNodeContent } from "@/app/apiServices/nodeServices";
+import { createNewFile, createNode,   updateNodeContent } from "@/app/apiServices/nodeServices";
  
  
 import { useToast } from "./ui/toast";
 import { ReviewRequestModal } from "./ReviewRequestModal";
-
+ 
+import { FileService } from "@/lib/fileService";
 interface DocumentPaneProps {
   content: string;
   onContentChange: (_content: string) => void;
@@ -39,6 +40,8 @@ interface DocumentPaneProps {
   // ✅ NEW: Add this to control AIPopup visibility
   isFolderPickerOpen?: boolean;
   isNewFileMode?: boolean;
+    
+    pdfBlobOrUrl?: File | string | null;
   // userId: string;
   // documents: any[];
   // files: any[];
@@ -65,6 +68,7 @@ export function DocumentPane({
   onInitiateSave,
   isFolderPickerOpen,
   isNewFileMode,
+  pdfBlobOrUrl,
   node
   // userId,
   // documents,
@@ -114,7 +118,124 @@ export function DocumentPane({
     //console.log("Tree received in DocumentPane:", newTree);
   };
      
+// Add to your component state
+ 
+const [pdfContent, setPdfContent] = useState<string>('');
 
+// Add this effect
+ // Update your PDF handling logic
+const [quillContent, setQuillContent] = useState('');
+
+useEffect(() => {
+   
+  const processPdfForQuill = async () => {
+    if (!fileName?.toLowerCase().endsWith('.pdf') || !content) return;
+
+    try {
+      startLoading('PDF_PROCESSING');
+      
+      let htmlContent = content;
+      
+      // If content is raw PDF data (URL, blob, base64)
+      if (content.startsWith('http') || content.startsWith('data:application/pdf')) {
+        const arrayBuffer = content.startsWith('http')
+          ? await fetch(content).then(res => res.arrayBuffer())
+          : Uint8Array.from(atob(content.split(',')[1]), c => c.charCodeAt(0)).buffer;
+        
+        // Convert to Quill-compatible HTML
+        htmlContent = await FileService.parsePDFToQuillHTML(arrayBuffer);
+      }
+      
+      // Set content for Quill editor
+      setQuillContent(htmlContent);
+      onContentChange(htmlContent); // Update parent if needed
+      
+    } catch (error) {
+      console.error('PDF processing error:', error);
+      setQuillContent('<p class="text-red-500">Error loading PDF content</p>');
+      showToast('Failed to process PDF', 'error');
+    } finally {
+      stopLoading('PDF_PROCESSING');
+    }
+  };
+
+  processPdfForQuill();
+}, [fileName, content]);
+// Add this render method
+ // Add this to your DocumentPane component
+const renderPdfContent = () => {
+  // If you have a Blob or URL for the PDF
+  if (pdfBlobOrUrl) {
+    return (
+      <iframe
+        src={typeof pdfBlobOrUrl === "string" ? pdfBlobOrUrl : URL.createObjectURL(pdfBlobOrUrl)}
+        style={{ width: "100%", height: "80vh", border: "none" }}
+        title="PDF Preview"
+      />
+    );
+  }
+  if (!pdfContent) return (
+    <div className="flex items-center justify-center h-full">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+  );
+
+  // Check if content is HTML
+  if (pdfContent.startsWith('<div')) {
+    return (
+      <div 
+        className="pdf-viewer"
+        dangerouslySetInnerHTML={{ __html: pdfContent }}
+      />
+    );
+  }
+
+  // Fallback to plain text
+  return (
+    <div className="pdf-text-viewer">
+      <pre className="whitespace-pre-wrap font-sans p-4">{pdfContent}</pre>
+    </div>
+  );
+};
+
+// Update your content loading logic
+useEffect(() => {
+  const loadPdfContent = async () => {
+    if (!fileName?.toLowerCase().endsWith('.pdf')) return;
+    
+    try {
+      startLoading('TRANSLATE_TEXT');
+      
+      // If content is a URL
+      if (content.startsWith('http')) {
+        const response = await fetch(content);
+        const arrayBuffer = await response.arrayBuffer();
+        const html = await FileService.parsePDFToFormattedHTML(arrayBuffer);
+        setPdfContent(html);
+      } 
+      // If content is base64
+      else if (content.startsWith('data:application/pdf')) {
+        const base64Data = content.split(',')[1];
+        const arrayBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
+        const html = await FileService.parsePDFToFormattedHTML(arrayBuffer);
+        setPdfContent(html);
+      }
+      // If content is already processed
+      else {
+        setPdfContent(content);
+      }
+    } catch (error) {
+      console.error('PDF loading error:', error);
+      showToast('Failed to load PDF', 'error');
+      // Fallback to plain text
+      setPdfContent('PDF content could not be displayed');
+    } finally {
+      stopLoading('TRANSLATE_TEXT');
+    }
+  };
+
+  loadPdfContent();
+}, [fileName, content]);
  
   // useEffect(() => {
   //   console.log("Fetching file tree on mount...");
@@ -767,15 +888,36 @@ useEffect(() => {
       </div>
 
       <div className="flex-1 relative p-3 bg-white" ref={containerRef}>
-        <QuillEditor
+        {/* <QuillEditor
           ref={quillRef}
          // content={content}
           content={ localContent}
           onContentChange={handleEditorChange}
          // onContentChange={onContentChange}
           onSelectionChange={handleSelectionChange}
-        />
-
+        /> */}
+            {fileName?.toLowerCase().endsWith('.pdf') ? (
+         <QuillEditor
+        ref={quillRef}
+        content={quillContent}
+        onContentChange={(newContent) => {
+          setQuillContent(newContent);
+          onContentChange(newContent);
+        }}
+        onSelectionChange={handleSelectionChange}
+       // readOnly={false} // Set based on your needs
+        //className="pdf-quill-editor" // Add specific styles if needed
+      />
+      ) : (
+        <div className="h-full p-3">
+          <QuillEditor
+            ref={quillRef}
+            content={localContent}
+            onContentChange={handleEditorChange}
+            onSelectionChange={handleSelectionChange}
+          />
+        </div>
+      )}
         {showAIPopup && (
           <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50" style={{ width: '600px' }}>
           <AIPopup
