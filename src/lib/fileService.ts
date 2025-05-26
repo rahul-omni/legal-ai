@@ -79,61 +79,7 @@ export class FileService {
       console.error("PDF parsing error:", error);
       throw error;
     }
-      // try {
-      //   console.log("[FileService] Converting file to array buffer...");
-      //   const arrayBuffer = await file.arrayBuffer();
-      //   console.log("[FileService] Converting to base64...");
-      //   const base64PDF = Buffer.from(arrayBuffer).toString("base64");
-      //   console.log(
-      //     "[FileService] Base64 conversion complete. Length:",
-      //     base64PDF.length
-      //   );
-
-      //   const apiUrl = new URL("/api/parse-pdf", window.location.origin);
-      //   console.log("[FileService] Making API request to:", apiUrl.toString());
-
-      //   const response = await fetch(apiUrl, {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //       Accept: "application/json",
-      //     },
-      //     body: JSON.stringify({ base64PDF }),
-      //   });
-
-      //   console.log("[FileService] API Response status:", response.status);
-      //   console.log(
-      //     "[FileService] API Response status text:",
-      //     response.statusText
-      //   );
-
-      //   // Try to get the response text first to debug any HTML responses
-      //   const responseText = await response.text();
-      //   console.log("[FileService] Raw response:", responseText.slice(0, 200));
-
-      //   if (!response.ok) {
-      //     throw new Error(
-      //       `HTTP error! status: ${response.status}, response: ${responseText.slice(0, 200)}`
-      //     );
-      //   }
-
-      //   // Parse the response text as JSON
-      //   const data = JSON.parse(responseText);
-      //   console.log("[FileService] API Response data:", {
-      //     hasText: !!data.text,
-      //     textLength: data.text?.length,
-      //     metadata: data.metadata,
-      //   });
-
-      //   if (data.error) throw new Error(data.error);
-
-      //   return data.text;
-      // } catch (error) {
-      //   console.error("[FileService] PDF parsing error:", error);
-      //   throw new Error(
-      //     "Failed to parse PDF file: " + (error as Error).message
-      //   );
-      // }
+      
     }
 
     // Default to text files
