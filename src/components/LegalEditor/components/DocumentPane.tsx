@@ -392,7 +392,7 @@ export function DocumentPane({
           handleSaveAs={handleSaveAs}
           isSaving={isSaving}
         />
-        <div className="flex-1 relative p-3 bg-white">
+        <div className="flex-1 relative bg-white">
           <DocumentEditor
             localContent={localContent}
             editorRef={editorRef}
@@ -400,10 +400,7 @@ export function DocumentPane({
             onSelectedTextChange={setSelectedText}
           />
 
-          <div
-            className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50"
-            style={{ width: "600px" }}
-          >
+          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-[600px]">
             <AIPopup
               onPromptSubmit={handlePromptSubmit}
               currentContent={content}
