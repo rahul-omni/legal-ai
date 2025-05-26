@@ -6,7 +6,7 @@ import { FileProvider } from "@/components/LegalEditor/reducers/fileReducer";
 export default function Page() {
   return (
     <FileProvider>
-      <LegalEditor />;
+      <LegalEditor />
     </FileProvider>
   );
 }
