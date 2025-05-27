@@ -7,7 +7,11 @@ import {
 import { handleApiError } from "@/helper/handleApiError";
 import { FileService } from "@/lib/fileService";
 import { FileSystemNodeProps } from "@/types/fileSystem";
-import { extractTextFromPDF } from "@/utils/pdfUtils";
+import {
+  extractPdfToHtml,
+  extractPDFWithFormatting,
+  extractTextFromPDF,
+} from "@/utils/pdfUtils";
 import { useParams } from "next/navigation";
 import { FC, useEffect, useRef, useState } from "react";
 import { useToast } from "../../ui/toast";
@@ -18,7 +22,6 @@ import FolderNode from "./FolderNode";
 interface FileExplorerProps {
   selectedDocument?: FileSystemNodeProps;
   onDocumentSelect: (_file: FileSystemNodeProps) => void;
-  onPdfParsed: (_text: string) => void;
   isFolderPickerOpen?: boolean;
   isNewFileMode?: boolean;
 }
@@ -26,7 +29,6 @@ interface FileExplorerProps {
 export const FileExplorer: FC<FileExplorerProps> = ({
   selectedDocument,
   onDocumentSelect,
-  onPdfParsed,
   isFolderPickerOpen = false,
 }) => {
   const params = useParams();
@@ -130,8 +132,8 @@ export const FileExplorer: FC<FileExplorerProps> = ({
       let content: string;
 
       if (file.type === "application/pdf") {
-        content = await extractTextFromPDF(file);
-        onPdfParsed(content);
+        content = await extractPdfToHtml(file);
+
         showToast("PDF Parsed Successfully");
       } else {
         content = await FileService.parseFile(file);

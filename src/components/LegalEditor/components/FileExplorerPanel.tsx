@@ -7,7 +7,6 @@ interface FileExplorerPanelProps {
   refreshKey: number;
   isNewFileMode: boolean;
   onDocumentSelect: (_file: FileSystemNodeProps) => void;
-  onPdfParsed: (_text: string) => void;
 }
 
 export function FileExplorerPanel({
@@ -16,7 +15,6 @@ export function FileExplorerPanel({
   refreshKey,
   isNewFileMode,
   onDocumentSelect,
-  onPdfParsed,
 }: FileExplorerPanelProps) {
   return (
     <div
@@ -31,7 +29,6 @@ export function FileExplorerPanel({
           key={`file-explorer-${refreshKey}`}
           selectedDocument={selectedFile}
           onDocumentSelect={onDocumentSelect}
-          onPdfParsed={onPdfParsed}
           isFolderPickerOpen={false}
           isNewFileMode={isNewFileMode}
         />

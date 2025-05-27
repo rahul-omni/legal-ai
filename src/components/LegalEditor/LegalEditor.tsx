@@ -11,7 +11,6 @@ import { DocumentEditorPanel } from "./components/DocumentEditorPanel";
 import { FileExplorerPanel } from "./components/FileExplorerPanel";
 import { FolderPickerModal } from "./components/FolderPickerModal";
 import { Toolbar } from "./components/Toolbar";
-import { useDocumentState } from "./reducers/documentReducer";
 import { useFileContext } from "./reducers/fileReducer";
 import { useFolderPickerState } from "./reducers/folderPickerReducer";
 import { useUIState } from "./reducers/uiReducer";
@@ -23,8 +22,6 @@ export function LegalEditor() {
   const { state: fileState, dispatch: fileDispatch } = useFileContext();
   const { state: folderPickerState, dispatch: folderPickerDispatch } =
     useFolderPickerState();
-  const { dispatch: documentDispatch } = useDocumentState();
-
   const {
     openTabs,
     activeTabId,
@@ -124,9 +121,6 @@ export function LegalEditor() {
           refreshKey={fileState.refreshKey}
           isNewFileMode={fileState.isNewFileMode}
           onDocumentSelect={handleFileSelect}
-          onPdfParsed={(text) =>
-            documentDispatch({ type: "SET_CONTENT", payload: text })
-          }
         />
 
         {/* Middle Panel - Document Editor */}
