@@ -1,6 +1,6 @@
 "use client";
 import { login } from "@/app/apiServices/authServices";
-import { loadingContext } from "@/context/loadingContext";
+import { useLoadingContext } from "@/context/loadingContext";
 import { routeConfig } from "@/lib/routeConfig";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { startLoading, stopLoading, isLoading } = loadingContext();
+  const { startLoading, stopLoading, isLoading } = useLoadingContext();
   const emailParam = useSearchParams().get("email") || "";
   const redirectedFromParam = useSearchParams().get("from") || "";
 

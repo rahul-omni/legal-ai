@@ -10,7 +10,7 @@
     "clean-tokens": "node -r esbuild-register prisma/scripts/cleanExpiredTokens.ts",
     "lint": "next lint",
     "ts-lint": "npx tsc --noEmit --project tsconfig.json --pretty",
-    "es-lint": "npx eslint ./src/app/api --ext .js,.jsx,.ts,.tsx --format table"
+    "es-lint": "npx eslint ./src/app/ --ext .js,.jsx,.ts,.tsx --format table"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.9.0",

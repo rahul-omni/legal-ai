@@ -45,10 +45,11 @@ export const DocumentEditor: FC<DocumentEditorProps> = ({
       }
 
       if (selection.getTextContent().length === 0) {
-        caretPositionRef.current = {
-          index: selection.anchor.offset,
-          length: 0,
-        };
+        // TODO: Handle empty selection case
+        // caretPositionRef.current = {
+        //   index: selection.anchor.offset,
+        //   length: 0,
+        // };
       } else {
         text = selection.getTextContent();
         if (onSelectedTextChange) onSelectedTextChange(text);
@@ -92,8 +93,9 @@ export function insertTextAtSelection(editor: LexicalEditor, text: string) {
       const root = $getRoot();
       const lastChild = root.getLastChild();
       if (lastChild) {
-        lastChild.select(lastChild.getTextContentSize(), 0);
-        $getSelection()?.insertText(text);
+        // TODO: Handle case where last child is not a text node 
+        // lastChild.select(lastChild.getTextContentSize(), 0);
+        // $getSelection()?.insertText(text);
       } else {
         const textNode = $createTextNode(text);
         root.append(textNode);

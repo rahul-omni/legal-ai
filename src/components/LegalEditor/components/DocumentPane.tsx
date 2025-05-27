@@ -5,7 +5,7 @@ import {
   createNode,
   updateNodeContent,
 } from "@/app/apiServices/nodeServices";
-import { loadingContext } from "@/context/loadingContext";
+import { useLoadingContext } from "@/context/loadingContext";
 import { handleApiError } from "@/helper/handleApiError";
 import { TranslationVendor } from "@/lib/translation/types";
 import { FileSystemNodeProps } from "@/types/fileSystem";
@@ -120,7 +120,7 @@ export function DocumentPane({
   const [translationVendor, setTranslationVendor] =
     useState<TranslationVendor>("openai");
   const [selectedLanguage, setSelectedLanguage] = useState("hi-IN");
-  const { isLoading, startLoading, stopLoading } = loadingContext();
+  const { isLoading, startLoading, stopLoading } = useLoadingContext();
   const [generationState, setGenerationState] = useState<GenerationState>({
     isGenerating: false,
   });
