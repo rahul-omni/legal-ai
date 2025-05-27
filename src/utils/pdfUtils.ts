@@ -409,6 +409,7 @@ export async function extractPdfToHtml(file: File): Promise<string> {
             lineText += currentStyles.italic ? "</em>" : "<em>";
             currentStyles.italic = isItalic;
           }
+
           if (isHeading && headingLevel !== currentStyles.heading) {
             lineText += currentStyles.heading
               ? `</h${currentStyles.heading}>`
