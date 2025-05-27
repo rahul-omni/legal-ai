@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Plus, Search, X, User, Building, Mail, Phone, Loader2, Edit, Trash2, MoreHorizontal, Filter, FileText, DollarSign, Clock } from 'lucide-react';
-import { useToast } from './ui/toast';
+import { Building, Clock, DollarSign, Edit, FileText, Filter, Loader2, Mail, MoreHorizontal, Phone, Plus, Search, User, X } from 'lucide-react';
+import { useState } from 'react';
 import { ClientBilling } from './ClientBilling';
+import { useToast } from './ui/toast';
 
 interface Client {
   id: string;
