@@ -60,7 +60,6 @@ export const initialConfig: InitialConfigType = {
   nodes: [
     ParagraphNode,
     TextNode,      // required for any text
-
     HeadingNode,   // enables <h1-h6>
     ListNode,      // <ul>, <ol>
     ListItemNode,  // <li>
