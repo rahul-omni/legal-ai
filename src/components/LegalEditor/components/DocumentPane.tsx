@@ -10,13 +10,19 @@ import { handleApiError } from "@/helper/handleApiError";
 import { TranslationVendor } from "@/lib/translation/types";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { $generateNodesFromDOM } from "@lexical/html";
-import { $getRoot, $getSelection, LexicalEditor } from "lexical";
+import { $getRoot, $getSelection, LexicalEditor, $insertNodes, $createTextNode, $isElementNode, $createParagraphNode } from "lexical";
 import { useEffect, useRef, useState } from "react";
 import { useToast } from "../../ui/toast";
 import { AIPopup } from "./AIPopup";
 import { DocumentEditor, insertTextAtSelection } from "./DocumentEditor";
 import { DocumentPaneTopBar } from "./DocumentPaneTopBar";
 import { ReviewRequestModal } from "./ReviewRequestModal";
+import debounce from "lodash.debounce";   // add once at top
+import { initialConfig } from "./lexical/initialConfig";
+import showdown from "showdown";
+
+
+
 
 //#region Types & Interfaces
 
@@ -214,42 +220,92 @@ export function DocumentPane({
     }
   };
 
-  const handlePromptSubmit = async (prompt: string) => {
-    if (!prompt.trim()) return;
-    setGenerationState({ isGenerating: true });
 
-    try {
-      const contextText = selectedText || content;
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, text: contextText }),
-      });
-
-      if (!res.body) throw new Error("No stream returned");
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-
-      if (!editorRef.current) {
-        setTimeout(() => handlePromptSubmit(prompt), 100);
-        setGenerationState({ isGenerating: false });
-        return;
-      }
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-
-        if (editorRef.current) {
-          insertTextAtSelection(editorRef.current, chunk);
+  const stripCodeFence = (raw: string): string =>
+    raw
+      .replace(/^```(?:html)?\s*\n?/i, "")   // opening fence
+      .replace(/\n?```$/i, "")               // closing fence
+      .trim();
+  
+      async function handlePromptSubmit(prompt: string) {
+        if (!prompt.trim() || !editorRef.current) return;
+        setGenerationState({ isGenerating: true });
+      
+        try {
+          const res = await fetch("/api/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt, text: selectedText || content }),
+          });
+          if (!res.body) throw new Error("No stream returned");
+      
+          const reader  = res.body.getReader();
+          const decoder = new TextDecoder();
+      
+          // buffer for the *entire* answer so we can render rich HTML later
+          let fullHtml = "";
+      
+          // references for the "live typing" paragraph + text node
+          let paraNode: ReturnType<typeof $createParagraphNode> | null = null;
+          let liveText: ReturnType<typeof $createTextNode> | null = null;
+      
+          while (true) {
+            const { value, done } = await reader.read();
+      
+            if (value) {
+              const chunk = decoder.decode(value, { stream: true });
+              fullHtml += chunk;
+      
+              // ── Phase 1: update plain text immediately ──
+              editorRef.current.update(() => {
+                if (!paraNode) {
+                  paraNode = $createParagraphNode();
+                  liveText = $createTextNode("");
+                  paraNode.append(liveText);
+                  $getRoot().append(paraNode);
+                }
+                if (liveText) {
+                  const previous = liveText.getTextContent();
+                  liveText.setTextContent(previous + chunk);
+                }
+              });
+            }
+      
+            if (done) {
+              // ── Phase 2: replace plain text with rich HTML ──
+              const cleanHtml = stripCodeFence(fullHtml).trim();
+              const dom       = new DOMParser().parseFromString(cleanHtml, "text/html");
+      
+              editorRef.current.update(() => {
+                // wipe the temporary paragraph
+                $getRoot().clear();
+      
+                // keep only element/decorator nodes (TextNodes alone will break root)
+                
+                const nodes = $generateNodesFromDOM(editorRef.current!, dom)
+                    .filter($isElementNode);
+                const safeNodes = nodes.filter($isElementNode);
+      
+                if (safeNodes.length) {
+                  $insertNodes(safeNodes);
+                } else {
+                  // fallback: show raw HTML as text so the user sees *something*
+                  const p = $createParagraphNode().append(
+                    $createTextNode(cleanHtml)
+                  );
+                  $getRoot().append(p);
+                }
+              });
+      
+              break;
+            }
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setGenerationState({ isGenerating: false });
         }
       }
-    } finally {
-      setGenerationState({ isGenerating: false });
-    }
-  };
 
   const handleSelectionChange = (text?: string) => {
     setSelectedText(text);
