@@ -161,6 +161,26 @@ model FileReviewComment {
   @@map("review_comments")
 }
 
+model CaseManagement {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  serialNumber  String   @map("serial_number")
+  diaryNumber   String   @map("diary_number")
+  caseNumber    String   @map("case_number")
+  parties       String   // Petitioner/Respondent
+  advocates      String   // Petitioner/Respondent Advocate
+  bench         String
+  judgmentBy    String   @map("judgment_by")
+  judgmentDate  String   @map("judgment_date") // Format: "17-01-2025(English)"
+  judgmentText  String   @map("judgment_text")
+  judgmentUrl   String   @map("judgment_url")
+  court         String   // Additional field for court name
+  date          DateTime  @default(now()) @map("date") // Additional field for proper date storage
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+
+  @@map("case_management")
+}
 enum FileReviewStatus {
   PENDING
   IN_REVIEW

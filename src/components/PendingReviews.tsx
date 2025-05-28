@@ -69,7 +69,6 @@ export function PendingReviews() {
     console.log("Opening document with ID:", documentId);
 
     router.push(`/?documentId=${documentId}`);
-    
   };
 
   // const handleOpenPreview = (review: any) => {
@@ -99,53 +98,53 @@ export function PendingReviews() {
   };
 
   const handleOpenPreview = async (review: any) => {
-  const fileName = review.file.name.toLowerCase();
-  const isPDF = fileName.endsWith(".pdf");
+    const fileName = review.file.name.toLowerCase();
+    const isPDF = fileName.endsWith(".pdf");
 
-  try {
-    let previewContent = {
-      ...review,
-      file: {
-        ...review.file,
-        type: isPDF ? "pdf" : "docx",
-        content: review.file.content
-      }
-    };
+    try {
+      let previewContent = {
+        ...review,
+        file: {
+          ...review.file,
+          type: isPDF ? "pdf" : "docx",
+          content: review.file.content,
+        },
+      };
 
-    if (isPDF) {
-      const original = review.file.originalContent;
-      let pdfContent = "";
+      if (isPDF) {
+        const original = review.file.originalContent;
+        let pdfContent = "";
 
-      if (typeof original === "string") {
-        if (original.startsWith("data:application/pdf")) {
-          pdfContent = original;
-        } else if (/^[A-Za-z0-9+/]+={0,2}$/.test(original)) {
-          // Ensure proper base64 data URI format
-          pdfContent = `data:application/pdf;base64,${original}`;
-        } else if (original.startsWith("http") || original.startsWith("/")) {
-          pdfContent = encodeURI(original);
-        } else if (original.startsWith("%PDF-")) {
-          // Raw PDF data
-          pdfContent = original;
+        if (typeof original === "string") {
+          if (original.startsWith("data:application/pdf")) {
+            pdfContent = original;
+          } else if (/^[A-Za-z0-9+/]+={0,2}$/.test(original)) {
+            // Ensure proper base64 data URI format
+            pdfContent = `data:application/pdf;base64,${original}`;
+          } else if (original.startsWith("http") || original.startsWith("/")) {
+            pdfContent = encodeURI(original);
+          } else if (original.startsWith("%PDF-")) {
+            // Raw PDF data
+            pdfContent = original;
+          }
         }
+
+        previewContent.file.content = pdfContent || review.file.content;
+        previewContent.file.type = pdfContent ? "pdf" : "pdf-text";
       }
 
-      previewContent.file.content = pdfContent || review.file.content;
-      previewContent.file.type = pdfContent ? "pdf" : "pdf-text";
+      setPreviewDocument(previewContent);
+      setShowPreview(true);
+    } catch (error) {
+      console.error("Error opening preview:", error);
+      showToast(
+        `Failed to open document: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
-
-    setPreviewDocument(previewContent);
-    setShowPreview(true);
-  } catch (error) {
-    console.error("Error opening preview:", error);
-    showToast(`Failed to open document: ${error instanceof Error ? error.message : "Unknown error"}`);
-  }
-};
+  };
 
   // working
   const handleOpenPreview1 = async (review: any) => {
- 
-     
     const fileName = review.file.name;
     const isPDF = fileName.toLowerCase().endsWith(".pdf");
 
@@ -224,7 +223,7 @@ export function PendingReviews() {
       showToast(`Failed to open document: ${(error as Error).message}`);
     }
   };
-  
+
   const handleClosePreview = () => {
     setShowPreview(false);
     setPreviewDocument(null);
@@ -473,6 +472,8 @@ export function PendingReviews() {
               {Array.isArray(pendingReviews) && pendingReviews.length > 0 ? (
                 pendingReviews.map((review) => {
                   const daysRemaining = getDaysRemaining(review.dueDate);
+                  console.log("Review Data:", pendingReviews);
+                  
                   return (
                     <tr key={review.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -506,7 +507,7 @@ export function PendingReviews() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(review.requester.createdAt)}
+                          {formatDate(review.createdAt)} 
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
@@ -656,17 +657,13 @@ export function PendingReviews() {
           }
         >
           <div className="p-4 h-full bg-white">
-            {/* {previewDocument.file?.content ? (
+            {previewDocument.file ? (
               <div className="border rounded-lg h-full p-4 overflow-auto bg-white">
-                {previewDocument.file.name.endsWith(".pdf") ? (
-                  // PDF Viewer Solution
-                  
+                {previewDocument.file.name?.endsWith(".pdf") ? (
                   <div className="h-full flex flex-col">
-                    
-
                     <div className="flex-grow overflow-auto bg-white p-4">
-                      {previewDocument?.file?.content ? (
-                        <div className="border rounded-lg h-full p-4 overflow-auto">
+                      {previewDocument.file.content ? (
+                        <div className="h-full p-4 overflow-auto">
                           {previewDocument.file.type === "pdf" ? (
                             <PdfViewer content={previewDocument.file.content} />
                           ) : previewDocument.file.type === "pdf-text" ? (
@@ -690,18 +687,17 @@ export function PendingReviews() {
                         </div>
                       )}
                     </div>
-                    <div className="flex-grow overflow-auto"></div>
                   </div>
-                ) : previewDocument.file.name.endsWith(".docx") ? (
-                  // DOCX Viewer
+                ) : previewDocument.file.name?.endsWith(".docx") ? (
                   <div
                     className="prose max-w-none"
                     dangerouslySetInnerHTML={{
-                      __html: DOMPurify.sanitize(previewDocument.file.content),
+                      __html: DOMPurify.sanitize(
+                        previewDocument.file.content || ""
+                      ),
                     }}
                   />
                 ) : (
-                  // Fallback for other file types
                   <div className="flex flex-col items-center justify-center h-full">
                     <FileText className="h-12 w-12 text-gray-400 mb-4" />
                     <p>Preview not available for this file type</p>
@@ -718,7 +714,6 @@ export function PendingReviews() {
                 )}
               </div>
             ) : previewDocument.file?.url ? (
-              // Handle URL case
               <iframe
                 src={previewDocument.file.url}
                 className="w-full h-full border-0"
@@ -726,74 +721,10 @@ export function PendingReviews() {
                 onError={() => showToast("Failed to load document from URL")}
               />
             ) : (
-              // No content case
               <div className="flex items-center justify-center h-full bg-white">
                 <p>No content available</p>
               </div>
-            )} */}
-            {previewDocument.file ? (
-  <div className="border rounded-lg h-full p-4 overflow-auto bg-white">
-    {previewDocument.file.name?.endsWith(".pdf") ? (
-      <div className="h-full flex flex-col">
-        <div className="flex-grow overflow-auto bg-white p-4">
-          {previewDocument.file.content ? (
-            <div className="h-full p-4 overflow-auto">
-              {previewDocument.file.type === "pdf" ? (
-                <PdfViewer content={previewDocument.file.content} />
-              ) : previewDocument.file.type === "pdf-text" ? (
-                <PDFTextViewer content={previewDocument.file.content} />
-              ) : (
-                <div
-                  className="prose max-w-none"
-                  dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize(previewDocument.file.content),
-                  }}
-                />
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <p>No content available</p>
-            </div>
-          )}
-        </div>
-      </div>
-    ) : previewDocument.file.name?.endsWith(".docx") ? (
-      <div
-        className="prose max-w-none"
-        dangerouslySetInnerHTML={{
-          __html: DOMPurify.sanitize(previewDocument.file.content || ""),
-        }}
-      />
-    ) : (
-      <div className="flex flex-col items-center justify-center h-full">
-        <FileText className="h-12 w-12 text-gray-400 mb-4" />
-        <p>Preview not available for this file type</p>
-        {previewDocument.file.content && (
-          <a
-            href={`data:text/plain;base64,${btoa(previewDocument.file.content)}`}
-            download={previewDocument.file.name}
-            className="mt-4 text-blue-600 hover:underline"
-          >
-            Download File
-          </a>
-        )}
-      </div>
-    )}
-  </div>
-) : previewDocument.file?.url ? (
-  <iframe
-    src={previewDocument.file.url}
-    className="w-full h-full border-0"
-    title={previewDocument.file.name}
-    onError={() => showToast("Failed to load document from URL")}
-  />
-) : (
-  <div className="flex items-center justify-center h-full bg-white">
-    <p>No content available</p>
-  </div>
-)}
-
+            )}
           </div>
         </Modal>
       )}
