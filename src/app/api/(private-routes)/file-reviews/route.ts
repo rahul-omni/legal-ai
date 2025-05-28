@@ -2,7 +2,7 @@ import { userFromSession } from "@/lib/auth";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "../../[...nextauth]/route";
+import { auth } from "../../lib/auth/nextAuthConfig";
 import { db } from "../../lib/db";
 import { ErrorValidation, handleError } from "../../lib/errors";
 import { reviewService } from "../../services/fileReviewServices";

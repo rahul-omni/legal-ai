@@ -4,8 +4,9 @@ import bcrypt from "bcryptjs";
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { logInSchema } from "../validation/authValidation";
+import NextAuth from "next-auth";
 
-export const authOptions: NextAuthConfig = {
+const authOptions: NextAuthConfig = {
   providers: [
     Credentials({
       name: "credentials",
@@ -15,8 +16,7 @@ export const authOptions: NextAuthConfig = {
       },
       async authorize(credentials) {
         try {
-          const { email, password } =
-            await logInSchema.parseAsync(credentials);
+          const { email, password } = await logInSchema.parseAsync(credentials);
 
           const user = await db.user.findUnique({
             where: { email },
@@ -70,3 +70,6 @@ export const authOptions: NextAuthConfig = {
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
+
+export const nextAuthWithConfig = NextAuth(authOptions);
+export const { auth } = nextAuthWithConfig;

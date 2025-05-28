@@ -2,11 +2,9 @@ import { db } from "@/app/api/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 //api/nodes/id
-export async function GET(
-  _: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_: NextRequest, context: any) {
   try {
+    const { params } = context;
     const node = await db.fileSystemNode.findUnique({
       where: { id: params.id },
     });
@@ -45,9 +43,10 @@ export async function GET(
 // PUT: Update a node (rename, move, etc.)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: any // Change here
 ) {
   try {
+    const { params } = context;
 
     if (!params.id) {
       return NextResponse.json(
@@ -78,11 +77,10 @@ export async function PUT(
 }
 
 // DELETE: Recursively delete a node and its children
-export async function DELETE(
-  _: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_: NextRequest, context: any) {
   try {
+    const { params } = context;
+
     // First check if node exists
     const node = await db.fileSystemNode.findUnique({
       where: { id: params.id },

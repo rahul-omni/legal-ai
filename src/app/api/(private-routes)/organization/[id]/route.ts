@@ -1,7 +1,7 @@
 import { userFromSession } from "@/lib/auth";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
-import { auth } from "../../../[...nextauth]/route";
+import { auth } from "../../../lib/auth/nextAuthConfig";
 import { db } from "../../../lib/db";
 import { handleError } from "../../../lib/errors";
 import { logger } from "../../../lib/logger";

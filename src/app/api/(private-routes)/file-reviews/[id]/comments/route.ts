@@ -1,4 +1,4 @@
-import { auth } from "@/app/api/[...nextauth]/route";
+import { auth } from "@/app/api/lib/auth/nextAuthConfig";
 import { handleError } from "@/app/api/lib/errors";
 import { reviewService } from "@/app/api/services/fileReviewServices";
 import { userFromSession } from "@/lib/auth";
