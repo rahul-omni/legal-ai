@@ -3,7 +3,7 @@ import { FileType } from "@prisma/client";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "../../[...nextauth]/route";
+import { auth } from "../../lib/auth/nextAuthConfig";
 import { ErrorValidation, handleError } from "../../lib/errors";
 import { logger } from "../../lib/logger";
 import { fileSystemNodeService } from "../../services/fileSystemNodeService";

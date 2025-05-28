@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
 import { db } from "@/app/api/lib/db";
-import { FileSystemNodeProps } from "@/types/fileSystem";
 import { userFromSession } from "@/lib/auth";
+import { FileSystemNodeProps } from "@/types/fileSystem";
 import { NextAuthRequest } from "next-auth";
-import { auth } from "../../../[...nextauth]/route";
+import { NextResponse } from "next/server";
+import { auth } from "../../../lib/auth/nextAuthConfig";
+import { handleError } from "@/app/api/lib/errors";
 
 // Recursive function to build a nested tree structure
 async function buildTree(parentId: string | null, userId: string) {
@@ -27,7 +28,7 @@ async function buildTree(parentId: string | null, userId: string) {
 }
 
 // GET: Fetch entire file system tree for a user
-export async function retrieveFileTreeStructure(request: NextAuthRequest) {
+async function retrieveFileTreeStructure(request: NextAuthRequest) {
   try {
     const sessionUser = await userFromSession(request);
 
@@ -35,10 +36,7 @@ export async function retrieveFileTreeStructure(request: NextAuthRequest) {
     const tree = await buildTree(null, sessionUser.id);
     return NextResponse.json(tree);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch tree" },
-      { status: 500 }
-    );
+    return handleError(error);
   }
 }
 

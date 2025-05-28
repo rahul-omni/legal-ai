@@ -1,7 +1,7 @@
 import { routeConfig } from "@/lib/routeConfig";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
-import { auth } from "./app/api/[...nextauth]/route";
+import { auth } from "./app/api/lib/auth/nextAuthConfig";
 import { redirectToURL } from "./app/api/helper/redirect";
 
 export default auth((req: NextAuthRequest) => {
