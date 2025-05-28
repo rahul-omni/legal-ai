@@ -35,7 +35,7 @@ const useAxios = <TResponse>() => {
           headers,
           cancelToken: cancelTokenSource.current.token,
         });
-
+     
         setData(response.data);
         return response.data;
       } catch (err) {

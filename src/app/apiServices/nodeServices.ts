@@ -2,6 +2,7 @@ import { FileSystemNodeProps } from "@/types/fileSystem";
 import { FileType } from "@prisma/client";
 import { apiClient } from ".";
 import { AxiosResponse } from "axios";
+import { apiRouteConfig } from "../api/lib/apiRouteConfig";
 export interface CreateNodePayload {
   name: string;
   type: FileType;
@@ -9,56 +10,29 @@ export interface CreateNodePayload {
   content?: string;
 }
 
-// export const fetchNodes = async (
-//   parentId?: string
-// ): Promise<FileSystemNodeProps[] | undefined> => {
-//   try {
-//     const url = `/nodes?parentId=${parentId || ""}`;
-//     const response = await apiClient.get(url);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error fetching nodes:", error);
-//     return;
-//   }
-// };
-// Create a module-level cache
-const requestCache = new Map<string, Promise<FileSystemNodeProps[]>>();
-
 export const fetchNodes = async (
   parentId?: string
-): Promise<FileSystemNodeProps[]> => { // Always return array, not undefined
-  const url = `/nodes?parentId=${parentId || ""}`;
-  
-  // Return cached promise if available
-  if (requestCache.has(url)) {
-    return requestCache.get(url)!;
-  }
+): Promise<FileSystemNodeProps[]> => {
+  const url = `${apiRouteConfig.privateRoutes.nodes}?parentId=${parentId || ""}`;
 
   try {
-    // Create and cache the request promise
-    const requestPromise = apiClient.get(url).then(response => {
-      // Validate response is an array
+    const requestPromise = apiClient.get(url).then((response) => {
       if (!Array.isArray(response.data)) {
-        throw new Error('Invalid response format: expected array');
+        throw new Error("Invalid response format: expected array");
       }
       return response.data;
-    }).finally(() => {
-      // Clean up cache after request completes (success or failure)
-      requestCache.delete(url);
     });
 
-    requestCache.set(url, requestPromise);
-    
     return await requestPromise;
   } catch (error) {
     console.error("Error fetching nodes:", error);
     return []; // Return empty array instead of undefined
   }
 };
- 
+
 export const createNodeold = async (node: CreateNodePayload) => {
   try {
-    await apiClient.post("/nodes", node);
+    await apiClient.post(apiRouteConfig.privateRoutes.nodes, node);
   } catch (error) {
     console.error("Error uploading file:", error);
     throw new Error("Failed to upload file");
@@ -70,7 +44,7 @@ export const createNode = async (
 ): Promise<FileSystemNodeProps> => {
   try {
     const response: AxiosResponse<FileSystemNodeProps> = await apiClient.post(
-      "/nodes",
+      apiRouteConfig.privateRoutes.nodes,
       node
     );
     return response.data;
@@ -82,7 +56,7 @@ export const createNode = async (
 
 export const fetchAllNodes = async (): Promise<FileSystemNodeProps[]> => {
   try {
-    const response = await apiClient.get("/system/tree");
+    const response = await apiClient.get(apiRouteConfig.privateRoutes.nodeTree);
     return response.data;
   } catch (error) {
     console.error("Error fetching all nodes:", error);
@@ -94,9 +68,12 @@ export const readFile = async (
   nodeId: string
 ): Promise<{ content: Blob; name: string }> => {
   try {
-    const response = await apiClient.get(`/nodes/${nodeId}`, {
-      responseType: "blob",
-    });
+    const response = await apiClient.get(
+      apiRouteConfig.privateRoutes.node(nodeId),
+      {
+        responseType: "blob",
+      }
+    );
     const blob = response.data as Blob;
 
     const contentDisposition = response.headers["content-disposition"];
@@ -120,7 +97,7 @@ export const updateNodeContentwork = async (
   }
   try {
     const response: AxiosResponse<FileSystemNodeProps> = await apiClient.put(
-      `/nodes/${nodeId}`,
+      apiRouteConfig.privateRoutes.node(nodeId),
       { content }
     );
     return response.data;
@@ -144,7 +121,7 @@ export const updateNodeContent = async (
     if (name) payload.name = name;
 
     const response: AxiosResponse<FileSystemNodeProps> = await apiClient.put(
-      `/nodes/${nodeId}`,
+      apiRouteConfig.privateRoutes.node(nodeId),
       payload
     );
 
@@ -155,26 +132,25 @@ export const updateNodeContent = async (
   }
 };
 
-
 export const createNewFile = async (
-  payload:  CreateNodePayload
+  payload: CreateNodePayload
 ): Promise<FileSystemNodeProps> => {
   // Set default values
   const { type, ...restPayload } = payload; // Exclude 'type' from payload
   const createPayload = {
-    type: 'FILE' as const,
-    content: '',
+    type: "FILE" as const,
+    content: "",
     ...restPayload,
   };
 
   try {
     const response: AxiosResponse<FileSystemNodeProps> = await apiClient.post(
-      '/nodes',
+      apiRouteConfig.privateRoutes.nodes,
       createPayload
     );
 
     console.log("New file created:", response.data);
-    
+
     return response.data;
   } catch (error) {
     console.error("Error creating new file:", error);

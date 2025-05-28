@@ -1,6 +1,12 @@
 "use client";
-import LegalEditor from "@/components/LegalEditor";
+
+import { LegalEditor } from "@/components/LegalEditor/LegalEditor";
+import { FileProvider } from "@/components/LegalEditor/reducers/fileReducer";
 
 export default function Page() {
-  return <LegalEditor />;
+  return (
+    <FileProvider>
+      <LegalEditor />
+    </FileProvider>
+  );
 }

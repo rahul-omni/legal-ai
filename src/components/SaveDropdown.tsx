@@ -2,8 +2,8 @@ import { Save, ChevronDown, Loader2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 interface SaveDropdownProps {
-  onSave: () => Promise<void>;
-  onSaveAs: () => Promise<void>;
+  onSave: () => void;
+  onSaveAs: () => void;
   isNewFile?: boolean;
   name?: string;
   isSaving?: boolean;

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { createContext, ReactNode, useContext, useReducer } from "react";
 import {
   ActionType,
@@ -34,7 +34,7 @@ export const FileHandlingProvider: React.FC<FileHandlingProviderProps> = ({
   );
 };
 
-export const fileHandlingContext = () => {
+export const useFileHandlingContext = () => {
   const context = useContext(contextMade);
   if (!context) {
     throw new Error(
