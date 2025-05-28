@@ -545,7 +545,7 @@ const SekeletonProjectCard = () => {
   );
 };
 
-export const NewProjectModal: FC<ProjectReducerProps> = ({
+const NewProjectModal: FC<ProjectReducerProps> = ({
   projectHubState: projectHubState,
   dispatchProjectHub: dispatchProjectHub,
 }) => {

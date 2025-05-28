@@ -49,7 +49,6 @@ export function FolderPickerModal({
               }
             }}
             selectedDocument={selectedFile}
-            onPdfParsed={() => {}}
             isFolderPickerOpen={true}
           />
         </div>

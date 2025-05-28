@@ -191,36 +191,6 @@ export const extractTextFromPDF = async (
   }
 };
 
-// Helper function specifically for Lexical editor integration
-export const convertPDFToLexicalNodes = (
-  extractedContent: ExtractedContent
-) => {
-  // This function would transform the extracted content into a structure
-  // that can be inserted into a Lexical editor instance
-  // The implementation depends on the specific Lexical plugins and structure you're using
-
-  // Simple example - would need to be customized based on your Lexical setup
-  const paragraphs = extractedContent.text.split("\n\n");
-
-  return {
-    type: "root",
-    children: paragraphs
-      .map((paragraph) => ({
-        type: "paragraph",
-        children: [{ text: paragraph, type: "text" }],
-      }))
-      .concat(
-        extractedContent.images.map((image) => ({
-          type: "image",
-          src: image.src,
-          width: image.width,
-          height: image.height,
-          altText: "PDF image",
-        }))
-      ),
-  };
-};
-
 interface TextItem {
   str: string;
   dir: string;
@@ -371,7 +341,7 @@ export async function extractPdfToHtml(file: File): Promise<string> {
     // Group text items by line (y-position)
     const lines: Record<string, any[]> = {};
 
-    textContent.items.forEach((item:any) => {
+    textContent.items.forEach((item: any) => {
       const lineKey = Math.round(item.transform[5]).toString();
       if (!lines[lineKey]) lines[lineKey] = [];
       lines[lineKey].push(item);
