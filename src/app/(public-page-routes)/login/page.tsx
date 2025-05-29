@@ -5,7 +5,6 @@ import { routeConfig } from "@/lib/routeConfig";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -50,28 +49,106 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
           <div className="py-16">
             <h2 className="text-4xl font-bold mb-6">Welcome Back</h2>
-            <p className="text-lg text-white/80">Streamline your legal workflow with AI-powered insights</p>
+            <p className="text-lg text-white/80">
+              Streamline your legal workflow with AI-powered insights
+            </p>
             <div className="mt-12 relative h-64">
               <div className="absolute inset-0 flex items-center justify-center">
                 {/* Modern geometric SVG pattern */}
-                <svg width="320" height="200" viewBox="0 0 320 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-90">
-                  <rect x="30" y="30" width="60" height="60" rx="16" fill="url(#rectGrad)" opacity="0.18" />
-                  <circle cx="220" cy="60" r="36" fill="url(#circleGrad)" opacity="0.13" />
-                  <polygon points="160,160 200,190 120,190" fill="url(#polyGrad)" opacity="0.16" />
-                  <line x1="40" y1="170" x2="280" y2="170" stroke="#fff" strokeWidth="2" opacity="0.08" />
-                  <ellipse cx="80" cy="140" rx="28" ry="12" fill="#fff" opacity="0.07" />
-                  <ellipse cx="260" cy="140" rx="18" ry="8" fill="#fff" opacity="0.09" />
-                  <rect x="250" y="30" width="18" height="18" rx="4" fill="#fff" opacity="0.10" />
+                <svg
+                  width="320"
+                  height="200"
+                  viewBox="0 0 320 200"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="opacity-90"
+                >
+                  <rect
+                    x="30"
+                    y="30"
+                    width="60"
+                    height="60"
+                    rx="16"
+                    fill="url(#rectGrad)"
+                    opacity="0.18"
+                  />
+                  <circle
+                    cx="220"
+                    cy="60"
+                    r="36"
+                    fill="url(#circleGrad)"
+                    opacity="0.13"
+                  />
+                  <polygon
+                    points="160,160 200,190 120,190"
+                    fill="url(#polyGrad)"
+                    opacity="0.16"
+                  />
+                  <line
+                    x1="40"
+                    y1="170"
+                    x2="280"
+                    y2="170"
+                    stroke="#fff"
+                    strokeWidth="2"
+                    opacity="0.08"
+                  />
+                  <ellipse
+                    cx="80"
+                    cy="140"
+                    rx="28"
+                    ry="12"
+                    fill="#fff"
+                    opacity="0.07"
+                  />
+                  <ellipse
+                    cx="260"
+                    cy="140"
+                    rx="18"
+                    ry="8"
+                    fill="#fff"
+                    opacity="0.09"
+                  />
+                  <rect
+                    x="250"
+                    y="30"
+                    width="18"
+                    height="18"
+                    rx="4"
+                    fill="#fff"
+                    opacity="0.10"
+                  />
                   <defs>
-                    <linearGradient id="rectGrad" x1="30" y1="30" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+                    <linearGradient
+                      id="rectGrad"
+                      x1="30"
+                      y1="30"
+                      x2="90"
+                      y2="90"
+                      gradientUnits="userSpaceOnUse"
+                    >
                       <stop stopColor="#fff" stopOpacity="0.5" />
                       <stop offset="1" stopColor="#fff" stopOpacity="0.1" />
                     </linearGradient>
-                    <radialGradient id="circleGrad" cx="0" cy="0" r="1" gradientTransform="translate(220 60) scale(36)" gradientUnits="userSpaceOnUse">
+                    <radialGradient
+                      id="circleGrad"
+                      cx="0"
+                      cy="0"
+                      r="1"
+                      gradientTransform="translate(220 60) scale(36)"
+                      gradientUnits="userSpaceOnUse"
+                    >
                       <stop stopColor="#fff" stopOpacity="0.4" />
                       <stop offset="1" stopColor="#fff" stopOpacity="0.08" />
                     </radialGradient>
-                    <linearGradient id="polyGrad" x1="120" y1="190" x2="200" y2="190" gradientUnits="userSpaceOnUse">
+                    <linearGradient
+                      id="polyGrad"
+                      x1="120"
+                      y1="190"
+                      x2="200"
+                      y2="190"
+                      gradientUnits="userSpaceOnUse"
+                    >
                       <stop stopColor="#fff" stopOpacity="0.3" />
                       <stop offset="1" stopColor="#fff" stopOpacity="0.08" />
                     </linearGradient>
@@ -137,9 +214,25 @@ export default function LoginPage() {
             >
               {isLoading("LOGGING_IN") ? (
                 <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Signing in...
                 </span>
@@ -151,14 +244,12 @@ export default function LoginPage() {
 
           <div className="mt-6 text-center space-y-4">
             <p className="text-sm text-gray-600">
-              <button
-                className="text-primary hover:text-primaryDark font-medium"
-              >
+              <button className="text-primary hover:text-primaryDark font-medium">
                 Forgot your password?
               </button>
             </p>
             <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
+              {"Don't have an account?"}{" "}
               <button
                 onClick={() => router.push(routeConfig.publicRoutes.signup)}
                 className="text-primary hover:text-primaryDark font-medium"
