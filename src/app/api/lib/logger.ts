@@ -6,12 +6,18 @@ import { createLogger, format, transports } from "winston";
 const loggerTransports = [];
 
 const logDir = path.join(process.cwd(), "logs");
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
+try {
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+  loggerTransports.push(
+    new transports.File({ filename: path.join(logDir, "app.log") })
+  );
+} catch (err) {
+  // If directory creation fails (e.g., read-only FS), fallback to console only
+  // Optionally, you can log this to the console for debugging
+  // console.warn("File logging disabled: ", err);
 }
-loggerTransports.push(
-  new transports.File({ filename: path.join(logDir, "app.log") })
-);
 
 loggerTransports.push(new transports.Console());
 
