@@ -1,6 +1,19 @@
 import { formatDate } from "date-fns";
 import path from "path";
+import fs from "fs";
 import { createLogger, format, transports } from "winston";
+
+const loggerTransports = [];
+
+const logDir = path.join(process.cwd(), "logs");
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
+loggerTransports.push(
+  new transports.File({ filename: path.join(logDir, "app.log") })
+);
+
+loggerTransports.push(new transports.Console());
 
 export const logger = createLogger({
   level: "info",
@@ -22,8 +35,5 @@ export const logger = createLogger({
       return `${istTimestamp} [${level}] [${filePath}]: ${stack || message}${contextStr}`;
     })
   ),
-  transports: [
-    new transports.File({ filename: "logs/app.log" }), // Log to file
-    new transports.Console(), // Log to console
-  ],
+  transports: loggerTransports,
 });
