@@ -4,14 +4,11 @@ import {
   CreateNodePayload,
   fetchNodes,
 } from "@/app/apiServices/nodeServices";
+import { Spinner } from "@/components/Loader";
 import { handleApiError } from "@/helper/handleApiError";
 import { FileService } from "@/lib/fileService";
 import { FileSystemNodeProps } from "@/types/fileSystem";
-import {
-  extractPdfToHtml,
-  extractPDFWithFormatting,
-  extractTextFromPDF,
-} from "@/utils/pdfUtils";
+import { extractPdfToHtml } from "@/utils/pdfUtils";
 import { useParams } from "next/navigation";
 import { FC, useEffect, useRef, useState } from "react";
 import { useToast } from "../../ui/toast";
@@ -23,7 +20,6 @@ interface FileExplorerProps {
   selectedDocument?: FileSystemNodeProps;
   onDocumentSelect: (_file: FileSystemNodeProps) => void;
   isFolderPickerOpen?: boolean;
-  isNewFileMode?: boolean;
 }
 
 export const FileExplorer: FC<FileExplorerProps> = ({
@@ -35,6 +31,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
   const [nodes, setNodes] = useState<FileSystemNodeProps[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -131,11 +128,27 @@ export const FileExplorer: FC<FileExplorerProps> = ({
     try {
       let content: string;
 
+      console.log(
+        "%c[DEBUG] File type detected:",
+        "color: blue; font-weight: bold;",
+        file.type
+      );
       if (file.type === "application/pdf") {
+        console.log(
+          "%c[DEBUG] Parsing PDF file...",
+          "color: green; font-weight: bold;"
+        );
         content = await extractPdfToHtml(file);
-
+        console.log(
+          "%c[DEBUG] PDF parsed successfully",
+          "color: green; font-weight: bold;"
+        );
         showToast("PDF Parsed Successfully");
       } else {
+        console.log(
+          "%c[DEBUG] Parsing non-PDF file...",
+          "color: orange; font-weight: bold;"
+        );
         content = await FileService.parseFile(file);
       }
 
@@ -227,9 +240,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
 
       <div className="flex-1 overflow-y-auto p-2 bg-[#f9f9f9]">
         {loading ? (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            <div className="animate-spin mr-2">⏳</div> Loading...
-          </div>
+          <Spinner />
         ) : (
           <div className="space-y-0.5">
             {Array.isArray(nodes) && nodes.length > 0 ? (

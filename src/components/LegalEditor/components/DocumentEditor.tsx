@@ -11,10 +11,10 @@ import {
   EditorState,
   LexicalEditor,
 } from "lexical";
-import { FC, RefObject, useRef } from "react";
+import { FC, RefObject } from "react";
+import { EditorInitializer } from "./lexical/EditorInitializer";
 import { ToolbarPlugin } from "./lexical/ToolbarPlugin";
 import { initialConfig } from "./lexical/initialConfig";
-import { EditorInitializer } from "./lexical/EditorInitializer";
 import "./lexical/lexical.css";
 
 interface DocumentEditorProps {
@@ -30,10 +30,6 @@ export const DocumentEditor: FC<DocumentEditorProps> = ({
   handleSelectionChange,
   onSelectedTextChange,
 }) => {
-  const caretPositionRef = useRef<{ index: number; length: number } | null>(
-    null
-  );
-
   const handleEditorSelectionChange = (editorState: EditorState) => {
     let text: string | undefined;
     editorState.read(() => {
@@ -45,11 +41,7 @@ export const DocumentEditor: FC<DocumentEditorProps> = ({
       }
 
       if (selection.getTextContent().length === 0) {
-        // TODO: Handle empty selection case
-        // caretPositionRef.current = {
-        //   index: selection.anchor.offset,
-        //   length: 0,
-        // };
+        // Handle empty selection case
       } else {
         text = selection.getTextContent();
         if (onSelectedTextChange) onSelectedTextChange(text);
@@ -93,9 +85,7 @@ export function insertTextAtSelection(editor: LexicalEditor, text: string) {
       const root = $getRoot();
       const lastChild = root.getLastChild();
       if (lastChild) {
-        // TODO: Handle case where last child is not a text node 
-        // lastChild.select(lastChild.getTextContentSize(), 0);
-        // $getSelection()?.insertText(text);
+        // Handle case where last child is not a text node
       } else {
         const textNode = $createTextNode(text);
         root.append(textNode);

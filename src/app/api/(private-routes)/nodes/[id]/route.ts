@@ -1,4 +1,6 @@
 import { db } from "@/app/api/lib/db";
+import { handleError } from "@/app/api/lib/errors";
+import { handleApiError } from "@/helper/handleApiError";
 import { NextRequest, NextResponse } from "next/server";
 
 //api/nodes/id
@@ -69,10 +71,7 @@ export async function PUT(
 
     return NextResponse.json(updatedNode);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to update node" },
-      { status: 500 }
-    );
+    return handleError(error);
   }
 }
 

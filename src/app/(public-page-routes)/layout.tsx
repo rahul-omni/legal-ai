@@ -1,3 +1,4 @@
+import { Spinner } from "@/components/Loader";
 import { Metadata } from "next";
 import { Suspense } from "react";
 
@@ -11,15 +12,5 @@ export default function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center min-h-screen">
-          Loading...
-        </div>
-      }
-    >
-      {children}
-    </Suspense>
-  );
+  return <Suspense fallback={<Spinner />}>{children}</Suspense>;
 }

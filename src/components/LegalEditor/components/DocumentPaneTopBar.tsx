@@ -1,57 +1,47 @@
 import { TranslationDropdown } from "../../TranslationDropdown";
 import { SaveDropdown } from "../../SaveDropdown";
-import { TranslationVendor } from "@/lib/translation/types";
-import { Dispatch, SetStateAction } from "react";
+import { useLoadingContext } from "@/context/loadingContext";
+import { useDocumentEditor } from "../reducersContexts/documentEditorReducerContext";
+import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 
 interface DocumentPaneTopBarProps {
-  localFileName: string;
-  fileId?: string | null;
-  isNewFileMode?: boolean;
-  handleTranslate: any;
-  isLoading: boolean;
-  selectedLanguage: string;
-  setSelectedLanguage: (_lang: string) => void;
-  translationVendor: TranslationVendor;
-  setTranslationVendor: Dispatch<SetStateAction<TranslationVendor>>;
   onFileReviewRequest: () => void;
-  handleSave: () => void;
-  handleSaveAs: (_name?: string) => void;
-  isSaving: boolean;
 }
 
-export function DocumentPaneTopBar({
-  localFileName,
-  fileId,
-  isNewFileMode,
-  handleTranslate,
-  isLoading,
-  selectedLanguage,
-  setSelectedLanguage,
-  translationVendor,
-  setTranslationVendor,
-  onFileReviewRequest,
-  handleSave,
-  handleSaveAs,
-  isSaving,
-}: DocumentPaneTopBarProps) {
+export function DocumentPaneTopBar({ onFileReviewRequest }: DocumentPaneTopBarProps) {
+  const { docEditorState: docState, handleSave, handleSaveAs, handleTranslate } = useDocumentEditor();
+  const { explorerState } = useExplorerContext();
+  const { isLoading } = useLoadingContext();
+
+  const { activeTabId, openTabs, isSaving, selectedLanguage, translationVendor } = docState;
+  const activeTab = openTabs.find(tab => tab.id === activeTabId);
+  
+  const handleLanguageChange = (language: string) => {
+    handleTranslate(translationVendor, language);
+  };
+  
+  const handleVendorChange = (vendor: any) => {
+    handleTranslate(vendor, selectedLanguage);
+  };
+
   return (
     <div className="bg-white border-b border-gray-200">
       <div className="flex justify-between items-center px-3 py-1">
         <div className="flex items-center space-x-2">
           <h2 className="text-sm font-medium text-gray-700 truncate max-w-md">
-            {localFileName || "Untitled Document"} {!fileId && "(Unsaved)"}
+            {activeTab?.name || "Untitled Document"} {!activeTab?.fileId && "(Unsaved)"}
           </h2>
         </div>
         <div className="flex items-center space-x-1">
           <TranslationDropdown
             onTranslate={handleTranslate}
-            isLoading={isLoading}
+            isLoading={isLoading("TRANSLATE_TEXT")}
             selectedLanguage={selectedLanguage}
-            onLanguageChange={setSelectedLanguage}
+            onLanguageChange={handleLanguageChange}
             selectedVendor={translationVendor}
-            onVendorChange={setTranslationVendor}
+            onVendorChange={handleVendorChange}
           />
-          {!isNewFileMode && (
+          {!explorerState.isNewFileMode && (
             <button
               onClick={onFileReviewRequest}
               className="ml-2 px-3 py-1.5 text-sm bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
@@ -62,8 +52,8 @@ export function DocumentPaneTopBar({
           <SaveDropdown
             onSave={handleSave}
             onSaveAs={handleSaveAs}
-            isNewFile={!fileId}
-            name={localFileName || ""}
+            isNewFile={!activeTab?.fileId}
+            name={activeTab?.name || ""}
             isSaving={isSaving}
           />
         </div>

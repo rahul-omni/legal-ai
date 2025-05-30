@@ -1,36 +1,30 @@
-import { FileSystemNodeProps } from "@/types/fileSystem";
+import { useDocumentEditor } from "../reducersContexts/documentEditorReducerContext";
+import { useUIState } from "../reducersContexts/editorUiReducerContext";
+import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 import { FileExplorer } from "./FileExplorer";
 
-interface FileExplorerPanelProps {
-  showLeftPanel: boolean;
-  selectedFile?: FileSystemNodeProps;
-  refreshKey: number;
-  isNewFileMode: boolean;
-  onDocumentSelect: (_file: FileSystemNodeProps) => void;
-}
+export function FileExplorerPanel() {
+  const { explorerState, handleSelectFile } = useExplorerContext();
+  const { docEditorDispatch } = useDocumentEditor();
+  const { state: uiState } = useUIState();
 
-export function FileExplorerPanel({
-  showLeftPanel,
-  selectedFile,
-  refreshKey,
-  isNewFileMode,
-  onDocumentSelect,
-}: FileExplorerPanelProps) {
   return (
     <div
       className={`${
-        showLeftPanel ? "w-56" : "w-0"
+        uiState.showLeftPanel ? "w-56" : "w-0"
       } transition-all duration-200`}
     >
       <div
-        className={`h-full overflow-hidden ${!showLeftPanel && "invisible"}`}
+        className={`h-full overflow-hidden ${!uiState.showLeftPanel && "invisible"}`}
       >
         <FileExplorer
-          key={`file-explorer-${refreshKey}`}
-          selectedDocument={selectedFile}
-          onDocumentSelect={onDocumentSelect}
+          key={`file-explorer-${explorerState.refreshKey}`}
+          selectedDocument={explorerState.selectedFile}
+          onDocumentSelect={(file) => {
+            handleSelectFile(file);
+            docEditorDispatch({ type: "FILE_SELECT", payload: file });
+          }}
           isFolderPickerOpen={false}
-          isNewFileMode={isNewFileMode}
         />
       </div>
     </div>

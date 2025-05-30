@@ -1,5 +1,5 @@
 import { RoleProvider } from "@/context/roleContext";
-import { TabsProvider } from "@/context/tabsContext";
+import { TabsProvider } from "@/components/LegalEditor/reducersContexts/tabsContext";
 import type { Metadata } from "next";
 import { SessionProvider } from "next-auth/react";
 import PrivatePages from "./privatePages";

@@ -1,4 +1,5 @@
 "use client";
+import { Spinner } from "@/components/Loader";
 import { Navigation } from "@/components/Navigation";
 import { useRoleContext } from "@/context/roleContext";
 import { useUserContext } from "@/context/userContext";
@@ -32,11 +33,7 @@ const PrivatePages: FC<{
   }, [roleList]);
 
   if (session.status === "loading" || session.status === "unauthenticated") {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
-      </div>
-    );
+    return <Spinner />;
   }
 
   return (
