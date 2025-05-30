@@ -228,7 +228,7 @@ export function DocumentPane({
       .replace(/\n?```$/i, "") // closing fence
       .trim();
 
-  async function handlePromptSubmit(prompt: string) {
+  async function handlePromptSubmit(prompt: string, fullText?: string) {
     if (!prompt.trim() || !editorRef.current) return;
     setGenerationState({ isGenerating: true });
 
@@ -236,7 +236,7 @@ export function DocumentPane({
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, text: selectedText || content }),
+        body: JSON.stringify({ prompt, text: fullText || content }),
       });
       if (!res.body) throw new Error("No stream returned");
 

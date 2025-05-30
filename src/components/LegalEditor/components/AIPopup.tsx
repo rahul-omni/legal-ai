@@ -111,36 +111,20 @@ export function AIPopup({
       );
 
       // Process selected documents from tree
-      const treeTexts = await Promise.all(
-        selectedDocuments.map(async (node) => {
-          try {
-            const { content, name } = await readFile(node.id);
-            const file = new File([content], name);
+      const treeTexts = selectedDocuments.map((node) => node.content);
 
-            if (name.endsWith(".pdf")) return extractTextFromPDF(file);
-            if (name.endsWith(".docx")) return extractTextFromDocx(file);
-            return content.text();
-          } catch (err) {
-            console.error("Failed to read file:", node.name, err);
-            return "";
-          }
-        })
-      );
-
-      const fileText = [...uploadedTexts, ...treeTexts]
+      let fileText = [...uploadedTexts, ...treeTexts]
         .filter(Boolean)
         .join("\n\n");
 
       // Build primary context
       let primary = "";
       if (selectedText) primary = `Selected Text:\n"""\n${selectedText}\n"""`;
-      else if (currentContent)
-        primary = `Document Content:\n"""\n${currentContent}\n"""`;
+      // else if (currentContent)
+      //   primary = `Document Content:\n"""\n${currentContent}\n"""`;
+      if (fileText) fileText = `Context Files:\n"""\n${fileText}\n"""`;
 
-      // Merge primary + files
-      const separator =
-        primary && fileText ? "\n\n---\n\nAdditional Context Files:\n" : "";
-      const fullText = primary + separator + fileText;
+      const fullText = primary + fileText;
 
       // Submit to parent
       onPromptSubmit(prompt.trim(), fullText);
