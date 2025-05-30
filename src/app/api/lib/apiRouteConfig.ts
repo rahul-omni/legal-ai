@@ -16,8 +16,6 @@ interface PrivateApiRoute {
   user: "/user";
   inviteTeamMember: "/invite-team-member";
   teamMembers(_orgId: string): `/organization/${string}/team-members`;
-  reviews: "/reviews";
-  
   organization(_orgId: string): `/organization/${string}`;
   fileReviewReq: `/file-reviews`;
   reviewDetails(_reviewId: string): `/file-reviews/${string}`;
@@ -39,7 +37,6 @@ export const apiRouteConfig: {
     user: "/user",
     teamMembers: (orgId) => `/organization/${orgId}/team-members`,
     inviteTeamMember: "/invite-team-member",
-    reviews: "/reviews",
     fileReviewReq: `/file-reviews`,
     reviewDetails: (reviewId) => `/file-reviews/${reviewId}`,
     reviewStatus: (reviewId) => `/file-reviews/${reviewId}/status`,
