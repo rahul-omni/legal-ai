@@ -1,13 +1,10 @@
 "use client";
 
-import { useLoadingContext } from "@/context/loadingContext";
-import { TranslationVendor } from "@/lib/translation/types";
 import { $generateNodesFromDOM } from "@lexical/html";
 import {
   $createParagraphNode,
   $createTextNode,
   $getRoot,
-  $getSelection,
   $insertNodes,
   $isElementNode,
   LexicalEditor,
@@ -20,8 +17,6 @@ import { DocumentEditor } from "./DocumentEditor";
 import { DocumentPaneTopBar } from "./DocumentPaneTopBar";
 import { ReviewRequestModal } from "./ReviewRequestModal";
 
-//#region Types & Interfaces
-
 interface GenerationState {
   isGenerating: boolean;
   insertPosition?: {
@@ -31,33 +26,20 @@ interface GenerationState {
   };
 }
 
-interface DocumentPaneProps {
-  activeTabId: string;
-}
-
-//#endregion
-
-export function DocumentPane({ activeTabId }: DocumentPaneProps) {
-  //#region State & Refs
-  const {
-    docEditorState: docEditorState,
-    handleContentChange,
-    handleTranslate,
-  } = useDocumentEditor();
+export function DocumentPane() {
+  const { docEditorState } = useDocumentEditor();
   const [selectedText, setSelectedText] = useState<string>();
   const [generationState, setGenerationState] = useState<GenerationState>({
     isGenerating: false,
   });
   const { showToast } = useToast();
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const { startLoading, stopLoading } = useLoadingContext();
 
   const activeTab = docEditorState.openTabs.find(
-    (tab) => tab.id === activeTabId
+    (tab) => tab.id === docEditorState.activeTabId
   );
-  const editorRef = useRef<LexicalEditor>(null);
 
-  //#endregion
+  const editorRef = useRef<LexicalEditor>(null);
 
   const stripCodeFence = (raw: string): string =>
     raw
@@ -163,89 +145,35 @@ export function DocumentPane({ activeTabId }: DocumentPaneProps) {
     }
   };
 
-  const handleContentChangeLocal = (content: string) => {
-    handleContentChange(content);
-  };
-
-  const handleTranslateText = async (
-    vendor: TranslationVendor,
-    language: string
-  ) => {
-    try {
-      startLoading("TRANSLATE_TEXT");
-      const response = await fetch("/api/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vendor,
-          sourceText: selectedText || activeTab?.content || "",
-          targetLanguage: language,
-          mode: "formal",
-        }),
-      });
-
-      if (!response.ok) throw new Error("Translation failed");
-      const data = await response.json();
-
-      if (editorRef.current) {
-        editorRef.current.update(() => {
-          const selection = $getSelection();
-          if (selection) {
-            selection.insertText(data.translation);
-          } else {
-            const root = $getRoot();
-            root.clear();
-            const parser = new DOMParser();
-            const dom = parser.parseFromString(data.translation, "text/html");
-            const nodes = $generateNodesFromDOM(editorRef.current!, dom);
-            root.append(...nodes);
-          }
-        });
-
-        // Update content in context
-        handleContentChange(data.translation);
-      }
-
-      // Call the context handler to update translation state
-      handleTranslate(vendor, language);
-    } catch (error) {
-      showToast("Failed to translate text", "error");
-    } finally {
-      stopLoading("TRANSLATE_TEXT");
-    }
-  };
-
   return (
-    <>
-      <div className="flex flex-col h-full">
-        <DocumentPaneTopBar onFileReviewRequest={onFileReviewRequest} />
-        <div className="flex-1 relative bg-white">
-          <DocumentEditor
-            localContent={activeTab?.content || ""}
-            editorRef={editorRef}
-            handleSelectionChange={handleSelectionChange}
-            onSelectedTextChange={setSelectedText}
-          />
+    <div className="flex flex-col h-full">
+      <DocumentPaneTopBar onFileReviewRequest={onFileReviewRequest} />
+      <div className="flex-1 relative bg-white">
+        <DocumentEditor
+          localContent={activeTab?.content || ""}
+          editorRef={editorRef}
+          handleSelectionChange={handleSelectionChange}
+          onSelectedTextChange={setSelectedText}
+        />
 
-          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-[600px]">
-            <AIPopup
-              onPromptSubmit={handlePromptSubmit}
-              selectedText={selectedText}
-              cursorPosition={undefined}
-              isFolderPickerOpen={docEditorState.isFolderPickerOpen}
-            />
-          </div>
-          <GenerationIndicator isGenerating={generationState.isGenerating} />
-        </div>
-        {activeTab?.fileId && (
-          <ReviewRequestModal
-            isOpen={showReviewModal}
-            fileId={activeTab.fileId}
-            onClose={() => setShowReviewModal(false)}
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-[600px]">
+          <AIPopup
+            onPromptSubmit={handlePromptSubmit}
+            selectedText={selectedText}
+            cursorPosition={undefined}
+            isFolderPickerOpen={docEditorState.isFolderPickerOpen}
           />
-        )}
+        </div>
+        <GenerationIndicator isGenerating={generationState.isGenerating} />
       </div>
-    </>
+      {activeTab?.fileId && (
+        <ReviewRequestModal
+          isOpen={showReviewModal}
+          fileId={activeTab.fileId}
+          onClose={() => setShowReviewModal(false)}
+        />
+      )}
+    </div>
   );
 }
 
