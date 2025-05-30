@@ -10,7 +10,7 @@ export function DocumentEditorPanel() {
       <TabBar />
       <div className="flex-1 flex flex-col min-h-0">
         {docEditorState.activeTabId ? (
-          <DocumentPane />
+          <DocumentPane key={docEditorState.activeTabId} />
         ) : (
           <NoDocumentOpenMessage />
         )}

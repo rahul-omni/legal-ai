@@ -556,7 +556,7 @@ export function DocumentEditorProvider({
   };
 
   const handleFileTreeUpdate = async (
-    parentId?: string
+    _parentId?: string
   ): Promise<FileSystemNodeProps[]> => {
     // This should be implemented in the parent component
     // to update the file tree after operations

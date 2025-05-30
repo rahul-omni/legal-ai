@@ -29,11 +29,12 @@ interface GenerationState {
 export function DocumentPane() {
   const { docEditorState } = useDocumentEditor();
   const [selectedText, setSelectedText] = useState<string>();
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const [generationState, setGenerationState] = useState<GenerationState>({
     isGenerating: false,
   });
+
   const { showToast } = useToast();
-  const [showReviewModal, setShowReviewModal] = useState(false);
 
   const activeTab = docEditorState.openTabs.find(
     (tab) => tab.id === docEditorState.activeTabId
