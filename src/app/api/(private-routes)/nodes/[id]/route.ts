@@ -1,14 +1,13 @@
 import { db } from "@/app/api/lib/db";
 import { handleError } from "@/app/api/lib/errors";
-import { handleApiError } from "@/helper/handleApiError";
 import { NextRequest, NextResponse } from "next/server";
 
 //api/nodes/id
 export async function GET(_: NextRequest, context: any) {
   try {
-    const { params } = context;
+    const { id } = await context.params;
     const node = await db.fileSystemNode.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!node) {
@@ -35,10 +34,7 @@ export async function GET(_: NextRequest, context: any) {
 
     return NextResponse.json(node);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch node" },
-      { status: 500 }
-    );
+    handleError(error);
   }
 }
 
@@ -48,9 +44,9 @@ export async function PUT(
   context: any // Change here
 ) {
   try {
-    const { params } = context;
+    const { id } = await context.params;
 
-    if (!params.id) {
+    if (!id) {
       return NextResponse.json(
         { error: "Node ID is  PUT nodes routes  required" },
         { status: 400 }
@@ -60,7 +56,7 @@ export async function PUT(
 
     // Partial update - only modify provided fields
     const updatedNode = await db.fileSystemNode.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(name && { name }), // Update if name exists
         ...(content !== undefined && { content }), // Update if content provided
@@ -78,11 +74,11 @@ export async function PUT(
 // DELETE: Recursively delete a node and its children
 export async function DELETE(_: NextRequest, context: any) {
   try {
-    const { params } = context;
+    const { id } = await context.params;
 
     // First check if node exists
     const node = await db.fileSystemNode.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!node) {
@@ -107,13 +103,10 @@ export async function DELETE(_: NextRequest, context: any) {
       });
     }
 
-    await deleteNode(params.id);
+    await deleteNode(id);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to delete node" },
-      { status: 500 }
-    );
+    return handleError(error);
   }
 }
