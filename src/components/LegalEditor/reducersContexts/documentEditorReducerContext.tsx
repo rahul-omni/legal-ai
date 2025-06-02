@@ -1,12 +1,15 @@
-import { updateNodeContent } from "@/app/apiServices/nodeServices";
 import { TranslationVendor } from "@/lib/translation/types";
 import { FileSystemNodeProps } from "@/types/fileSystem";
+import { LexicalEditor } from "lexical";
 import {
   createContext,
   Dispatch,
   ReactNode,
+  RefObject,
   useContext,
+  useEffect,
   useReducer,
+  useRef,
 } from "react";
 import { useFolderPickerState } from "./folderPickerReducerContext";
 
@@ -37,13 +40,11 @@ type DocumentEditorAction =
   | { type: "NEW_FILE" }
   | { type: "TAB_CLICK"; payload: string }
   | { type: "TAB_CLOSE"; payload: string }
-  | { type: "CONTENT_CHANGE"; payload: string }
   | {
       type: "TRANSLATE";
       payload: { vendor: TranslationVendor; language: string };
     }
   | { type: "START_SAVE" }
-  | { type: "FINISH_SAVE"; payload?: { tabId: string; fileId?: string } }
   | { type: "START_SAVE_AS"; payload: { name: string } }
   | { type: "FILE_SELECT"; payload: FileSystemNodeProps }
   | {
@@ -111,30 +112,6 @@ function documentEditorReducer(
       };
     }
 
-    case "CONTENT_CHANGE": {
-      if (!state.activeTabId) {
-        console.warn(
-          `%c[Reducer] CONTENT_CHANGE: No active tab to update content`,
-          "color: orange; font-weight: bold;"
-        );
-        return state;
-      }
-
-      console.log(
-        `%c[Reducer] CONTENT_CHANGE: Updating content for tab ID ${state.activeTabId}`,
-        "color: purple; font-weight: bold;"
-      );
-      return {
-        ...state,
-        localContent: action.payload,
-        openTabs: state.openTabs.map((tab) =>
-          tab.id === state.activeTabId
-            ? { ...tab, content: action.payload, isUnsaved: true }
-            : tab
-        ),
-      };
-    }
-
     case "TRANSLATE":
       console.log(
         `%c[Reducer] TRANSLATE: Setting translation vendor to ${action.payload.vendor} and language to ${action.payload.language}`,
@@ -154,27 +131,6 @@ function documentEditorReducer(
       return {
         ...state,
         isSaving: true,
-      };
-
-    case "FINISH_SAVE":
-      console.log(
-        `%c[Reducer] FINISH_SAVE: Save process completed`,
-        "color: green; font-weight: bold;"
-      );
-      return {
-        ...state,
-        isSaving: false,
-        openTabs: action.payload
-          ? state.openTabs.map((tab) =>
-              tab.id === action.payload?.tabId
-                ? {
-                    ...tab,
-                    isUnsaved: false,
-                    fileId: action.payload.fileId || tab.fileId,
-                  }
-                : tab
-            )
-          : state.openTabs,
       };
 
     case "FILE_SELECT": {
@@ -237,6 +193,7 @@ function documentEditorReducer(
       );
       return {
         ...state,
+        isSaving: false,
         openTabs: state.openTabs.map((tab) =>
           tab.id === action.payload.tabId
             ? { ...tab, content: action.payload.content, isUnsaved: true }
@@ -275,16 +232,15 @@ function documentEditorReducer(
 // Context interface with state and handlers
 interface DocumentEditorContextType {
   docEditorState: DocumentEditorState;
+  lexicalEditorRef: RefObject<LexicalEditor | null>;
   docEditorDispatch: Dispatch<DocumentEditorAction>;
   handleNewFile: () => void;
   handleTabClick: (_tabId: string) => void;
   handleTabClose: (_tabId: string) => void;
-  handleContentChange: (_content: string) => void;
   handleTranslate: (
     _vendor: TranslationVendor,
     _language: string
   ) => Promise<void>;
-  handleSave: () => Promise<string | undefined>;
   handleSaveAs: (_name?: string) => Promise<void>;
   handleFileSelect: (_file: FileSystemNodeProps) => void;
   handleFileReviewRequest: () => void;
@@ -312,7 +268,7 @@ const initialState: DocumentEditorState = {
 };
 
 // Create context with default values
-const DocumentEditorContext = createContext<
+const documentEditorContext = createContext<
   DocumentEditorContextType | undefined
 >(undefined);
 
@@ -337,6 +293,14 @@ export function DocumentEditorProvider({
     }
   );
 
+  const lexicalEditorRef = useRef<LexicalEditor>(null);
+
+  useEffect(() => {
+    return () => {
+      lexicalEditorRef.current = null;
+    };
+  }, []);
+
   const folderPickerContext = useFolderPickerState();
 
   // Handler functions - simplified with direct dispatch calls
@@ -350,10 +314,6 @@ export function DocumentEditorProvider({
 
   const handleTabClose = (tabId: string) => {
     docEditorDispatch({ type: "TAB_CLOSE", payload: tabId });
-  };
-
-  const handleContentChange = (content: string) => {
-    docEditorDispatch({ type: "CONTENT_CHANGE", payload: content });
   };
 
   const handleTranslate = async (
@@ -404,74 +364,6 @@ export function DocumentEditorProvider({
     }
   };
 
-  const handleSave = async (): Promise<string | undefined> => {
-    if (!docEditorState.activeTabId) return;
-
-    const activeTab = docEditorState.openTabs.find(
-      (tab) => tab.id === docEditorState.activeTabId
-    );
-    if (!activeTab) return;
-
-    docEditorDispatch({ type: "START_SAVE" });
-
-    try {
-      if (!activeTab.fileId) {
-        // This is a new file, show save dialog
-        const fileName = window.prompt(
-          "Enter file name:",
-          activeTab.name || "Untitled"
-        );
-        if (!fileName) {
-          docEditorDispatch({ type: "FINISH_SAVE" });
-          return;
-        }
-
-        // Show the folder picker to get save location
-        handleInitiateSave(
-          fileName,
-          activeTab.content,
-          undefined,
-          null,
-          (newFile) => {
-            docEditorDispatch({
-              type: "UPDATE_TAB_NAME",
-              payload: {
-                tabId: activeTab.id,
-                name: newFile.name,
-                fileId: newFile.id,
-              },
-            });
-
-            docEditorDispatch({
-              type: "FINISH_SAVE",
-              payload: {
-                tabId: activeTab.id,
-                fileId: newFile.id,
-              },
-            });
-
-            return newFile.id;
-          }
-        );
-      } else {
-        // Update existing file
-        await updateNodeContent(activeTab.fileId, activeTab.content);
-
-        docEditorDispatch({
-          type: "FINISH_SAVE",
-          payload: {
-            tabId: activeTab.id,
-          },
-        });
-
-        return activeTab.fileId;
-      }
-    } catch (error) {
-      console.error("Save failed:", error);
-      docEditorDispatch({ type: "FINISH_SAVE" });
-    }
-  };
-
   const handleSaveAs = async (name?: string): Promise<void> => {
     if (!docEditorState.activeTabId) return;
 
@@ -493,16 +385,6 @@ export function DocumentEditorProvider({
       undefined,
       activeTab.fileId,
       (newFile) => {
-        // Create a new tab for the saved-as file
-        const newTabId = `tab-${Date.now()}`;
-        const newTab = {
-          id: newTabId,
-          name: newFile.name,
-          content: activeTab.content,
-          fileId: newFile.id,
-          isUnsaved: false,
-        };
-
         docEditorDispatch({
           type: "FILE_SELECT",
           payload: {
@@ -510,7 +392,6 @@ export function DocumentEditorProvider({
             content: activeTab.content,
           },
         });
-        docEditorDispatch({ type: "FINISH_SAVE" });
       }
     );
   };
@@ -565,13 +446,12 @@ export function DocumentEditorProvider({
 
   const contextValue: DocumentEditorContextType = {
     docEditorState,
+    lexicalEditorRef,
     docEditorDispatch,
     handleNewFile,
     handleTabClick,
     handleTabClose,
-    handleContentChange,
     handleTranslate,
-    handleSave,
     handleSaveAs,
     handleFileSelect,
     handleFileReviewRequest,
@@ -580,14 +460,14 @@ export function DocumentEditorProvider({
   };
 
   return (
-    <DocumentEditorContext.Provider value={contextValue}>
+    <documentEditorContext.Provider value={contextValue}>
       {children}
-    </DocumentEditorContext.Provider>
+    </documentEditorContext.Provider>
   );
 }
 
 export const useDocumentEditor = (): DocumentEditorContextType => {
-  const context = useContext(DocumentEditorContext);
+  const context = useContext(documentEditorContext);
   if (!context) {
     throw new Error(
       "useDocumentEditor must be used within a DocumentEditorProvider"

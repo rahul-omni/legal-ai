@@ -4,59 +4,45 @@ import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import {
-  $createTextNode,
-  $getRoot,
-  $getSelection,
-  EditorState,
-  LexicalEditor,
-} from "lexical";
-import { FC, RefObject } from "react";
+import { $getSelection, EditorState } from "lexical";
+import { debounce } from "lodash";
+import { FC } from "react";
+import { useDocumentEditor } from "../reducersContexts/documentEditorReducerContext";
 import { EditorInitializer } from "./lexical/EditorInitializer";
 import { ToolbarPlugin } from "./lexical/ToolbarPlugin";
 import { initialConfig } from "./lexical/initialConfig";
+
 import "./lexical/lexical.css";
 
 interface DocumentEditorProps {
   localContent: string;
   handleSelectionChange: (_selectedText?: string) => void;
-  editorRef: RefObject<LexicalEditor | null>;
-  onSelectedTextChange?: (_text: string) => void;
 }
 
 export const DocumentEditor: FC<DocumentEditorProps> = ({
   localContent,
-  editorRef,
   handleSelectionChange,
-  onSelectedTextChange,
 }) => {
-  const handleEditorSelectionChange = (editorState: EditorState) => {
-    let text: string | undefined;
-    editorState.read(() => {
-      const selection = $getSelection();
-      if (!selection) {
-        text = undefined;
-        if (onSelectedTextChange) onSelectedTextChange("");
-        return;
-      }
+  const { lexicalEditorRef } = useDocumentEditor();
 
-      if (selection.getTextContent().length === 0) {
-        // Handle empty selection case
-      } else {
-        text = selection.getTextContent();
-        if (onSelectedTextChange) onSelectedTextChange(text);
-      }
-    });
-
-    handleSelectionChange(text);
+  const handleSelectionUpdate = () => {
+    const selection = $getSelection();
+    const selectedText = selection?.getTextContent() || undefined;
+    handleSelectionChange(selectedText);
   };
+
+  const handleEditorChange = debounce((editorState: EditorState) => {
+    editorState.read(() => {
+      handleSelectionUpdate();
+    });
+  }, 300);
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <EditorInitializer
         localContent={localContent}
         setEditorRef={(editor) => {
-          editorRef.current = editor;
+          lexicalEditorRef.current = editor;
         }}
       />
       <ToolbarPlugin />
@@ -68,28 +54,9 @@ export const DocumentEditor: FC<DocumentEditorProps> = ({
           contentEditable={<ContentEditable className="editor-input" />}
           ErrorBoundary={LexicalErrorBoundary}
         />
-        <OnChangePlugin onChange={handleEditorSelectionChange} />
+        <OnChangePlugin onChange={handleEditorChange} />
         <HistoryPlugin />
       </div>
     </LexicalComposer>
   );
 };
-
-// Add a public method to the Editor component through its ref
-export function insertTextAtSelection(editor: LexicalEditor, text: string) {
-  editor.update(() => {
-    const selection = $getSelection();
-    if (selection) {
-      selection.insertText(text);
-    } else {
-      const root = $getRoot();
-      const lastChild = root.getLastChild();
-      if (lastChild) {
-        // Handle case where last child is not a text node
-      } else {
-        const textNode = $createTextNode(text);
-        root.append(textNode);
-      }
-    }
-  });
-}

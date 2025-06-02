@@ -7,15 +7,14 @@ import {
   $getRoot,
   $insertNodes,
   $isElementNode,
-  LexicalEditor,
 } from "lexical";
-import { useRef, useState } from "react";
-import { useToast } from "../../ui/toast";
+import { useState } from "react";
 import { useDocumentEditor } from "../reducersContexts/documentEditorReducerContext";
 import { AIPopup } from "./AIPopup";
 import { DocumentEditor } from "./DocumentEditor";
 import { DocumentPaneTopBar } from "./DocumentPaneTopBar";
 import { ReviewRequestModal } from "./ReviewRequestModal";
+import toast from "react-hot-toast";
 
 interface GenerationState {
   isGenerating: boolean;
@@ -27,20 +26,16 @@ interface GenerationState {
 }
 
 export function DocumentPane() {
-  const { docEditorState } = useDocumentEditor();
+  const { docEditorState, lexicalEditorRef } = useDocumentEditor();
   const [selectedText, setSelectedText] = useState<string>();
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [generationState, setGenerationState] = useState<GenerationState>({
     isGenerating: false,
   });
 
-  const { showToast } = useToast();
-
   const activeTab = docEditorState.openTabs.find(
     (tab) => tab.id === docEditorState.activeTabId
   );
-
-  const editorRef = useRef<LexicalEditor>(null);
 
   const stripCodeFence = (raw: string): string =>
     raw
@@ -49,7 +44,7 @@ export function DocumentPane() {
       .trim();
 
   async function handlePromptSubmit(prompt: string, fullText?: string) {
-    if (!prompt.trim() || !editorRef.current) return;
+    if (!prompt.trim() || !lexicalEditorRef.current) return;
     setGenerationState({ isGenerating: true });
 
     try {
@@ -81,7 +76,7 @@ export function DocumentPane() {
           fullHtml += chunk;
 
           // ── Phase 1: update plain text immediately ──
-          editorRef.current.update(() => {
+          lexicalEditorRef.current.update(() => {
             if (!paraNode) {
               paraNode = $createParagraphNode();
               liveText = $createTextNode("");
@@ -100,14 +95,15 @@ export function DocumentPane() {
           const cleanHtml = stripCodeFence(fullHtml).trim();
           const dom = new DOMParser().parseFromString(cleanHtml, "text/html");
 
-          editorRef.current.update(() => {
+          lexicalEditorRef.current.update(() => {
             // wipe the temporary paragraph
             $getRoot().clear();
 
             // keep only element/decorator nodes (TextNodes alone will break root)
-            const nodes = $generateNodesFromDOM(editorRef.current!, dom).filter(
-              $isElementNode
-            );
+            const nodes = $generateNodesFromDOM(
+              lexicalEditorRef.current!,
+              dom
+            ).filter($isElementNode);
             const safeNodes = nodes.filter($isElementNode);
 
             if (safeNodes.length) {
@@ -131,18 +127,11 @@ export function DocumentPane() {
     }
   }
 
-  const handleSelectionChange = (text?: string) => {
-    setSelectedText(text);
-  };
-
   const onFileReviewRequest = () => {
     if (activeTab?.fileId) {
       setShowReviewModal(true);
     } else {
-      showToast(
-        "Please save the document first before requesting a review",
-        "error"
-      );
+      toast.error("Please save the document first before requesting a review");
     }
   };
 
@@ -152,9 +141,7 @@ export function DocumentPane() {
       <div className="flex-1 relative bg-white">
         <DocumentEditor
           localContent={activeTab?.content || ""}
-          editorRef={editorRef}
-          handleSelectionChange={handleSelectionChange}
-          onSelectedTextChange={setSelectedText}
+          handleSelectionChange={setSelectedText}
         />
 
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-[600px]">

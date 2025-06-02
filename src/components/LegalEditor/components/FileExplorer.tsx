@@ -11,7 +11,7 @@ import { FileSystemNodeProps } from "@/types/fileSystem";
 import { extractPdfToHtml } from "@/utils/pdfUtils";
 import { useParams } from "next/navigation";
 import { FC, useEffect, useRef, useState } from "react";
-import { useToast } from "../../ui/toast";
+import toast from "react-hot-toast";
 import { FileExplorerHeader } from "./FileHeader";
 import FileNode from "./FileNode";
 import FolderNode from "./FolderNode";
@@ -32,7 +32,6 @@ export const FileExplorer: FC<FileExplorerProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -63,7 +62,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
       setNodes(() => node);
       handleParams(node);
     } catch (error) {
-      handleApiError(error, showToast);
+      handleApiError(error);
     } finally {
       setLoading(false);
     }
@@ -143,7 +142,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
           "%c[DEBUG] PDF parsed successfully",
           "color: green; font-weight: bold;"
         );
-        showToast("PDF Parsed Successfully");
+        toast.success("PDF Parsed Successfully");
       } else {
         console.log(
           "%c[DEBUG] Parsing non-PDF file...",
@@ -162,7 +161,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
       await createNode(newFile);
       await refreshNodes(parentId);
     } catch (error) {
-      handleApiError(error, showToast);
+      handleApiError(error);
     }
   };
 
@@ -197,7 +196,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
       await createNode(folder);
       await refreshNodes();
     } catch (error) {
-      handleApiError(error, showToast);
+      handleApiError(error);
     }
   };
 

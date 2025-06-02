@@ -5,7 +5,6 @@ interface SaveDropdownProps {
   onSave: () => void;
   onSaveAs: () => void;
   isNewFile?: boolean;
-  name?: string;
   isSaving?: boolean;
 }
 
@@ -13,7 +12,6 @@ export function SaveDropdown({
   onSave, 
   onSaveAs, 
   isNewFile = false, 
-  name = "",
   isSaving = false 
 }: SaveDropdownProps) {
   const [showDropdown, setShowDropdown] = useState(false);
