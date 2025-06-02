@@ -1,6 +1,7 @@
 import { updateNodeContent } from "@/app/apiServices/nodeServices";
 import { useLoadingContext } from "@/context/loadingContext";
 import { $generateHtmlFromNodes } from "@lexical/html";
+import toast from "react-hot-toast";
 import { SaveDropdown } from "../../SaveDropdown";
 import { TranslationDropdown } from "../../TranslationDropdown";
 import {
@@ -8,7 +9,6 @@ import {
   useDocumentEditor,
 } from "../reducersContexts/documentEditorReducerContext";
 import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
-import toast from "react-hot-toast";
 
 interface DocumentPaneTopBarProps {
   onFileReviewRequest: () => void;
