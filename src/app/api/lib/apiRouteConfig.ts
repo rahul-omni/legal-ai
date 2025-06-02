@@ -10,7 +10,7 @@ interface PublicApiRoute {
 
 interface PrivateApiRoute {
   nodes: "/nodes";
-  node: (_nodeId: string) => `/node/${string}`;
+  node: (_nodeId: string) => `/nodes/${string}`;
   nodeTree: "/system/tree";
   roles: "/roles";
   user: "/user";
@@ -33,7 +33,7 @@ export const apiRouteConfig: {
 } = {
   privateRoutes: {
     nodes: "/nodes",
-    node: (nodeId: string) => `/node/${nodeId}`,
+    node: (nodeId: string) => `/nodes/${nodeId}`,
     nodeTree: "/system/tree",
     roles: "/roles",
     user: "/user",
