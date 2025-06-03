@@ -11,7 +11,6 @@ interface FolderNodeProps {
     _e: React.ChangeEvent<HTMLInputElement>,
     _parentId?: string
   ) => void;
-  isFolderPickerOpen?: boolean;
   renderNode: (_node: FileSystemNodeProps, _depth: number) => JSX.Element;
 }
 
@@ -21,7 +20,6 @@ const FolderNode = ({
   selectedDocument,
   onToggleExpand,
   onFileUpload,
-  isFolderPickerOpen,
   renderNode,
 }: FolderNodeProps) => (
   <div key={node.id} className="relative">
@@ -58,14 +56,12 @@ const FolderNode = ({
             <span className="text-sm text-gray-700/80">{node.name}</span>
           </div>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {!isFolderPickerOpen && (
-              <label
-                htmlFor={`file-${node.id}`}
-                className="p-1 rounded-md hover:bg-gray-200/70 cursor-pointer"
-              >
-                <FilePlus className="w-4 h-4 text-gray-500/80" />
-              </label>
-            )}
+            <label
+              htmlFor={`file-${node.id}`}
+              className="p-1 rounded-md hover:bg-gray-200/70 cursor-pointer"
+            >
+              <FilePlus className="w-4 h-4 text-gray-500/80" />
+            </label>
             <input
               id={`file-${node.id}`}
               type="file"

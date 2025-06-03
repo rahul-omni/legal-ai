@@ -11,7 +11,7 @@ import {
   useReducer,
   useRef,
 } from "react";
-import { useFolderPickerState } from "./folderPickerReducerContext";
+import { useFolderPicker } from "./folderPickerReducerContext";
 
 // Interface for TabInfo
 export interface TabInfo {
@@ -45,7 +45,7 @@ type DocumentEditorAction =
       payload: { vendor: TranslationVendor; language: string };
     }
   | { type: "START_SAVE" }
-  | { type: "START_SAVE_AS"; payload: { name: string } }
+  | { type: "CANCEL_SAVE" }
   | { type: "FILE_SELECT"; payload: FileSystemNodeProps }
   | {
       type: "INITIATE_SAVE";
@@ -71,10 +71,6 @@ function documentEditorReducer(
   switch (action.type) {
     case "NEW_FILE": {
       const newTabId = `tab-${Date.now()}`;
-      console.log(
-        `%c[Reducer] NEW_FILE: Creating new tab with ID ${newTabId}`,
-        "color: green; font-weight: bold;"
-      );
       return {
         ...state,
         isNewFileMode: true,
@@ -87,20 +83,12 @@ function documentEditorReducer(
     }
 
     case "TAB_CLICK":
-      console.log(
-        `%c[Reducer] TAB_CLICK: Switching to tab with ID ${action.payload}`,
-        "color: blue; font-weight: bold;"
-      );
       return {
         ...state,
         activeTabId: action.payload,
       };
 
     case "TAB_CLOSE": {
-      console.log(
-        `%c[Reducer] TAB_CLOSE: Closing tab with ID ${action.payload}`,
-        "color: red; font-weight: bold;"
-      );
       const newTabs = state.openTabs.filter((tab) => tab.id !== action.payload);
       return {
         ...state,
@@ -113,10 +101,6 @@ function documentEditorReducer(
     }
 
     case "TRANSLATE":
-      console.log(
-        `%c[Reducer] TRANSLATE: Setting translation vendor to ${action.payload.vendor} and language to ${action.payload.language}`,
-        "color: teal; font-weight: bold;"
-      );
       return {
         ...state,
         selectedLanguage: action.payload.language,
@@ -124,28 +108,16 @@ function documentEditorReducer(
       };
 
     case "START_SAVE":
-      console.log(
-        `%c[Reducer] START_SAVE: Initiating save process`,
-        "color: green; font-weight: bold;"
-      );
-      return {
-        ...state,
-        isSaving: true,
-      };
+      return { ...state, isSaving: true };
+
+    case "CANCEL_SAVE":
+      return { ...state, isSaving: false };
 
     case "FILE_SELECT": {
       const file = action.payload;
-      console.log(
-        `%c[Reducer] FILE_SELECT: Selecting file with ID ${file.id} and name ${file.name}`,
-        "color: blue; font-weight: bold;"
-      );
       const existingTab = state.openTabs.find((tab) => tab.fileId === file.id);
 
       if (existingTab) {
-        console.log(
-          `%c[Reducer] FILE_SELECT: File already open in tab ID ${existingTab.id}`,
-          "color: orange; font-weight: bold;"
-        );
         return {
           ...state,
           activeTabId: existingTab.id,
@@ -154,10 +126,6 @@ function documentEditorReducer(
       }
 
       const newTabId = `tab-${Date.now()}`;
-      console.log(
-        `%c[Reducer] FILE_SELECT: Creating new tab for file with ID ${file.id}`,
-        "color: green; font-weight: bold;"
-      );
       const newTab = {
         id: newTabId,
         name: file.name,
@@ -168,6 +136,7 @@ function documentEditorReducer(
 
       return {
         ...state,
+        isSaving: false,
         openTabs: [...state.openTabs, newTab],
         activeTabId: newTabId,
         isNewFileMode: false,
@@ -177,20 +146,12 @@ function documentEditorReducer(
     }
 
     case "INITIATE_SAVE":
-      console.log(
-        `%c[Reducer] INITIATE_SAVE: Opening folder picker for save operation`,
-        "color: teal; font-weight: bold;"
-      );
       return {
         ...state,
         isFolderPickerOpen: true,
       };
 
     case "UPDATE_TAB_CONTENT":
-      console.log(
-        `%c[Reducer] UPDATE_TAB_CONTENT: Updating content for tab ID ${action.payload.tabId}`,
-        "color: purple; font-weight: bold;"
-      );
       return {
         ...state,
         isSaving: false,
@@ -202,12 +163,9 @@ function documentEditorReducer(
       };
 
     case "UPDATE_TAB_NAME":
-      console.log(
-        `%c[Reducer] UPDATE_TAB_NAME: Updating name for tab ID ${action.payload.tabId} to ${action.payload.name}`,
-        "color: blue; font-weight: bold;"
-      );
       return {
         ...state,
+        isSaving: false,
         openTabs: state.openTabs.map((tab) =>
           tab.id === action.payload.tabId
             ? {
@@ -221,10 +179,6 @@ function documentEditorReducer(
       };
 
     default:
-      console.warn(
-        `%c[Reducer] Unknown action type: ${action.type}`,
-        "color: red; font-weight: bold;"
-      );
       return state;
   }
 }
@@ -241,16 +195,7 @@ interface DocumentEditorContextType {
     _vendor: TranslationVendor,
     _language: string
   ) => Promise<void>;
-  handleSaveAs: (_name?: string) => Promise<void>;
-  handleFileSelect: (_file: FileSystemNodeProps) => void;
   handleFileReviewRequest: () => void;
-  handleInitiateSave: (
-    _name: string,
-    _content: string,
-    _parentId?: string,
-    _fileId?: string | null,
-    _callback?: (_newFile: FileSystemNodeProps) => void
-  ) => void;
   handleFileTreeUpdate: (_parentId?: string) => Promise<FileSystemNodeProps[]>;
 }
 
@@ -301,7 +246,7 @@ export function DocumentEditorProvider({
     };
   }, []);
 
-  const folderPickerContext = useFolderPickerState();
+  const folderPickerContext = useFolderPicker();
 
   // Handler functions - simplified with direct dispatch calls
   const handleNewFile = () => {
@@ -364,76 +309,9 @@ export function DocumentEditorProvider({
     }
   };
 
-  const handleSaveAs = async (name?: string): Promise<void> => {
-    if (!docEditorState.activeTabId) return;
-
-    const activeTab = docEditorState.openTabs.find(
-      (tab) => tab.id === docEditorState.activeTabId
-    );
-    if (!activeTab) return;
-
-    const fileName =
-      name || window.prompt("Enter new file name:", activeTab.name);
-    if (!fileName) return;
-
-    docEditorDispatch({ type: "START_SAVE" });
-
-    // Show folder picker to select location
-    handleInitiateSave(
-      fileName,
-      activeTab.content,
-      undefined,
-      activeTab.fileId,
-      (newFile) => {
-        docEditorDispatch({
-          type: "FILE_SELECT",
-          payload: {
-            ...newFile,
-            content: activeTab.content,
-          },
-        });
-      }
-    );
-  };
-
-  const handleFileSelect = (file: FileSystemNodeProps) => {
-    docEditorDispatch({ type: "FILE_SELECT", payload: file });
-  };
-
   const handleFileReviewRequest = () => {
     // This will be implemented in the DocumentPane component
     // Logic will open the review modal
-  };
-
-  const handleInitiateSave = (
-    name: string,
-    content: string,
-    parentId?: string,
-    fileId?: string | null,
-    callback?: (_newFile: FileSystemNodeProps) => void
-  ) => {
-    // Show the folder picker via context
-    folderPickerContext.dispatch({
-      type: "SHOW_PICKER",
-      payload: {
-        name,
-        content,
-        parentId,
-        fileId,
-        callback,
-      },
-    });
-
-    docEditorDispatch({
-      type: "INITIATE_SAVE",
-      payload: {
-        name,
-        content,
-        parentId,
-        fileId,
-        callback,
-      },
-    });
   };
 
   const handleFileTreeUpdate = async (
@@ -452,10 +330,7 @@ export function DocumentEditorProvider({
     handleTabClick,
     handleTabClose,
     handleTranslate,
-    handleSaveAs,
-    handleFileSelect,
     handleFileReviewRequest,
-    handleInitiateSave,
     handleFileTreeUpdate,
   };
 

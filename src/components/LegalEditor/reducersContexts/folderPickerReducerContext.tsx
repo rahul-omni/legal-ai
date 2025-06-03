@@ -91,7 +91,7 @@ export function FolderPickerProvider({
 }
 
 // Custom hook
-export function useFolderPickerState(): FolderPickerContextType {
+export function useFolderPicker(): FolderPickerContextType {
   const context = useContext(FolderPickerContext);
   if (!context) {
     throw new Error(
