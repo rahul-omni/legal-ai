@@ -126,7 +126,6 @@ type ExplorerContextType = {
   explorerState: ExplorerState;
   explorerDispatch: React.Dispatch<ExplorerAction>;
   handleLoadFiles: () => Promise<FileSystemNodeProps[]>;
-  handleSelectFile: (_file?: FileSystemNodeProps) => void;
   handleRefreshFiles: () => void;
   handleSetNewFileMode: (_isNewMode: boolean) => void;
 };
@@ -157,10 +156,6 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const handleSelectFile = (file: FileSystemNodeProps | undefined) => {
-    explorerDispatch({ type: "SELECT_FILE", payload: file });
-  };
-
   const handleRefreshFiles = () => {
     explorerDispatch({ type: "INCREMENT_REFRESH_KEY" });
     handleLoadFiles();
@@ -176,7 +171,6 @@ export function ExplorerProvider({ children }: { children: ReactNode }) {
         explorerState,
         explorerDispatch,
         handleLoadFiles,
-        handleSelectFile,
         handleRefreshFiles,
         handleSetNewFileMode,
       }}

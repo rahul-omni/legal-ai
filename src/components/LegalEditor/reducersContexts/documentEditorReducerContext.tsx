@@ -189,7 +189,6 @@ interface DocumentEditorContextType {
   lexicalEditorRef: RefObject<LexicalEditor | null>;
   docEditorDispatch: Dispatch<DocumentEditorAction>;
   handleNewFile: () => void;
-  handleTabClick: (_tabId: string) => void;
   handleTabClose: (_tabId: string) => void;
   handleTranslate: (
     _vendor: TranslationVendor,
@@ -251,10 +250,6 @@ export function DocumentEditorProvider({
   // Handler functions - simplified with direct dispatch calls
   const handleNewFile = () => {
     docEditorDispatch({ type: "NEW_FILE" });
-  };
-
-  const handleTabClick = (tabId: string) => {
-    docEditorDispatch({ type: "TAB_CLICK", payload: tabId });
   };
 
   const handleTabClose = (tabId: string) => {
@@ -327,7 +322,6 @@ export function DocumentEditorProvider({
     lexicalEditorRef,
     docEditorDispatch,
     handleNewFile,
-    handleTabClick,
     handleTabClose,
     handleTranslate,
     handleFileReviewRequest,

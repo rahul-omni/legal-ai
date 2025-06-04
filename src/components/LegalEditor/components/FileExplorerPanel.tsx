@@ -4,7 +4,7 @@ import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 import { FileExplorer } from "./FileExplorer";
 
 export function FileExplorerPanel() {
-  const { explorerState, handleSelectFile } = useExplorerContext();
+  const { explorerState, explorerDispatch } = useExplorerContext();
   const { docEditorDispatch } = useDocumentEditor();
   const { state: uiState } = useUIState();
 
@@ -21,10 +21,9 @@ export function FileExplorerPanel() {
           key={`file-explorer-${explorerState.refreshKey}`}
           selectedDocument={explorerState.selectedFile}
           onDocumentSelect={(file) => {
-            handleSelectFile(file);
+            explorerDispatch({ type: "SELECT_FILE", payload: file });
             docEditorDispatch({ type: "FILE_SELECT", payload: file });
           }}
-          isFolderPickerOpen={false}
         />
       </div>
     </div>

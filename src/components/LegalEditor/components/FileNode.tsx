@@ -17,7 +17,7 @@ const FileNode = ({
   <div
     className={`
       flex items-center px-2 py-1.5 rounded-md cursor-pointer
-      ${depth > 0 ? "pl-[28px]" : ""}
+      ${depth > 0 ? "pl-2" : ""}
       ${
         selectedDocument?.id === node.id
           ? "bg-blue-50 text-blue-600 ring-1 ring-blue-200"

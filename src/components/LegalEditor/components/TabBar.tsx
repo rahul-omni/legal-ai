@@ -1,9 +1,35 @@
+import { FileSystemNodeProps } from "@/types/fileSystem";
 import { Plus, X } from "lucide-react";
-import { useDocumentEditor } from "../reducersContexts/documentEditorReducerContext";
+import {
+  TabInfo,
+  useDocumentEditor,
+} from "../reducersContexts/documentEditorReducerContext";
+import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
+import { findFileById } from "./helper/explorerHelper";
 
 export function TabBar() {
-  const { docEditorState: state, handleNewFile, handleTabClick, handleTabClose } = useDocumentEditor();
+  const {
+    docEditorState: state,
+    handleNewFile,
+    handleTabClose,
+    docEditorDispatch,
+  } = useDocumentEditor();
+  const { explorerState, explorerDispatch } = useExplorerContext();
   const { openTabs, activeTabId } = state;
+
+  const handleTabClick = (tab: TabInfo) => {
+    docEditorDispatch({ type: "TAB_CLICK", payload: tab.id });
+
+    if (!tab.fileId) return;
+
+    const fileNode = findFileById(
+      explorerState.fileTree,
+      tab.fileId ?? undefined
+    );
+
+    if (!fileNode) return;
+    explorerDispatch({ type: "SELECT_FILE", payload: fileNode });
+  };
 
   return (
     <div className="flex items-center h-9 border-b border-gray-200 bg-gray-50/80">
@@ -18,7 +44,7 @@ export function TabBar() {
         {openTabs.map((tab) => (
           <div
             key={tab.id}
-            onClick={() => handleTabClick(tab.id)}
+            onClick={() => handleTabClick(tab)}
             className={`group flex items-center h-full px-3 py-1 rounded border-r border-gray-200 cursor-pointer
                       ${
                         activeTabId === tab.id
