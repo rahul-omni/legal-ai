@@ -1,5 +1,10 @@
+import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
+import useAxios from "@/hooks/api/useAxios";
+import { Trash2 } from "lucide-react";
 import FileIconDisplay from "./FileIconDisplay";
 import { FileSystemNodeProps } from "@/types/fileSystem";
+import { IconLoader } from "@/components/Loader";
+import { MouseEvent } from "react";
 
 interface FileNodeProps {
   node: FileSystemNodeProps;
@@ -13,9 +18,17 @@ const FileNode = ({
   depth,
   selectedDocument,
   onDocumentSelect,
-}: FileNodeProps) => (
-  <div
-    className={`
+}: FileNodeProps) => {
+  const { fetchData, loading: deleteLoading } = useAxios();
+
+  const handleDelete = async (e: MouseEvent, nodeId: string) => {
+    e.stopPropagation();
+    await fetchData(apiRouteConfig.privateRoutes.node(nodeId), "DELETE");
+  };
+
+  return (
+    <div
+      className={`
       flex items-center px-2 py-1.5 rounded-md cursor-pointer
       ${depth > 0 ? "pl-2" : ""}
       ${
@@ -25,15 +38,32 @@ const FileNode = ({
       }
       relative group transition-colors duration-150 ease-in-out
     `}
-    onClick={() => onDocumentSelect(node)}
-  >
-    <div className="flex items-center gap-2 w-full">
-      <div className="w-4 h-4 flex items-center justify-center shrink-0">
-        <FileIconDisplay fileName={node.name} />
+      onClick={() => onDocumentSelect(node)}
+    >
+      <div className="flex justify-between w-full">
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 flex items-center justify-center shrink-0">
+            <FileIconDisplay fileName={node.name} />
+          </div>
+          <span className="text-sm text-gray-600/80">{node.name}</span>
+        </div>
+
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            disabled={deleteLoading}
+            className="p-1 rounded-md hover:bg-gray-200/70 cursor-pointer"
+            onClick={(e) => handleDelete(e, node.id)}
+          >
+            {deleteLoading ? (
+              <IconLoader />
+            ) : (
+              <Trash2 className="w-4 h-4 text-gray-500/80 hover:text-black" />
+            )}
+          </button>
+        </div>
       </div>
-      <span className="text-sm text-gray-600/80">{node.name}</span>
     </div>
-  </div>
-);
+  );
+};
 
 export default FileNode;

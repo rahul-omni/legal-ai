@@ -1,4 +1,5 @@
 import { useLoadingContext } from "@/context/loadingContext";
+import { Loader2 } from "lucide-react";
 
 export const Spinner = () => {
   return (
@@ -13,3 +14,7 @@ export function GlobalLoader() {
   const anyLoading = Object.values(loadingState).some(Boolean);
   return anyLoading ? <Spinner /> : null;
 }
+
+export const IconLoader = () => {
+  return <Loader2 className="w-4 h-4 animate-spin" />;
+};
