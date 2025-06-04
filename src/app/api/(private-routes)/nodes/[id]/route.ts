@@ -1,12 +1,14 @@
 import { db } from "@/app/api/lib/db";
+import { ErrorNotFound, handleError } from "@/app/api/lib/errors";
+import { logger } from "@/app/api/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 
 //api/nodes/id
 export async function GET(_: NextRequest, context: any) {
   try {
-    const { params } = context;
+    const { id } = await context.params;
     const node = await db.fileSystemNode.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!node) {
@@ -33,10 +35,7 @@ export async function GET(_: NextRequest, context: any) {
 
     return NextResponse.json(node);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch node" },
-      { status: 500 }
-    );
+    handleError(error);
   }
 }
 
@@ -46,9 +45,9 @@ export async function PUT(
   context: any // Change here
 ) {
   try {
-    const { params } = context;
+    const { id } = await context.params;
 
-    if (!params.id) {
+    if (!id) {
       return NextResponse.json(
         { error: "Node ID is  PUT nodes routes  required" },
         { status: 400 }
@@ -58,7 +57,7 @@ export async function PUT(
 
     // Partial update - only modify provided fields
     const updatedNode = await db.fileSystemNode.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(name && { name }), // Update if name exists
         ...(content !== undefined && { content }), // Update if content provided
@@ -69,29 +68,29 @@ export async function PUT(
 
     return NextResponse.json(updatedNode);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to update node" },
-      { status: 500 }
-    );
+    return handleError(error);
   }
 }
 
 // DELETE: Recursively delete a node and its children
 export async function DELETE(_: NextRequest, context: any) {
   try {
-    const { params } = context;
+    const { id } = await context.params;
+    logger.info(`DELETE /nodes/${id} - Start recursive delete`);
 
     // First check if node exists
     const node = await db.fileSystemNode.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!node) {
-      return NextResponse.json({ error: "Node not found" }, { status: 404 });
+      logger.warn(`DELETE /nodes/${id} - Node not found`);
+      throw new ErrorNotFound("Node not found");
     }
 
     // Recursive delete function
     async function deleteNode(nodeId: string) {
+      logger.debug(`Deleting node ${nodeId} and its children`);
       // 1. Fetch all children
       const children = await db.fileSystemNode.findMany({
         where: { parentId: nodeId },
@@ -103,18 +102,18 @@ export async function DELETE(_: NextRequest, context: any) {
       }
 
       // 3. Delete the current node
+      logger.debug(`Deleting node ${nodeId}`);
       await db.fileSystemNode.delete({
         where: { id: nodeId },
       });
     }
 
-    await deleteNode(params.id);
+    await deleteNode(id);
+    logger.info(`DELETE /nodes/${id} - Success`);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to delete node" },
-      { status: 500 }
-    );
+    logger.error(`DELETE /nodes - Error: ${error}`);
+    return handleError(error);
   }
 }

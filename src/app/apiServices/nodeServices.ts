@@ -88,30 +88,11 @@ export const readFile = async (
   }
 };
 
-export const updateNodeContentwork = async (
-  nodeId: string,
-  content: string
-): Promise<FileSystemNodeProps> => {
-  if (!nodeId) {
-    throw new Error("Node ID is required");
-  }
-  try {
-    const response: AxiosResponse<FileSystemNodeProps> = await apiClient.put(
-      apiRouteConfig.privateRoutes.node(nodeId),
-      { content }
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Error updating node content:", error);
-    throw new Error("Failed to update node content");
-  }
-};
-
 export const updateNodeContent = async (
   nodeId: string,
   content: string,
   name?: string // optional if not renaming
-): Promise<FileSystemNodeProps> => {
+): Promise<FileSystemNodeProps | null> => {
   if (!nodeId) {
     throw new Error("Node ID is required");
   }
@@ -128,7 +109,7 @@ export const updateNodeContent = async (
     return response.data;
   } catch (error) {
     console.error("Error updating node content:", error);
-    throw new Error("Failed to update node content");
+    return null;
   }
 };
 

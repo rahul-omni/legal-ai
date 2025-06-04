@@ -1,12 +1,21 @@
 "use client";
 
 import { LegalEditor } from "@/components/LegalEditor/LegalEditor";
-import { FileProvider } from "@/components/LegalEditor/reducers/fileReducer";
+import { DocumentEditorProvider } from "@/components/LegalEditor/reducersContexts/documentEditorReducerContext";
+import { UIProvider } from "@/components/LegalEditor/reducersContexts/editorUiReducerContext";
+import { ExplorerProvider } from "@/components/LegalEditor/reducersContexts/explorerReducerContext";
+import { FolderPickerProvider } from "@/components/LegalEditor/reducersContexts/folderPickerReducerContext";
 
 export default function Page() {
   return (
-    <FileProvider>
-      <LegalEditor />
-    </FileProvider>
+    <UIProvider>
+      <ExplorerProvider>
+        <FolderPickerProvider>
+          <DocumentEditorProvider>
+            <LegalEditor />
+          </DocumentEditorProvider>
+        </FolderPickerProvider>
+      </ExplorerProvider>
+    </UIProvider>
   );
 }

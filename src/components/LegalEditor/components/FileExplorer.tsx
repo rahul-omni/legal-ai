@@ -4,17 +4,16 @@ import {
   CreateNodePayload,
   fetchNodes,
 } from "@/app/apiServices/nodeServices";
+import { Spinner } from "@/components/Loader";
 import { handleApiError } from "@/helper/handleApiError";
 import { FileService } from "@/lib/fileService";
 import { FileSystemNodeProps } from "@/types/fileSystem";
-import {
-  extractPdfToHtml,
-  extractPDFWithFormatting,
-  extractTextFromPDF,
-} from "@/utils/pdfUtils";
+import { extractTextFromPDF } from "@/utils/pdfUtils";
+import { isArray } from "lodash";
 import { useParams } from "next/navigation";
 import { FC, useEffect, useRef, useState } from "react";
-import { useToast } from "../../ui/toast";
+import toast from "react-hot-toast";
+import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 import { FileExplorerHeader } from "./FileHeader";
 import FileNode from "./FileNode";
 import FolderNode from "./FolderNode";
@@ -22,20 +21,20 @@ import FolderNode from "./FolderNode";
 interface FileExplorerProps {
   selectedDocument?: FileSystemNodeProps;
   onDocumentSelect: (_file: FileSystemNodeProps) => void;
-  isFolderPickerOpen?: boolean;
-  isNewFileMode?: boolean;
 }
 
 export const FileExplorer: FC<FileExplorerProps> = ({
   selectedDocument,
   onDocumentSelect,
-  isFolderPickerOpen = false,
 }) => {
   const params = useParams();
-  const [nodes, setNodes] = useState<FileSystemNodeProps[]>([]);
+  const {
+    explorerState: { fileTree },
+    explorerDispatch,
+  } = useExplorerContext();
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
-  const { showToast } = useToast();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -63,62 +62,34 @@ export const FileExplorer: FC<FileExplorerProps> = ({
   const fetchRootNodes = async () => {
     try {
       const node = await fetchNodes();
-      setNodes(() => node);
+      explorerDispatch({ type: "LOAD_FILES", payload: node });
       handleParams(node);
     } catch (error) {
-      handleApiError(error, showToast);
+      handleApiError(error);
     } finally {
       setLoading(false);
     }
   };
 
   const toggleExpand = async (node: FileSystemNodeProps, fileId?: string) => {
-    if (node.type !== "FOLDER") return;
+    if (node.type !== "FOLDER") {
+      return;
+    }
 
-    setNodes((prevNodes) =>
-      updateNodeProperty(prevNodes, node.id, "isExpanded", !node.isExpanded)
-    );
+    explorerDispatch({
+      type: "UPDATE_NODE_PROPERTY",
+      payload: {
+        nodeId: node.id,
+        key: "isExpanded",
+        value: !node.isExpanded,
+      },
+    });
 
-    if (!node.isExpanded && (!node.children || node.children.length === 0)) {
+    const shouldFetchChildren =
+      !node.isExpanded && (!node.children || node.children.length === 0);
+    if (shouldFetchChildren) {
       await refreshNodes(node.id, fileId);
     }
-  };
-
-  const updateNodeProperty = (
-    nodes: FileSystemNodeProps[],
-    nodeId: string,
-    key: keyof FileSystemNodeProps,
-    value: boolean | string
-  ): FileSystemNodeProps[] => {
-    return nodes.map((node) => {
-      if (node.id === nodeId) return { ...node, [key]: value };
-      if (node.children) {
-        return {
-          ...node,
-          children: updateNodeProperty(node.children, nodeId, key, value),
-        };
-      }
-      return node;
-    });
-  };
-
-  const updateNodeChildren = (
-    nodes: FileSystemNodeProps[],
-    children: FileSystemNodeProps[],
-    parentId: string
-  ): FileSystemNodeProps[] => {
-    return nodes.map((node) => {
-      if (node.id === parentId) {
-        return { ...node, children };
-      }
-      if (node.children) {
-        return {
-          ...node,
-          children: updateNodeChildren(node.children, children, parentId),
-        };
-      }
-      return node;
-    });
   };
 
   const handleFileUpload = async (
@@ -132,9 +103,9 @@ export const FileExplorer: FC<FileExplorerProps> = ({
       let content: string;
 
       if (file.type === "application/pdf") {
-        content = await extractPdfToHtml(file);
-
-        showToast("PDF Parsed Successfully");
+        const { html } = await extractTextFromPDF(file);
+        content = html;
+        toast.success("PDF Parsed Successfully");
       } else {
         content = await FileService.parseFile(file);
       }
@@ -149,14 +120,15 @@ export const FileExplorer: FC<FileExplorerProps> = ({
       await createNode(newFile);
       await refreshNodes(parentId);
     } catch (error) {
-      handleApiError(error, showToast);
+      handleApiError(error);
     }
   };
 
   const refreshNodes = async (parentId?: string, fileId?: string) => {
     const children = await fetchNodes(parentId);
+
     if (!parentId) {
-      setNodes(children);
+      explorerDispatch({ type: "LOAD_FILES", payload: children });
       return;
     }
 
@@ -167,7 +139,10 @@ export const FileExplorer: FC<FileExplorerProps> = ({
       }
     }
 
-    setNodes((prevNodes) => updateNodeChildren(prevNodes, children, parentId));
+    explorerDispatch({
+      type: "UPDATE_NODE_CHILDREN",
+      payload: { children, parentId },
+    });
   };
 
   const handleCreateFolder = async (e: React.MouseEvent) => {
@@ -184,7 +159,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
       await createNode(folder);
       await refreshNodes();
     } catch (error) {
-      handleApiError(error, showToast);
+      handleApiError(error);
     }
   };
 
@@ -198,7 +173,6 @@ export const FileExplorer: FC<FileExplorerProps> = ({
           selectedDocument={selectedDocument}
           onToggleExpand={toggleExpand}
           onFileUpload={handleFileUpload}
-          isFolderPickerOpen={isFolderPickerOpen}
           renderNode={renderNode}
         />
       );
@@ -219,7 +193,6 @@ export const FileExplorer: FC<FileExplorerProps> = ({
       <FileExplorerHeader
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        isFolderPickerOpen={isFolderPickerOpen}
         fileInputRef={fileInputRef}
         handleCreateFolder={handleCreateFolder}
         handleFileUpload={handleFileUpload}
@@ -227,13 +200,11 @@ export const FileExplorer: FC<FileExplorerProps> = ({
 
       <div className="flex-1 overflow-y-auto p-2 bg-[#f9f9f9]">
         {loading ? (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            <div className="animate-spin mr-2">⏳</div> Loading...
-          </div>
+          <Spinner />
         ) : (
           <div className="space-y-0.5">
-            {Array.isArray(nodes) && nodes.length > 0 ? (
-              nodes.map((node) => renderNode(node))
+            {isArray(fileTree) ? (
+              fileTree.map((node) => renderNode(node))
             ) : (
               <div className="text-center text-gray-500 py-4">
                 No files found

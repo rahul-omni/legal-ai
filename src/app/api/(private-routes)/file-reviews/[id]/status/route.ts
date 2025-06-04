@@ -12,8 +12,7 @@ const updateStatusSchema = z.object({
 });
 
 export const PUT = auth(async (request: NextAuthRequest, context) => {
-  const { params } = context;
-  const { id } = (await params) as unknown as { id: string };
+  const { id } = await context.params;
 
   try {
     const sessionUser = await userFromSession(request);
@@ -26,7 +25,7 @@ export const PUT = auth(async (request: NextAuthRequest, context) => {
       sessionUser.id,
       status
     );
-     
+
     if (!updatedReview) {
       return NextResponse.json(
         { error: "Failed to update review" },
@@ -34,7 +33,6 @@ export const PUT = auth(async (request: NextAuthRequest, context) => {
       );
     }
 
-    console.log("Updated review:", );
     return NextResponse.json(updatedReview);
   } catch (error) {
     return handleError(error);

@@ -16,15 +16,13 @@ interface PrivateApiRoute {
   user: "/user";
   inviteTeamMember: "/invite-team-member";
   teamMembers(_orgId: string): `/organization/${string}/team-members`;
-  reviews: "/reviews";
-  
   organization(_orgId: string): `/organization/${string}`;
   fileReviewReq: `/file-reviews`;
   reviewDetails(_reviewId: string): `/file-reviews/${string}`;
   reviewStatus(_reviewId: string): `/file-reviews/${string}/status`;
   reviewComments(_reviewId: string): `/file-reviews/${string}/comments`;
   resolveComment(_commentId: string): `/file-reviews/comments/${string}/resolve`;
-  organizationInvitations(orgId: string): `/organization/${string}/invitations`;
+  organizationInvitations(_orgId: string): `/organization/${string}/invitations`;
 }
 
 export const apiRouteConfig: {
@@ -39,7 +37,6 @@ export const apiRouteConfig: {
     user: "/user",
     teamMembers: (orgId) => `/organization/${orgId}/team-members`,
     inviteTeamMember: "/invite-team-member",
-    reviews: "/reviews",
     fileReviewReq: `/file-reviews`,
     reviewDetails: (reviewId) => `/file-reviews/${reviewId}`,
     reviewStatus: (reviewId) => `/file-reviews/${reviewId}/status`,

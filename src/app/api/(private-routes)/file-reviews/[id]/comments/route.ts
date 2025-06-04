@@ -1,5 +1,5 @@
 import { auth } from "@/app/api/lib/auth/nextAuthConfig";
-import { handleError } from "@/app/api/lib/errors";
+import { ErrorApp, handleError } from "@/app/api/lib/errors";
 import { reviewService } from "@/app/api/services/fileReviewServices";
 import { userFromSession } from "@/lib/auth";
 import { NextAuthRequest } from "next-auth";
@@ -11,20 +11,9 @@ const addCommentSchema = z.object({
 });
 
 export const POST = auth(async (request: NextAuthRequest, context) => {
-  // const { params } = context;
-  // console.log("params", params);
-  // const { id } = params as unknown as { id: string };
+  const { id: reviewId } = await context.params;
 
-  
   try {
-
-    // Ensure async context before accessing params
-    await Promise.resolve();
-    
-    // Now safely access params
-    const params = await context.params;
-    const reviewId = params?.id;
-    
     if (!reviewId) {
       return NextResponse.json(
         { error: "Review ID is required" },
@@ -42,15 +31,8 @@ export const POST = auth(async (request: NextAuthRequest, context) => {
       content,
     });
     if (!comment) {
-      return NextResponse.json(
-        { error: "Failed to add comment" },
-        { status: 500 }
-      );
+      throw new ErrorApp("Failed to add comment", 500);
     }
-
-    console.log("comment");
-    
-    
     return NextResponse.json(comment, { status: 201 });
   } catch (error) {
     return handleError(error);

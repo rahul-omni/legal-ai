@@ -1,23 +1,21 @@
-import { handleApiError } from "@/helper/handleApiError";
-import { CheckCircle, Clock, FileText, User, XCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Modal } from "./ui/Modal";
-import { ModalButton, ModalFooter } from "./ui/ModalButton";
-import { useToast } from "./ui/toast";
 import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
 import { apiClient } from "@/app/apiServices";
+import { handleApiError } from "@/helper/handleApiError";
 import DOMPurify from "dompurify";
+import { CheckCircle, Clock, FileText, User, XCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import "../app/globals.css";
-import PdfViewer from "./PdfViewer";
-import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import PDFTextViewer from "./PDFTextViewer";
+import PdfViewer from "./PdfViewer";
+import { Modal } from "./ui/Modal";
+import { ModalButton, ModalFooter } from "./ui/ModalButton";
 
 export function PendingReviews() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const { showToast } = useToast();
   const [filter, setFilter] = useState<
     "all" | "pending" | "approved" | "rejected"
   >("pending");
@@ -38,11 +36,11 @@ export function PendingReviews() {
       setIsLoading(true);
       const data = await getFileReviewDetails();
       if (!data || data.length === 0) {
-        showToast("No pending reviews found");
+        toast("No pending reviews found");
       }
       setPendingReviews(data);
     } catch (error) {
-      handleApiError(error, showToast);
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }
@@ -121,7 +119,7 @@ export function PendingReviews() {
       setShowPreview(true);
     } catch (error) {
       console.error("Error opening preview:", error);
-      showToast(
+      toast.error(
         `Failed to open document: ${error instanceof Error ? error.message : "Unknown error"}`
       );
     }
@@ -204,7 +202,7 @@ export function PendingReviews() {
       setShowPreview(true);
     } catch (error) {
       console.error("Error opening preview:", error);
-      showToast(`Failed to open document: ${(error as Error).message}`);
+      toast.error(`Failed to open document: ${(error as Error).message}`);
     }
   };
 
@@ -224,7 +222,7 @@ export function PendingReviews() {
       return response.data || [];
     } catch (error: any) {
       console.error("Error fetching file review details:", error);
-      showToast("Error fetching file review details");
+      toast.error("Error fetching file review details");
       return [];
     }
   };
@@ -248,7 +246,7 @@ export function PendingReviews() {
         throw new Error("Failed to approve review");
       }
 
-      showToast("Review approved successfully");
+      toast.success("Review approved successfully");
     } catch (error) {
       // Revert optimistic update on error
       setPendingReviews((prevReviews) =>
@@ -256,7 +254,7 @@ export function PendingReviews() {
           review.id === reviewId ? { ...review, status: "PENDING" } : review
         )
       );
-      handleApiError(error, showToast);
+      handleApiError(error);
     } finally {
       handleClosePreview();
     }
@@ -270,7 +268,7 @@ export function PendingReviews() {
   // Update the handleRejectReview function
   const handleRejectReview = async () => {
     if (!rejectComment) {
-      showToast("Please provide a reason for rejection");
+      toast.error("Please provide a reason for rejection");
       return;
     }
 
@@ -357,7 +355,7 @@ export function PendingReviews() {
             : review
         )
       );
-      handleApiError(error, showToast);
+      handleApiError(error);
     } finally {
       setShowRejectModal(false);
       setRejectComment("");
@@ -775,7 +773,7 @@ export function PendingReviews() {
                 src={previewDocument.file.url}
                 className="w-full h-full border-0"
                 title={previewDocument.file.name}
-                onError={() => showToast("Failed to load document from URL")}
+                onError={() => toast.error("Failed to load document from URL")}
               />
             ) : (
               <div className="flex items-center justify-center h-full bg-white">
