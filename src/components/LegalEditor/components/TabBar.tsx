@@ -1,11 +1,10 @@
-import { FileSystemNodeProps } from "@/types/fileSystem";
 import { Plus, X } from "lucide-react";
+import { findFileById } from "../helper/explorerHelper";
 import {
   TabInfo,
   useDocumentEditor,
 } from "../reducersContexts/documentEditorReducerContext";
 import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
-import { findFileById } from "./helper/explorerHelper";
 
 export function TabBar() {
   const {
