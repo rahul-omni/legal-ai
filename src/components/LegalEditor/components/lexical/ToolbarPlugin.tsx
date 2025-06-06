@@ -24,6 +24,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { DiffPlugin } from "./DiffPlugin";
 
 const LowPriority = 1;
 
@@ -181,6 +182,9 @@ export function ToolbarPlugin() {
       >
         <AlignJustify size={18} />
       </button>{" "}
+      <div className="toolbar">
+        <DiffPlugin />
+      </div>
     </div>
   );
 }

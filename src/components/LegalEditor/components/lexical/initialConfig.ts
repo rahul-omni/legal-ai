@@ -1,9 +1,7 @@
 // LegalEditor/components/lexical/initialConfig.ts
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
-
 // ➜ Core nodes (bundled with "lexical")
 import { ParagraphNode, TextNode } from "lexical";
-
 // ➜ Rich-text nodes for headings, lists, quotes, code blocks
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
