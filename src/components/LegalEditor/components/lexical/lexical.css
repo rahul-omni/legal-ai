@@ -158,6 +158,51 @@
   text-decoration: line-through;
 }
 
+.editor-text-highlight {
+  background-color: #fef08a;
+  padding: 1px 2px;
+  border-radius: 3px;
+}
+
+/* Diff highlighting using combination of existing formats */
+.editor-text-bold.editor-text-underline {
+  background-color: #dcfce7 !important;
+  border-left: 3px solid #22c55e !important;
+  padding: 1px 4px !important;
+  margin: 0 1px !important;
+  border-radius: 3px !important;
+  text-decoration: none !important; /* Remove underline for diff additions */
+  font-weight: normal !important; /* Reset bold for diff additions */
+}
+
+.editor-text-italic.editor-text-strikethrough {
+  background-color: #fee2e2 !important;
+  border-left: 3px solid #ef4444 !important;
+  padding: 1px 4px !important;
+  margin: 0 1px !important;
+  border-radius: 3px !important;
+  opacity: 0.7 !important;
+  font-style: normal !important; /* Reset italic for diff deletions */
+}
+
+.editor-text-diff-added {
+  background-color: #dcfce7;
+  border-left: 3px solid #22c55e;
+  padding: 1px 4px;
+  margin: 0 1px;
+  border-radius: 3px;
+}
+
+.editor-text-diff-removed {
+  background-color: #fee2e2;
+  border-left: 3px solid #ef4444;
+  padding: 1px 4px;
+  margin: 0 1px;
+  border-radius: 3px;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
 .editor-text-underlineStrikethrough {
   text-decoration: underline line-through;
 }

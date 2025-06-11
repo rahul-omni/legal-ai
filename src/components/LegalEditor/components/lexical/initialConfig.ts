@@ -36,11 +36,15 @@ const theme = {
     bold: "editor-text-bold",
     code: "editor-text-code",
     hashtag: "editor-text-hashtag",
+    highlight: "editor-text-highlight",
     italic: "editor-text-italic",
     overflowed: "editor-text-overflowed",
     strikethrough: "editor-text-strikethrough",
     underline: "editor-text-underline",
     underlineStrikethrough: "editor-text-underlineStrikethrough",
+    // Custom diff highlights
+    diffAdded: "editor-text-diff-added",
+    diffRemoved: "editor-text-diff-removed",
   },
 };
 
@@ -57,11 +61,11 @@ export const initialConfig: InitialConfigType = {
   // 🔑 Register every Node class you want Lexical to recognise.
   nodes: [
     ParagraphNode,
-    TextNode,      // required for any text
-    HeadingNode,   // enables <h1-h6>
-    ListNode,      // <ul>, <ol>
-    ListItemNode,  // <li>
-    QuoteNode,     // <blockquote>
-    CodeNode,      // <pre><code>
+    TextNode, // required for any text
+    HeadingNode, // enables <h1-h6>
+    ListNode, // <ul>, <ol>
+    ListItemNode, // <li>
+    QuoteNode, // <blockquote>
+    CodeNode, // <pre><code>
   ],
 };

@@ -17,6 +17,9 @@ import {
   AlignLeft,
   AlignRight,
   Bold,
+  Eye,
+  EyeOff,
+  Highlighter,
   Italic,
   Redo2,
   Strikethrough,
@@ -32,7 +35,17 @@ function Divider() {
   return <div className="divider" />;
 }
 
-export function ToolbarPlugin() {
+interface ToolbarPluginProps {
+  showDiffHighlight?: boolean;
+  onToggleDiffHighlight?: () => void;
+  hasDiffData?: boolean;
+}
+
+export function ToolbarPlugin({ 
+  showDiffHighlight = false, 
+  onToggleDiffHighlight,
+  hasDiffData = false 
+}: ToolbarPluginProps = {}) {
   const [editor] = useLexicalComposerContext();
   const toolbarRef = useRef(null);
   const [canUndo, setCanUndo] = useState(false);
@@ -41,6 +54,7 @@ export function ToolbarPlugin() {
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
   const [isStrikethrough, setIsStrikethrough] = useState(false);
+  const [isHighlight, setIsHighlight] = useState(false);
 
   const $updateToolbar = useCallback(() => {
     const selection = $getSelection();
@@ -49,6 +63,7 @@ export function ToolbarPlugin() {
       setIsItalic(selection.hasFormat("italic"));
       setIsUnderline(selection.hasFormat("underline"));
       setIsStrikethrough(selection.hasFormat("strikethrough"));
+      setIsHighlight(selection.hasFormat("highlight"));
     }
   }, []);
 
@@ -135,7 +150,7 @@ export function ToolbarPlugin() {
         aria-label="Format Underline"
       >
         <Underline size={18} />
-      </button>
+      </button>{" "}
       <button
         onClick={() => {
           editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough");
@@ -144,6 +159,15 @@ export function ToolbarPlugin() {
         aria-label="Format Strikethrough"
       >
         <Strikethrough size={18} />
+      </button>
+      <button
+        onClick={() => {
+          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "highlight");
+        }}
+        className={"toolbar-item spaced " + (isHighlight ? "active" : "")}
+        aria-label="Highlight Text"
+      >
+        <Highlighter size={18} />
       </button>
       <Divider />
       <button
@@ -179,9 +203,23 @@ export function ToolbarPlugin() {
         }}
         className="toolbar-item"
         aria-label="Justify Align"
-      >
-        <AlignJustify size={18} />
+      >        <AlignJustify size={18} />
       </button>{" "}
+      
+      {hasDiffData && (
+        <>
+          <Divider />
+          <button
+            onClick={onToggleDiffHighlight}
+            className={"toolbar-item spaced " + (showDiffHighlight ? "active" : "")}
+            aria-label={showDiffHighlight ? "Hide Diff Highlights" : "Show Diff Highlights"}
+            title={showDiffHighlight ? "Hide changes highlighting" : "Show changes highlighting"}
+          >
+            {showDiffHighlight ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </>
+      )}
+      
       <div className="toolbar">
         <DiffPlugin />
       </div>

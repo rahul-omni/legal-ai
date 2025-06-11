@@ -14,6 +14,7 @@ interface PrivateApiRoute {
   nodeTree: "/system/tree";
   roles: "/roles";
   user: "/user";
+  aiGenerate: "/generate";
   inviteTeamMember: "/invite-team-member";
   teamMembers(_orgId: string): `/organization/${string}/team-members`;
   organization(_orgId: string): `/organization/${string}`;
@@ -21,8 +22,12 @@ interface PrivateApiRoute {
   reviewDetails(_reviewId: string): `/file-reviews/${string}`;
   reviewStatus(_reviewId: string): `/file-reviews/${string}/status`;
   reviewComments(_reviewId: string): `/file-reviews/${string}/comments`;
-  resolveComment(_commentId: string): `/file-reviews/comments/${string}/resolve`;
-  organizationInvitations(_orgId: string): `/organization/${string}/invitations`;
+  resolveComment(
+    _commentId: string
+  ): `/file-reviews/comments/${string}/resolve`;
+  organizationInvitations(
+    _orgId: string
+  ): `/organization/${string}/invitations`;
 }
 
 export const apiRouteConfig: {
@@ -35,15 +40,17 @@ export const apiRouteConfig: {
     nodeTree: "/system/tree",
     roles: "/roles",
     user: "/user",
+    aiGenerate: "/generate",
     teamMembers: (orgId) => `/organization/${orgId}/team-members`,
     inviteTeamMember: "/invite-team-member",
     fileReviewReq: `/file-reviews`,
     reviewDetails: (reviewId) => `/file-reviews/${reviewId}`,
     reviewStatus: (reviewId) => `/file-reviews/${reviewId}/status`,
     reviewComments: (reviewId) => `/file-reviews/${reviewId}/comments`,
-    resolveComment: (commentId) => `/file-reviews/comments/${commentId}/resolve`,
+    resolveComment: (commentId) =>
+      `/file-reviews/comments/${commentId}/resolve`,
     organization: (ordId) => `/organization/${ordId}`,
-    
+
     // organizationInvitations: (orgId) => `/organization/${orgId}/invitations`,
     organizationInvitations: (orgId: string) =>
       `/organization/${orgId}/invitations`,

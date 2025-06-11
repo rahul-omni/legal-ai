@@ -24,6 +24,7 @@ import {
   DIFF_EQUAL,
 } from "diff-match-patch";
 import { Modal } from "@/components/ui/Modal";
+import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
 
 interface GenerationState {
   isGenerating: boolean;
@@ -52,6 +53,9 @@ export function DocumentPane() {
   const [diffViewMode, setDiffViewMode] = useState<"side-by-side" | "unified">(
     "side-by-side"
   );
+  const [showDiffHighlight, setShowDiffHighlight] = useState(false);
+  const [diffOldText, setDiffOldText] = useState<string | null>(null);
+  const [diffNewText, setDiffNewText] = useState<string | null>(null);
   const [generationState, setGenerationState] = useState<GenerationState>({
     isGenerating: false,
     loading: false,
@@ -82,7 +86,7 @@ export function DocumentPane() {
   }
 
   async function fetchAIResponse(prompt: string, context?: string) {
-    const res = await fetch("/api/generate", {
+    const res = await fetch(apiRouteConfig.privateRoutes.aiGenerate, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -167,17 +171,20 @@ export function DocumentPane() {
       showDiff(initialEditorHtml, newHtml);
     }
   }
+
   function showDiff(oldHtml: string | null, newHtml: string) {
     if (oldHtml === null) {
       console.log("[AI DIFF] No initial HTML to compare.");
       return;
     }
     console.log("[AI DIFF] Old HTML:", oldHtml);
-    console.log("[AI DIFF] New HTML:", newHtml);
-
-    // Convert HTML to readable text for better diff visualization
+    console.log("[AI DIFF] New HTML:", newHtml); // Convert HTML to readable text for better diff visualization
     const oldText = htmlToText(oldHtml);
     const newText = htmlToText(newHtml);
+
+    // Store text for inline highlighting
+    setDiffOldText(oldText);
+    setDiffNewText(newText);
 
     const dmp = new diff_match_patch();
     const diffs = dmp.diff_main(oldText, newText);
@@ -243,8 +250,11 @@ export function DocumentPane() {
         <DocumentEditor
           localContent={activeTab?.content || ""}
           handleSelectionChange={setSelectedText}
+          showDiffHighlight={showDiffHighlight}
+          onToggleDiffHighlight={() => setShowDiffHighlight(!showDiffHighlight)}
+          diffOldText={diffOldText}
+          diffNewText={diffNewText}
         />
-
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-[600px]">
           <AIPopup
             onPromptSubmit={handlePromptSubmit}
@@ -299,8 +309,17 @@ export function DocumentPane() {
                   >
                     Unified
                   </button>
+                  <button
+                    onClick={() => setShowDiffHighlight(!showDiffHighlight)}
+                    className={`px-3 py-1 rounded text-sm ${
+                      showDiffHighlight
+                        ? "bg-green-500 text-white"
+                        : "bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    {showDiffHighlight ? "Hide" : "Show"} Inline Highlights
+                  </button>
                 </div>
-
                 {/* Diff Content */}
                 {diffViewMode === "side-by-side" ? (
                   <div className="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto">

@@ -1,7 +1,6 @@
 // components/DocumentDiffViewer.tsx
-import { useEffect, useRef, useState } from 'react';
-import { LexicalEditor } from 'lexical';
-import * as diffMatchPatch from 'diff-match-patch';
+import * as diffMatchPatch from "diff-match-patch";
+import { useEffect, useRef, useState } from "react";
 
 const dmp = new diffMatchPatch.diff_match_patch();
 
@@ -11,8 +10,12 @@ interface DocumentDiffViewerProps {
   onClose: () => void;
 }
 
-export function DocumentDiffViewer({ oldText, newText, onClose }: DocumentDiffViewerProps) {
-  const [htmlDiff, setHtmlDiff] = useState('');
+export function DocumentDiffViewer({
+  oldText,
+  newText,
+  onClose,
+}: DocumentDiffViewerProps) {
+  const [htmlDiff, setHtmlDiff] = useState("");
   const diffContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,7 +31,7 @@ export function DocumentDiffViewer({ oldText, newText, onClose }: DocumentDiffVi
         <h3>Document Comparison</h3>
         <button onClick={onClose}>Close</button>
       </div>
-      <div 
+      <div
         ref={diffContainerRef}
         className="diff-content"
         dangerouslySetInnerHTML={{ __html: htmlDiff }}
