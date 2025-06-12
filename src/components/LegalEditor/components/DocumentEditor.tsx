@@ -60,7 +60,7 @@ export const DocumentEditor: FC<DocumentEditorProps> = ({
               lexicalEditorRef.current = editor;
             }}
           />
-          <ToolbarPlugin 
+          <ToolbarPlugin
             showDiffHighlight={showDiffHighlight}
             onToggleDiffHighlight={onToggleDiffHighlight}
             hasDiffData={hasDiffData}
@@ -83,7 +83,8 @@ export const DocumentEditor: FC<DocumentEditorProps> = ({
             <HistoryPlugin />
           </div>
         </LexicalComposer>
-      </div>      {onCompare && (
+      </div>
+      {onCompare && (
         <div className="flex-1">
           <LexicalComposer initialConfig={initialConfig}>
             <EditorInitializer
@@ -92,7 +93,7 @@ export const DocumentEditor: FC<DocumentEditorProps> = ({
                 lexicalEditorRef.current = editor;
               }}
             />
-            <ToolbarPlugin 
+            <ToolbarPlugin
               showDiffHighlight={showDiffHighlight}
               onToggleDiffHighlight={onToggleDiffHighlight}
               hasDiffData={hasDiffData}

@@ -37,7 +37,8 @@ interface GenerationState {
 }
 
 export function DocumentPane() {
-  const { docEditorState, lexicalEditorRef } = useDocumentEditor();
+  const { docEditorState, lexicalEditorRef, docEditorDispatch } =
+    useDocumentEditor();
   const [selectedText, setSelectedText] = useState<string>();
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [initialEditorHtml, setInitialEditorHtml] = useState<string | null>(
@@ -144,6 +145,11 @@ export function DocumentPane() {
   }
 
   function renderFinalContent(rawHtml: string) {
+    docEditorDispatch({
+      type: "PRESERVE_TAB_HISTORY",
+      payload: { content: rawHtml },
+    });
+
     console.log("[AI STREAM] renderFinalContent rawHtml:", rawHtml);
     const cleanHtml = rawHtml.trim();
     const dom = new DOMParser().parseFromString(cleanHtml, "text/html");

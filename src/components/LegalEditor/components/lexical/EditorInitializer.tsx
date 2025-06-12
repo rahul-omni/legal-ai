@@ -26,5 +26,9 @@ export function EditorInitializer({
     });
   }, [editor, localContent]);
 
+  useEffect(() => {
+    console.log("editor", editor);
+  }, [editor]);
+
   return null;
 }

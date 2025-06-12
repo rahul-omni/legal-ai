@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
+import { handleError } from "../../lib/errors";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -58,6 +59,6 @@ export async function POST(request: Request) {
       },
     });
   } catch (error: any) {
-    return new Response(error.message || "An error occurred", { status: 500 });
+    return handleError(error);
   }
 }

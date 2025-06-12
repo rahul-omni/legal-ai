@@ -14,7 +14,7 @@ interface PrivateApiRoute {
   nodeTree: "/system/tree";
   roles: "/roles";
   user: "/user";
-  aiGenerate: "/generate";
+  aiGenerate: "api/generate";
   inviteTeamMember: "/invite-team-member";
   teamMembers(_orgId: string): `/organization/${string}/team-members`;
   organization(_orgId: string): `/organization/${string}`;
@@ -40,7 +40,7 @@ export const apiRouteConfig: {
     nodeTree: "/system/tree",
     roles: "/roles",
     user: "/user",
-    aiGenerate: "/generate",
+    aiGenerate: "api/generate",
     teamMembers: (orgId) => `/organization/${orgId}/team-members`,
     inviteTeamMember: "/invite-team-member",
     fileReviewReq: `/file-reviews`,

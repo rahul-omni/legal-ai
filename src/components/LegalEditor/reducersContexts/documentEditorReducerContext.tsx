@@ -25,6 +25,7 @@ export interface TabInfo {
 // State interface
 interface DocumentEditorState {
   openTabs: TabInfo[];
+  tabHistory: (Omit<TabInfo, "name"> & { timestamp: number })[];
   activeTabId: string | null;
   isNewFileMode: boolean;
   isFolderPickerOpen: boolean;
@@ -56,6 +57,10 @@ type DocumentEditorAction =
         fileId?: string | null;
         callback?: (_newFile: FileSystemNodeProps) => void;
       };
+    }
+  | {
+      type: "PRESERVE_TAB_HISTORY";
+      payload: { content: string };
     }
   | { type: "UPDATE_TAB_CONTENT"; payload: { tabId: string; content: string } }
   | {
@@ -178,6 +183,20 @@ function documentEditorReducer(
         ),
       };
 
+    case "PRESERVE_TAB_HISTORY": {
+      return {
+        ...state,
+        tabHistory: [
+          ...state.tabHistory,
+          {
+            id: state.activeTabId!,
+            content: action.payload.content,
+            timestamp: Date.now(),
+          },
+        ],
+      };
+    }
+
     default:
       return state;
   }
@@ -201,6 +220,7 @@ interface DocumentEditorContextType {
 // Default state
 const initialState: DocumentEditorState = {
   openTabs: [],
+  tabHistory: [],
   activeTabId: null,
   isNewFileMode: false,
   isFolderPickerOpen: false,
