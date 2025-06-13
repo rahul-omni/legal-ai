@@ -10,8 +10,8 @@ export function TabBar() {
   const {
     docEditorState: state,
     handleNewFile,
-    handleTabClose,
     docEditorDispatch,
+    lexicalEditorRef,
   } = useDocumentEditor();
   const { explorerState, explorerDispatch } = useExplorerContext();
   const { openTabs, activeTabId } = state;
@@ -28,6 +28,14 @@ export function TabBar() {
 
     if (!fileNode) return;
     explorerDispatch({ type: "SELECT_FILE", payload: fileNode });
+  };
+
+  const handleTabClose = (tabId: string, fileId: string) => {
+    //TODO: have to integrate warning on close
+    docEditorDispatch({
+      type: "TAB_CLOSE",
+      payload: { tabId },
+    });
   };
 
   return (
@@ -61,7 +69,7 @@ export function TabBar() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                handleTabClose(tab.id);
+                handleTabClose(tab.id, tab.fileId!);
               }}
               className="ml-1.5 p-0.5 rounded-sm hover:bg-gray-200/80 opacity-0 group-hover:opacity-100 transition-opacity"
             >

@@ -11,7 +11,6 @@ import {
   useReducer,
   useRef,
 } from "react";
-import { useFolderPicker } from "./folderPickerReducerContext";
 
 // Interface for TabInfo
 export interface TabInfo {
@@ -25,6 +24,7 @@ export interface TabInfo {
 // State interface
 interface DocumentEditorState {
   openTabs: TabInfo[];
+  showDiffHighlight: boolean;
   tabHistory: (Omit<TabInfo, "name"> & { timestamp: number })[];
   activeTabId: string | null;
   isNewFileMode: boolean;
@@ -39,8 +39,12 @@ interface DocumentEditorState {
 // Action types - renamed to match handler functions
 type DocumentEditorAction =
   | { type: "NEW_FILE" }
+  | { type: "TOGGLE_DIFF_HIGHLIGHT" }
   | { type: "TAB_CLICK"; payload: string }
-  | { type: "TAB_CLOSE"; payload: string }
+  | {
+      type: "TAB_CLOSE";
+      payload: { tabId: string };
+    }
   | {
       type: "TRANSLATE";
       payload: { vendor: TranslationVendor; language: string };
@@ -62,7 +66,7 @@ type DocumentEditorAction =
       type: "PRESERVE_TAB_HISTORY";
       payload: { content: string };
     }
-  | { type: "UPDATE_TAB_CONTENT"; payload: { tabId: string; content: string } }
+  | { type: "UPDATE_TAB_CONTENT"; payload: { content: string } }
   | {
       type: "UPDATE_TAB_NAME";
       payload: { tabId: string; name: string; fileId?: string };
@@ -87,19 +91,32 @@ function documentEditorReducer(
       };
     }
 
+    case "TOGGLE_DIFF_HIGHLIGHT":
+      return {
+        ...state,
+        showDiffHighlight: !state.showDiffHighlight,
+      };
+
     case "TAB_CLICK":
       return {
         ...state,
         activeTabId: action.payload,
+        showDiffHighlight: false,
       };
 
     case "TAB_CLOSE": {
-      const newTabs = state.openTabs.filter((tab) => tab.id !== action.payload);
+      const newTabs = state.openTabs.filter(
+        (tab) => tab.id !== action.payload.tabId
+      );
       return {
         ...state,
         openTabs: newTabs,
+        showDiffHighlight: false,
+        tabHistory: state.tabHistory.filter(
+          (history) => history.id !== action.payload.tabId
+        ),
         activeTabId:
-          state.activeTabId === action.payload
+          state.activeTabId === action.payload.tabId
             ? newTabs[0]?.id || null
             : state.activeTabId,
       };
@@ -130,7 +147,8 @@ function documentEditorReducer(
         };
       }
 
-      const newTabId = `tab-${Date.now()}`;
+      const currentDateTime = Date.now();
+      const newTabId = `tab-${currentDateTime}`;
       const newTab = {
         id: newTabId,
         name: file.name,
@@ -161,7 +179,7 @@ function documentEditorReducer(
         ...state,
         isSaving: false,
         openTabs: state.openTabs.map((tab) =>
-          tab.id === action.payload.tabId
+          tab.id === state.activeTabId
             ? { ...tab, content: action.payload.content, isUnsaved: true }
             : tab
         ),
@@ -208,7 +226,6 @@ interface DocumentEditorContextType {
   lexicalEditorRef: RefObject<LexicalEditor | null>;
   docEditorDispatch: Dispatch<DocumentEditorAction>;
   handleNewFile: () => void;
-  handleTabClose: (_tabId: string) => void;
   handleTranslate: (
     _vendor: TranslationVendor,
     _language: string
@@ -220,6 +237,7 @@ interface DocumentEditorContextType {
 // Default state
 const initialState: DocumentEditorState = {
   openTabs: [],
+  showDiffHighlight: false,
   tabHistory: [],
   activeTabId: null,
   isNewFileMode: false,
@@ -265,15 +283,9 @@ export function DocumentEditorProvider({
     };
   }, []);
 
-  const folderPickerContext = useFolderPicker();
-
   // Handler functions - simplified with direct dispatch calls
   const handleNewFile = () => {
     docEditorDispatch({ type: "NEW_FILE" });
-  };
-
-  const handleTabClose = (tabId: string) => {
-    docEditorDispatch({ type: "TAB_CLOSE", payload: tabId });
   };
 
   const handleTranslate = async (
@@ -312,7 +324,6 @@ export function DocumentEditorProvider({
       docEditorDispatch({
         type: "UPDATE_TAB_CONTENT",
         payload: {
-          tabId: docEditorState.activeTabId,
           content: data.translation,
         },
       });
@@ -342,7 +353,6 @@ export function DocumentEditorProvider({
     lexicalEditorRef,
     docEditorDispatch,
     handleNewFile,
-    handleTabClose,
     handleTranslate,
     handleFileReviewRequest,
     handleFileTreeUpdate,

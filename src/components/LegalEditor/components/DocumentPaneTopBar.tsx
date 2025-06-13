@@ -70,7 +70,7 @@ export function DocumentPaneTopBar({
 
     docEditorDispatch({
       type: "UPDATE_TAB_CONTENT",
-      payload: { tabId: tab.id, content: data.content! },
+      payload: { content: data.content! },
     });
   };
 
@@ -104,7 +104,7 @@ export function DocumentPaneTopBar({
       });
       docEditorDispatch({
         type: "UPDATE_TAB_CONTENT",
-        payload: { tabId: tab.id, content: newFile.content! },
+        payload: { content: newFile.content! },
       });
     });
   };
@@ -146,7 +146,6 @@ export function DocumentPaneTopBar({
             content: activeTab.content,
           },
         });
-        
       }
     );
   };

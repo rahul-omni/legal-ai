@@ -1,35 +1,46 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
+  DIFF_DELETE,
+  DIFF_EQUAL,
+  DIFF_INSERT,
+  diff_match_patch,
+} from "diff-match-patch";
+import {
   $createParagraphNode,
   $createTextNode,
   $getRoot,
+  LexicalEditor,
   TextNode,
 } from "lexical";
 import { useEffect } from "react";
-import { diff_match_patch, DIFF_DELETE, DIFF_INSERT, DIFF_EQUAL } from "diff-match-patch";
+import { useDocumentEditor } from "../../reducersContexts/documentEditorReducerContext";
 
-interface DiffHighlightPluginProps {
-  isEnabled: boolean;
-  oldText: string | null;
-  newText: string | null;
-  onToggle: () => void;
-}
-
-export function DiffHighlightPlugin({
-  isEnabled,
-  oldText,
-  newText,
-}: DiffHighlightPluginProps) {
+export function DiffHighlightPlugin() {
   const [editor] = useLexicalComposerContext();
+
+  const {
+    docEditorState: { showDiffHighlight, activeTabId, openTabs },
+  } = useDocumentEditor();
+
+  const oldHtmlContent =
+    openTabs.find((tab) => tab.id === activeTabId)?.content || "";
+
+  const newHtmlContent =
+    openTabs.find((tab) => tab.id === activeTabId)?.content || "";
 
   // Apply diff highlighting when enabled
   useEffect(() => {
-    if (!isEnabled || !oldText || !newText) return;
+    if (!showDiffHighlight) {
+      clearAllDiffFormatting(editor);
+      return;
+    }
+
+    if (!showDiffHighlight) return;
 
     editor.update(() => {
-      applyDiffHighlighting(oldText, newText);
+      applyDiffHighlighting(oldHtmlContent, newHtmlContent);
     });
-  }, [editor, isEnabled, oldText, newText]);
+  }, [showDiffHighlight]);
 
   const applyDiffHighlighting = (oldText: string, newText: string) => {
     const dmp = new diff_match_patch();
@@ -41,12 +52,12 @@ export function DiffHighlightPlugin({
 
     // Create a paragraph to hold all the diff text
     const paragraph = $createParagraphNode();
-    
+
     for (const [op, text] of diffs) {
       if (!text) continue;
 
       const textNode = $createTextNode(text);
-        // Use existing Lexical formats creatively for diff highlighting
+      // Use existing Lexical formats creatively for diff highlighting
       switch (op) {
         case DIFF_INSERT:
           // Use underline + bold for additions
@@ -60,10 +71,10 @@ export function DiffHighlightPlugin({
           // No special formatting for unchanged text
           break;
       }
-      
+
       paragraph.append(textNode);
     }
-    
+
     root.append(paragraph);
   };
 
@@ -71,7 +82,7 @@ export function DiffHighlightPlugin({
 }
 
 // Utility function to extract plain text from Lexical editor
-export function extractPlainTextFromEditor(editor: any): string {
+export function extractPlainTextFromEditor(editor: LexicalEditor): string {
   let text = "";
   editor.getEditorState().read(() => {
     const root = $getRoot();
@@ -87,11 +98,11 @@ export function hasDiffFormatting(node: TextNode): boolean {
 }
 
 // Utility function to clear all diff formatting from editor
-export function clearAllDiffFormatting(editor: any) {
+export function clearAllDiffFormatting(editor: LexicalEditor) {
   editor.update(() => {
     const root = $getRoot();
     const textNodes = root.getAllTextNodes();
-    
+
     textNodes.forEach((node) => {
       if (hasDiffFormatting(node)) {
         node.setFormat(0); // Clear all formatting

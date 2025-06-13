@@ -27,7 +27,8 @@ import {
   Undo2,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { DiffPlugin } from "./DiffPlugin";
+import { useDocumentEditor } from "../../reducersContexts/documentEditorReducerContext";
+import { DiffHighlightToggleButton } from "./DiffHighlightToggleButton";
 
 const LowPriority = 1;
 
@@ -35,18 +36,9 @@ function Divider() {
   return <div className="divider" />;
 }
 
-interface ToolbarPluginProps {
-  showDiffHighlight?: boolean;
-  onToggleDiffHighlight?: () => void;
-  hasDiffData?: boolean;
-}
-
-export function ToolbarPlugin({ 
-  showDiffHighlight = false, 
-  onToggleDiffHighlight,
-  hasDiffData = false 
-}: ToolbarPluginProps = {}) {
+export function ToolbarPlugin() {
   const [editor] = useLexicalComposerContext();
+
   const toolbarRef = useRef(null);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
@@ -100,6 +92,8 @@ export function ToolbarPlugin({
       )
     );
   }, [editor, $updateToolbar]);
+
+  const hasDiffData = true;
 
   return (
     <div className="toolbar" ref={toolbarRef}>
@@ -203,26 +197,16 @@ export function ToolbarPlugin({
         }}
         className="toolbar-item"
         aria-label="Justify Align"
-      >        <AlignJustify size={18} />
+      >
+        {" "}
+        <AlignJustify size={18} />
       </button>{" "}
-      
       {hasDiffData && (
         <>
           <Divider />
-          <button
-            onClick={onToggleDiffHighlight}
-            className={"toolbar-item spaced " + (showDiffHighlight ? "active" : "")}
-            aria-label={showDiffHighlight ? "Hide Diff Highlights" : "Show Diff Highlights"}
-            title={showDiffHighlight ? "Hide changes highlighting" : "Show changes highlighting"}
-          >
-            {showDiffHighlight ? <EyeOff size={18} /> : <Eye size={18} />}
-          </button>
+          <DiffHighlightToggleButton />
         </>
       )}
-      
-      <div className="toolbar">
-        <DiffPlugin />
-      </div>
     </div>
   );
 }

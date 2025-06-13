@@ -44,19 +44,6 @@ export function DocumentPane() {
   const [initialEditorHtml, setInitialEditorHtml] = useState<string | null>(
     null
   );
-  const [diffData, setDiffData] = useState<{
-    oldSide: string;
-    newSide: string;
-    unifiedDiff: string;
-    hasChanges: boolean;
-  } | null>(null);
-  const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
-  const [diffViewMode, setDiffViewMode] = useState<"side-by-side" | "unified">(
-    "side-by-side"
-  );
-  const [showDiffHighlight, setShowDiffHighlight] = useState(false);
-  const [diffOldText, setDiffOldText] = useState<string | null>(null);
-  const [diffNewText, setDiffNewText] = useState<string | null>(null);
   const [generationState, setGenerationState] = useState<GenerationState>({
     isGenerating: false,
     loading: false,
@@ -188,10 +175,6 @@ export function DocumentPane() {
     const oldText = htmlToText(oldHtml);
     const newText = htmlToText(newHtml);
 
-    // Store text for inline highlighting
-    setDiffOldText(oldText);
-    setDiffNewText(newText);
-
     const dmp = new diff_match_patch();
     const diffs = dmp.diff_main(oldText, newText);
     dmp.diff_cleanupSemantic(diffs);
@@ -229,9 +212,6 @@ export function DocumentPane() {
       unifiedDiff,
       hasChanges: diffs.some(([op]) => op !== DIFF_EQUAL),
     };
-
-    setDiffData(diffData);
-    setIsDiffModalOpen(true);
   }
 
   function htmlToText(html: string): string {
@@ -256,10 +236,7 @@ export function DocumentPane() {
         <DocumentEditor
           localContent={activeTab?.content || ""}
           handleSelectionChange={setSelectedText}
-          showDiffHighlight={showDiffHighlight}
-          onToggleDiffHighlight={() => setShowDiffHighlight(!showDiffHighlight)}
-          diffOldText={diffOldText}
-          diffNewText={diffNewText}
+          showDiffHighlight={docEditorState.showDiffHighlight}
         />
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-[600px]">
           <AIPopup
@@ -277,91 +254,7 @@ export function DocumentPane() {
           fileId={activeTab.fileId}
           onClose={() => setShowReviewModal(false)}
         />
-      )}{" "}
-      <Modal
-        isOpen={isDiffModalOpen}
-        onClose={() => setIsDiffModalOpen(false)}
-        title="Content Differences"
-        size="xl"
-      >
-        {diffData && (
-          <div className="space-y-4">
-            {!diffData.hasChanges ? (
-              <div className="text-center py-8 text-gray-500">
-                No changes detected between the original and AI-generated
-                content.
-              </div>
-            ) : (
-              <>
-                {/* View Mode Toggle */}
-                <div className="flex gap-2 mb-4">
-                  <button
-                    onClick={() => setDiffViewMode("side-by-side")}
-                    className={`px-3 py-1 rounded text-sm ${
-                      diffViewMode === "side-by-side"
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-200 text-gray-700"
-                    }`}
-                  >
-                    Side by Side
-                  </button>
-                  <button
-                    onClick={() => setDiffViewMode("unified")}
-                    className={`px-3 py-1 rounded text-sm ${
-                      diffViewMode === "unified"
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-200 text-gray-700"
-                    }`}
-                  >
-                    Unified
-                  </button>
-                  <button
-                    onClick={() => setShowDiffHighlight(!showDiffHighlight)}
-                    className={`px-3 py-1 rounded text-sm ${
-                      showDiffHighlight
-                        ? "bg-green-500 text-white"
-                        : "bg-gray-200 text-gray-700"
-                    }`}
-                  >
-                    {showDiffHighlight ? "Hide" : "Show"} Inline Highlights
-                  </button>
-                </div>
-                {/* Diff Content */}
-                {diffViewMode === "side-by-side" ? (
-                  <div className="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto">
-                    <div className="border rounded p-3">
-                      <h4 className="font-semibold text-sm mb-2 text-red-700">
-                        Original Content
-                      </h4>
-                      <div
-                        className="text-sm whitespace-pre-wrap font-mono"
-                        dangerouslySetInnerHTML={{ __html: diffData.oldSide }}
-                      />
-                    </div>
-                    <div className="border rounded p-3">
-                      <h4 className="font-semibold text-sm mb-2 text-green-700">
-                        AI-Generated Content
-                      </h4>
-                      <div
-                        className="text-sm whitespace-pre-wrap font-mono"
-                        dangerouslySetInnerHTML={{ __html: diffData.newSide }}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="border rounded p-3 max-h-96 overflow-y-auto">
-                    <h4 className="font-semibold text-sm mb-2">Unified Diff</h4>
-                    <div
-                      className="text-sm whitespace-pre-wrap font-mono"
-                      dangerouslySetInnerHTML={{ __html: diffData.unifiedDiff }}
-                    />
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-      </Modal>
+      )}
     </div>
   );
 }
