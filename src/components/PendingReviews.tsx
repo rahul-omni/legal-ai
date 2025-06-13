@@ -454,6 +454,8 @@ export function PendingReviews() {
               {Array.isArray(pendingReviews) && pendingReviews.length > 0 ? (
                 pendingReviews.map((review) => {
                   const daysRemaining = getDaysRemaining(review.dueDate);
+                  console.log("Review Data:", pendingReviews);
+                  
                   return (
                     <tr key={review.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -487,7 +489,7 @@ export function PendingReviews() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(review.requester.createdAt)}
+                          {formatDate(review.createdAt)} 
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
@@ -637,81 +639,6 @@ export function PendingReviews() {
           }
         >
           <div className="p-4 h-full bg-white">
-            {/* {previewDocument.file?.content ? (
-              <div className="border rounded-lg h-full p-4 overflow-auto bg-white">
-                {previewDocument.file.name.endsWith(".pdf") ? (
-                  // PDF Viewer Solution
-                  
-                  <div className="h-full flex flex-col">
-                    
-
-                    <div className="flex-grow overflow-auto bg-white p-4">
-                      {previewDocument?.file?.content ? (
-                        <div className="border rounded-lg h-full p-4 overflow-auto">
-                          {previewDocument.file.type === "pdf" ? (
-                            <PdfViewer content={previewDocument.file.content} />
-                          ) : previewDocument.file.type === "pdf-text" ? (
-                            <PDFTextViewer
-                              content={previewDocument.file.content}
-                            />
-                          ) : (
-                            <div
-                              className="prose max-w-none"
-                              dangerouslySetInnerHTML={{
-                                __html: DOMPurify.sanitize(
-                                  previewDocument.file.content
-                                ),
-                              }}
-                            />
-                          )}
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <p>No content available</p>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-grow overflow-auto"></div>
-                  </div>
-                ) : previewDocument.file.name.endsWith(".docx") ? (
-                  // DOCX Viewer
-                  <div
-                    className="prose max-w-none"
-                    dangerouslySetInnerHTML={{
-                      __html: DOMPurify.sanitize(previewDocument.file.content),
-                    }}
-                  />
-                ) : (
-                  // Fallback for other file types
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <FileText className="h-12 w-12 text-gray-400 mb-4" />
-                    <p>Preview not available for this file type</p>
-                    {previewDocument.file.content && (
-                      <a
-                        href={`data:text/plain;base64,${btoa(previewDocument.file.content)}`}
-                        download={previewDocument.file.name}
-                        className="mt-4 text-blue-600 hover:underline"
-                      >
-                        Download File
-                      </a>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : previewDocument.file?.url ? (
-              // Handle URL case
-              <iframe
-                src={previewDocument.file.url}
-                className="w-full h-full border-0"
-                title={previewDocument.file.name}
-                onError={() => showToast("Failed to load document from URL")}
-              />
-            ) : (
-              // No content case
-              <div className="flex items-center justify-center h-full bg-white">
-                <p>No content available</p>
-              </div>
-            )} */}
             {previewDocument.file ? (
               <div className="border rounded-lg h-full p-4 overflow-auto bg-white">
                 {previewDocument.file.name?.endsWith(".pdf") ? (

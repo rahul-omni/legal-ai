@@ -424,11 +424,7 @@ const EmptyProject: FC<
       <h3 className="text-lg font-medium text-gray-900 mb-1">
         {projectHubState.selectedProject ? "" : "No projects yet"}
       </h3>
-      {!projectHubState.selectedProject && (
-        <p className="text-gray-500 mb-4">
-          Create your first project to get started
-        </p>
-      )}
+       
       {/* {projectHubState.selectedProject && (
         <>
           <button
