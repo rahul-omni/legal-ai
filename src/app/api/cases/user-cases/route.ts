@@ -1,12 +1,11 @@
  
-
-import { auth } from "@/app/api/[...nextauth]/route";
-import { handleError } from "@/app/api/lib/errors";
+ 
 import { userFromSession } from "@/lib/auth";
+import { PrismaClient } from '@prisma/client';
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { Prisma, PrismaClient } from '@prisma/client';
+import { auth } from "../../lib/auth/nextAuthConfig";
 
 const prisma = new PrismaClient();
  

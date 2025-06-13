@@ -1,5 +1,5 @@
 
-import { auth } from "@/app/api/[...nextauth]/route";
+ 
 import { handleError } from "@/app/api/lib/errors";
 import { userFromSession } from "@/lib/auth";
 import { NextAuthRequest } from "next-auth";

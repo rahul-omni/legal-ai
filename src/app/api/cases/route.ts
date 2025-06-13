@@ -5,52 +5,11 @@ import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
  
 import { PrismaClient } from '@prisma/client';
-import { auth } from "@/app/api/[...nextauth]/route";
+import { auth } from "../lib/auth/nextAuthConfig";
+ 
 
   
 const prisma = new PrismaClient();
-
-// export async function POST(request: Request) {
-//   try {
-//     // Parse the incoming JSON data
-//     const jsonData = await request.json();
-    
-//     // Transform the data to match your Prisma model
-//     const caseData = {
-//       serialNumber: jsonData["Serial Number"] || '',
-//       diaryNumber: jsonData["Diary Number"] || '', // Fixed typo from "Diary"
-//       caseNumber: jsonData["Case Number"] || '',
-//       parties: jsonData["Petitioner / Respondent"] || '',
-//       advocates: jsonData["Petitioner/Respondent Advocate"] || '',
-//       bench: jsonData["Bench"] || '',
-//       judgmentBy: jsonData["Judgment By"] || '',
-//       judgmentDate: jsonData["Judgment"]?.split(" ")[0] || '', // First part
-//       judgmentText: jsonData["Judgment"]?.split(" ")[1] || '', // Second part
-//       judgmentUrl: jsonData.judgmentLinks?.[0]?.url || '', // First URL only
-//       court: "Supreme Court", // Hardcoded as per your requirement
-//       // date, createdAt, updatedAt will be auto-filled
-//     };
-
-//     // Insert into database
-//     const newCase = await prisma.caseManagement.create({
-//       data: caseData
-//     });
-//     console.log('New case created:', newCase);
-    
-//     return NextResponse.json(newCase, { status: 201 });
-//   } catch (error) {
-//     console.error('Error creating case:', error);
-//     return NextResponse.json(
-//       { message: 'Error creating case record' },
-//       { status: 500 }
-//     );
-//   } finally {
-//     await prisma.$disconnect();
-//   }
-//  }
- 
-
-
 
 export const  GET = auth(async     (  request: NextAuthRequest)  => {
   console.log("[GET /api/cases] Fetching user cases...");
@@ -58,8 +17,7 @@ export const  GET = auth(async     (  request: NextAuthRequest)  => {
    
     // Get the user from request
    const sessionUser = await userFromSession(request);
-    console.log("[GET /api/cases] Session user:", sessionUser.id);
-    
+     
    if (!sessionUser?.id) {
   return NextResponse.json(
     { success: false, message: "Unauthorized" },
@@ -67,8 +25,7 @@ export const  GET = auth(async     (  request: NextAuthRequest)  => {
   );
 }
 
-console.log("SessionUser:", sessionUser.id);
-
+ 
     // Get all diary numbers from user_cases for this user
     const userCases = await prisma.userCase.findMany({
       where: {

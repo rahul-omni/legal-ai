@@ -84,11 +84,7 @@ export function PendingReviews() {
     const isPDF = fileName.endsWith(".pdf");
 
     try {
-<<<<<<< HEAD
-      let previewContent = {
-=======
       const previewContent = {
->>>>>>> 0ee709e697a3874fd1b633e94a6f82562e9baa0f
         ...review,
         file: {
           ...review.file,
@@ -123,11 +119,7 @@ export function PendingReviews() {
       setShowPreview(true);
     } catch (error) {
       console.error("Error opening preview:", error);
-<<<<<<< HEAD
-      showToast(
-=======
       toast.error(
->>>>>>> 0ee709e697a3874fd1b633e94a6f82562e9baa0f
         `Failed to open document: ${error instanceof Error ? error.message : "Unknown error"}`
       );
     }
@@ -708,83 +700,12 @@ export function PendingReviews() {
                 src={previewDocument.file.url}
                 className="w-full h-full border-0"
                 title={previewDocument.file.name}
-                onError={() => showToast("Failed to load document from URL")}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full bg-white">
-                <p>No content available</p>
-              </div>
-<<<<<<< HEAD
-=======
-            )} */}
-            {previewDocument.file ? (
-              <div className="border rounded-lg h-full p-4 overflow-auto bg-white">
-                {previewDocument.file.name?.endsWith(".pdf") ? (
-                  <div className="h-full flex flex-col">
-                    <div className="flex-grow overflow-auto bg-white p-4">
-                      {previewDocument.file.content ? (
-                        <div className="h-full p-4 overflow-auto">
-                          {previewDocument.file.type === "pdf" ? (
-                            <PdfViewer content={previewDocument.file.content} />
-                          ) : previewDocument.file.type === "pdf-text" ? (
-                            <PDFTextViewer
-                              content={previewDocument.file.content}
-                            />
-                          ) : (
-                            <div
-                              className="prose max-w-none"
-                              dangerouslySetInnerHTML={{
-                                __html: DOMPurify.sanitize(
-                                  previewDocument.file.content
-                                ),
-                              }}
-                            />
-                          )}
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <p>No content available</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ) : previewDocument.file.name?.endsWith(".docx") ? (
-                  <div
-                    className="prose max-w-none"
-                    dangerouslySetInnerHTML={{
-                      __html: DOMPurify.sanitize(
-                        previewDocument.file.content || ""
-                      ),
-                    }}
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <FileText className="h-12 w-12 text-gray-400 mb-4" />
-                    <p>Preview not available for this file type</p>
-                    {previewDocument.file.content && (
-                      <a
-                        href={`data:text/plain;base64,${btoa(previewDocument.file.content)}`}
-                        download={previewDocument.file.name}
-                        className="mt-4 text-blue-600 hover:underline"
-                      >
-                        Download File
-                      </a>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : previewDocument.file?.url ? (
-              <iframe
-                src={previewDocument.file.url}
-                className="w-full h-full border-0"
-                title={previewDocument.file.name}
                 onError={() => toast.error("Failed to load document from URL")}
               />
             ) : (
               <div className="flex items-center justify-center h-full bg-white">
                 <p>No content available</p>
               </div>
->>>>>>> 0ee709e697a3874fd1b633e94a6f82562e9baa0f
             )}
           </div>
         </Modal>
