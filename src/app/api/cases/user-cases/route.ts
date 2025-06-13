@@ -10,10 +10,9 @@ import { Prisma, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
  
-const createUserCasesSchema = z.object({
-  diaryNumbers: z.array(z.string()).min(1, "At least one diary number is required")
+const createUserCaseSchema = z.object({
+  diaryNumber: z.string().min(1, "Diary number is required")
 });
-
 
 export const POST = auth(async (request: NextAuthRequest) => {
   try {
@@ -26,59 +25,49 @@ export const POST = auth(async (request: NextAuthRequest) => {
       );
     }
 
-    // Parse input - now only accepting diaryNumbers
+    // Parse input - now accepting single diaryNumber
     const body = await request.json();
-    const { diaryNumbers } = body;
+    const { diaryNumber } = createUserCaseSchema.parse(body);
     
-    if (!diaryNumbers || !Array.isArray(diaryNumbers) || diaryNumbers.length === 0) {
+    if (!diaryNumber) {
       return NextResponse.json(
-        { success: false, message: "No diary numbers provided" },
+        { success: false, message: "Diary number is required" },
         { status: 400 }
       );
     }
 
-    // Check for existing diary numbers
-    const existingUserCases = await prisma.userCase.findMany({
+    // Check for existing diary number
+    const existingCase = await prisma.userCase.findFirst({
       where: {
-        diaryNumber: { in: diaryNumbers }
-      },
-      select: {
-        diaryNumber: true
+        diaryNumber: diaryNumber,
+        userId: sessionUser.id // Also check user ownership
       }
     });
-
-    const existingDiaryNumbers = existingUserCases.map(uc => uc.diaryNumber);
     
-    if (existingDiaryNumbers.length > 0) {
+    if (existingCase) {
       return NextResponse.json({
         success: false,
-        message: "Some cases already exist",
+        message: "Case already exists",
         data: {
-          duplicateDiaryNumbers: existingDiaryNumbers,
-          duplicateCount: existingDiaryNumbers.length
+          duplicateDiaryNumber: diaryNumber
         }
       }, { status: 409 });
     }
 
-    // Create new user cases
-    const createdCases = await prisma.$transaction(
-      diaryNumbers.map(diaryNumber => 
-        prisma.userCase.create({
-          data: {
-            userId: sessionUser.id,
-            diaryNumber: diaryNumber,
-            status: "PENDING"
-          }
-        })
-      )
-    );
+    // Create new user case
+    const createdCase = await prisma.userCase.create({
+      data: {
+        userId: sessionUser.id,
+        diaryNumber: diaryNumber,
+        status: "PENDING"
+      }
+    });
 
     return NextResponse.json({
       success: true,
-      message: `Successfully created ${createdCases.length} cases`,
+      message: "Successfully created case",
       data: {
-        createdCases,
-        createdCount: createdCases.length
+        createdCase
       }
     }, { status: 201 });
 

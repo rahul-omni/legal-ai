@@ -156,31 +156,31 @@ const handleCreateCases = async () => {
     
     // Extract case IDs from selected cases
     const diaryNumbers = selectedCases.map(caseData => caseData.diaryNumber);
+    console.log("Selected diary numbers:", diaryNumbers);
     
+    // Take only the first diary number
+    const firstDiaryNumber = diaryNumbers[0];
     const response = await fetch('/api/cases/user-cases', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ diaryNumbers }),
+      body: JSON.stringify({ diaryNumber :firstDiaryNumber }),
     });
 
     const result = await response.json();
-
+   console.log("Create cases response:", result);
+   
     if (!response.ok) {
       throw new Error(result.message || "Failed to save cases");
     }
-
-    // Show appropriate feedback based on results
-    if (result.data.duplicateCount > 0) {
-      toast(
-        `Created ${result.data.createdCount} new cases. ` +
-        `${result.data.duplicateCount} cases already existed.`
-      );
+ 
+    // Show success message based on the actual API response
+    if (result.success) {
+      toast.success(`Successfully created Order for Diary Number ${result.data.createdCase.diaryNumber}`);
     } else {
-      toast.success(`Successfully created ${result.data.createdCount} cases`);
+      toast.error(result.message || "Case processed but got some errors");
     }
-
 
     await fetchUserCases(); // Refresh the cases list
     // Update UI
@@ -208,6 +208,7 @@ console.log("selectedCases", selectedCases);
           <h1 className="text-2xl font-semibold text-gray-800">
             Case Management
           </h1>
+           
           <button
             onClick={() => setShowNewCaseModal(true)}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
@@ -407,7 +408,7 @@ console.log("selectedCases", selectedCases);
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <h4 className="font-medium text-gray-800">
-                        Found {foundCases.length} Cases
+                        Found {foundCases.length}  Order Related to this dairy number {foundCases[0].diaryNumber}
                       </h4>
                       <div className="flex items-center">
                         <input
