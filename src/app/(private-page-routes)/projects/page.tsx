@@ -4,7 +4,6 @@ import {
   CreateNodePayload,
   fetchNodes,
 } from "@/app/apiServices/nodeServices";
-import { useToast } from "@/components/ui/toast";
 import { useUserContext } from "@/context/userContext";
 import { handleApiError } from "@/helper/handleApiError";
 import { FileService } from "@/lib/fileService";
@@ -23,6 +22,7 @@ import moment from "moment";
 import { useRouter } from "next/navigation";
 import { getDocument } from "pdfjs-dist";
 import { Dispatch, FC, useEffect, useReducer, useRef, useState } from "react";
+import toast from "react-hot-toast";
 
 interface ProjectHubProps {
   projects: FileSystemNodeProps[];
@@ -159,7 +159,6 @@ export default function ProjectHub() {
         projectHubState={projectHubState}
         dispatchProjectHub={dispatchProjectHub}
         loadProjects={loadProjects}
-         
       />
     </>
   );
@@ -209,13 +208,11 @@ const Breadcrumbs: FC<
   );
 };
 
- 
 const ProjectToolbar: FC<ProjectReducerProps> = ({
   projectHubState,
   dispatchProjectHub,
   loadProjects,
 }) => {
-  const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef2 = useRef<HTMLInputElement>(null); // New ref for Upload Files 2
   const [isUploading, setIsUploading] = useState(false);
@@ -253,7 +250,7 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
 
       if (file.type === "application/pdf") {
         content = await extractTextFromPDF(file);
-        showToast("PDF Parsed Successfully");
+        toast.success("PDF Parsed Successfully");
       } else {
         content = await FileService.parseFile(file);
       }
@@ -266,13 +263,15 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
       };
 
       await createNode(newFile);
-      await loadProjects(isRootLevel ? undefined : projectHubState.selectedProject?.id);
-      showToast("File uploaded successfully");
+      await loadProjects(
+        isRootLevel ? undefined : projectHubState.selectedProject?.id
+      );
+      toast.success("File uploaded successfully");
     } catch (error) {
-      handleApiError(error, showToast);
+      handleApiError(error);
     } finally {
       setIsUploading(false);
-      if (e.target) e.target.value = '';
+      if (e.target) e.target.value = "";
     }
   };
 
@@ -299,11 +298,13 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
               className={`px-3 py-1.5 border border-gray-200 rounded-md flex items-center gap-2 ${
-                isUploading ? 'bg-gray-100 cursor-not-allowed' : 'hover:bg-gray-50'
+                isUploading
+                  ? "bg-gray-100 cursor-not-allowed"
+                  : "hover:bg-gray-50"
               } transition-colors text-sm`}
             >
               <Upload className="w-3.5 h-3.5" />
-              Upload Files 
+              Upload Files
             </button>
           </>
         ) : (
@@ -312,11 +313,13 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
             onClick={() => fileInputRef2.current?.click()}
             disabled={isUploading}
             className={`px-3 py-1.5 border border-gray-200 rounded-md flex items-center gap-2 ${
-              isUploading ? 'bg-gray-100 cursor-not-allowed' : 'hover:bg-gray-50'
+              isUploading
+                ? "bg-gray-100 cursor-not-allowed"
+                : "hover:bg-gray-50"
             } transition-colors text-sm`}
           >
             <Upload className="w-3.5 h-3.5" />
-            Upload Files 
+            Upload Files
           </button>
         )}
 
@@ -356,11 +359,8 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
 };
 
 const EmptyProject: FC<
-  ProjectReducerProps & { loadProjects: (parentId?: string) => void }
+  ProjectReducerProps & { loadProjects: (_parentId?: string) => void }
 > = ({ projectHubState, dispatchProjectHub, loadProjects }) => {
-  const { showToast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const extractTextFromPDF = async (file: File): Promise<string> => {
     try {
       const arrayBuffer = await file.arrayBuffer();
@@ -389,7 +389,7 @@ const EmptyProject: FC<
       let content: string;
       if (file.type === "application/pdf") {
         content = await extractTextFromPDF(file);
-        showToast("PDF Parsed Successfully");
+        toast.success("PDF Parsed Successfully");
       } else {
         content = await FileService.parseFile(file);
       }
@@ -404,9 +404,9 @@ const EmptyProject: FC<
 
       await createNode(newFile);
       await loadProjects(projectHubState.selectedProject?.id);
-      showToast("File uploaded successfully");
+      toast.success("File uploaded successfully");
     } catch (error) {
-      handleApiError(error, showToast);
+      handleApiError(error);
     } finally {
       if (e.target) e.target.value = "";
     }
@@ -541,7 +541,7 @@ const SekeletonProjectCard = () => {
   );
 };
 
-export const NewProjectModal: FC<ProjectReducerProps> = ({
+const NewProjectModal: FC<ProjectReducerProps> = ({
   projectHubState: projectHubState,
   dispatchProjectHub: dispatchProjectHub,
 }) => {

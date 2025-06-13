@@ -1,8 +1,6 @@
 import mammoth from "mammoth";
 // Add to FileService.ts
 import * as pdfjsLib from 'pdfjs-dist';
-import { parsePDF } from "./pdfConfig";
-import { TextItem } from "pdfjs-dist/types/src/display/api";
 export interface FileData {
   id: string;
   name: string;

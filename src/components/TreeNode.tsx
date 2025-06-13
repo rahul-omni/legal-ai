@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 interface TreeNodeProps {
   node: FileSystemNodeProps;
-  onSelect: (node: FileSystemNodeProps) => void;
+  onSelect: (_node: FileSystemNodeProps) => void;
 }
 
 export default function TreeNode({ node, onSelect }: TreeNodeProps) {

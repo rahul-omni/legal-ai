@@ -1,7 +1,7 @@
 import { db } from "@/app/api/lib/db";
 import { FileSystemNode, FileType } from "@prisma/client";
 import { Transaction } from "../types";
-import { ErrorNotFound } from "../lib/errors";
+import { ErrorApp, ErrorNotFound } from "../lib/errors";
 
 interface CreateNodeInput {
   userId: string;
@@ -35,7 +35,7 @@ class FileSystemNodeService {
         orderBy: { type: "desc" },
       });
     } catch {
-      throw new Error("Failed to find nodes in the database");
+      throw new ErrorNotFound("Failed to find nodes in the database");
     }
   }
 

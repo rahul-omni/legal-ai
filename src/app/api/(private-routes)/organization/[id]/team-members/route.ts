@@ -5,11 +5,11 @@ import { OrgTeamMemberRes } from "../../types";
 
 export async function GET(
   _: NextRequest,
-  { params }: { params: { id: string } }
+  context: any
 ): Promise<NextResponse<OrgTeamMemberRes | ErrorResponse>> {
   try {
-    const param = await params;
-    const { id: orgId } = param;
+    const { params } = context;
+    const { id: orgId } = params;
 
     const invitations = await invitationService.organizationInvitations(orgId);
 

@@ -1,7 +1,7 @@
 import { userFromSession } from "@/lib/auth";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
-import { auth } from "../../../[...nextauth]/route";
+import { auth } from "../../../lib/auth/nextAuthConfig";
 import { db } from "../../../lib/db";
 import { handleError } from "../../../lib/errors";
 import { logger } from "../../../lib/logger";
@@ -16,8 +16,7 @@ export const GET = auth(async function (request: NextAuthRequest, context) {
       sessionUser
     );
 
-    const { params } = await context;
-    const { id: organizationId } = (await params) as { id: string };
+    const { id: organizationId } = await context.params;
 
     if (!organizationId) {
       logger.warn("getOrganizationUsersController: Missing organizationId");
@@ -63,7 +62,7 @@ async function getOrganizationUsers(organizationId: string) {
       },
     },
   });
-   console.log("getOrganizationUsers: memberships", memberships);
-   
+  console.log("getOrganizationUsers: memberships", memberships);
+
   return memberships;
 }

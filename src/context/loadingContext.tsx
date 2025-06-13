@@ -35,7 +35,7 @@ export const LoadingProvider: FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 // Custom hook
-export function loadingContext() {
+export function useLoadingContext() {
   const context = useContext(LoadingContext);
   if (!context) {
     throw new Error(

@@ -1,38 +1,21 @@
-import { handleApiError } from "@/helper/handleApiError";
-import { CheckCircle, Clock, FileText, User, XCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Modal } from "./ui/Modal";
-import { ModalButton, ModalFooter } from "./ui/ModalButton";
-import { useToast } from "./ui/toast";
 import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
 import { apiClient } from "@/app/apiServices";
+import { handleApiError } from "@/helper/handleApiError";
 import DOMPurify from "dompurify";
+import { CheckCircle, Clock, FileText, User, XCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import "../app/globals.css";
-import PdfViewer from "./PdfViewer";
-import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import PDFTextViewer from "./PDFTextViewer";
-
-interface ReviewItem {
-  id: string;
-  documentId: string;
-  documentName: string;
-  documentType: "pdf" | "docx";
-  documentUrl?: string;
-  senderId: string;
-  senderName: string;
-  sentAt: string;
-  status: "pending" | "approved" | "rejected";
-  dueDate?: string;
-  comments?: string;
-}
+import PdfViewer from "./PdfViewer";
+import { Modal } from "./ui/Modal";
+import { ModalButton, ModalFooter } from "./ui/ModalButton";
 
 export function PendingReviews() {
   const router = useRouter();
-  const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { showToast } = useToast();
   const [filter, setFilter] = useState<
     "all" | "pending" | "approved" | "rejected"
   >("pending");
@@ -42,7 +25,6 @@ export function PendingReviews() {
   const [rejectComment, setRejectComment] = useState("");
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [currentReviewId, setCurrentReviewId] = useState("");
-  const [pdfLoading, setPdfLoading] = useState(true);
   GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
 
   useEffect(() => {
@@ -54,11 +36,11 @@ export function PendingReviews() {
       setIsLoading(true);
       const data = await getFileReviewDetails();
       if (!data || data.length === 0) {
-        showToast("No pending reviews found");
+        toast("No pending reviews found");
       }
       setPendingReviews(data);
     } catch (error) {
-      handleApiError(error, showToast);
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }
@@ -102,7 +84,11 @@ export function PendingReviews() {
     const isPDF = fileName.endsWith(".pdf");
 
     try {
+<<<<<<< HEAD
       let previewContent = {
+=======
+      const previewContent = {
+>>>>>>> 0ee709e697a3874fd1b633e94a6f82562e9baa0f
         ...review,
         file: {
           ...review.file,
@@ -137,7 +123,11 @@ export function PendingReviews() {
       setShowPreview(true);
     } catch (error) {
       console.error("Error opening preview:", error);
+<<<<<<< HEAD
       showToast(
+=======
+      toast.error(
+>>>>>>> 0ee709e697a3874fd1b633e94a6f82562e9baa0f
         `Failed to open document: ${error instanceof Error ? error.message : "Unknown error"}`
       );
     }
@@ -153,7 +143,7 @@ export function PendingReviews() {
         // First check if we have original PDF content
         if (review.file.originalContent) {
           // Handle original PDF content
-          let pdfContent = review.file.originalContent;
+          const pdfContent = review.file.originalContent;
 
           if (
             typeof pdfContent === "string" &&
@@ -220,7 +210,7 @@ export function PendingReviews() {
       setShowPreview(true);
     } catch (error) {
       console.error("Error opening preview:", error);
-      showToast(`Failed to open document: ${(error as Error).message}`);
+      toast.error(`Failed to open document: ${(error as Error).message}`);
     }
   };
 
@@ -240,7 +230,7 @@ export function PendingReviews() {
       return response.data || [];
     } catch (error: any) {
       console.error("Error fetching file review details:", error);
-      showToast("Error fetching file review details");
+      toast.error("Error fetching file review details");
       return [];
     }
   };
@@ -264,7 +254,7 @@ export function PendingReviews() {
         throw new Error("Failed to approve review");
       }
 
-      showToast("Review approved successfully");
+      toast.success("Review approved successfully");
     } catch (error) {
       // Revert optimistic update on error
       setPendingReviews((prevReviews) =>
@@ -272,7 +262,7 @@ export function PendingReviews() {
           review.id === reviewId ? { ...review, status: "PENDING" } : review
         )
       );
-      handleApiError(error, showToast);
+      handleApiError(error);
     } finally {
       handleClosePreview();
     }
@@ -286,7 +276,7 @@ export function PendingReviews() {
   // Update the handleRejectReview function
   const handleRejectReview = async () => {
     if (!rejectComment) {
-      showToast("Please provide a reason for rejection");
+      toast.error("Please provide a reason for rejection");
       return;
     }
 
@@ -348,7 +338,7 @@ export function PendingReviews() {
                 ...review,
                 fileReviewComments: [
                   ...(review.fileReviewComments?.filter(
-                    (c) => c.id !== tempComment.id
+                    (c: any) => c.id !== tempComment.id
                   ) || []),
                   commentResponse.data,
                 ],
@@ -367,13 +357,13 @@ export function PendingReviews() {
                 ...review,
                 status: "PENDING",
                 fileReviewComments: review.fileReviewComments?.filter(
-                  (c) => !c.id?.startsWith("temp-")
+                  (c: any) => !c.id?.startsWith("temp-")
                 ),
               }
             : review
         )
       );
-      handleApiError(error, showToast);
+      handleApiError(error);
     } finally {
       setShowRejectModal(false);
       setRejectComment("");
@@ -724,6 +714,77 @@ export function PendingReviews() {
               <div className="flex items-center justify-center h-full bg-white">
                 <p>No content available</p>
               </div>
+<<<<<<< HEAD
+=======
+            )} */}
+            {previewDocument.file ? (
+              <div className="border rounded-lg h-full p-4 overflow-auto bg-white">
+                {previewDocument.file.name?.endsWith(".pdf") ? (
+                  <div className="h-full flex flex-col">
+                    <div className="flex-grow overflow-auto bg-white p-4">
+                      {previewDocument.file.content ? (
+                        <div className="h-full p-4 overflow-auto">
+                          {previewDocument.file.type === "pdf" ? (
+                            <PdfViewer content={previewDocument.file.content} />
+                          ) : previewDocument.file.type === "pdf-text" ? (
+                            <PDFTextViewer
+                              content={previewDocument.file.content}
+                            />
+                          ) : (
+                            <div
+                              className="prose max-w-none"
+                              dangerouslySetInnerHTML={{
+                                __html: DOMPurify.sanitize(
+                                  previewDocument.file.content
+                                ),
+                              }}
+                            />
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <p>No content available</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : previewDocument.file.name?.endsWith(".docx") ? (
+                  <div
+                    className="prose max-w-none"
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(
+                        previewDocument.file.content || ""
+                      ),
+                    }}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <FileText className="h-12 w-12 text-gray-400 mb-4" />
+                    <p>Preview not available for this file type</p>
+                    {previewDocument.file.content && (
+                      <a
+                        href={`data:text/plain;base64,${btoa(previewDocument.file.content)}`}
+                        download={previewDocument.file.name}
+                        className="mt-4 text-blue-600 hover:underline"
+                      >
+                        Download File
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : previewDocument.file?.url ? (
+              <iframe
+                src={previewDocument.file.url}
+                className="w-full h-full border-0"
+                title={previewDocument.file.name}
+                onError={() => toast.error("Failed to load document from URL")}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full bg-white">
+                <p>No content available</p>
+              </div>
+>>>>>>> 0ee709e697a3874fd1b633e94a6f82562e9baa0f
             )}
           </div>
         </Modal>

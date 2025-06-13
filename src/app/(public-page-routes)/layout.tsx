@@ -1,5 +1,6 @@
+import { Spinner } from "@/components/Loader";
 import { Metadata } from "next";
-import React from "react";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Login",
@@ -11,9 +12,5 @@ export default function PublicLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <>
-      {children}
-    </>
-  );
+  return <Suspense fallback={<Spinner />}>{children}</Suspense>;
 }

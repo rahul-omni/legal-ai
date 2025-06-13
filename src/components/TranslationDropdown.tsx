@@ -10,9 +10,9 @@ interface TranslationDropdownProps {
   onTranslate: (_vendor: TranslationVendor, _language: string) => Promise<void>;
   isLoading: boolean;
   selectedLanguage: string;
-  onLanguageChange: (language: string) => void;
+  onLanguageChange: (_language: string) => void;
   selectedVendor: TranslationVendor;
-  onVendorChange: (vendor: TranslationVendor) => void;
+  onVendorChange: (_vendor: TranslationVendor) => void;
 }
 
 export function TranslationDropdown({ 
@@ -27,7 +27,6 @@ export function TranslationDropdown({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleTranslate = async () => {
-    console.log("Translating to:", selectedLanguage);
     await onTranslate(selectedVendor, selectedLanguage);
   };
 

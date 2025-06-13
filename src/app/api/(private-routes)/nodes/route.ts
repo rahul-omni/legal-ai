@@ -3,7 +3,7 @@ import { FileType } from "@prisma/client";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "../../[...nextauth]/route";
+import { auth } from "../../lib/auth/nextAuthConfig";
 import { ErrorValidation, handleError } from "../../lib/errors";
 import { logger } from "../../lib/logger";
 import { fileSystemNodeService } from "../../services/fileSystemNodeService";
@@ -17,17 +17,24 @@ const nodeInputSchema = z.object({
 
 async function getNodesController(request: NextAuthRequest) {
   try {
+    logger.debug("getNodesController: Start processing request");
+
     const sessionUser = await userFromSession(request);
+    logger.debug("getNodesController: Retrieved session user", sessionUser);
+
     const { searchParams } = new URL(request.url);
     const parentId = searchParams.get("parentId");
+    logger.debug("getNodesController: Extracted parentId from query params", { parentId });
 
     const nodes = await fileSystemNodeService.findNodesByParentId(
       sessionUser.id,
       parentId
     );
+    logger.debug("getNodesController: Retrieved nodes by parentId", nodes);
 
     return NextResponse.json(nodes);
   } catch (error) {
+    logger.error("getNodesController: Error occurred", error);
     return handleError(error);
   }
 }
