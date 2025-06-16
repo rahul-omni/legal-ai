@@ -11,7 +11,6 @@ import { DiffHighlightPlugin } from "./lexical/DiffHighlightPlugin";
 import { EditorInitializer } from "./lexical/EditorInitializer";
 import { ToolbarPlugin } from "./lexical/ToolbarPlugin";
 import { initialConfig } from "./lexical/initialConfig";
-
 import "./lexical/lexical.css";
 
 interface DocumentEditorProps {
@@ -61,7 +60,7 @@ export const DocumentEditor: FC<DocumentEditorProps> = ({
               contentEditable={<ContentEditable className="editor-input" />}
               ErrorBoundary={LexicalErrorBoundary}
             />
-            <DiffHighlightPlugin  />
+            <DiffHighlightPlugin />
             <OnChangePlugin onChange={handleEditorChange} />
             <HistoryPlugin />
           </div>
