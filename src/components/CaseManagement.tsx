@@ -9,6 +9,7 @@ import {
   Download,
   Calendar,
   Check,
+  ChevronDown,
 } from "lucide-react";
 import toast from "react-hot-toast";
  
@@ -48,13 +49,72 @@ export function CaseManagement() {
     year: "",
     court: "",
   });
+   // Add a new state for tracking the newly created case
+  const [newlyCreatedCase, setNewlyCreatedCase] = useState<CaseData | null>(null);
+  // Add this to your existing state declarations
+ 
+const [expandedCases, setExpandedCases] = useState<Record<string, boolean>>({});
+const [caseDetails, setCaseDetails] = useState<Record<string, CaseData[]>>({}); // Changed to store array of cases
+const [loadingDetails, setLoadingDetails] = useState<Record<string, boolean>>({});
 
+const handleCaseExpand = async (caseItem: CaseData) => {
+  if (!caseItem?.id) {
+    console.error('Cannot expand - case item has no ID:', caseItem);
+    return;
+  }
+
+  const caseId = caseItem.id;
+  console.group(`Handling expand for case ${caseId}`);
+  
+  const isExpanded = expandedCases[caseId];
+  console.log('Current states:', {
+    expanded: expandedCases,
+    details: caseDetails,
+    loading: loadingDetails
+  });
+
+  // Toggle expansion state
+  setExpandedCases(prev => ({ ...prev, [caseId]: !isExpanded }));
+
+  if (!isExpanded && !caseDetails[caseId]) {
+    try {
+      setLoadingDetails(prev => ({ ...prev, [caseId]: true }));
+      
+      console.log(`Fetching details for diary ${caseItem.diaryNumber}`);
+      const response = await fetch(`/api/cases/dairynumber?diaryNumber=${caseItem.diaryNumber}`);
+      const data = await response.json();
+      console.log('API response:', data);
+
+      if (data.success && data.data?.length) {
+        // Store ALL cases from the response
+        setCaseDetails(prev => ({ 
+          ...prev, 
+          [caseId]: data.data 
+        }));
+      } else {
+        throw new Error(data.message || 'No case data returned');
+      }
+    } catch (error) {
+      console.error('Fetch error:', error);
+      // Fallback to the original case item as single item array
+      setCaseDetails(prev => ({ 
+        ...prev, 
+        [caseId]: [caseItem] 
+      }));
+    } finally {
+      setLoadingDetails(prev => ({ ...prev, [caseId]: false }));
+    }
+  }
+  console.groupEnd();
+};
  
    const fetchUserCases = async () => {
     try {
       setIsLoading(true);
       setError("");
-      const response = await fetch('/api/cases');
+      const response = await fetch('/api/cases/user-cases', {
+        method: 'GET'
+      });
       const data = await response.json();
       
       if (data.success && data.data) {
@@ -178,6 +238,7 @@ const handleCreateCases = async () => {
     // Show success message based on the actual API response
     if (result.success) {
       toast.success(`Successfully created Order for Diary Number ${result.data.createdCase.diaryNumber}`);
+       setNewlyCreatedCase(result.data.createdCase);
     } else {
       toast.error(result.message || "Case processed but got some errors");
     }
@@ -197,8 +258,7 @@ const handleCreateCases = async () => {
   } finally {
     setIsSubmitting(false);
   }
-};
-console.log("selectedCases", selectedCases);
+}; 
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
@@ -233,83 +293,195 @@ console.log("selectedCases", selectedCases);
       </div>
  
        {/* Cases List */}
-<div className="grid grid-cols-1 gap-2 mt-2 p-4">
-  {cases.map((caseItem) => (
-    <div
-      key={caseItem.id}
-      className="bg-white border rounded-md hover:shadow-sm transition-shadow text-xs"
-    >
-      <div className="flex justify-between items-center p-2 border-b">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-gray-900">
-            Case Number: {caseItem.caseNumber}
-          </span>
-          <span className="text-gray-500">
-            Diary Number: {caseItem.diaryNumber}
-          </span>
+ 
+     <div className="grid grid-cols-1 gap-2 mt-2 p-4">
+  {cases.map((caseItem, index) => {
+    if (!caseItem.id) {
+      console.error('Rendering case with no ID:', caseItem);
+      return null;
+    }
+    return (
+      <div
+        key={caseItem.id}
+        className="bg-white border rounded-md hover:shadow-sm transition-shadow text-xs"
+      >
+        {/* Case header - clickable */}
+        <div 
+          className="flex justify-between items-center p-2 border-b cursor-pointer"
+          onClick={() => handleCaseExpand(caseItem)}
+        >
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-gray-900">
+              {index + 1}. {caseItem.caseNumber}
+            </span>
+             <span className="font-medium text-gray-900">
+                  Diary Number: {caseItem.diaryNumber}
+                </span>
+            {caseItem.judgmentDate && (
+              <span className="text-gray-500">
+                (Judgment: {caseItem.judgmentDate})
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {loadingDetails[caseItem.id] ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ChevronDown 
+                className={`w-4 h-4 transition-transform ${
+                  expandedCases[caseItem.id] ? 'rotate-180' : ''
+                }`}
+              />
+            )}
+          </div>
         </div>
-        <div className="flex gap-1">
-          <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 text-[0.65rem] rounded-full">
-            {caseItem.court}
-          </span>
-          <span className="px-1.5 py-0.5 bg-green-100 text-green-800 text-[0.65rem] rounded-full">
-            {new Date(caseItem.date).toLocaleDateString()}
-          </span>
-        </div>
-      </div>
 
-      <div className="px-2 py-1 border-b">
-        <p className="truncate font-medium">
-          <span className="text-gray-500">Parties: </span>
-          {caseItem.parties}
-        </p>
-      </div>
+        {/* Expanded content */}
+        {expandedCases[caseItem.id] && (
+          <div className="p-4">
+            {caseDetails[caseItem.id] ? (
+              <div className="space-y-4">
+                {/* {caseDetails[caseItem.id].map((detail, idx) => (
+                  <div key={`${detail.id}-${idx}`} className="border-b pb-4 last:border-0">
+                    <h4 className="font-medium mb-2">Judgment {idx + 1}</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-gray-500 text-xs">Court:</p>
+                        <p className="font-medium">{detail.court}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 text-xs">Date:</p>
+                        <p className="font-medium">
+                          {new Date(detail.date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
 
-      <div className="px-2 py-1 border-b">
-        <p className="truncate">
-          <span className="text-gray-500">Advocates: </span>
-          {caseItem.advocates || "N/A"}
-        </p>
-      </div>
+                    <div className="mt-2">
+                      <p className="text-gray-500 text-xs">Parties:</p>
+                      <p className="font-medium">{detail.parties}</p>
+                    </div>
 
-      <div className="px-2 py-1 border-b">
-        <p className="truncate">
-          <span className="text-gray-500">Bench: </span>
-          {caseItem.bench}
-        </p>
-      </div>
+                    <div className="mt-2">
+                      <p className="text-gray-500 text-xs">Advocates:</p>
+                      <p className="font-medium">
+                        {detail.advocates || "N/A"}
+                      </p>
+                    </div>
 
-      <div className="grid grid-cols-3 gap-x-2 gap-y-1 px-2 py-1 border-b">
-        <div className="truncate">
-          <p className="text-gray-500 text-[0.65rem]">Judgment Date:</p>
-          <p className="truncate">{caseItem.judgmentDate || "N/A"}</p>
-        </div>
-        <div className="truncate">
-          <p className="text-gray-500 text-[0.65rem]">Serial Number:</p>
-          <p className="truncate">{caseItem.serialNumber || "N/A"}</p>
-        </div>
-        <div className="truncate">
-          <p className="text-gray-500 text-[0.65rem]">Judgment By:</p>
-          <p className="truncate">{caseItem.judgmentBy || "N/A"}</p>
-        </div>
-      </div>
+                    <div className="mt-2">
+                      <p className="text-gray-500 text-xs">Bench:</p>
+                      <p className="font-medium">{detail.bench}</p>
+                    </div>
 
-      {caseItem.judgmentUrl && (
-        <div className="px-2 py-1">
-          <a 
-            href={caseItem.judgmentUrl} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline text-[0.65rem]"
-          >
-            View Judgment PDF
-          </a>
-        </div>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      <div>
+                        <p className="text-gray-500 text-xs">Judgment Date:</p>
+                        <p className="font-medium">
+                          {detail.judgmentDate || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 text-xs">Diary Number:</p>
+                        <p className="font-medium">{detail.diaryNumber}</p>
+                      </div>
+                    </div>
+
+                    {detail.judgmentUrl && (
+                      <div className="mt-3">
+                        <a
+                          href={detail.judgmentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center text-blue-600 hover:underline text-xs"
+                        >
+                          <FileText className="w-3 h-3 mr-1" />
+                          View Judgment PDF
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ))} */}
+
+                {caseDetails[caseItem.id].map((detail, idx) => (
+  <div key={`${detail.id}-${idx}`} className="border-b pb-4 last:border-0">
+    <div className="flex justify-between items-start mb-3">
+      <h4 className="font-medium text-sm text-blue-600">Judgment {idx + 1}</h4>
+      {detail.judgmentDate && (
+        <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+          {detail.judgmentDate}
+        </span>
       )}
     </div>
-  ))}
+
+    <div className="flex flex-wrap gap-4">
+      {/* Column 1 - Case Info */}
+      <div className="flex-1 min-w-[200px] space-y-2">
+        <div>
+          <p className="text-gray-500 text-xs">Court</p>
+          <p className="font-medium text-sm">{detail.court}</p>
+        </div>
+        <div>
+          <p className="text-gray-500 text-xs">Date</p>
+          <p className="font-medium text-sm">
+            {new Date(detail.date).toLocaleDateString()}
+          </p>
+        </div>
+        <div>
+          <p className="text-gray-500 text-xs">Diary Number</p>
+          <p className="font-medium text-sm">{detail.diaryNumber}</p>
+        </div>
+      </div>
+
+      {/* Column 2 - Parties */}
+      <div className="flex-1 min-w-[200px] space-y-2">
+        <div>
+          <p className="text-gray-500 text-xs">Parties</p>
+          <p className="font-medium text-sm">{detail.parties}</p>
+        </div>
+        <div>
+          <p className="text-gray-500 text-xs">Advocates</p>
+          <p className="font-medium text-sm">
+            {detail.advocates || "N/A"}
+          </p>
+        </div>
+      </div>
+
+      {/* Column 3 - Bench & Actions */}
+      <div className="flex-1 min-w-[200px] space-y-2">
+        <div>
+          <p className="text-gray-500 text-xs">Bench</p>
+          <p className="font-medium text-sm">{detail.bench}</p>
+        </div>
+        {detail.judgmentUrl && (
+          <div className="mt-2">
+            <a
+              href={detail.judgmentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center text-blue-600 hover:underline text-xs bg-blue-50 px-2 py-1 rounded"
+            >
+              <FileText className="w-3 h-3 mr-1" />
+              View Judgment PDF
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+))}
+              </div>
+            ) : (
+              <div className="text-center py-2 text-gray-500 text-xs">
+                {loadingDetails[caseItem.id] ? 'Loading...' : 'Failed to load details'}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  })}
 </div>
-  
 
       {/* Search and Create Case Modal */}
       {showNewCaseModal && (

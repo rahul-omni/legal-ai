@@ -84,3 +84,54 @@ export const POST = auth(async (request: NextAuthRequest) => {
     await prisma.$disconnect();
   }
 });
+
+
+
+export const GET = auth(async (request: NextAuthRequest) => {
+  try {
+    // Authentication
+    const sessionUser = await userFromSession(request);
+    if (!sessionUser?.id) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Fetch all diary numbers for this user
+    const userCases = await prisma.userCase.findMany({
+      where: {
+        userId: sessionUser.id
+      },
+      select: {
+        id:true,
+        diaryNumber: true,
+        createdAt: true,
+        status: true
+      },
+      orderBy: {
+        createdAt: 'desc' // Optional: order by creation date
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Successfully retrieved diary numbers",
+      data:  userCases
+      
+    });
+
+  } catch (error) {
+    console.error("Error in GET /api/cases/user-cases:", error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: "Internal server error", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
+  }
+});
