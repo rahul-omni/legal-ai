@@ -71,7 +71,7 @@ export function DocumentPane() {
     const reader = stream.getReader();
     const decoder = new TextDecoder();
     let fullHtml = "";
-    let tempElements: { para: ParagraphNode | null; text: TextNode | null } = {
+    const tempElements: { para: ParagraphNode | null; text: TextNode | null } = {
       para: null,
       text: null,
     };
