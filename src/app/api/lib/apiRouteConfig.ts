@@ -21,7 +21,7 @@ interface PrivateApiRoute {
   reviewDetails(_reviewId: string): `/file-reviews/${string}`;
   reviewStatus(_reviewId: string): `/file-reviews/${string}/status`;
   reviewComments(_reviewId: string): `/file-reviews/${string}/comments`;
-  resolveComment(_commentId: string): `/file-reviews/comments/${string}/resolve`;
+ 
   organizationInvitations(_orgId: string): `/organization/${string}/invitations`;
 }
 
@@ -41,7 +41,6 @@ export const apiRouteConfig: {
     reviewDetails: (reviewId) => `/file-reviews/${reviewId}`,
     reviewStatus: (reviewId) => `/file-reviews/${reviewId}/status`,
     reviewComments: (reviewId) => `/file-reviews/${reviewId}/comments`,
-    resolveComment: (commentId) => `/file-reviews/comments/${commentId}/resolve`,
     organization: (ordId) => `/organization/${ordId}`,
     
     // organizationInvitations: (orgId) => `/organization/${orgId}/invitations`,

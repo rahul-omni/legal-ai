@@ -235,28 +235,7 @@ class ReviewService {
     }
   }
 
-  async resolveComment(
-    commentId: string,
-    userId: string
-  ): Promise<FileReviewComment> {
-    try {
-      const comment = await db.fileReviewComment.findUnique({
-        where: { id: commentId },
-        include: { fileReview: true },
-      });
-
-      if (!comment || comment.fileReview.reviewerId !== userId) {
-        throw new ErrorNotFound("Comment not found or access denied");
-      }
-
-      return await db.fileReviewComment.update({
-        where: { id: commentId },
-        data: { resolved: true },
-      });
-    } catch {
-      throw new Error("Failed to resolve comment");
-    }
-  }
+  
 }
 
 export const reviewService = new ReviewService();
