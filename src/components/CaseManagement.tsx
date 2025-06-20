@@ -152,7 +152,7 @@ const handleCaseExpand = async (caseItem: CaseData) => {
       setSelectAll(false);
 
       if (!searchParams.number || !searchParams.year) {
-        throw new Error("Both diary number and year are required");
+        throw new Error("Both diary number and year are required.");
       }
 
       const searchUrl = new URL("/api/cases/search", window.location.origin);
