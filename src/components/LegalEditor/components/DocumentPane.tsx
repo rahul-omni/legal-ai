@@ -29,7 +29,7 @@ interface GenerationState {
 }
 
 export function DocumentPane() {
-  const { docEditorState, lexicalEditorRef } = useDocumentEditor();
+  const { docEditorState, lexicalEditorRef, docEditorDispatch } = useDocumentEditor();
   const [selectedText, setSelectedText] = useState<string>();
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [generationState, setGenerationState] = useState<GenerationState>({
@@ -115,7 +115,13 @@ export function DocumentPane() {
   function renderFinalContent(rawHtml: string) {
     const cleanHtml = stripCodeFences(rawHtml).trim();
     const dom = new DOMParser().parseFromString(cleanHtml, "text/html");
-  
+    if (docEditorState.activeTabId) {
+      docEditorDispatch({
+        type: "UPDATE_TAB_CONTENT",
+        payload: { tabId: docEditorState.activeTabId, content: activeTab?.content + cleanHtml },
+      });
+    }
+
     lexicalEditorRef.current?.update(() => {
       // 1️⃣ drop the temp paragraph if it exists
       if (tempElements.para) {
