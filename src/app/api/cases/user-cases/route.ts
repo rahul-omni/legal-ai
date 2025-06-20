@@ -115,11 +115,12 @@ export const GET = auth(async (request: NextAuthRequest) => {
     });
 
     return NextResponse.json({
-      success: true,
-      message: "Successfully retrieved diary numbers",
-      data:  userCases
-      
-    });
+  success: true,
+  message: userCases.length === 0 
+    ? "No cases found for this user" 
+    : "Successfully retrieved diary numbers",
+  data: userCases
+});
 
   } catch (error) {
     console.error("Error in GET /api/cases/user-cases:", error);
