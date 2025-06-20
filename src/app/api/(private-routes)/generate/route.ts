@@ -25,8 +25,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "system",
-          content: `You are a legal document assistant. Respond only with clean, well-formatted rich text using tags like h1, p, h2, li. Always Format the response as To be added: ... . To be replaced: ... If nothing needs to be added or replaced send the respectie on
-           If some text has to be replaced, send both the text to be added and the one to be replaced. Always Format the response as To be added: ... . To be replaced: ...
+          content: `You are a legal document assistant. Respond only with clean, well-formatted rich text using tags like h1, p, h2, li. 
 
           `
                        //"You are a legal document assistant. Create clear and professional legal content."

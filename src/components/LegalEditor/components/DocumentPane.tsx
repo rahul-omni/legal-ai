@@ -40,7 +40,10 @@ export function DocumentPane() {
   const activeTab = docEditorState.openTabs.find(
     (tab) => tab.id === docEditorState.activeTabId
   );
-
+  let tempElements: { para: ParagraphNode | null; text: TextNode | null } = {
+    para: null,
+    text: null,
+  };
   async function handlePromptSubmit(prompt: string, fullText?: string) {
     if (!prompt.trim() || !lexicalEditorRef.current) return;
     setGenerationState({ isGenerating: true, loading: true });
@@ -71,10 +74,7 @@ export function DocumentPane() {
     const reader = stream.getReader();
     const decoder = new TextDecoder();
     let fullHtml = "";
-    let tempElements: { para: ParagraphNode | null; text: TextNode | null } = {
-      para: null,
-      text: null,
-    };
+    
 
     while (true) {
       const { value, done } = await reader.read();
@@ -90,6 +90,8 @@ export function DocumentPane() {
         renderFinalContent(fullHtml);
         break;
       }
+
+      
     }
   }
 
@@ -98,14 +100,14 @@ export function DocumentPane() {
     elements: { para: ParagraphNode | null; text: TextNode | null }
   ) {
     lexicalEditorRef.current?.update(() => {
-      if (!elements.para) {
-        elements.para = $createParagraphNode();
-        elements.text = $createTextNode("");
-        elements.para.append(elements.text);
-        $getRoot().append(elements.para);
+      if (!tempElements.para) {
+        tempElements.para = $createParagraphNode();
+        tempElements.text = $createTextNode("");
+        tempElements.para.append(tempElements.text);
+        $getRoot().append(tempElements.para);
       }
-      if (elements.text) {
-        elements.text.setTextContent(elements.text.getTextContent() + chunk);
+      if (tempElements.text) {
+        tempElements.text.setTextContent(tempElements.text.getTextContent() + chunk);
       }
     });
   }
@@ -113,22 +115,29 @@ export function DocumentPane() {
   function renderFinalContent(rawHtml: string) {
     const cleanHtml = stripCodeFences(rawHtml).trim();
     const dom = new DOMParser().parseFromString(cleanHtml, "text/html");
-
+  
     lexicalEditorRef.current?.update(() => {
-      $getRoot().clear();
+      // 1️⃣ drop the temp paragraph if it exists
+      if (tempElements.para) {
+        tempElements.para.remove();
+        tempElements = { para: null, text: null };
+      }
+  
+      // 2️⃣ convert & insert final nodes
       const nodes = $generateNodesFromDOM(lexicalEditorRef.current!, dom);
       const validNodes = nodes.filter($isElementNode);
-
+  
+      $getRoot().selectEnd();   // caret to end
       if (validNodes.length) {
         $insertNodes(validNodes);
       } else {
-        // Fallback for invalid HTML
-        $getRoot().append(
-          $createParagraphNode().append($createTextNode(cleanHtml))
-        );
+        $insertNodes([
+          $createParagraphNode().append($createTextNode(cleanHtml)),
+        ]);
       }
     });
   }
+  
 
   function stripCodeFences(raw: string): string {
     return raw
