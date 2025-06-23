@@ -10,7 +10,7 @@ import {
   ParagraphNode,
   TextNode,
 } from "lexical";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useDocumentEditor } from "../reducersContexts/documentEditorReducerContext";
 import { AIPopup } from "./AIPopup";
@@ -36,6 +36,12 @@ export function DocumentPane() {
     isGenerating: false,
     loading: false,
   });
+
+  const [initialContent, setInitialContent] = useState<string>("")
+
+  useEffect(()=>{
+    setInitialContent(activeTab?.content || "")
+  }, [docEditorState.activeTabId])
 
   const activeTab = docEditorState.openTabs.find(
     (tab) => tab.id === docEditorState.activeTabId
@@ -165,8 +171,9 @@ export function DocumentPane() {
       <DocumentPaneTopBar onFileReviewRequest={onFileReviewRequest} />
       <div className="flex-1 relative bg-white">
         <DocumentEditor
-          localContent={activeTab?.content || ""}
+          localContent={initialContent}
           handleSelectionChange={setSelectedText}
+          activeTabId={docEditorState.activeTabId || ""}
         />
 
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-[600px]">

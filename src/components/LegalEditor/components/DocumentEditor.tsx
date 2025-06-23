@@ -11,19 +11,23 @@ import { useDocumentEditor } from "../reducersContexts/documentEditorReducerCont
 import { EditorInitializer } from "./lexical/EditorInitializer";
 import { ToolbarPlugin } from "./lexical/ToolbarPlugin";
 import { initialConfig } from "./lexical/initialConfig";
+import { $generateHtmlFromNodes } from "@lexical/html";
+import { LexicalEditor } from "lexical";
 
 import "./lexical/lexical.css";
 
 interface DocumentEditorProps {
   localContent: string;
   handleSelectionChange: (_selectedText?: string) => void;
+  activeTabId: string;
 }
 
 export const DocumentEditor: FC<DocumentEditorProps> = ({
   localContent,
   handleSelectionChange,
+  activeTabId,
 }) => {
-  const { lexicalEditorRef } = useDocumentEditor();
+  const { lexicalEditorRef, docEditorDispatch } = useDocumentEditor();
 
   const handleSelectionUpdate = () => {
     const selection = $getSelection();
@@ -34,6 +38,14 @@ export const DocumentEditor: FC<DocumentEditorProps> = ({
   const handleEditorChange = debounce((editorState: EditorState) => {
     editorState.read(() => {
       handleSelectionUpdate();
+      if (activeTabId) {
+        const editor = lexicalEditorRef.current as LexicalEditor;
+        const htmlContent = $generateHtmlFromNodes(editor);
+        docEditorDispatch({
+          type: "UPDATE_TAB_CONTENT",
+          payload: { tabId: activeTabId, content: htmlContent },
+        });
+      }
     });
   }, 300);
 
