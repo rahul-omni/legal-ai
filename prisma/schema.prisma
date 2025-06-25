@@ -28,6 +28,7 @@ model User {
   orgMemberships          OrgMembership[]     @relation("org_memberships_user_id_idx")
   organizationsCreated    Organization[]      @relation("organization_createdByUser")
   fileReviewComments      FileReviewComment[] @relation("reviewer_comment")
+  userCases               UserCase[]          @relation("user_usercases")
 
   @@map("users")
 }
@@ -159,6 +160,40 @@ model FileReviewComment {
   user         User       @relation("reviewer_comment", fields: [userId], references: [id])
 
   @@map("review_comments")
+}
+
+model CaseManagement {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  serialNumber String    @map("serial_number")
+  diaryNumber  String    @map("diary_number")
+  caseNumber   String    @map("case_number")
+  parties      String
+  advocates    String
+  bench        String
+  judgmentBy   String    @map("judgment_by")
+  judgmentDate String    @map("judgment_date")
+  judgmentText String    @map("judgment_text")
+  judgmentUrl  String    @map("judgment_url")
+  court        String
+  date         DateTime  @default(now()) @map("date")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+
+  @@map("case_management")
+}
+
+model UserCase {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  status          String         @default("PENDING")
+  userId          String         @map("user_id") @db.Uuid
+  diaryNumber  String         @map("diary_number")
+  
+  user            User           @relation("user_usercases", fields: [userId], references: [id])
+
+  @@map("user_cases")
 }
 
 enum FileReviewStatus {
