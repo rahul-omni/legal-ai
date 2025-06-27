@@ -1,5 +1,4 @@
 import { getDocument, PDFPageProxy } from "pdfjs-dist";
-import * as mammoth from "mammoth";
 import pdf2md from "@opendocsg/pdf2md";
 import { marked } from "marked";
 
@@ -127,61 +126,15 @@ const extractImagesFromPage = async (
 /**
  * Converts a PDF File/Blob to HTML by first extracting Markdown using pdf2md, then converting it to HTML.
  */
-// export const extractTextFromPDF = async (file: File | Blob): Promise<{ html: string }> => {
-//   const arrayBuffer = await file.arrayBuffer();
-//   const buffer = Buffer.from(arrayBuffer);
+export const extractTextFromPDF = async (file: File | Blob): Promise<{ html: string }> => {
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
 
-//   // Convert PDF to markdown
-//   const markdown: string = await pdf2md(buffer, {});
+  // Convert PDF to markdown
+  const markdown: string = await pdf2md(buffer, {});
 
-//   // Convert markdown to HTML
-//   const html: string = await marked(markdown);
-
-//   return { html: `<div class="docx-document">${html}</div>` };
-// };
-
-
-
-
-function base64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binaryString = atob(base64); // decode base64
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes.buffer;
-}
-
-export const extractTextFromPDF = async (file: File): Promise<{ html: string }> => {
-  const formData = new FormData();
-  formData.append("File", file);
-
-  const convertApiSecret = "cRQ2CCp2UnbelFQMqSgTuLNqcFfjn7hS"; // Replace with your key
-  const url = `https://v2.convertapi.com/convert/pdf/to/docx?Secret=${convertApiSecret}`;
-
-  const response = await fetch(url, {
-    method: "POST",
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`ConvertAPI failed: ${response.status} - ${errText}`);
-  }
-
-  const result = await response.json();
-  const fileData = result?.Files?.[0]?.FileData;
-
-  if (!fileData) {
-    throw new Error("Missing FileData (base64) in ConvertAPI response");
-  }
-
-  // Convert base64 FileData to ArrayBuffer
-  const arrayBuffer = base64ToArrayBuffer(fileData);
-
-  // Use mammoth to convert DOCX buffer to HTML
-  const { value: html } = await mammoth.convertToHtml({ arrayBuffer });
+  // Convert markdown to HTML
+  const html: string = await marked(markdown);
 
   return { html: `<div class="docx-document">${html}</div>` };
 };
