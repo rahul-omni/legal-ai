@@ -17,6 +17,9 @@ import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 import { FileExplorerHeader } from "./FileHeader";
 import FileNode from "./FileNode";
 import FolderNode from "./FolderNode";
+import { GlobalWorkerOptions, version } from 'pdfjs-dist/build/pdf';
+
+GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.js`;
 
 interface FileExplorerProps {
   selectedDocument?: FileSystemNodeProps;

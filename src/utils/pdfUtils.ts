@@ -1,4 +1,7 @@
 import { getDocument, PDFPageProxy } from "pdfjs-dist";
+import * as mammoth from "mammoth";
+import pdf2md from "@opendocsg/pdf2md";
+import { marked } from "marked";
 
 interface TextItem {
   str: string;
@@ -121,75 +124,68 @@ const extractImagesFromPage = async (
   return images;
 };
 
-export const extractTextFromPDF = async (
-  file: File
-): Promise<ExtractedContent> => {
-  try {
-    console.log("Starting PDF extraction...");
-    const arrayBuffer = await file.arrayBuffer();
-    console.log("File converted to ArrayBuffer.");
+/**
+ * Converts a PDF File/Blob to HTML by first extracting Markdown using pdf2md, then converting it to HTML.
+ */
+// export const extractTextFromPDF = async (file: File | Blob): Promise<{ html: string }> => {
+//   const arrayBuffer = await file.arrayBuffer();
+//   const buffer = Buffer.from(arrayBuffer);
 
-    const pdf = await getDocument({ data: arrayBuffer }).promise;
-    console.log(`PDF loaded with ${pdf.numPages} pages.`);
+//   // Convert PDF to markdown
+//   const markdown: string = await pdf2md(buffer, {});
 
-    let fullText = "";
-    let fullHtml = "";
-    const allImages: ImageItem[] = [];
+//   // Convert markdown to HTML
+//   const html: string = await marked(markdown);
 
-    for (let i = 1; i <= pdf.numPages; i++) {
-      console.log(`Processing page ${i}...`);
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      console.log(`Text content extracted for page ${i}.`);
+//   return { html: `<div class="docx-document">${html}</div>` };
+// };
 
-      // Extract text with positioning information
-      const textItems = content.items as TextItem[];
-      console.log(`Number of text items on page ${i}: ${textItems.length}`);
-      const formattedText = organizeTextItems(textItems);
-      fullText += `Page ${i}:\n${formattedText}\n\n`;
 
-      // Extract images
-      const pageImages = await extractImagesFromPage(page);
-      console.log(
-        `Number of images extracted from page ${i}: ${pageImages.length}`
-      );
-      allImages.push(...pageImages);
 
-      // Build HTML representation
-      let pageHtml = `<div class="pdf-page" data-page="${i}">`;
-      pageHtml += `<h4 class="pdf-page-header">Page ${i}</h4>`;
 
-      // Add text content
-      pageHtml += `<div class="pdf-text-content">${formattedText.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br>")}</div>`;
-
-      // Add images
-      if (pageImages.length > 0) {
-        pageHtml += '<div class="pdf-images">';
-        pageImages.forEach((img, idx) => {
-          pageHtml += `<img src="${img.src}" width="${img.width}" height="${img.height}" alt="PDF image ${idx + 1}" />`;
-        });
-        pageHtml += "</div>";
-      }
-
-      pageHtml += "</div>";
-      fullHtml += pageHtml;
-
-      console.log(`Finished processing page ${i}.`);
-    }
-
-    console.log("PDF extraction completed successfully.");
-    const data = {
-      text: fullText,
-      images: allImages,
-      html: `<div class="pdf-document">${fullHtml}</div>`,
-    };
-    console.log("Extracted content:", data);
-    return data;
-  } catch (error) {
-    console.error("Error extracting PDF content:", error);
-    throw error; // Re-throw the error to ensure the caller is aware of the failure
+function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const binaryString = atob(base64); // decode base64
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
   }
+  return bytes.buffer;
+}
+
+export const extractTextFromPDF = async (file: File): Promise<{ html: string }> => {
+  const formData = new FormData();
+  formData.append("File", file);
+
+  const convertApiSecret = "cRQ2CCp2UnbelFQMqSgTuLNqcFfjn7hS"; // Replace with your key
+  const url = `https://v2.convertapi.com/convert/pdf/to/docx?Secret=${convertApiSecret}`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`ConvertAPI failed: ${response.status} - ${errText}`);
+  }
+
+  const result = await response.json();
+  const fileData = result?.Files?.[0]?.FileData;
+
+  if (!fileData) {
+    throw new Error("Missing FileData (base64) in ConvertAPI response");
+  }
+
+  // Convert base64 FileData to ArrayBuffer
+  const arrayBuffer = base64ToArrayBuffer(fileData);
+
+  // Use mammoth to convert DOCX buffer to HTML
+  const { value: html } = await mammoth.convertToHtml({ arrayBuffer });
+
+  return { html: `<div class="docx-document">${html}</div>` };
 };
+
 
 interface TextItem {
   str: string;
