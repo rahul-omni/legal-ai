@@ -86,6 +86,7 @@ export function Navigation() {
             <Link
               key={item.name}
               href={item.href}
+              title={item.name}
               className={`
                 relative flex items-center gap-3 px-4 py-2 mx-2 rounded-md transition-colors
                 ${isExpanded ? "" : "justify-center"} 
