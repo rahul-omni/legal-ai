@@ -55,6 +55,7 @@
     "react-toastify": "^11.0.5",
     "resend": "^4.5.0",
     "supports-color": "^10.0.0",
+    "twilio": "^5.7.1",
     "winston": "^3.17.0",
     "zod": "^3.24.4",
     "zustand": "^5.0.4"
@@ -70,6 +71,7 @@
     "@types/node-cron": "^3.0.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/twilio": "^3.19.2",
     "@typescript-eslint/eslint-plugin": "^8.32.0",
     "@typescript-eslint/parser": "^8.32.0",
     "autoprefixer": "^10.4.21",

@@ -1,10 +1,14 @@
+
 "use client";
 import { createContext, FC, ReactNode, useContext, useState } from "react";
 
+// Add the new loading states to the default loading state
 const defaultLoadingState = {
   RISK_ANALYZE: false,
   TRANSLATE_TEXT: false,
   LOGGING_IN: false,
+  SENDING_OTP: false,
+  VERIFYING_OTP: false,
 };
 
 type LoadingType = keyof typeof defaultLoadingState;
@@ -39,7 +43,7 @@ export function useLoadingContext() {
   const context = useContext(LoadingContext);
   if (!context) {
     throw new Error(
-      "useFileHandling must be used within a FileHandlingProvider"
+      "useLoadingContext must be used within a LoadingProvider"
     );
   }
   return context;
