@@ -23,6 +23,9 @@ import { useRouter } from "next/navigation";
 import { getDocument } from "pdfjs-dist";
 import { Dispatch, FC, useEffect, useReducer, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import {
+  parseImageWithOpenAI
+} from "@/app/apiServices/nodeServices";
 
 interface ProjectHubProps {
   projects: FileSystemNodeProps[];
@@ -251,12 +254,18 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
       if (file.type === "application/pdf") {
         content = await extractTextFromPDF(file);
         toast.success("PDF Parsed Successfully");
+      }else if (["image/png", "image/jpg", "image/jpeg"].includes(file.type)) {
+        const { html } = await parseImageWithOpenAI(file);
+        content = html;
+        toast.success("Image Parsed Successfully");
       } else {
         content = await FileService.parseFile(file);
       }
 
+      const updatedFileName = file.name.replace(/\.[^/.]+$/, "") + ".docx";
+
       const newFile: CreateNodePayload = {
-        name: file.name,
+        name: updatedFileName,
         type: "FILE",
         parentId: isRootLevel ? undefined : projectHubState.selectedProject?.id,
         content,
@@ -329,14 +338,14 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
           ref={fileInputRef}
           className="hidden"
           onChange={(e) => handleFileUpload(e, true)} // true for root level
-          accept=".txt,.doc,.docx,.pdf"
+          accept=".txt,.doc,.docx,.pdf, .png, .jpg, .jpeg"
         />
         <input
           type="file"
           ref={fileInputRef2}
           className="hidden"
           onChange={(e) => handleFileUpload(e, false)} // false for folder level
-          accept=".txt,.doc,.docx,.pdf"
+          accept=".txt,.doc,.docx,.pdf, .png, .jpg, .jpeg"
         />
       </div>
       <div className="relative">
@@ -390,6 +399,10 @@ const EmptyProject: FC<
       if (file.type === "application/pdf") {
         content = await extractTextFromPDF(file);
         toast.success("PDF Parsed Successfully");
+      }else if (["image/png", "image/jpg", "image/jpeg"].includes(file.type)) {
+        const { html } = await runOCR(file);
+        content = html;
+        toast.success("Image Parsed Successfully");
       } else {
         content = await FileService.parseFile(file);
       }

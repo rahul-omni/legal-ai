@@ -52,7 +52,7 @@ export const FileExplorerHeader: FC<{
           ref={fileInputRef}
           className="hidden"
           onChange={handleFileUpload}
-          accept=".txt,.doc,.docx,.pdf"
+          accept=".txt,.doc,.docx,.pdf, .png, .jpg, .jpeg"
         />
 
         {/* New Folder Button */}

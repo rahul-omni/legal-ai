@@ -3,6 +3,7 @@ import {
   createNode,
   CreateNodePayload,
   fetchNodes,
+  parseImageWithOpenAI
 } from "@/app/apiServices/nodeServices";
 import { Spinner } from "@/components/Loader";
 import { handleApiError } from "@/helper/handleApiError";
@@ -109,12 +110,18 @@ export const FileExplorer: FC<FileExplorerProps> = ({
         const { html } = await extractTextFromPDF(file);
         content = html;
         toast.success("PDF Parsed Successfully");
+      }else if (["image/png", "image/jpg", "image/jpeg"].includes(file.type)) {
+        const { html } = await parseImageWithOpenAI(file);
+        content = html;
+        toast.success("Image Parsed Successfully");
       } else {
         content = await FileService.parseFile(file);
       }
 
+      const updatedFileName = file.name.replace(/\.[^/.]+$/, "") + ".docx";
+
       const newFile: CreateNodePayload = {
-        name: file.name,
+        name: updatedFileName,
         type: "FILE",
         parentId,
         content,

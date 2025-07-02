@@ -70,7 +70,7 @@ const FolderNode = ({
                 id={`file-${node.id}`}
                 type="file"
                 className="hidden"
-                accept=".docx,.pdf,.txt"
+                accept=".docx,.pdf,.txt, .png, .jpg, .jpeg"
                 onChange={async (e) => {
                   e.stopPropagation();
                   await onFileUpload(e, node.id);

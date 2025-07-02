@@ -3,6 +3,7 @@ import { FileType } from "@prisma/client";
 import { apiClient } from ".";
 import { AxiosResponse } from "axios";
 import { apiRouteConfig } from "../api/lib/apiRouteConfig";
+import { openai } from "@/lib/openai";
 export interface CreateNodePayload {
   name: string;
   type: FileType;
@@ -63,6 +64,56 @@ export const fetchAllNodes = async (): Promise<FileSystemNodeProps[]> => {
     throw new Error("Failed to fetch all nodes");
   }
 };
+
+export const parseImageWithOpenAI = async (
+  imageFile: File
+): Promise<{ html: string }> => {
+  try {
+    // Step 1: Convert File to base64
+    const base64Image = await fileToBase64(imageFile);
+
+    // Step 2: Send image to OpenAI with vision model
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: `Extract text from this image file. Preserve formatting and return rich HTML.`,
+        },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:${imageFile.type};base64,${base64Image}`,
+              },
+            },
+          ],
+        },
+      ],
+      max_tokens: 2000,
+    });
+
+    const htmlContent = response.choices[0]?.message?.content || '';
+    return {html: htmlContent.replace(/```html|```/g, '').trim()};
+  } catch (error) {
+    console.error('Error during OpenAI Vision processing:', error);
+    throw new Error('Failed to process image');
+  }
+};
+
+// Helper: Convert File to base64 string
+const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const base64 = (reader.result as string).split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = (error) => reject(error);
+  });
 
 export const readFile = async (
   nodeId: string
