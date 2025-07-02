@@ -8,6 +8,7 @@ import { useUserContext } from "@/context/userContext";
 import { handleApiError } from "@/helper/handleApiError";
 import { FileService } from "@/lib/fileService";
 import { FileSystemNodeProps } from "@/types/fileSystem";
+import { fileToBase64 } from "@/utils/pdfUtils";
 import {
   File,
   FilePlus,
@@ -23,9 +24,6 @@ import { useRouter } from "next/navigation";
 import { getDocument } from "pdfjs-dist";
 import { Dispatch, FC, useEffect, useReducer, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import {
-  parseImageWithOpenAI
-} from "@/app/apiServices/nodeServices";
 
 interface ProjectHubProps {
   projects: FileSystemNodeProps[];
@@ -38,9 +36,9 @@ interface ProjectHubProps {
 
 type ProjectHubAction =
   | {
-      type: "SET_PROJECTS";
-      payload: FileSystemNodeProps[];
-    }
+    type: "SET_PROJECTS";
+    payload: FileSystemNodeProps[];
+  }
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_CREATE_LOADING"; payload: boolean }
   | { type: "SET_SEARCH_QUERY"; payload: string }
@@ -148,12 +146,12 @@ export default function ProjectHub() {
               {/* Always show EmptyProject when a folder is selected to display the upload button */}
               {(projectHubState.selectedProject ||
                 projectHubState.projects.length === 0) && (
-                <EmptyProject
-                  projectHubState={projectHubState}
-                  dispatchProjectHub={dispatchProjectHub}
-                  loadProjects={loadProjects}
-                />
-              )}
+                  <EmptyProject
+                    projectHubState={projectHubState}
+                    dispatchProjectHub={dispatchProjectHub}
+                    loadProjects={loadProjects}
+                  />
+                )}
             </>
           )}
         </div>
@@ -254,8 +252,22 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
       if (file.type === "application/pdf") {
         content = await extractTextFromPDF(file);
         toast.success("PDF Parsed Successfully");
-      }else if (["image/png", "image/jpg", "image/jpeg"].includes(file.type)) {
-        const { html } = await parseImageWithOpenAI(file);
+      } else if (["image/png", "image/jpg", "image/jpeg"].includes(file.type)) {
+        const base64 = await fileToBase64(file); // 👈 Convert image to base64
+
+        const res = await fetch("/api/parse-image", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            base64Image: base64,
+            mimeType: file.type,
+            targetLanguage: "English", // Optional, default handled by server
+          }),
+        });
+
+        const { html } = await res.json();
         content = html;
         toast.success("Image Parsed Successfully");
       } else {
@@ -306,11 +318,10 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
               title="Upload File"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className={`px-3 py-1.5 border border-gray-200 rounded-md flex items-center gap-2 ${
-                isUploading
+              className={`px-3 py-1.5 border border-gray-200 rounded-md flex items-center gap-2 ${isUploading
                   ? "bg-gray-100 cursor-not-allowed"
                   : "hover:bg-gray-50"
-              } transition-colors text-sm`}
+                } transition-colors text-sm`}
             >
               <Upload className="w-3.5 h-3.5" />
               Upload Files
@@ -321,11 +332,10 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
             title="Upload File"
             onClick={() => fileInputRef2.current?.click()}
             disabled={isUploading}
-            className={`px-3 py-1.5 border border-gray-200 rounded-md flex items-center gap-2 ${
-              isUploading
+            className={`px-3 py-1.5 border border-gray-200 rounded-md flex items-center gap-2 ${isUploading
                 ? "bg-gray-100 cursor-not-allowed"
                 : "hover:bg-gray-50"
-            } transition-colors text-sm`}
+              } transition-colors text-sm`}
           >
             <Upload className="w-3.5 h-3.5" />
             Upload Files
@@ -399,8 +409,22 @@ const EmptyProject: FC<
       if (file.type === "application/pdf") {
         content = await extractTextFromPDF(file);
         toast.success("PDF Parsed Successfully");
-      }else if (["image/png", "image/jpg", "image/jpeg"].includes(file.type)) {
-        const { html } = await parseImageWithOpenAI(file);
+      } else if (["image/png", "image/jpg", "image/jpeg"].includes(file.type)) {
+        const base64 = await fileToBase64(file); // 👈 Convert image to base64
+        
+        const res = await fetch("/api/parse-image", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            base64Image: base64,
+            mimeType: file.type,
+            targetLanguage: "English", // Optional, default handled by server
+          }),
+        });
+
+        const { html } = await res.json();
         content = html;
         toast.success("Image Parsed Successfully");
       } else {
@@ -437,7 +461,7 @@ const EmptyProject: FC<
       <h3 className="text-lg font-medium text-gray-900 mb-1">
         {projectHubState.selectedProject ? "" : "No projects yet"}
       </h3>
-       
+
       {/* {projectHubState.selectedProject && (
         <>
           <button

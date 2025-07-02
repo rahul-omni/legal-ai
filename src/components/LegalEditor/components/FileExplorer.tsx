@@ -3,13 +3,12 @@ import {
   createNode,
   CreateNodePayload,
   fetchNodes,
-  parseImageWithOpenAI
 } from "@/app/apiServices/nodeServices";
 import { Spinner } from "@/components/Loader";
 import { handleApiError } from "@/helper/handleApiError";
 import { FileService } from "@/lib/fileService";
 import { FileSystemNodeProps } from "@/types/fileSystem";
-import { extractTextFromPDF } from "@/utils/pdfUtils";
+import { extractTextFromPDF, fileToBase64 } from "@/utils/pdfUtils";
 import { isArray } from "lodash";
 import { useParams } from "next/navigation";
 import { FC, useEffect, useRef, useState } from "react";
@@ -111,7 +110,21 @@ export const FileExplorer: FC<FileExplorerProps> = ({
         content = html;
         toast.success("PDF Parsed Successfully");
       }else if (["image/png", "image/jpg", "image/jpeg"].includes(file.type)) {
-        const { html } = await parseImageWithOpenAI(file);
+        const base64 = await fileToBase64(file); // 👈 Convert image to base64
+        
+        const res = await fetch("/api/parse-image", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            base64Image: base64,
+            mimeType: file.type,
+            targetLanguage: "English", // Optional, default handled by server
+          }),
+        });
+
+        const { html } = await res.json();
         content = html;
         toast.success("Image Parsed Successfully");
       } else {
