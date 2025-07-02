@@ -400,7 +400,7 @@ const EmptyProject: FC<
         content = await extractTextFromPDF(file);
         toast.success("PDF Parsed Successfully");
       }else if (["image/png", "image/jpg", "image/jpeg"].includes(file.type)) {
-        const { html } = await runOCR(file);
+        const { html } = await parseImageWithOpenAI(file);
         content = html;
         toast.success("Image Parsed Successfully");
       } else {
