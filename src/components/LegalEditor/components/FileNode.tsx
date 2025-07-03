@@ -5,6 +5,8 @@ import FileIconDisplay from "./FileIconDisplay";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { IconLoader } from "@/components/Loader";
 import { MouseEvent } from "react";
+import { fetchNodes } from "@/app/apiServices/nodeServices";
+import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 
 interface FileNodeProps {
   node: FileSystemNodeProps;
@@ -20,10 +22,35 @@ const FileNode = ({
   onDocumentSelect,
 }: FileNodeProps) => {
   const { fetchData, loading: deleteLoading } = useAxios();
+  const {
+      explorerDispatch,
+    } = useExplorerContext();
+
+  const refreshNodes = async (parentId?: string, fileId?: string) => {
+    const children = await fetchNodes(parentId);
+
+    if (!parentId) {
+      explorerDispatch({ type: "LOAD_FILES", payload: children });
+      return;
+    }
+
+    if (fileId && children.length >= 0) {
+      const file = children.find((node) => node.id === fileId);
+      if (file) {
+        onDocumentSelect(file);
+      }
+    }
+
+    explorerDispatch({
+      type: "UPDATE_NODE_CHILDREN",
+      payload: { children, parentId },
+    });
+  };
 
   const handleDelete = async (e: MouseEvent, nodeId: string) => {
     e.stopPropagation();
     await fetchData(apiRouteConfig.privateRoutes.node(nodeId), "DELETE");
+    await refreshNodes(node.parentId);
   };
 
   return (
