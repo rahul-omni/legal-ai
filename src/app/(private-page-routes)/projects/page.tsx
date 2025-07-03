@@ -550,9 +550,9 @@ const ProjectCard: FC<
               </p>
             )}
           </div>
-          <button className="p-1 hover:bg-gray-100 rounded">
+          {/* <button className="p-1 hover:bg-gray-100 rounded">
             <MoreVertical className="w-4 h-4 text-gray-400" />
-          </button>
+          </button> */}
         </div>
       </div>
     </div>

@@ -140,8 +140,9 @@ export const FileExplorer: FC<FileExplorerProps> = ({
         content,
       };
 
-      await createNode(newFile);
+      const newnode = await createNode(newFile);
       await refreshNodes(parentId);
+      onDocumentSelect(newnode)
     } catch (error) {
       handleApiError(error);
     }
