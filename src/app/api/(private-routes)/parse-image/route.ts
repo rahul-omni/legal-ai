@@ -47,7 +47,11 @@ export async function POST(request: Request) {
     });
 
     const rawHtml = completion.choices[0]?.message?.content || '';
-    const cleanedHtml = rawHtml.replace(/```html|```/g, '').trim() || "<div></div>";
+    const isRefusal = rawHtml.includes("I'm sorry") || rawHtml.includes("I can't help");
+
+    const cleanedHtml = !isRefusal
+      ? rawHtml.replace(/```html|```/g, '').trim()
+      : "<div><p>No readable handwritten text found in the image.</p></div>";
 
     console.log('[API] Translation complete.');
     return NextResponse.json({ html: cleanedHtml });
