@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: 'system',
-          content: `Extract the text from the image. Preserve formatting and return rich HTML.`,
+          content: `Extract the text from the image. Preserve formatting and return rich HTML only.`,
         },
         {
           role: 'user',
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     });
 
     const rawHtml = completion.choices[0]?.message?.content || '';
-    const cleanedHtml = rawHtml.replace(/```html|```/g, '').trim();
+    const cleanedHtml = rawHtml.replace(/```html|```/g, '').trim() || "<div></div>";
 
     console.log('[API] Translation complete.');
     return NextResponse.json({ html: cleanedHtml });
