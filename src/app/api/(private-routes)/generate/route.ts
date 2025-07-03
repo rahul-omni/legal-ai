@@ -25,7 +25,10 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "system",
-          content: `You are a legal document assistant. Respond only with clean, well-formatted rich text. Add proper HTML tags without head tag.`,
+          content: `You are a legal document assistant. Respond only with clean, well-formatted rich text using tags like h1, p, h2, li. 
+
+          `
+                       //"You are a legal document assistant. Create clear and professional legal content."
         },
         {
           role: "user",
