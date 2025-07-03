@@ -47,14 +47,20 @@ export async function POST(request: Request) {
     });
 
     const rawHtml = completion.choices[0]?.message?.content || '';
-    const isRefusal = rawHtml.includes("I'm sorry") || rawHtml.includes("I can't help");
 
-    const cleanedHtml = !isRefusal
-      ? rawHtml.replace(/```html|```/g, '').trim()
+    // Step 1: Strip Markdown ```html and ``` wrappers
+    const cleanedHtml = rawHtml.replace(/```html|```/g, '').trim();
+
+    // Step 2: Basic HTML validation (does it contain at least one tag like <p>, <div>, etc.?)
+    const isValidHtml = /<[^>]+>/.test(cleanedHtml);
+
+    // Step 3: Fallback if not valid HTML
+    const finalHtml = isValidHtml
+      ? cleanedHtml
       : "<div><p>No readable handwritten text found in the image.</p></div>";
 
     console.log('[API] Translation complete.');
-    return NextResponse.json({ html: cleanedHtml });
+    return NextResponse.json({ html: finalHtml });
 
   } catch (error) {
     console.error('[API] Error:', error);
