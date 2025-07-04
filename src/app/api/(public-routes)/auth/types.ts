@@ -7,6 +7,9 @@ export interface IndividualSignupRequest {
   name?: string;
   email: string;
   password: string;
+  mobileNumber?: string; // Optional mobile number
+ mobileOtp?: string; // Optional OTP for mobile verification
+  mobileNumberVerified?: boolean; // Optional flag to indicate if mobile number is verified
   roleId?: string; // Optional role ID (will use default if not provided)
   signupType: SignupType;
 }

@@ -20,6 +20,10 @@ model User {
   verificationTokenExpiry DateTime?           @map("verification_token_expiry")
   countryCode             String              @default("+91") @map("country_code")
   mobileNumber            String              @default("0000000000") @map("mobile_number")
+  otp          String?             @map("otp")
+  mobileOtpExpiry         DateTime?           @map("mobile_otp_expiry")
+  mobileOtpAttempts       Int?                @default(0) @map("mobile_otp_attempts")
+  isMobileVerified        Boolean?            @default(false) @map("is_mobile_verified")
   filesReviewRequests     FileReview[]        @relation("requester_reviews")
   filesToReview           FileReview[]        @relation("reviewer_reviews")
   nodesCreated            FileSystemNode[]    @relation("file_system_nodes_created_by_idx")
@@ -29,10 +33,27 @@ model User {
   organizationsCreated    Organization[]      @relation("organization_createdByUser")
   fileReviewComments      FileReviewComment[] @relation("reviewer_comment")
   userCases               UserCase[]          @relation("user_usercases")
+  
 
+  individualOtpLogin IndividualOtpLogin? @relation("user_otp_login")
   @@map("users")
 }
 
+model IndividualOtpLogin {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  mobileNumber String   @unique @map("mobile_number")
+  otp          String?
+  otpExpiry    DateTime? @map("otp_expiry")
+  attempts     Int      @default(0)
+  userId       String   @unique @map("user_id") @db.Uuid
+  status       OtpStatus @default(PENDING)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  
+  user         User     @relation("user_otp_login", fields: [userId], references: [id])
+
+  @@map("individual_otp_logins")
+}
 model Role {
   id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        RoleName     @unique
@@ -196,6 +217,11 @@ model UserCase {
   @@map("user_cases")
 }
 
+enum OtpStatus {
+  PENDING
+  VERIFIED
+  EXPIRED
+}
 enum FileReviewStatus {
   PENDING
   IN_REVIEW

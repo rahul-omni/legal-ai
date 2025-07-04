@@ -21,7 +21,8 @@ export async function POST(
 ): Promise<NextResponse<SignupResponse | ErrorResponse>> {
   try {
     const { signupType, ...data } = (await req.json()) as SignupRequest;
-
+    console.log("Signup request received", { signupType, data });
+    
     if (!signupType || !(signupType in validationSchemas)) {
       throw new ErrorValidation("Invalid or missing signup type");
     }
