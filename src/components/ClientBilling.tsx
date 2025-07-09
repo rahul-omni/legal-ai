@@ -33,15 +33,15 @@ interface Bill {
 interface ClientBillingProps {
   clientId: string;
   clientName: string;
-  clientCompany?: string;
-  clientPhone?: string;
+  clientorganization?: string;
+  clientphone_no?: string;
 }
 
 export function ClientBilling({
   clientId,
   clientName,
-  clientCompany,
-  clientPhone,
+  clientorganization,
+  clientphone_no,
 }: ClientBillingProps) {
   const [bills, setBills] = useState<Bill[]>([]);
   const [showNewBillModal, setShowNewBillModal] = useState(false);
