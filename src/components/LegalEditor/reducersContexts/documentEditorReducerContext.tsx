@@ -33,6 +33,7 @@ interface DocumentEditorState {
   translationVendor: TranslationVendor;
   localFileName: string;
   localContent: string;
+  isAIEdit: boolean
 }
 
 // Action types - renamed to match handler functions
@@ -58,6 +59,7 @@ type DocumentEditorAction =
       };
     }
   | { type: "UPDATE_TAB_CONTENT"; payload: { tabId: string; content: string } }
+  | { type: "UPDATE_IS_AI_EDIT"; payload : {isAIEdit: boolean} }
   | {
       type: "UPDATE_TAB_NAME";
       payload: { tabId: string; name: string; fileId?: string };
@@ -160,6 +162,7 @@ function documentEditorReducer(
             ? { ...tab, content: action.payload.content, isUnsaved: true }
             : tab
         ),
+        isAIEdit: !!action.payload.isAIEdit,
       };
 
     case "UPDATE_TAB_NAME":
@@ -294,6 +297,7 @@ export function DocumentEditorProvider({
         payload: {
           tabId: docEditorState.activeTabId,
           content: data.translation,
+          isAIEdit: true
         },
       });
 

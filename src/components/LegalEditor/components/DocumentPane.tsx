@@ -43,6 +43,16 @@ export function DocumentPane() {
     setInitialContent(activeTab?.content || "")
   }, [docEditorState.activeTabId])
 
+   useEffect(()=>{
+    if(docEditorState.isAIEdit){
+      setInitialContent(activeTab?.content || "")
+      docEditorDispatch({
+        type: "UPDATE_IS_AI_EDIT",
+        payload: { isAIEdit: false },
+      });
+    }
+  }, [docEditorState.isAIEdit])
+
   const activeTab = docEditorState.openTabs.find(
     (tab) => tab.id === docEditorState.activeTabId
   );

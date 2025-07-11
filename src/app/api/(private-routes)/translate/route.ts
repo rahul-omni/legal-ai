@@ -3,6 +3,8 @@ import { translateWithSarvam } from "@/lib/translation/sarvamTranslator";
 import { TranslationOptions } from "@/lib/translation/types";
 import { NextResponse } from "next/server";
 import { handleError } from "../../lib/errors";
+import TurndownService from 'turndown';
+import { marked } from 'marked';
 
 export async function POST(req: Request) {
   try {
@@ -15,31 +17,68 @@ export async function POST(req: Request) {
       mode = "formal",
     } = body as TranslationOptions;
 
-    let translatedText: string;
+    const turndownService = new TurndownService();
+    const markdown = turndownService.turndown(sourceText);
 
-    if (vendor === "sarvam") {
-      translatedText = await translateWithSarvam(sourceText, targetLanguage);
-    } else {
-      // OpenAI translation
-      const completion = await openai.chat.completions.create({
-        messages: [
-          {
-            role: "system",
-            content: `You are a translator. Translate the following text to ${targetLanguage}. Maintain the original formatting.`,
-          },
-          {
-            role: "user",
-            content: sourceText,
-          },
-        ],
-        model: "gpt-3.5-turbo",
-      });
+    // 🔹 Break large markdown into safe-size chunks
+    const markdownChunks = chunkMarkdownByParagraphs(markdown, 1000); // ~1k char per chunk
 
-      translatedText = completion.choices[0].message.content || "";
+    const translatedChunks: string[] = [];
+
+    for (const chunk of markdownChunks) {
+      if (vendor === "sarvam") {
+        const translated = await translateWithSarvam(chunk, targetLanguage);
+        translatedChunks.push(translated);
+      } else {
+        const completion = await openai.chat.completions.create({
+          messages: [
+            {
+              role: "system",
+              content: `You are a translator. Translate the following text to ${targetLanguage} in a ${mode} tone. Preserve markdown formatting.`,
+            },
+            {
+              role: "user",
+              content: chunk,
+            },
+          ],
+          model: "gpt-3.5-turbo",
+        });
+
+        translatedChunks.push(completion.choices[0].message.content || "");
+      }
     }
 
-    return NextResponse.json({ translation: translatedText });
+    const finalTranslatedMarkdown = translatedChunks.join("\n\n");
+    const translatedHtml = marked(finalTranslatedMarkdown);
+
+    return NextResponse.json({ translation: translatedHtml });
   } catch (error) {
     return handleError(error);
   }
+}
+
+
+export function chunkMarkdownByParagraphs(
+  markdown: string,
+  maxCharsPerChunk = 1000
+): string[] {
+  const paragraphs = markdown.split(/\n\s*\n/);
+  const chunks: string[] = [];
+
+  let currentChunk = "";
+
+  for (const para of paragraphs) {
+    if ((currentChunk + "\n\n" + para).length > maxCharsPerChunk) {
+      chunks.push(currentChunk.trim());
+      currentChunk = para;
+    } else {
+      currentChunk += "\n\n" + para;
+    }
+  }
+
+  if (currentChunk.trim()) {
+    chunks.push(currentChunk.trim());
+  }
+
+  return chunks;
 }
