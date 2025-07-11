@@ -6,6 +6,31 @@ import { handleError } from "../../lib/errors";
 import TurndownService from 'turndown';
 import { marked } from 'marked';
 
+function chunkMarkdownByParagraphs(
+  markdown: string,
+  maxCharsPerChunk = 1000
+): string[] {
+  const paragraphs = markdown.split(/\n\s*\n/);
+  const chunks: string[] = [];
+
+  let currentChunk = "";
+
+  for (const para of paragraphs) {
+    if ((currentChunk + "\n\n" + para).length > maxCharsPerChunk) {
+      chunks.push(currentChunk.trim());
+      currentChunk = para;
+    } else {
+      currentChunk += "\n\n" + para;
+    }
+  }
+
+  if (currentChunk.trim()) {
+    chunks.push(currentChunk.trim());
+  }
+
+  return chunks;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -57,28 +82,3 @@ export async function POST(req: Request) {
   }
 }
 
-
-export function chunkMarkdownByParagraphs(
-  markdown: string,
-  maxCharsPerChunk = 1000
-): string[] {
-  const paragraphs = markdown.split(/\n\s*\n/);
-  const chunks: string[] = [];
-
-  let currentChunk = "";
-
-  for (const para of paragraphs) {
-    if ((currentChunk + "\n\n" + para).length > maxCharsPerChunk) {
-      chunks.push(currentChunk.trim());
-      currentChunk = para;
-    } else {
-      currentChunk += "\n\n" + para;
-    }
-  }
-
-  if (currentChunk.trim()) {
-    chunks.push(currentChunk.trim());
-  }
-
-  return chunks;
-}
