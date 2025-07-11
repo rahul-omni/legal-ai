@@ -11,9 +11,10 @@ export interface CreateNodePayload {
 }
 
 export const fetchNodes = async (
-  parentId?: string
+  parentId?: string,
+  id?: string
 ): Promise<FileSystemNodeProps[]> => {
-  const url = `${apiRouteConfig.privateRoutes.nodes}?parentId=${parentId || ""}`;
+  const url = `${apiRouteConfig.privateRoutes.nodes}?parentId=${parentId || ""}&id=${id || ""}`;
 
   try {
     const requestPromise = apiClient.get(url).then((response) => {

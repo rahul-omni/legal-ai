@@ -23,21 +23,28 @@ class FileSystemNodeService {
   }
 
   async findNodesByParentId(
-    userId: string,
-    parentId: string | null
-  ): Promise<FileSystemNode[]> {
-    try {
-      return await db.fileSystemNode.findMany({
-        where: {
-          parentId: parentId || null,
-          userId,
-        },
-        orderBy: { type: "desc" },
-      });
-    } catch {
-      throw new ErrorNotFound("Failed to find nodes in the database");
-    }
+  userId: string,
+  parentId: string | null,
+): Promise<Pick<FileSystemNode, 'id' | 'name' | 'type' | 'parentId' | 'isExpanded'>[]> {
+  try {
+    return await db.fileSystemNode.findMany({
+      where: {
+        parentId: parentId || null,
+        userId,
+      },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        parentId: true,
+        isExpanded: true,
+      },
+      orderBy: { type: 'desc' },
+    });
+  } catch {
+    throw new ErrorNotFound("Failed to find nodes in the database");
   }
+}
 
   async createNode(
     node: CreateNodeInput,

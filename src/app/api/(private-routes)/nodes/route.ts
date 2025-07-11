@@ -24,8 +24,15 @@ async function getNodesController(request: NextAuthRequest) {
 
     const { searchParams } = new URL(request.url);
     const parentId = searchParams.get("parentId");
+    const id = searchParams.get("id");
     logger.debug("getNodesController: Extracted parentId from query params", { parentId });
 
+    if (id) {
+      const node = await fileSystemNodeService.findNodeById(id);
+      logger.debug("getNodesController: Retrieved node by id", node);
+
+      return NextResponse.json([node]);
+    }
     const nodes = await fileSystemNodeService.findNodesByParentId(
       sessionUser.id,
       parentId
