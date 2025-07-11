@@ -5,6 +5,7 @@ import {
 } from "@/lib/translation/types";
 import { ChevronDown } from "lucide-react";
 import { useRef, useState } from "react";
+import { useDocumentEditor } from "./LegalEditor/reducersContexts/documentEditorReducerContext";
 
 interface TranslationDropdownProps {
   onTranslate: (_vendor: TranslationVendor, _language: string) => Promise<void>;
@@ -25,6 +26,7 @@ export function TranslationDropdown({
 }: TranslationDropdownProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { docEditorState } = useDocumentEditor();
 
   const handleTranslate = async () => {
     await onTranslate(selectedVendor, selectedLanguage);
@@ -35,13 +37,13 @@ export function TranslationDropdown({
       <div className="flex">
         <button
           onClick={handleTranslate}
-          disabled={isLoading}
+          disabled={docEditorState.isTranslating}
           className="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-l-lg
                    hover:bg-blue-100 transition-colors disabled:opacity-50
                    flex items-center gap-2 border-r border-blue-200"
         >
           <span>Translate</span>
-          {isLoading && <div className="animate-spin">⏳</div>}
+          {docEditorState.isTranslating && <div className="animate-spin">⏳</div>}
         </button>
         <button
           onClick={() => setShowDropdown(!showDropdown)}

@@ -75,7 +75,7 @@ const FileNode = ({
           <span className="text-sm text-gray-600/80">{node.name}</span>
         </div>
 
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 transition-opacity">
           <button
             disabled={deleteLoading}
             className="p-1 rounded-md hover:bg-gray-200/70 cursor-pointer"

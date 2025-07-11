@@ -33,7 +33,8 @@ interface DocumentEditorState {
   translationVendor: TranslationVendor;
   localFileName: string;
   localContent: string;
-  isAIEdit: boolean
+  isAIEdit: boolean;
+  isTranslating: boolean;
 }
 
 // Action types - renamed to match handler functions
@@ -59,7 +60,8 @@ type DocumentEditorAction =
       };
     }
   | { type: "UPDATE_TAB_CONTENT"; payload: { tabId: string; content: string, isAIEdit?: boolean } }
-  | { type: "UPDATE_IS_AI_EDIT"; payload : {isAIEdit: boolean} }
+  | { type: "UPDATE_IS_AI_EDIT"; payload : { isAIEdit: boolean } }
+  | { type: "IS_TRANSLATING"; payload : { isTranslating: boolean } }
   | {
       type: "UPDATE_TAB_NAME";
       payload: { tabId: string; name: string; fileId?: string };
@@ -88,6 +90,18 @@ function documentEditorReducer(
       return {
         ...state,
         activeTabId: action.payload,
+      };
+
+    case "UPDATE_IS_AI_EDIT":
+      return {
+        ...state,
+        isAIEdit: !!action.payload.isAIEdit,
+      };
+    
+    case "IS_TRANSLATING":
+      return {
+        ...state,
+        isTranslating: !!action.payload.isTranslating,
       };
 
     case "TAB_CLOSE": {
@@ -213,6 +227,7 @@ const initialState: DocumentEditorState = {
   localFileName: "Untitled",
   localContent: "",
   isAIEdit: false,
+  isTranslating: false,
 };
 
 // Create context with default values
@@ -269,6 +284,11 @@ export function DocumentEditorProvider({
       payload: { vendor, language },
     });
 
+    docEditorDispatch({
+      type: "IS_TRANSLATING",
+      payload: { isTranslating: true },
+    });
+
     if (!docEditorState.activeTabId) return;
 
     const activeTab = docEditorState.openTabs.find(
@@ -300,6 +320,11 @@ export function DocumentEditorProvider({
           content: data.translation,
           isAIEdit: true
         },
+      });
+
+      docEditorDispatch({
+        type: "IS_TRANSLATING",
+        payload: { isTranslating: false },
       });
 
       return Promise.resolve();
