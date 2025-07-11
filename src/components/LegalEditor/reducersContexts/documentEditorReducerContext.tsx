@@ -58,7 +58,7 @@ type DocumentEditorAction =
         callback?: (_newFile: FileSystemNodeProps) => void;
       };
     }
-  | { type: "UPDATE_TAB_CONTENT"; payload: { tabId: string; content: string } }
+  | { type: "UPDATE_TAB_CONTENT"; payload: { tabId: string; content: string, isAIEdit?: boolean } }
   | { type: "UPDATE_IS_AI_EDIT"; payload : {isAIEdit: boolean} }
   | {
       type: "UPDATE_TAB_NAME";
@@ -212,6 +212,7 @@ const initialState: DocumentEditorState = {
   translationVendor: "openai",
   localFileName: "Untitled",
   localContent: "",
+  isAIEdit: false,
 };
 
 // Create context with default values
