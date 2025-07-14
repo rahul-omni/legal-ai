@@ -35,6 +35,7 @@ interface DocumentEditorState {
   localContent: string;
   isAIEdit: boolean;
   isTranslating: boolean;
+  isFileLoading: boolean;
 }
 
 // Action types - renamed to match handler functions
@@ -62,6 +63,7 @@ type DocumentEditorAction =
   | { type: "UPDATE_TAB_CONTENT"; payload: { tabId: string; content: string, isAIEdit?: boolean } }
   | { type: "UPDATE_IS_AI_EDIT"; payload : { isAIEdit: boolean } }
   | { type: "IS_TRANSLATING"; payload : { isTranslating: boolean } }
+  | { type: "FILE_LOADING"; payload : { isFileLoading: boolean } }
   | {
       type: "UPDATE_TAB_NAME";
       payload: { tabId: string; name: string; fileId?: string };
@@ -128,6 +130,9 @@ function documentEditorReducer(
 
     case "CANCEL_SAVE":
       return { ...state, isSaving: false };
+    
+    case "FILE_LOADING":
+      return { ...state, isFileLoading: !!action.payload.isFileLoading };
 
     case "FILE_SELECT": {
       const file = action.payload;
@@ -228,6 +233,7 @@ const initialState: DocumentEditorState = {
   localContent: "",
   isAIEdit: false,
   isTranslating: false,
+  isFileLoading: false,
 };
 
 // Create context with default values
