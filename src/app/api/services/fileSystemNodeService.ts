@@ -39,7 +39,6 @@ class FileSystemNodeService {
         parentId: true,
         isExpanded: true,
       },
-      orderBy: { type: 'desc' },
     });
   } catch {
     throw new ErrorNotFound("Failed to find nodes in the database");

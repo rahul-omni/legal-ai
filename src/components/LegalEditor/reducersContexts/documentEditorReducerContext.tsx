@@ -282,63 +282,71 @@ export function DocumentEditorProvider({
   };
 
   const handleTranslate = async (
-    vendor: TranslationVendor,
-    language: string
-  ): Promise<void> => {
-    docEditorDispatch({
-      type: "TRANSLATE",
-      payload: { vendor, language },
+  vendor: TranslationVendor,
+  language: string
+): Promise<void> => {
+  if (!docEditorState.activeTabId) return;
+
+  const activeTab = docEditorState.openTabs.find(
+    (tab) => tab.id === docEditorState.activeTabId
+  );
+  if (!activeTab) return;
+
+  docEditorDispatch({
+    type: "IS_TRANSLATING",
+    payload: { isTranslating: true },
+  });
+
+  try {
+    const response = await fetch("/api/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        vendor,
+        sourceText: activeTab.content,
+        targetLanguage: language,
+        mode: "formal",
+      }),
     });
 
-    docEditorDispatch({
-      type: "IS_TRANSLATING",
-      payload: { isTranslating: true },
-    });
+    if (!response.body) throw new Error("Empty stream");
 
-    if (!docEditorState.activeTabId) return;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullContent = "";
 
-    const activeTab = docEditorState.openTabs.find(
-      (tab) => tab.id === docEditorState.activeTabId
-    );
-    if (!activeTab) return;
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
 
-    try {
-      const sourceText = activeTab.content;
-
-      const response = await fetch("/api/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vendor,
-          sourceText,
-          targetLanguage: language,
-          mode: "formal",
-        }),
-      });
-
-      if (!response.ok) throw new Error("Translation failed");
-      const data = await response.json();
+      const chunk = decoder.decode(value, { stream: true });
+      fullContent += chunk;
 
       docEditorDispatch({
         type: "UPDATE_TAB_CONTENT",
         payload: {
           tabId: docEditorState.activeTabId,
-          content: data.translation,
-          isAIEdit: true
+          content: fullContent,
+          isAIEdit: true,
         },
       });
-
-      docEditorDispatch({
-        type: "IS_TRANSLATING",
-        payload: { isTranslating: false },
-      });
-
-      return Promise.resolve();
-    } catch (error) {
-      console.error("Translation error:", error);
-      return Promise.reject(error);
     }
-  };
+
+    docEditorDispatch({
+      type: "IS_TRANSLATING",
+      payload: { isTranslating: false },
+    });
+
+    return Promise.resolve();
+  } catch (error) {
+    console.error("Translation error:", error);
+    docEditorDispatch({
+      type: "IS_TRANSLATING",
+      payload: { isTranslating: false },
+    });
+    return Promise.reject(error);
+  }
+};
 
   const handleFileReviewRequest = () => {
     // This will be implemented in the DocumentPane component

@@ -1,10 +1,7 @@
+import { marked } from "marked";
+import TurndownService from "turndown";
 import { openai } from "@/lib/openai";
 import { translateWithSarvam } from "@/lib/translation/sarvamTranslator";
-import { TranslationOptions } from "@/lib/translation/types";
-import { NextResponse } from "next/server";
-import { handleError } from "../../lib/errors";
-import TurndownService from 'turndown';
-import { marked } from 'marked';
 
 function chunkMarkdownByParagraphs(
   markdown: string,
@@ -33,52 +30,57 @@ function chunkMarkdownByParagraphs(
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-
-    const {
-      vendor,
-      sourceText,
-      targetLanguage,
-      mode = "formal",
-    } = body as TranslationOptions;
+    const { vendor, sourceText, targetLanguage, mode = "formal" } =
+      await req.json();
 
     const turndownService = new TurndownService();
     const markdown = turndownService.turndown(sourceText);
+    const chunks = chunkMarkdownByParagraphs(markdown, 1000);
 
-    // 🔹 Break large markdown into safe-size chunks
-    const markdownChunks = chunkMarkdownByParagraphs(markdown, 1000); // ~1k char per chunk
+    const encoder = new TextEncoder();
 
-    const translatedChunks: string[] = [];
+    const stream = new ReadableStream({
+      async start(controller) {
+        for (const chunk of chunks) {
+          let translated = "";
 
-    for (const chunk of markdownChunks) {
-      if (vendor === "sarvam") {
-        const translated = await translateWithSarvam(chunk, targetLanguage);
-        translatedChunks.push(translated);
-      } else {
-        const completion = await openai.chat.completions.create({
-          messages: [
-            {
-              role: "system",
-              content: `You are a translator. Translate the following text to ${targetLanguage} in a ${mode} tone. Preserve markdown formatting.`,
-            },
-            {
-              role: "user",
-              content: chunk,
-            },
-          ],
-          model: "gpt-3.5-turbo",
-        });
+          if (vendor === "sarvam") {
+            translated = await translateWithSarvam(chunk, targetLanguage);
+          } else {
+            const completion = await openai.chat.completions.create({
+              messages: [
+                {
+                  role: "system",
+                  content: `You are a translator. Translate to ${targetLanguage} in a ${mode} tone. Preserve markdown.`,
+                },
+                { role: "user", content: chunk },
+              ],
+              model: "gpt-3.5-turbo",
+            });
 
-        translatedChunks.push(completion.choices[0].message.content || "");
-      }
-    }
+            translated = completion.choices[0].message.content || "";
+          }
 
-    const finalTranslatedMarkdown = translatedChunks.join("\n\n");
-    const translatedHtml = marked(finalTranslatedMarkdown);
+          const html = marked(translated);
+          controller.enqueue(encoder.encode(html + "\n\n")); // send it immediately
+        }
 
-    return NextResponse.json({ translation: translatedHtml });
+        controller.close();
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+      },
+    });
   } catch (error) {
-    return handleError(error);
+    console.error("Streaming translation error:", error);
+    return new Response("Translation failed", { status: 500 });
   }
 }
+
+
+
 

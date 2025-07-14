@@ -176,12 +176,19 @@ export function DocumentPane() {
     }
   };
 
+  const updateContent = (content : string)=>{
+    if (docEditorState.isTranslating){
+      return `<div>${initialContent} translating...</div>`
+    }
+    return content;
+  }
+
   return (
     <div className="flex flex-col h-full">
       <DocumentPaneTopBar onFileReviewRequest={onFileReviewRequest} />
       <div className="flex-1 relative bg-white">
         <DocumentEditor
-          localContent={initialContent}
+          localContent={updateContent(initialContent)}
           handleSelectionChange={setSelectedText}
           activeTabId={docEditorState.activeTabId || ""}
         />
