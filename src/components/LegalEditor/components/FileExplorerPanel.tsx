@@ -23,8 +23,11 @@ export function FileExplorerPanel() {
           selectedDocument={explorerState.selectedFile}
           onDocumentSelect={async (file) => {
             const fetched = docEditorState.openTabs.find(
-              (tab) => file.id === tab.fileId
-            );
+              (tab) => {
+                if (file.id === tab.fileId){
+                  return tab;
+                }
+              });
             if (!fetched) {
               docEditorDispatch({ type: "FILE_LOADING", payload: {isFileLoading: true }});
               const fileNode = await fetchNodes("", file.id)
@@ -33,7 +36,9 @@ export function FileExplorerPanel() {
                 docEditorDispatch({ type: "FILE_SELECT", payload: fileNode[0] });
                 docEditorDispatch({ type: "FILE_LOADING", payload: {isFileLoading: false }});
               }
-          }
+            }else{
+              docEditorDispatch({ type: "TAB_CLICK", payload: fetched.id });
+            }
           }}
         />
       </div>
