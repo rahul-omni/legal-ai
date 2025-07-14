@@ -33,11 +33,11 @@ const navigationItems = [
     href: "/cases",
     icon: Gavel,
   },
-  {
-    name: "Analytics",
-    href: "/analytics",
-    icon: BarChart2,
-  },
+  // {
+  //   name: "Analytics",
+  //   href: "/analytics",
+  //   icon: BarChart2,
+  // },
   
   {
     name: "Pending Reviews",
