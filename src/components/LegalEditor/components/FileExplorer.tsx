@@ -37,6 +37,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
   } = useExplorerContext();
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [expandedNode, setExpandedNode] = useState<string>("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -75,6 +76,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
   };
 
   const toggleExpand = async (node: FileSystemNodeProps, fileId?: string) => {
+    setExpandedNode(node.id);
     if (node.type !== "FOLDER") {
       return;
     }
@@ -93,6 +95,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
     if (shouldFetchChildren) {
       await refreshNodes(node.id, fileId);
     }
+    setExpandedNode("");
   };
 
   const handleFileUpload = async (
@@ -198,6 +201,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
           onToggleExpand={toggleExpand}
           onFileUpload={handleFileUpload}
           renderNode={renderNode}
+          loader={expandedNode == node.id ? true : false}
         />
       );
     }
