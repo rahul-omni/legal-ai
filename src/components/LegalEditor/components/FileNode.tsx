@@ -7,6 +7,7 @@ import { IconLoader } from "@/components/Loader";
 import { MouseEvent } from "react";
 import { fetchNodes } from "@/app/apiServices/nodeServices";
 import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
+import { trimName } from "@/helper/utils";
 
 interface FileNodeProps {
   node: FileSystemNodeProps;
@@ -70,9 +71,9 @@ const FileNode = ({
       <div className="flex justify-between w-full">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 flex items-center justify-center shrink-0">
-            <FileIconDisplay fileName={node.name} />
+            <FileIconDisplay fileName={node.name}/>
           </div>
-          <span className="text-sm text-gray-600/80">{node.name}</span>
+          <span className="text-sm text-gray-600/80" title={node.name}>{trimName(node.name)}</span>
         </div>
 
         <div className="flex items-center gap-1 transition-opacity">
