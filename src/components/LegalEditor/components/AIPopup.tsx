@@ -21,6 +21,7 @@ interface AIPopupProps {
     column: number;
   } | null;
   isFolderPickerOpen?: boolean;
+  setSelectedText: (prompt: string) => void;
 }
 
 // Utility functions for document processing
@@ -51,6 +52,7 @@ export function AIPopup({
   cursorPosition,
   cursorIndicatorPosition,
   isFolderPickerOpen,
+  setSelectedText,
 }: AIPopupProps) {
   // Core state
   const [prompt, setPrompt] = useState("");
@@ -211,6 +213,13 @@ export function AIPopup({
             {/* Selected Text */}
             {selectedText && (
               <div className="mb-2 p-2 border border-dashed border-green-300 rounded bg-green-50">
+                <button
+                  onClick={() => setSelectedText("")}
+                  className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full border border-green-500 text-green-800 hover:bg-green-100 hover:text-red-500 transition"
+                  aria-label="Close selected text"
+                >
+                  <X className="w-3 h-3" />
+                </button>
                 <div className="flex items-center justify-between mb-1">
                   <h4 className="text-xs font-semibold text-green-800">
                     Using Selected Text:
