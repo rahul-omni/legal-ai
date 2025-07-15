@@ -1,5 +1,5 @@
 "use client";
-import { FolderPlus, Search, Upload } from "lucide-react";
+import { FolderPlus, Loader2, Search, Upload } from "lucide-react";
 import { ChangeEvent, FC, MouseEvent, RefObject } from "react";
 
 export const FileExplorerHeader: FC<{
@@ -8,12 +8,14 @@ export const FileExplorerHeader: FC<{
   fileInputRef: RefObject<HTMLInputElement | null>;
   handleCreateFolder: (_e: MouseEvent) => void;
   handleFileUpload: (_e: ChangeEvent<HTMLInputElement>) => void;
+  fileLoader: boolean;
 }> = ({
   searchQuery,
   setSearchQuery,
   fileInputRef,
   handleCreateFolder,
   handleFileUpload,
+  fileLoader,
 }) => (
   <div className="p-4 bg-[#f9f9f9] sticky top-0 z-10">
     {/* Search */}
@@ -36,7 +38,7 @@ export const FileExplorerHeader: FC<{
       <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500/80">
         FILES
       </h2>
-      <div className="flex items-center gap-1">
+      {fileLoader ? <Loader2 className="w-4 h-4 animate-spin" /> : <div className="flex items-center gap-1">
         {/* Upload File Button */}
         <button
           onClick={() => fileInputRef.current?.click()}
@@ -63,7 +65,7 @@ export const FileExplorerHeader: FC<{
         >
           <FolderPlus className="w-4 h-4" />
         </button>
-      </div>
+      </div>}
     </div>
   </div>
 );

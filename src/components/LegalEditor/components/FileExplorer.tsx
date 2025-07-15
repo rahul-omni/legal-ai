@@ -37,6 +37,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
   } = useExplorerContext();
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [fileLoader, setFileLoader] = useState(false);
   const [expandedNode, setExpandedNode] = useState<string>("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -104,7 +105,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
+    setFileLoader(true);
     try {
       let content: string;
 
@@ -144,6 +145,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
       };
 
       const newnode = await createNode(newFile);
+      setFileLoader(false);
       await refreshNodes(parentId);
       onDocumentSelect(newnode)
     } catch (error) {
@@ -224,6 +226,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
         fileInputRef={fileInputRef}
         handleCreateFolder={handleCreateFolder}
         handleFileUpload={handleFileUpload}
+        fileLoader={fileLoader}
       />
 
       <div className="flex-1 overflow-y-auto p-2 bg-[#f9f9f9]">
