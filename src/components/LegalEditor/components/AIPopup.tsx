@@ -3,7 +3,7 @@ import { FileSystemNodeProps } from "@/types/fileSystem";
 import { ArrowUp, FilePlus, Paperclip, X } from "lucide-react";
 import mammoth from "mammoth";
 import { getDocument } from "pdfjs-dist";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TreeNode from "../../TreeNode";
 import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 
@@ -21,7 +21,6 @@ interface AIPopupProps {
     column: number;
   } | null;
   isFolderPickerOpen?: boolean;
-  setSelectedText: (prompt: string) => void;
 }
 
 // Utility functions for document processing
@@ -52,19 +51,23 @@ export function AIPopup({
   cursorPosition,
   cursorIndicatorPosition,
   isFolderPickerOpen,
-  setSelectedText,
 }: AIPopupProps) {
   // Core state
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showContext, setShowContext] = useState(false);
   const { explorerState } = useExplorerContext();
+  const [close, setClose] = useState(false);
 
   // File handling state
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [selectedDocuments, setSelectedDocuments] = useState<
     FileSystemNodeProps[]
   >([]);
+
+  useEffect(()=>{
+    setClose(false);
+  }, [selectedText])
 
   // Document selection handler
   const handleDocumentSelect = (file: FileSystemNodeProps) => {
@@ -203,18 +206,18 @@ export function AIPopup({
       </form>
 
       {/* Context panel - appears above the form */}
-      {(selectedText ||
+      {((selectedText ||
         selectedDocuments.length > 0 ||
         showContext ||
         uploadedFiles.length > 0 ||
-        cursorPosition) && (
+        cursorPosition) && !close) && (
         <div className="absolute bottom-full left-0 w-full mb-2 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[300px] overflow-y-auto">
           <div className="p-3">
             {/* Selected Text */}
             {selectedText && (
               <div className="mb-2 p-2 border border-dashed border-green-300 rounded bg-green-50">
                 <button
-                  onClick={() => setSelectedText("")}
+                  onClick={() => setClose(true)}
                   className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full border border-green-500 text-green-800 hover:bg-green-100 hover:text-red-500 transition"
                   aria-label="Close selected text"
                 >

@@ -199,7 +199,6 @@ export function DocumentPane() {
             selectedText={selectedText}
             cursorPosition={undefined}
             isFolderPickerOpen={docEditorState.isFolderPickerOpen}
-            setSelectedText={setSelectedText}
           />
         </div>
         <GenerationIndicator isGenerating={generationState.loading} />
