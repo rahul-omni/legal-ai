@@ -36,6 +36,7 @@ interface DocumentEditorState {
   isAIEdit: boolean;
   isTranslating: boolean;
   isFileLoading: boolean;
+  translatingTab: string;
 }
 
 // Action types - renamed to match handler functions
@@ -62,7 +63,7 @@ type DocumentEditorAction =
     }
   | { type: "UPDATE_TAB_CONTENT"; payload: { tabId: string; content: string, isAIEdit?: boolean } }
   | { type: "UPDATE_IS_AI_EDIT"; payload : { isAIEdit: boolean } }
-  | { type: "IS_TRANSLATING"; payload : { isTranslating: boolean } }
+  | { type: "IS_TRANSLATING"; payload : { isTranslating: boolean, translatingTab: string } }
   | { type: "FILE_LOADING"; payload : { isFileLoading: boolean } }
   | {
       type: "UPDATE_TAB_NAME";
@@ -104,6 +105,7 @@ function documentEditorReducer(
       return {
         ...state,
         isTranslating: !!action.payload.isTranslating,
+        translatingTab: action.payload.translatingTab
       };
 
     case "TAB_CLOSE": {
@@ -234,6 +236,7 @@ const initialState: DocumentEditorState = {
   isAIEdit: false,
   isTranslating: false,
   isFileLoading: false,
+  translatingTab: "",
 };
 
 // Create context with default values
@@ -294,7 +297,7 @@ export function DocumentEditorProvider({
 
   docEditorDispatch({
     type: "IS_TRANSLATING",
-    payload: { isTranslating: true },
+    payload: { isTranslating: true, translatingTab:  activeTab.id},
   });
 
   try {
@@ -334,7 +337,7 @@ export function DocumentEditorProvider({
 
     docEditorDispatch({
       type: "IS_TRANSLATING",
-      payload: { isTranslating: false },
+      payload: { isTranslating: false,  translatingTab:  "" },
     });
 
     return Promise.resolve();
@@ -342,7 +345,7 @@ export function DocumentEditorProvider({
     console.error("Translation error:", error);
     docEditorDispatch({
       type: "IS_TRANSLATING",
-      payload: { isTranslating: false },
+      payload: { isTranslating: false, translatingTab:  "" },
     });
     return Promise.reject(error);
   }

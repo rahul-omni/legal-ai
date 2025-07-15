@@ -177,7 +177,7 @@ export function DocumentPane() {
   };
 
   const updateContent = (content : string)=>{
-    if (docEditorState.isTranslating){
+    if (docEditorState.isTranslating && docEditorState.translatingTab == activeTab?.id){
       return `<div>${initialContent} translating...</div>`
     }
     return content;
