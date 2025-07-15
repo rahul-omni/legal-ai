@@ -14,6 +14,7 @@ import {
   FilePlus,
   Folder,
   FolderPlus,
+  Loader2,
   MoreVertical,
   Search,
   Upload,
@@ -324,7 +325,7 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
                 } transition-colors text-sm`}
             >
               <Upload className="w-3.5 h-3.5" />
-              Upload Files
+              {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Upload Files"}
             </button>
           </>
         ) : (
@@ -338,7 +339,7 @@ const ProjectToolbar: FC<ProjectReducerProps> = ({
               } transition-colors text-sm`}
           >
             <Upload className="w-3.5 h-3.5" />
-            Upload Files
+            {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Upload Files"}
           </button>
         )}
 
