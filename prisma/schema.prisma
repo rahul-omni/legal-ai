@@ -194,7 +194,7 @@ model CaseManagement {
   judgmentBy   String   @map("judgment_by")
   judgmentDate String   @map("judgment_date")
   judgmentText String   @map("judgment_text")
-  judgmentUrl  String   @map("judgment_url")
+  judgmentUrl  String[]   @map("judgment_url")
   court        String
   date         DateTime @default(now()) @map("date")
   createdAt    DateTime @default(now()) @map("created_at")
