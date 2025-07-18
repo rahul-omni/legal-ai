@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   Plus,
@@ -12,7 +11,6 @@ import {
   ChevronDown,
 } from "lucide-react";
 import toast from "react-hot-toast";
- 
 
 interface CaseData {
   id: string;
@@ -32,7 +30,6 @@ interface CaseData {
   updatedAt: string;
 }
 
-
 export function CaseManagement() {
   const [showNewCaseModal, setShowNewCaseModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,89 +46,94 @@ export function CaseManagement() {
     year: "",
     court: "",
   });
-   // Add a new state for tracking the newly created case
-  const [newlyCreatedCase, setNewlyCreatedCase] = useState<CaseData | null>(null);
+
   // Add this to your existing state declarations
- 
-const [expandedCases, setExpandedCases] = useState<Record<string, boolean>>({});
-const [caseDetails, setCaseDetails] = useState<Record<string, CaseData[]>>({}); // Changed to store array of cases
-const [loadingDetails, setLoadingDetails] = useState<Record<string, boolean>>({});
 
-const handleCaseExpand = async (caseItem: CaseData) => {
-  if (!caseItem?.id) {
-    console.error('Cannot expand - case item has no ID:', caseItem);
-    return;
-  }
+  const [expandedCases, setExpandedCases] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [caseDetails, setCaseDetails] = useState<Record<string, CaseData[]>>(
+    {}
+  ); // Changed to store array of cases
+  const [loadingDetails, setLoadingDetails] = useState<Record<string, boolean>>(
+    {}
+  );
 
-  const caseId = caseItem.id;
-  console.group(`Handling expand for case ${caseId}`);
-  
-  const isExpanded = expandedCases[caseId];
-  console.log('Current states:', {
-    expanded: expandedCases,
-    details: caseDetails,
-    loading: loadingDetails
-  });
-
-  // Toggle expansion state
-  setExpandedCases(prev => ({ ...prev, [caseId]: !isExpanded }));
-
-  if (!isExpanded && !caseDetails[caseId]) {
-    try {
-      setLoadingDetails(prev => ({ ...prev, [caseId]: true }));
-      
-      console.log(`Fetching details for diary ${caseItem.diaryNumber}`);
-      const response = await fetch(`/api/cases/dairynumber?diaryNumber=${caseItem.diaryNumber}`);
-      const data = await response.json();
-      console.log('API response:', data);
-
-      if (data.success && data.data?.length) {
-        // Store ALL cases from the response
-        setCaseDetails(prev => ({ 
-          ...prev, 
-          [caseId]: data.data 
-        }));
-      } else {
-        throw new Error(data.message || 'No case data returned');
-      }
-    } catch (error) {
-      console.error('Fetch error:', error);
-      // Fallback to the original case item as single item array
-      setCaseDetails(prev => ({ 
-        ...prev, 
-        [caseId]: [caseItem] 
-      }));
-    } finally {
-      setLoadingDetails(prev => ({ ...prev, [caseId]: false }));
+  const handleCaseExpand = async (caseItem: CaseData) => {
+    if (!caseItem?.id) {
+      console.error("Cannot expand - case item has no ID:", caseItem);
+      return;
     }
-  }
-  console.groupEnd();
-};
- 
-   const fetchUserCases = async () => {
+
+    const caseId = caseItem.id;
+
+    const isExpanded = expandedCases[caseId];
+    console.log("Current states:", {
+      expanded: expandedCases,
+      details: caseDetails,
+      loading: loadingDetails,
+    });
+
+    // Toggle expansion state
+    setExpandedCases((prev) => ({ ...prev, [caseId]: !isExpanded }));
+
+    if (!isExpanded && !caseDetails[caseId]) {
+      try {
+        setLoadingDetails((prev) => ({ ...prev, [caseId]: true }));
+
+        console.log(`Fetching details for diary ${caseItem.diaryNumber}`);
+        const response = await fetch(
+          `/api/cases/dairynumber?diaryNumber=${caseItem.diaryNumber}`
+        );
+        const data = await response.json();
+        console.log("API response:", data);
+
+        if (data.success && data.data?.length) {
+          // Store ALL cases from the response
+          setCaseDetails((prev) => ({
+            ...prev,
+            [caseId]: data.data,
+          }));
+        } else {
+          throw new Error(data.message || "No case data returned");
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+        // Fallback to the original case item as single item array
+        setCaseDetails((prev) => ({
+          ...prev,
+          [caseId]: [caseItem],
+        }));
+      } finally {
+        setLoadingDetails((prev) => ({ ...prev, [caseId]: false }));
+      }
+    }
+    console.groupEnd();
+  };
+
+  const fetchUserCases = async () => {
     try {
       setIsLoading(true);
       setError("");
-      const response = await fetch('/api/cases/user-cases', {
-        method: 'GET'
+      const response = await fetch("/api/cases/user-cases", {
+        method: "GET",
       });
       const data = await response.json();
-      
+
       if (data.success && data.data) {
-       // console.log("Fetched cases:", data.data);
-        
+        // console.log("Fetched cases:", data.data);
+
         setCases(data.data);
 
-       // console.log("cases:", cases);
-        
+        // console.log("cases:", cases);
       } else {
-        setError(data.message || 'Failed to fetch cases');
-        toast.error(data.message || 'Failed to fetch cases');
+        setError(data.message || "Failed to fetch cases");
+        toast.error(data.message || "Failed to fetch cases");
       }
     } catch (error) {
-      console.error('Error fetching cases:', error);
-      setError('Failed to load cases');
-      toast.error('Failed to load cases');
+      console.error("Error fetching cases:", error);
+      setError("Failed to load cases");
+      toast.error("Failed to load cases");
     } finally {
       setIsLoading(false);
     }
@@ -141,8 +143,7 @@ const handleCaseExpand = async (caseItem: CaseData) => {
     fetchUserCases();
   }, []);
   console.log("cases:", cases);
-  
-   
+
   const handleSearchCase = async () => {
     try {
       setIsLoading(true);
@@ -186,10 +187,10 @@ const handleCaseExpand = async (caseItem: CaseData) => {
   };
 
   const handleToggleSelectCase = (caseData: CaseData) => {
-    setSelectedCases(prev => {
-      const isSelected = prev.some(c => c.id === caseData.id);
+    setSelectedCases((prev) => {
+      const isSelected = prev.some((c) => c.id === caseData.id);
       if (isSelected) {
-        return prev.filter(c => c.id !== caseData.id);
+        return prev.filter((c) => c.id !== caseData.id);
       } else {
         return [...prev, caseData];
       }
@@ -205,60 +206,61 @@ const handleCaseExpand = async (caseItem: CaseData) => {
     setSelectAll(!selectAll);
   };
 
-  
-  
+  const handleCreateCases = async () => {
+    try {
+      setIsSubmitting(true);
 
- 
+      // Extract case IDs from selected cases
+      const diaryNumbers = selectedCases.map(
+        (caseData) => caseData.diaryNumber
+      );
+      console.log("Selected diary numbers:", diaryNumbers);
 
-const handleCreateCases = async () => {
-  try {
-    setIsSubmitting(true);
-    
-    // Extract case IDs from selected cases
-    const diaryNumbers = selectedCases.map(caseData => caseData.diaryNumber);
-    console.log("Selected diary numbers:", diaryNumbers);
-    
-    // Take only the first diary number
-    const firstDiaryNumber = diaryNumbers[0];
-    const response = await fetch('/api/cases/user-cases', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ diaryNumber :firstDiaryNumber }),
-    });
+      // Take only the first diary number
+      const firstDiaryNumber = diaryNumbers[0];
+      const response = await fetch("/api/cases/user-cases", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ diaryNumber: firstDiaryNumber }),
+      });
 
-    const result = await response.json();
-   console.log("Create cases response:", result);
-   
-    if (!response.ok) {
-      throw new Error(result.message || "Failed to save cases");
+      const result = await response.json();
+      console.log("Create cases response:", result);
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to save cases");
+      }
+
+      // Show success message based on the actual API response
+      if (result.success) {
+        toast.success(
+          `Successfully created Order for Diary Number ${result.data.createdCase.diaryNumber}`
+        );
+      } else {
+        toast.error(result.message || "Case processed but got some errors");
+      }
+
+      await fetchUserCases(); // Refresh the cases list
+      // Update UI
+      setShowNewCaseModal(false);
+      setFoundCases([]);
+      setSelectedCases([]);
+      setSearchParams({
+        number: "",
+        year: "",
+        court: "",
+      });
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to create cases";
+      toast.error(errorMessage);
+      console.error("Error in handleCreateCases:", err);
+    } finally {
+      setIsSubmitting(false);
     }
- 
-    // Show success message based on the actual API response
-    if (result.success) {
-      toast.success(`Successfully created Order for Diary Number ${result.data.createdCase.diaryNumber}`);
-       setNewlyCreatedCase(result.data.createdCase);
-    } else {
-      toast.error(result.message || "Case processed but got some errors");
-    }
-
-    await fetchUserCases(); // Refresh the cases list
-    // Update UI
-    setShowNewCaseModal(false);
-    setFoundCases([]);
-    setSelectedCases([]);
-    setSearchParams({
-      number: "", year:"", court: ""})
-
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Failed to create cases";
-    toast.error(errorMessage);
-    console.error("Error in handleCreateCases:", err);
-  } finally {
-    setIsSubmitting(false);
-  }
-}; 
+  };
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
@@ -268,13 +270,13 @@ const handleCreateCases = async () => {
           <h1 className="text-2xl font-semibold text-gray-800">
             Case Management
           </h1>
-           
+
           <button
             onClick={() => setShowNewCaseModal(true)}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
           >
             <Plus className="w-4 h-4" />
-            New Case
+            Add Case
           </button>
         </div>
 
@@ -291,197 +293,175 @@ const handleCreateCases = async () => {
           </div>
         </div>
       </div>
- 
-       {/* Cases List */}
- 
-     <div className="grid grid-cols-1 gap-2 mt-2 p-4">
-  {cases.map((caseItem, index) => {
-    if (!caseItem.id) {
-      console.error('Rendering case with no ID:', caseItem);
-      return null;
-    }
-    return (
-      <div
-        key={caseItem.id}
-        className="bg-white border rounded-md hover:shadow-sm transition-shadow text-xs"
-      >
-        {/* Case header - clickable */}
-        <div 
-          className="flex justify-between items-center p-2 border-b cursor-pointer"
-          onClick={() => handleCaseExpand(caseItem)}
-        >
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-gray-900">
-              {index + 1}. {caseItem.caseNumber}
-            </span>
-             <span className="font-medium text-gray-900">
-                  Diary Number: {caseItem.diaryNumber}
-                </span>
-            {caseItem.judgmentDate && (
-              <span className="text-gray-500">
-                (Judgment: {caseItem.judgmentDate})
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {loadingDetails[caseItem.id] ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <ChevronDown 
-                className={`w-4 h-4 transition-transform ${
-                  expandedCases[caseItem.id] ? 'rotate-180' : ''
-                }`}
-              />
-            )}
-          </div>
-        </div>
 
-        {/* Expanded content */}
-        {expandedCases[caseItem.id] && (
-          <div className="p-4">
-            {caseDetails[caseItem.id] ? (
-              <div className="space-y-4">
-                {/* {caseDetails[caseItem.id].map((detail, idx) => (
-                  <div key={`${detail.id}-${idx}`} className="border-b pb-4 last:border-0">
-                    <h4 className="font-medium mb-2">Judgment {idx + 1}</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-gray-500 text-xs">Court:</p>
-                        <p className="font-medium">{detail.court}</p>
+      {/* Cases List */}
+
+      <div className="grid grid-cols-1 gap-2 mt-2 p-4">
+        {cases.length > 0 ? (
+          cases.map((caseItem, index) => {
+            if (!caseItem.id) {
+              console.log("cases 1", cases);
+
+              console.error("Rendering case with no ID:", caseItem);
+              return null;
+            }
+            return (
+              <div
+                key={caseItem.id}
+                className="bg-white border rounded-md hover:shadow-sm transition-shadow text-xs"
+              >
+                {/* Case header - clickable */}
+
+                <div
+                  className="flex justify-between items-center p-2 border-b cursor-pointer"
+                  onClick={() => handleCaseExpand(caseItem)}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-900">
+                      {index + 1}. {caseItem.caseNumber}
+                    </span>
+                    <span className="font-medium text-gray-900">
+                      Diary Number: {caseItem.diaryNumber}
+                    </span>
+                    {caseItem.judgmentDate && (
+                      <span className="text-gray-500">
+                        (Judgment: {caseItem.judgmentDate})
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {loadingDetails[caseItem.id] ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform ${
+                          expandedCases[caseItem.id] ? "rotate-180" : ""
+                        }`}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* Case details - initially hidden */}
+
+                {/* Expanded content */}
+                {expandedCases[caseItem.id] && (
+                  <div className="p-4">
+                    {caseDetails[caseItem.id] ? (
+                      <div className="space-y-4">
+                        {/* Display all judgments for this case */}
+                        {caseDetails[caseItem.id].map((detail, idx) => (
+                          <div
+                            key={`${detail.id}-${idx}`}
+                            className="border-b pb-4 last:border-0"
+                          >
+                            <div className="flex justify-between items-start mb-3">
+                              <h4 className="font-medium text-sm text-blue-600">
+                                Judgment {idx + 1}
+                              </h4>
+                              {detail.judgmentDate && (
+                                <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                                  {detail.judgmentDate}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex flex-wrap gap-4">
+                              {/* Column 1 - Case Info */}
+                              <div className="flex-1 min-w-[200px] space-y-2">
+                                <div>
+                                  <p className="text-gray-500 text-xs">Court</p>
+                                  <p className="font-medium text-sm">
+                                    {detail.court}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-500 text-xs">Date</p>
+                                  <p className="font-medium text-sm">
+                                    {new Date(detail.date).toLocaleDateString()}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-500 text-xs">
+                                    Diary Number
+                                  </p>
+                                  <p className="font-medium text-sm">
+                                    {detail.diaryNumber}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Column 2 - Parties */}
+                              <div className="flex-1 min-w-[200px] space-y-2">
+                                <div>
+                                  <p className="text-gray-500 text-xs">
+                                    Parties
+                                  </p>
+                                  <p className="font-medium text-sm">
+                                    {detail.parties}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-500 text-xs">
+                                    Advocates
+                                  </p>
+                                  <p className="font-medium text-sm">
+                                    {detail.advocates || "N/A"}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Column 3 - Bench & Actions */}
+                              <div className="flex-1 min-w-[200px] space-y-2">
+                                <div>
+                                  <p className="text-gray-500 text-xs">Bench</p>
+                                  <p className="font-medium text-sm">
+                                    {detail.bench}
+                                  </p>
+                                </div>
+
+                                {Array.isArray(detail.judgmentUrl) &&
+                                  detail.judgmentUrl.length > 0 && (
+                                    <div className="mt-2 space-y-1">
+                                      {detail.judgmentUrl.map((url, index) => (
+                                        <a
+                                          key={index}
+                                          href={url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center text-blue-600 hover:underline text-xs bg-blue-50 px-2 py-1 rounded"
+                                        >
+                                          <FileText className="w-3 h-3 mr-1" />
+                                          View Judgment PDF {index + 1}
+                                        </a>
+                                      ))}
+                                    </div>
+                                  )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div>
-                        <p className="text-gray-500 text-xs">Date:</p>
-                        <p className="font-medium">
-                          {new Date(detail.date).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-2">
-                      <p className="text-gray-500 text-xs">Parties:</p>
-                      <p className="font-medium">{detail.parties}</p>
-                    </div>
-
-                    <div className="mt-2">
-                      <p className="text-gray-500 text-xs">Advocates:</p>
-                      <p className="font-medium">
-                        {detail.advocates || "N/A"}
-                      </p>
-                    </div>
-
-                    <div className="mt-2">
-                      <p className="text-gray-500 text-xs">Bench:</p>
-                      <p className="font-medium">{detail.bench}</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      <div>
-                        <p className="text-gray-500 text-xs">Judgment Date:</p>
-                        <p className="font-medium">
-                          {detail.judgmentDate || "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 text-xs">Diary Number:</p>
-                        <p className="font-medium">{detail.diaryNumber}</p>
-                      </div>
-                    </div>
-
-                    {detail.judgmentUrl && (
-                      <div className="mt-3">
-                        <a
-                          href={detail.judgmentUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center text-blue-600 hover:underline text-xs"
-                        >
-                          <FileText className="w-3 h-3 mr-1" />
-                          View Judgment PDF
-                        </a>
+                    ) : (
+                      <div className="text-center py-2 text-gray-500 text-xs">
+                        {loadingDetails[caseItem.id]
+                          ? "Loading..."
+                          : "Failed to load details"}
                       </div>
                     )}
                   </div>
-                ))} */}
-
-                {caseDetails[caseItem.id].map((detail, idx) => (
-  <div key={`${detail.id}-${idx}`} className="border-b pb-4 last:border-0">
-    <div className="flex justify-between items-start mb-3">
-      <h4 className="font-medium text-sm text-blue-600">Judgment {idx + 1}</h4>
-      {detail.judgmentDate && (
-        <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-          {detail.judgmentDate}
-        </span>
-      )}
-    </div>
-
-    <div className="flex flex-wrap gap-4">
-      {/* Column 1 - Case Info */}
-      <div className="flex-1 min-w-[200px] space-y-2">
-        <div>
-          <p className="text-gray-500 text-xs">Court</p>
-          <p className="font-medium text-sm">{detail.court}</p>
-        </div>
-        <div>
-          <p className="text-gray-500 text-xs">Date</p>
-          <p className="font-medium text-sm">
-            {new Date(detail.date).toLocaleDateString()}
-          </p>
-        </div>
-        <div>
-          <p className="text-gray-500 text-xs">Diary Number</p>
-          <p className="font-medium text-sm">{detail.diaryNumber}</p>
-        </div>
-      </div>
-
-      {/* Column 2 - Parties */}
-      <div className="flex-1 min-w-[200px] space-y-2">
-        <div>
-          <p className="text-gray-500 text-xs">Parties</p>
-          <p className="font-medium text-sm">{detail.parties}</p>
-        </div>
-        <div>
-          <p className="text-gray-500 text-xs">Advocates</p>
-          <p className="font-medium text-sm">
-            {detail.advocates || "N/A"}
-          </p>
-        </div>
-      </div>
-
-      {/* Column 3 - Bench & Actions */}
-      <div className="flex-1 min-w-[200px] space-y-2">
-        <div>
-          <p className="text-gray-500 text-xs">Bench</p>
-          <p className="font-medium text-sm">{detail.bench}</p>
-        </div>
-        {detail.judgmentUrl && (
-          <div className="mt-2">
-            <a
-              href={detail.judgmentUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center text-blue-600 hover:underline text-xs bg-blue-50 px-2 py-1 rounded"
-            >
-              <FileText className="w-3 h-3 mr-1" />
-              View Judgment PDF
-            </a>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div className="flex justify-center items-center p-4">
+            <div className="font-bold text-black text-center">
+              No cases found. Please create a new case.
+            </div>
           </div>
         )}
       </div>
-    </div>
-  </div>
-))}
-              </div>
-            ) : (
-              <div className="text-center py-2 text-gray-500 text-xs">
-                {loadingDetails[caseItem.id] ? 'Loading...' : 'Failed to load details'}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    )
-  })}
-</div>
 
       {/* Search and Create Case Modal */}
       {showNewCaseModal && (
@@ -489,7 +469,9 @@ const handleCreateCases = async () => {
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-auto">
             <div className="flex justify-between items-center p-4 border-b">
               <h3 className="text-lg font-semibold">
-                {foundCases.length > 0 ? "Select Case(s) to Create" : "Search Case"}
+                {foundCases.length > 0
+                  ? "Select Case(s) to Create"
+                  : "Search Case"}
               </h3>
               <button
                 onClick={() => {
@@ -517,7 +499,10 @@ const handleCreateCases = async () => {
                         type="text"
                         value={searchParams.number}
                         onChange={(e) =>
-                          setSearchParams({ ...searchParams, number: e.target.value })
+                          setSearchParams({
+                            ...searchParams,
+                            number: e.target.value,
+                          })
                         }
                         className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                         placeholder="e.g. 72381/1989"
@@ -532,7 +517,10 @@ const handleCreateCases = async () => {
                         type="text"
                         value={searchParams.year}
                         onChange={(e) =>
-                          setSearchParams({ ...searchParams, year: e.target.value })
+                          setSearchParams({
+                            ...searchParams,
+                            year: e.target.value,
+                          })
                         }
                         className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                         placeholder="e.g. 1989"
@@ -546,7 +534,10 @@ const handleCreateCases = async () => {
                       <select
                         value={searchParams.court}
                         onChange={(e) =>
-                          setSearchParams({ ...searchParams, court: e.target.value })
+                          setSearchParams({
+                            ...searchParams,
+                            court: e.target.value,
+                          })
                         }
                         className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                       >
@@ -580,7 +571,8 @@ const handleCreateCases = async () => {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <h4 className="font-medium text-gray-800">
-                        Found {foundCases.length}  Order Related to this dairy number {foundCases[0].diaryNumber}
+                        Found {foundCases.length} Order Related to this dairy
+                        number {foundCases[0].diaryNumber}
                       </h4>
                       <div className="flex items-center">
                         <input
@@ -590,52 +582,49 @@ const handleCreateCases = async () => {
                           onChange={handleToggleSelectAll}
                           className="mr-2 h-4 w-4 text-blue-600 rounded"
                         />
-                        <label htmlFor="selectAll" className="text-sm text-gray-700">
+                        <label
+                          htmlFor="selectAll"
+                          className="text-sm text-gray-700"
+                        >
                           Select All
                         </label>
                       </div>
                     </div>
-                    
+
                     {foundCases.map((caseData) => (
-                      <div 
-                        key={caseData.id} 
+                      <div
+                        key={caseData.id}
                         className={`bg-gray-50 p-4 rounded-md border ${
-                          selectedCases.some(c => c.id === caseData.id) ? 'border-blue-500' : ''
+                          selectedCases.some((c) => c.id === caseData.id)
+                            ? "border-blue-500"
+                            : ""
                         }`}
                       >
                         <div className="flex justify-between items-start mb-2">
                           <h5 className="font-medium text-blue-600">
-                            {caseData.diaryNumber} - {caseData.parties.split("/")[0]}
+                            {caseData.diaryNumber} -{" "}
+                            {caseData.parties.split("/")[0]}
                           </h5>
-                          {/* <button
-                            onClick={() => handleToggleSelectCase(caseData)}
-                            className={`px-3 py-1 rounded text-sm ${
-                              selectedCases.some(c => c.id === caseData.id) 
-                                ? 'bg-green-600 text-white' 
-                                : 'bg-gray-200 text-gray-700'
-                            }`}
-                          >
-                            {selectedCases.some(c => c.id === caseData.id) ? 'Selected' : 'Select'}
-                          </button> */}
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-sm">
-                          <p><span className="text-gray-600">Case Number:</span> {caseData.caseNumber}</p>
-                          <p><span className="text-gray-600">Judgment Date:</span> {caseData.judgmentDate}</p>
-                          <p><span className="text-gray-600">Bench:</span> {caseData.bench}</p>
-                          <p><span className="text-gray-600">Court:</span> {caseData.court}</p>
-                          {caseData.judgmentUrl && (
-                            <p className="col-span-2">
-                              <span className="text-gray-600">Judgment:</span> 
-                              <a 
-                                href={caseData.judgmentUrl} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="text-blue-600 hover:underline ml-1"
-                              >
-                                View PDF
-                              </a>
-                            </p>
-                          )}
+                          <p>
+                            <span className="text-gray-600">Case Number:</span>{" "}
+                            {caseData.caseNumber}
+                          </p>
+                          <p>
+                            <span className="text-gray-600">
+                              Judgment Date:
+                            </span>{" "}
+                            {caseData.judgmentDate}
+                          </p>
+                          <p>
+                            <span className="text-gray-600">Bench:</span>{" "}
+                            {caseData.bench}
+                          </p>
+                          <p>
+                            <span className="text-gray-600">Court:</span>{" "}
+                            {caseData.court}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -669,7 +658,7 @@ const handleCreateCases = async () => {
                         ) : (
                           <>
                             <Check className="w-4 h-4" />
-                            Create {selectedCases.length > 1 ? 'Cases' : 'Case'}
+                            Create {selectedCases.length > 1 ? "Cases" : "Case"}
                           </>
                         )}
                       </button>
