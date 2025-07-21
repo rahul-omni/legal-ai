@@ -190,7 +190,13 @@ const ProjectHub = () => {
                   </td>
                   <td className="px-4 py-2 flex items-center justify-center">
                     <button
-                      onClick={() => router.push(`/projects/${project.id}/edit`)}
+                      onClick={() => {
+                        if (project.type == "FOLDER"){
+                          router.push(`/projects/${project.id}/edit`)
+                        }else{
+                          router.push(`/projects/root/edit/${project.id}`)
+                        }
+                      }}
                       className="text-sm px-3 py-1 bg-blue-500 text-white hover:bg-blue-600 rounded mr-2"
                     >
                       Open
