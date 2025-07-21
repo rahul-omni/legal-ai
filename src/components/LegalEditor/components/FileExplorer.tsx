@@ -4,7 +4,7 @@ import { Spinner } from "@/components/Loader";
 import { handleApiError } from "@/helper/handleApiError";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { isArray } from "lodash";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { FC, useEffect, useRef, useState } from "react";
 import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 import { FileExplorerHeader } from "./FileHeader";
@@ -33,10 +33,11 @@ export const FileExplorer: FC<FileExplorerProps> = ({
   const [loading, setLoading] = useState(true);
   const [fileLoader, setFileLoader] = useState(false);
   const [deletingFile, setDeletingFile] = useState("");
+  const router = useRouter()
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const parentId = params.id as string;
-  const fileId = params.fileId as string;
+  const fileIdParam = params.fileId as string;
   const { fetchData } = useAxios();
 
   useEffect(() => {
@@ -46,7 +47,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
   const fetchRootNodes = async () => {
     try {
       if (parentId && params.fileId?.length){
-        const node = await fetchNodes(parentId, fileId);
+        const node = await fetchNodes(parentId, fileIdParam);
         explorerDispatch({ type: "LOAD_FILES", payload: node });
         if (node.length){
           onDocumentSelect(node[0]);
@@ -77,8 +78,12 @@ export const FileExplorer: FC<FileExplorerProps> = ({
     setDeletingFile(fileId);
     e.stopPropagation();
     await fetchData(apiRouteConfig.privateRoutes.node(fileId), "DELETE");
-    await fetchRootNodes();
-    setDeletingFile("");
+    if (fileIdParam){
+      router.push(`/projects`);
+    }else{
+      await fetchRootNodes();
+      setDeletingFile("");
+    }
   };
 
   const renderNode = (node: FileSystemNodeProps, depth = 0) => {
