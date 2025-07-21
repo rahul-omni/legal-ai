@@ -3,6 +3,10 @@ import { FileType } from "@prisma/client";
 import { apiClient } from ".";
 import { AxiosResponse } from "axios";
 import { apiRouteConfig } from "../api/lib/apiRouteConfig";
+import toast from "react-hot-toast";
+import { extractTextFromPDF, fileToBase64 } from "@/utils/pdfUtils";
+import { FileService } from "@/lib/fileService";
+import { handleApiError } from "@/helper/handleApiError";
 export interface CreateNodePayload {
   name: string;
   type: FileType;
@@ -28,15 +32,6 @@ export const fetchNodes = async (
   } catch (error) {
     console.error("Error fetching nodes:", error);
     return []; // Return empty array instead of undefined
-  }
-};
-
-export const createNodeold = async (node: CreateNodePayload) => {
-  try {
-    await apiClient.post(apiRouteConfig.privateRoutes.nodes, node);
-  } catch (error) {
-    console.error("Error uploading file:", error);
-    throw new Error("Failed to upload file");
   }
 };
 
@@ -139,3 +134,53 @@ export const createNewFile = async (
     throw new Error("Failed to create new file");
   }
 };
+
+export const uploadFile = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    parentId?: string
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      let content: string;
+
+      if (file.type === "application/pdf") {
+        const { html } = await extractTextFromPDF(file);
+        content = html;
+        toast.success("PDF Parsed Successfully");
+      }else if (["image/png", "image/jpg", "image/jpeg"].includes(file.type)) {
+        const base64 = await fileToBase64(file); // 👈 Convert image to base64
+        
+        const res = await fetch("/api/parse-image", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            base64Image: base64,
+            mimeType: file.type,
+            targetLanguage: "English", // Optional, default handled by server
+          }),
+        });
+
+        const { html } = await res.json();
+        content = html;
+        toast.success("Image Parsed Successfully");
+      } else {
+        content = await FileService.parseFile(file);
+      }
+
+      const updatedFileName = file.name.replace(/\.[^/.]+$/, "") + ".docx";
+
+      const newFile: CreateNodePayload = {
+        name: updatedFileName,
+        type: "FILE",
+        parentId,
+        content,
+      };
+
+      const newnode = await createNode(newFile);
+    } catch (error) {
+      handleApiError(error);
+    }
+  };

@@ -10,7 +10,7 @@ import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 // Type definitions
 interface AIPopupProps {
   selectedText?: string;
-  onPromptSubmit: (_prompt: string, _context: string) => void;
+  onPromptSubmit: (_prompt: string, _context: string, files?: string[]) => void;
   cursorPosition?: {
     line: number;
     column: number;
@@ -22,28 +22,6 @@ interface AIPopupProps {
   } | null;
   isFolderPickerOpen?: boolean;
 }
-
-// Utility functions for document processing
-const extractTextFromDocx = async (file: File): Promise<string> => {
-  const arrayBuffer = await file.arrayBuffer();
-  const result = await mammoth.extractRawText({ arrayBuffer });
-  return result.value;
-};
-
-const extractTextFromPDF = async (file: File): Promise<string> => {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await getDocument({ data: arrayBuffer }).promise;
-  let fullText = "";
-
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const text = content.items.map((item: any) => item.str).join(" ");
-    fullText += `\n\nPage ${i}:\n${text}`;
-  }
-
-  return fullText;
-};
 
 export function AIPopup({
   onPromptSubmit,
@@ -103,33 +81,10 @@ export function AIPopup({
     try {
       setIsLoading(true);
 
-      // Process uploaded files
-      const uploadedTexts = await Promise.all(
-        uploadedFiles.map(async (file) => {
-          if (file.type === "application/pdf") return extractTextFromPDF(file);
-          if (file.name.endsWith(".docx")) return extractTextFromDocx(file);
-          return file.text();
-        })
-      );
-
-      // Process selected documents from tree
-      const treeTexts = selectedDocuments.map((node) => node.content);
-
-      let fileText = [...uploadedTexts, ...treeTexts]
-        .filter(Boolean)
-        .join("\n\n");
-
-      // Build primary context
-      let primary = "";
-      if (selectedText) primary = `Selected Text:\n"""\n${selectedText}\n"""`;
-      // else if (currentContent)
-      //   primary = `Document Content:\n"""\n${currentContent}\n"""`;
-      if (fileText) fileText = `Context Files:\n"""\n${fileText}\n"""`;
-
-      const fullText = primary + fileText;
+      const selectedFiles = selectedDocuments.map((node) => node.id);
 
       // Submit to parent
-      onPromptSubmit(prompt.trim(), fullText);
+      onPromptSubmit(prompt.trim(),  selectedText || "", selectedFiles);
       setPrompt("");
     } catch (err) {
       console.error("Error preparing prompt:", err);

@@ -60,25 +60,26 @@ export function DocumentPane() {
     para: null,
     text: null,
   };
-  async function handlePromptSubmit(prompt: string, fullText?: string) {
+  async function handlePromptSubmit(prompt: string, fullText?: string, files?: string[]) {
     if (!prompt.trim() || !lexicalEditorRef.current) return;
     setGenerationState({ isGenerating: true, loading: true });
 
     try {
-      const response = await fetchAIResponse(prompt, fullText);
+      const response = await fetchAIResponse(prompt, fullText, files);
       await processAIStream(response);
     } finally {
       setGenerationState({ isGenerating: false, loading: false });
     }
   }
 
-  async function fetchAIResponse(prompt: string, context?: string) {
+  async function fetchAIResponse(prompt: string, context?: string, files?: string[]) {
     const res = await fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         prompt,
         text: context || activeTab?.content || "",
+        files
       }),
     });
     setGenerationState({ isGenerating: true, loading: false });

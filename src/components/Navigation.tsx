@@ -19,11 +19,6 @@ import { useState } from "react";
 
 const navigationItems = [
   {
-    name: "Editor",
-    href: "/editor",
-    icon: FileText,
-  },
-  {
     name: "Project Hub",
     href: "/projects",
     icon: FolderKanban,
