@@ -154,7 +154,7 @@ const ProjectHub = () => {
       </div>
 
       <div className="flex-1 overflow-auto p-6 bg-gray-50">
-        <div className="w-full overflow-auto">
+        <div className="w-full">
           {state.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <table className="w-full table-auto border-collapse">
             <thead className="bg-gray-100 text-left">
               <tr>
@@ -218,10 +218,10 @@ const ProjectHub = () => {
           </table>}
         </div>
 
-        <div className="flex justify-end mt-4 gap-2">
+        {!state.loading && <div className="flex justify-end mt-4 gap-2">
           <button disabled={state.currentPage === 1} onClick={() => dispatch({ type: "SET_PAGE", payload: state.currentPage - 1 })} className="px-3 py-1 text-sm bg-white border rounded disabled:opacity-50">Previous</button>
           <button disabled={state.currentPage * state.rowsPerPage >= state.projects.length} onClick={() => dispatch({ type: "SET_PAGE", payload: state.currentPage + 1 })} className="px-3 py-1 text-sm bg-white border rounded disabled:opacity-50">Next</button>
-        </div>
+        </div>}
       </div>
       {state.isNewProjectModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
