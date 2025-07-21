@@ -10,6 +10,8 @@ import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 import { FileExplorerHeader } from "./FileHeader";
 import FileNode from "./FileNode";
 import { GlobalWorkerOptions, version } from 'pdfjs-dist/build/pdf';
+import useAxios from "@/hooks/api/useAxios";
+import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
 
 GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.js`;
 
@@ -30,10 +32,12 @@ export const FileExplorer: FC<FileExplorerProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [fileLoader, setFileLoader] = useState(false);
+  const [deletingFile, setDeletingFile] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const parentId = params.id as string;
   const fileId = params.fileId as string;
+  const { fetchData } = useAxios();
 
   useEffect(() => {
     fetchRootNodes();
@@ -69,6 +73,14 @@ export const FileExplorer: FC<FileExplorerProps> = ({
     await fetchRootNodes();
   };
 
+  const handleDelete = async (e: React.MouseEvent<HTMLButtonElement>, fileId: string) => {
+    setDeletingFile(fileId);
+    e.stopPropagation();
+    await fetchData(apiRouteConfig.privateRoutes.node(fileId), "DELETE");
+    await fetchRootNodes();
+    setDeletingFile("");
+  };
+
   const renderNode = (node: FileSystemNodeProps, depth = 0) => {
     return (
       <FileNode
@@ -77,6 +89,8 @@ export const FileExplorer: FC<FileExplorerProps> = ({
         depth={depth}
         selectedDocument={selectedDocument}
         onDocumentSelect={onDocumentSelect}
+        handleDelete={handleDelete}
+        isDeleting={deletingFile==node.id}
       />
     );
   };
