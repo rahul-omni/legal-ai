@@ -380,33 +380,88 @@ export function CaseManagement() {
           return (
             <div
               key={caseItem.id}
-              className="bg-white border rounded-md hover:shadow-sm transition-shadow text-xs"
+              className="bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 text-sm"
             >
               {/* Case header - clickable */}
-              <div
-                className="flex justify-between items-center p-2 border-b cursor-pointer"
+              <div 
+                className="flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors"
                 onClick={() => handleCaseExpand(caseItem)}
               >
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-900">
-                    {index + 1}. {caseItem.caseNumber}
-                  </span>
-                  <span className="font-medium text-gray-900">
-                    Diary Number: {caseItem.diaryNumber}
-                  </span>
-                  {caseItem.judgmentDate && (
-                    <span className="text-gray-500">
-                      (Judgment: {caseItem.judgmentDate})
-                    </span>
-                  )}
+                <div className="flex items-center gap-6 flex-1">
+                  {/* Court Badge */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <span className="text-blue-600 font-semibold text-sm">
+                        {index + 1}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-900">
+                        {caseItem.court}
+                      </span>
+                      <span className="text-gray-400">•</span>
+                      <span className="text-gray-600 font-medium">
+                        Diary: {caseItem.diaryNumber}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Court Information */}
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+                        {caseItem.court}
+                      </span>
+                      {caseItem.caseType && (
+                        <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                          {caseItem.caseType}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Judgment Information */}
+                  <div className="flex items-center gap-4">
+                    {caseItem.judgmentDate && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <span className="text-gray-600 text-sm">
+                          {caseItem.judgmentDate}
+                        </span>
+                      </div>
+                    )}
+                    {caseItem.judgmentBy && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500 text-sm">By:</span>
+                        <span className="text-gray-700 text-sm font-medium">
+                          {caseItem.judgmentBy}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Parties Information */}
+                  <div className="flex-1 min-w-0">
+                    {caseItem.parties && (
+                      <div className="truncate">
+                        <span className="text-gray-500 text-sm">Parties:</span>
+                        <span className="text-gray-700 text-sm font-medium ml-1">
+                          {caseItem.parties}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
+
+                {/* Expand/Collapse Indicator */}
+                <div className="flex items-center gap-3 ml-4">
                   {loadingDetails[caseItem.id] ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
                   ) : (
-                    <ChevronDown
-                      className={`w-4 h-4 transition-transform ${expandedCases[caseItem.id] ? 'rotate-180' : ''
-                        }`}
+                    <ChevronDown 
+                      className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                        expandedCases[caseItem.id] ? 'rotate-180' : ''
+                      }`}
                     />
                   )}
                 </div>
@@ -414,142 +469,141 @@ export function CaseManagement() {
 
               {/* Expanded content */}
               {expandedCases[caseItem.id] && (
-                <div className="p-4">
+                <div className="bg-gray-50 border-t border-gray-200">
                   {caseDetails[caseItem.id] ? (
-                    <div className="space-y-4">
-                      {/* {caseDetails[caseItem.id].map((detail, idx) => (
-                  <div key={`${detail.id}-${idx}`} className="border-b pb-4 last:border-0">
-                    <h4 className="font-medium mb-2">Judgment {idx + 1}</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-gray-500 text-xs">Court:</p>
-                        <p className="font-medium">{detail.court}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 text-xs">Date:</p>
-                        <p className="font-medium">
-                          {new Date(detail.date).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-2">
-                      <p className="text-gray-500 text-xs">Parties:</p>
-                      <p className="font-medium">{detail.parties}</p>
-                    </div>
-
-                    <div className="mt-2">
-                      <p className="text-gray-500 text-xs">Advocates:</p>
-                      <p className="font-medium">
-                        {detail.advocates || "N/A"}
-                      </p>
-                    </div>
-
-                    <div className="mt-2">
-                      <p className="text-gray-500 text-xs">Bench:</p>
-                      <p className="font-medium">{detail.bench}</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      <div>
-                        <p className="text-gray-500 text-xs">Judgment Date:</p>
-                        <p className="font-medium">
-                          {detail.judgmentDate || "N/A"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 text-xs">Diary Number:</p>
-                        <p className="font-medium">{detail.diaryNumber}</p>
-                      </div>
-                    </div>
-
-                    {detail.judgmentUrl && (
-                      <div className="mt-3">
-                        <a
-                          href={detail.judgmentUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center text-blue-600 hover:underline text-xs"
-                        >
-                          <FileText className="w-3 h-3 mr-1" />
-                          View Judgment PDF
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                ))} */}
-
-                      {caseDetails[caseItem.id].map((detail, idx) => (
-                        <div key={`${detail.id}-${idx}`} className="border-b pb-4 last:border-0">
-                          <div className="flex justify-between items-start mb-3">
-                            <h4 className="font-medium text-sm text-blue-600">Judgment {idx + 1}</h4>
-                            {detail.judgmentDate && (
-                              <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                                {detail.judgmentDate}
-                              </span>
-                            )}
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                            <FileText className="w-4 h-4 text-white" />
                           </div>
-
-                          <div className="flex flex-wrap gap-4">
-                            {/* Column 1 - Case Info */}
-                            <div className="flex-1 min-w-[200px] space-y-2">
-                              <div>
-                                <p className="text-gray-500 text-xs">Court</p>
-                                <p className="font-medium text-sm">{detail.court}</p>
-                              </div>
-                              <div>
-                                <p className="text-gray-500 text-xs">Date</p>
-                                <p className="font-medium text-sm">
-                                  {new Date(detail.date).toLocaleDateString()}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-gray-500 text-xs">Diary Number</p>
-                                <p className="font-medium text-sm">{detail.diaryNumber}</p>
-                              </div>
-                            </div>
-
-                            {/* Column 2 - Parties */}
-                            <div className="flex-1 min-w-[200px] space-y-2">
-                              <div>
-                                <p className="text-gray-500 text-xs">Parties</p>
-                                <p className="font-medium text-sm">{detail.parties}</p>
-                              </div>
-                              <div>
-                                <p className="text-gray-500 text-xs">Advocates</p>
-                                <p className="font-medium text-sm">
-                                  {detail.advocates || "N/A"}
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* Column 3 - Bench & Actions */}
-                            <div className="flex-1 min-w-[200px] space-y-2">
-                              <div>
-                                <p className="text-gray-500 text-xs">Bench</p>
-                                <p className="font-medium text-sm">{detail.bench}</p>
-                              </div>
-                              {detail.judgmentUrl && (
-                                <div className="mt-2">
-                                  <a
-                                    href={detail.judgmentUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center text-blue-600 hover:underline text-xs bg-blue-50 px-2 py-1 rounded"
-                                  >
-                                    <FileText className="w-3 h-3 mr-1" />
-                                    View Judgment PDF
-                                  </a>
-                                </div>
-                              )}
-                            </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              Case Details
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              Diary Number: {caseItem.diaryNumber}
+                            </p>
                           </div>
                         </div>
-                      ))}
+                        <div className="flex items-center gap-2">
+                          <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                            {caseDetails[caseItem.id].length} judgment{caseDetails[caseItem.id].length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        {caseDetails[caseItem.id].map((detail, idx) => (
+                          <div key={`${detail.id}-${idx}`} className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <span className="text-blue-600 font-semibold text-sm">
+                                      {idx + 1}
+                                    </span>
+                                  </div>
+                                  <h4 className="font-semibold text-gray-900">
+                                    Judgment {idx + 1}
+                                  </h4>
+                                </div>
+                                {detail.judgmentDate && (
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-gray-400" />
+                                    <span className="text-sm text-gray-600 font-medium">
+                                      {detail.judgmentDate}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="p-6">
+                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                {/* Case Information */}
+                                <div className="space-y-4">
+                                  <h5 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                                    Case Information
+                                  </h5>
+                                  <div className="space-y-3">
+                                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                                      <span className="text-sm text-gray-600">Court</span>
+                                      <span className="text-sm font-semibold text-gray-900">{detail.court}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                                      <span className="text-sm text-gray-600">Date</span>
+                                      <span className="text-sm font-semibold text-gray-900">
+                                        {new Date(detail.date).toLocaleDateString('en-GB')}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+                                      <span className="text-sm text-gray-600">Diary Number</span>
+                                      <span className="text-sm font-semibold text-gray-900">{detail.diaryNumber}</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Parties & Advocates */}
+                                <div className="space-y-4">
+                                  <h5 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                                    Parties & Advocates
+                                  </h5>
+                                  <div className="space-y-3">
+                                    <div className="py-2 border-b border-gray-100">
+                                      <span className="text-sm text-gray-600 block mb-1">Parties</span>
+                                      <span className="text-sm font-semibold text-gray-900">
+                                        {detail.parties || 'Not specified'}
+                                      </span>
+                                    </div>
+                                    <div className="py-2 border-b border-gray-100">
+                                      <span className="text-sm text-gray-600 block mb-1">Advocates</span>
+                                      <span className="text-sm font-semibold text-gray-900">
+                                        {detail.advocates || 'N/A'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Bench & Actions */}
+                                <div className="space-y-4">
+                                  <h5 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                                    Bench & Actions
+                                  </h5>
+                                  <div className="space-y-3">
+                                    <div className="py-2 border-b border-gray-100">
+                                      <span className="text-sm text-gray-600 block mb-1">Bench</span>
+                                      <span className="text-sm font-semibold text-gray-900">{detail.bench}</span>
+                                    </div>
+                                    {detail.judgmentUrl && (
+                                      <div className="pt-2">
+                                        <a
+                                          href={detail.judgmentUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                                        >
+                                          <FileText className="w-4 h-4" />
+                                          View Judgment PDF
+                                        </a>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ) : (
-                    <div className="text-center py-2 text-gray-500 text-xs">
-                      {loadingDetails[caseItem.id] ? 'Loading...' : 'Failed to load details'}
+                    <div className="p-6 text-center">
+                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+                      </div>
+                      <p className="text-gray-500 text-sm">
+                        {loadingDetails[caseItem.id] ? 'Loading case details...' : 'Failed to load details'}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -700,72 +754,144 @@ export function CaseManagement() {
                 <>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <h4 className="font-medium text-gray-800">
-                        Found {foundCases.length}  Order Related to this dairy number {foundCases[0].diaryNumber}
-                      </h4>
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          id="selectAll"
-                          checked={selectAll}
-                          onChange={handleToggleSelectAll}
-                          className="mr-2 h-4 w-4 text-blue-600 rounded"
-                        />
-                        <label htmlFor="selectAll" className="text-sm text-gray-700">
-                          Select All
-                        </label>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <h4 className="font-semibold text-gray-800 text-lg">
+                            Search Results
+                          </h4>
+                        </div>
+                        <span className="px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full">
+                          {foundCases.length} case{foundCases.length !== 1 ? 's' : ''} found
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id="selectAll"
+                            checked={selectAll}
+                            onChange={handleToggleSelectAll}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <label htmlFor="selectAll" className="text-sm font-medium text-gray-700">
+                            Select All
+                          </label>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Diary: {foundCases[0]?.diaryNumber}
+                        </div>
                       </div>
                     </div>
-
-                    {foundCases.map((caseData) => (
-                      <div
-                        key={caseData.id}
-                        className={`bg-gray-50 p-4 rounded-md border ${selectedCases.some(c => c.id === caseData.id) ? 'border-blue-500' : ''
+                    
+                    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                      {foundCases.map((caseData, index) => (
+                        <div 
+                          key={caseData.id} 
+                          className={`border-b border-gray-100 last:border-b-0 transition-all duration-200 ${
+                            selectedCases.some(c => c.id === caseData.id) 
+                              ? 'bg-blue-50 border-l-4 border-l-blue-500' 
+                              : 'hover:bg-gray-50'
                           }`}
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <h5 className="font-medium text-blue-600">
-                            {caseData?.caseType} - {caseData.diaryNumber} - {caseData?.parties?.split("/")[0]}
-                          </h5>
-                          <button
-                            onClick={() => handleToggleSelectCase(caseData)}
-                            className={`px-3 py-1 rounded text-sm ${selectedCases.some(c => c.id === caseData.id)
-                                ? 'bg-green-600 text-white'
-                                : 'bg-gray-200 text-gray-700'
-                              }`}
-                          >
-                            {selectedCases.some(c => c.id === caseData.id) ? 'Selected' : 'Select'}
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <p><span className="text-gray-600">Case Number:</span> {caseData.caseNumber}</p>
-                          <p><span className="text-gray-600">Judgment Date:</span> {caseData.judgmentDate}</p>
-                          <p><span className="text-gray-600">Bench:</span> {caseData.bench}</p>
-                          <p><span className="text-gray-600">Court:</span> {caseData.court}</p>
-                          {caseData.judgmentUrl && 
-                           !(caseData.court === 'High Court' && caseData.judgmentType === 'ORDER') && (
-                            <p className="col-span-2">
-                              <span className="text-gray-600">Judgment:</span> 
-                              <a 
-                                href={Array.isArray(caseData.judgmentUrl) ? caseData.judgmentUrl[0] : caseData.judgmentUrl}
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="text-blue-600 hover:underline ml-1"
-                                onClick={(e) => handlePdfClick(caseData, e)}
-                              >
-                                {caseData.court === 'High Court' && 
-                                 caseData.judgmentType === 'JUDGEMENT' && 
-                                 loadingUrls[caseData.id] ? (
-                                  <span className="text-gray-500">Generating link...</span>
-                                ) : (
-                                  "View PDF"
+                        >
+                          <div className="p-6">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                      <span className="text-blue-600 font-semibold text-sm">
+                                        {index + 1}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <h5 className="font-semibold text-gray-900 text-lg">
+                                        {caseData?.caseType} - {caseData.diaryNumber}
+                                      </h5>
+                                      <p className="text-sm text-gray-600">
+                                        {caseData?.parties?.split("/")[0]}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded">
+                                      {caseData.court}
+                                    </span>
+                                    {caseData.judgmentType && (
+                                      <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded">
+                                        {caseData.judgmentType}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                  <div>
+                                    <span className="text-gray-500 font-medium">Case Number:</span>
+                                    <p className="text-gray-900 font-semibold">{caseData.caseNumber || 'N/A'}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-500 font-medium">Judgment Date:</span>
+                                    <p className="text-gray-900 font-semibold">{caseData.judgmentDate || 'N/A'}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-500 font-medium">Bench:</span>
+                                    <p className="text-gray-900 font-semibold">{caseData.bench || 'N/A'}</p>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-500 font-medium">Status:</span>
+                                    <p className="text-gray-900 font-semibold">Available</p>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-3 ml-4">
+                                {caseData.judgmentUrl && 
+                                 !(caseData.court === 'High Court' && caseData.judgmentType === 'ORDER') && (
+                                  <a 
+                                    href={Array.isArray(caseData.judgmentUrl) ? caseData.judgmentUrl[0] : caseData.judgmentUrl}
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                                    onClick={(e) => handlePdfClick(caseData, e)}
+                                  >
+                                    <FileText className="w-4 h-4" />
+                                    {caseData.court === 'High Court' && 
+                                     caseData.judgmentType === 'JUDGEMENT' && 
+                                     loadingUrls[caseData.id] ? (
+                                      <span>Generating...</span>
+                                    ) : (
+                                      "View PDF"
+                                    )}
+                                  </a>
                                 )}
-                              </a>
-                            </p>
-                          )}
+                                
+                                <button
+                                  onClick={() => handleToggleSelectCase(caseData)}
+                                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                                    selectedCases.some(c => c.id === caseData.id) 
+                                      ? 'bg-green-600 text-white shadow-sm hover:bg-green-700' 
+                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  {selectedCases.some(c => c.id === caseData.id) ? (
+                                    <>
+                                      <Check className="w-4 h-4" />
+                                      Selected
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Plus className="w-4 h-4" />
+                                      Select
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
 
                   <div className="flex justify-between items-center">
