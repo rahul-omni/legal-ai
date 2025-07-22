@@ -12,7 +12,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 import toast from "react-hot-toast";
- 
+import { HIGH_COURT_CASE_TYPES, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
+
 
 interface CaseData {
   id: string;
@@ -30,6 +31,9 @@ interface CaseData {
   date: string;
   createdAt: string;
   updatedAt: string;
+  file_path?: string; // Added for High Court signed URLs
+  caseType?: string;
+  judgmentType?: string;
 }
 
 
@@ -48,67 +52,69 @@ export function CaseManagement() {
     number: "",
     year: "",
     court: "",
+    judgmentType: "",
+    caseType: "",
   });
-   // Add a new state for tracking the newly created case
+  // Add a new state for tracking the newly created case
   const [newlyCreatedCase, setNewlyCreatedCase] = useState<CaseData | null>(null);
   // Add this to your existing state declarations
- 
-const [expandedCases, setExpandedCases] = useState<Record<string, boolean>>({});
-const [caseDetails, setCaseDetails] = useState<Record<string, CaseData[]>>({}); // Changed to store array of cases
-const [loadingDetails, setLoadingDetails] = useState<Record<string, boolean>>({});
 
-const handleCaseExpand = async (caseItem: CaseData) => {
-  if (!caseItem?.id) {
-    console.error('Cannot expand - case item has no ID:', caseItem);
-    return;
-  }
+  const [expandedCases, setExpandedCases] = useState<Record<string, boolean>>({});
+  const [caseDetails, setCaseDetails] = useState<Record<string, CaseData[]>>({}); // Changed to store array of cases
+  const [loadingDetails, setLoadingDetails] = useState<Record<string, boolean>>({});
 
-  const caseId = caseItem.id;
-  console.group(`Handling expand for case ${caseId}`);
-  
-  const isExpanded = expandedCases[caseId];
-  console.log('Current states:', {
-    expanded: expandedCases,
-    details: caseDetails,
-    loading: loadingDetails
-  });
-
-  // Toggle expansion state
-  setExpandedCases(prev => ({ ...prev, [caseId]: !isExpanded }));
-
-  if (!isExpanded && !caseDetails[caseId]) {
-    try {
-      setLoadingDetails(prev => ({ ...prev, [caseId]: true }));
-      
-      console.log(`Fetching details for diary ${caseItem.diaryNumber}`);
-      const response = await fetch(`/api/cases/dairynumber?diaryNumber=${caseItem.diaryNumber}`);
-      const data = await response.json();
-      console.log('API response:', data);
-
-      if (data.success && data.data?.length) {
-        // Store ALL cases from the response
-        setCaseDetails(prev => ({ 
-          ...prev, 
-          [caseId]: data.data 
-        }));
-      } else {
-        throw new Error(data.message || 'No case data returned');
-      }
-    } catch (error) {
-      console.error('Fetch error:', error);
-      // Fallback to the original case item as single item array
-      setCaseDetails(prev => ({ 
-        ...prev, 
-        [caseId]: [caseItem] 
-      }));
-    } finally {
-      setLoadingDetails(prev => ({ ...prev, [caseId]: false }));
+  const handleCaseExpand = async (caseItem: CaseData) => {
+    if (!caseItem?.id) {
+      console.error('Cannot expand - case item has no ID:', caseItem);
+      return;
     }
-  }
-  console.groupEnd();
-};
- 
-   const fetchUserCases = async () => {
+
+    const caseId = caseItem.id;
+    console.group(`Handling expand for case ${caseId}`);
+
+    const isExpanded = expandedCases[caseId];
+    console.log('Current states:', {
+      expanded: expandedCases,
+      details: caseDetails,
+      loading: loadingDetails
+    });
+
+    // Toggle expansion state
+    setExpandedCases(prev => ({ ...prev, [caseId]: !isExpanded }));
+
+    if (!isExpanded && !caseDetails[caseId]) {
+      try {
+        setLoadingDetails(prev => ({ ...prev, [caseId]: true }));
+
+        console.log(`Fetching details for diary ${caseItem.diaryNumber}`);
+        const response = await fetch(`/api/cases/dairynumber?diaryNumber=${caseItem.diaryNumber}`);
+        const data = await response.json();
+        console.log('API response:', data);
+
+        if (data.success && data.data?.length) {
+          // Store ALL cases from the response
+          setCaseDetails(prev => ({
+            ...prev,
+            [caseId]: data.data
+          }));
+        } else {
+          throw new Error(data.message || 'No case data returned');
+        }
+      } catch (error) {
+        console.error('Fetch error:', error);
+        // Fallback to the original case item as single item array
+        setCaseDetails(prev => ({
+          ...prev,
+          [caseId]: [caseItem]
+        }));
+      } finally {
+        setLoadingDetails(prev => ({ ...prev, [caseId]: false }));
+      }
+    }
+    console.groupEnd();
+  };
+
+  const fetchUserCases = async () => {
     try {
       setIsLoading(true);
       setError("");
@@ -116,14 +122,14 @@ const handleCaseExpand = async (caseItem: CaseData) => {
         method: 'GET'
       });
       const data = await response.json();
-      
+
       if (data.success && data.data) {
-       // console.log("Fetched cases:", data.data);
-        
+        // console.log("Fetched cases:", data.data);
+
         setCases(data.data);
 
-       // console.log("cases:", cases);
-        
+        // console.log("cases:", cases);
+
       } else {
         setError(data.message || 'Failed to fetch cases');
         toast.error(data.message || 'Failed to fetch cases');
@@ -141,8 +147,8 @@ const handleCaseExpand = async (caseItem: CaseData) => {
     fetchUserCases();
   }, []);
   console.log("cases:", cases);
-  
-   
+
+
   const handleSearchCase = async () => {
     try {
       setIsLoading(true);
@@ -161,6 +167,12 @@ const handleCaseExpand = async (caseItem: CaseData) => {
       if (searchParams.court) {
         searchUrl.searchParams.append("court", searchParams.court);
       }
+      if (searchParams.judgmentType) {
+        searchUrl.searchParams.append("judgmentType", searchParams.judgmentType);
+      }
+      if (searchParams.caseType) {
+        searchUrl.searchParams.append("caseType", searchParams.caseType);
+      }
 
       const response = await fetch(searchUrl.toString());
       const responseData = await response.json();
@@ -171,6 +183,7 @@ const handleCaseExpand = async (caseItem: CaseData) => {
 
       if (responseData.data && responseData.data.length > 0) {
         setFoundCases(responseData.data);
+        console.log("Found cases:", responseData.data);
         toast.success(`Found ${responseData.data.length} cases`);
       } else {
         toast.success(responseData.message || "No matching cases found");
@@ -205,60 +218,124 @@ const handleCaseExpand = async (caseItem: CaseData) => {
     setSelectAll(!selectAll);
   };
 
-  
-  
 
- 
 
-const handleCreateCases = async () => {
-  try {
-    setIsSubmitting(true);
-    
-    // Extract case IDs from selected cases
-    const diaryNumbers = selectedCases.map(caseData => caseData.diaryNumber);
-    console.log("Selected diary numbers:", diaryNumbers);
-    
-    // Take only the first diary number
-    const firstDiaryNumber = diaryNumbers[0];
-    const response = await fetch('/api/cases/user-cases', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ diaryNumber :firstDiaryNumber }),
-    });
 
-    const result = await response.json();
-   console.log("Create cases response:", result);
-   
-    if (!response.ok) {
-      throw new Error(result.message || "Failed to save cases");
+
+
+  const handleCreateCases = async () => {
+    try {
+      setIsSubmitting(true);
+
+      // Extract case IDs from selected cases
+      const diaryNumbers = selectedCases.map(caseData => caseData.diaryNumber);
+      console.log("Selected diary numbers:", diaryNumbers);
+
+      // Take only the first diary number
+      const firstDiaryNumber = diaryNumbers[0];
+      const response = await fetch('/api/cases/user-cases', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ diaryNumber: firstDiaryNumber }),
+      });
+
+      const result = await response.json();
+      console.log("Create cases response:", result);
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to save cases");
+      }
+
+      // Show success message based on the actual API response
+      if (result.success) {
+        toast.success(`Successfully created Order for Diary Number ${result.data.createdCase.diaryNumber}`);
+        setNewlyCreatedCase(result.data.createdCase);
+      } else {
+        toast.error(result.message || "Case processed but got some errors");
+      }
+
+      await fetchUserCases(); // Refresh the cases list
+      // Update UI
+      setShowNewCaseModal(false);
+      setFoundCases([]);
+      setSelectedCases([]);
+      setSearchParams({
+        number: "", year: "", court: "", judgmentType: "", caseType: ""
+      })
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to create cases";
+      toast.error(errorMessage);
+      console.error("Error in handleCreateCases:", err);
+    } finally {
+      setIsSubmitting(false);
     }
- 
-    // Show success message based on the actual API response
-    if (result.success) {
-      toast.success(`Successfully created Order for Diary Number ${result.data.createdCase.diaryNumber}`);
-       setNewlyCreatedCase(result.data.createdCase);
-    } else {
-      toast.error(result.message || "Case processed but got some errors");
+  };
+
+  // Add this state for signed URLs
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [loadingUrls, setLoadingUrls] = useState<Record<string, boolean>>({});
+
+  // Add this function to generate signed URL
+  const generateSignedUrlForCase = async (filePath: string) => {
+    try {
+      const response = await fetch('/api/signed-url', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filePath,
+          bucketName: process.env.NEXT_PUBLIC_HIGH_COURT_PDF_BUCKET || 'high-court-pdfs',
+          expirationMinutes: 30
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate signed URL');
+      }
+
+      const data = await response.json();
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error generating signed URL:', error);
+      throw error;
     }
+  };
 
-    await fetchUserCases(); // Refresh the cases list
-    // Update UI
-    setShowNewCaseModal(false);
-    setFoundCases([]);
-    setSelectedCases([]);
-    setSearchParams({
-      number: "", year:"", court: ""})
+  // Add this function to handle PDF link clicks
+  const handlePdfClick = async (caseData: CaseData, event: React.MouseEvent) => {
+    console.log("caseData:", caseData);
 
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "Failed to create cases";
-    toast.error(errorMessage);
-    console.error("Error in handleCreateCases:", err);
-  } finally {
-    setIsSubmitting(false);
-  }
-}; 
+    // Only generate signed URL for High Court with JUDGEMENT type
+
+    if (caseData.court === 'High Court' &&
+      caseData.judgmentType === 'JUDGEMENT' &&
+      caseData.file_path) {
+      console.log("Generating signed URL for High Court with JUDGEMENT type");
+      event.preventDefault(); // Prevent default link behavior
+
+      try {
+        setLoadingUrls(prev => ({ ...prev, [caseData.id]: true }));
+        const signedUrl = await generateSignedUrlForCase(caseData.file_path);
+
+        // Open the signed URL in a new tab
+        window.open(signedUrl, '_blank', 'noopener,noreferrer');
+
+        // Store the URL for future use (optional)
+        setSignedUrls(prev => ({ ...prev, [caseData.id]: signedUrl }));
+      } catch (error) {
+        console.error('Error generating signed URL:', error);
+        toast.error('Failed to generate PDF link');
+      } finally {
+        setLoadingUrls(prev => ({ ...prev, [caseData.id]: false }));
+      }
+    }
+    // For all other cases (Supreme Court, other High Court types, etc.), let the default link behavior handle it
+    // No need to prevent default or do anything special
+  };
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
@@ -268,7 +345,7 @@ const handleCreateCases = async () => {
           <h1 className="text-2xl font-semibold text-gray-800">
             Case Management
           </h1>
-           
+
           <button
             onClick={() => setShowNewCaseModal(true)}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
@@ -291,57 +368,56 @@ const handleCreateCases = async () => {
           </div>
         </div>
       </div>
- 
-       {/* Cases List */}
- 
-     <div className="grid grid-cols-1 gap-2 mt-2 p-4">
-  {cases.map((caseItem, index) => {
-    if (!caseItem.id) {
-      console.error('Rendering case with no ID:', caseItem);
-      return null;
-    }
-    return (
-      <div
-        key={caseItem.id}
-        className="bg-white border rounded-md hover:shadow-sm transition-shadow text-xs"
-      >
-        {/* Case header - clickable */}
-        <div 
-          className="flex justify-between items-center p-2 border-b cursor-pointer"
-          onClick={() => handleCaseExpand(caseItem)}
-        >
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-gray-900">
-              {index + 1}. {caseItem.caseNumber}
-            </span>
-             <span className="font-medium text-gray-900">
-                  Diary Number: {caseItem.diaryNumber}
-                </span>
-            {caseItem.judgmentDate && (
-              <span className="text-gray-500">
-                (Judgment: {caseItem.judgmentDate})
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {loadingDetails[caseItem.id] ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <ChevronDown 
-                className={`w-4 h-4 transition-transform ${
-                  expandedCases[caseItem.id] ? 'rotate-180' : ''
-                }`}
-              />
-            )}
-          </div>
-        </div>
 
-        {/* Expanded content */}
-        {expandedCases[caseItem.id] && (
-          <div className="p-4">
-            {caseDetails[caseItem.id] ? (
-              <div className="space-y-4">
-                {/* {caseDetails[caseItem.id].map((detail, idx) => (
+      {/* Cases List */}
+
+      <div className="grid grid-cols-1 gap-2 mt-2 p-4">
+        {cases.map((caseItem, index) => {
+          if (!caseItem.id) {
+            console.error('Rendering case with no ID:', caseItem);
+            return null;
+          }
+          return (
+            <div
+              key={caseItem.id}
+              className="bg-white border rounded-md hover:shadow-sm transition-shadow text-xs"
+            >
+              {/* Case header - clickable */}
+              <div
+                className="flex justify-between items-center p-2 border-b cursor-pointer"
+                onClick={() => handleCaseExpand(caseItem)}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-gray-900">
+                    {index + 1}. {caseItem.caseNumber}
+                  </span>
+                  <span className="font-medium text-gray-900">
+                    Diary Number: {caseItem.diaryNumber}
+                  </span>
+                  {caseItem.judgmentDate && (
+                    <span className="text-gray-500">
+                      (Judgment: {caseItem.judgmentDate})
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {loadingDetails[caseItem.id] ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform ${expandedCases[caseItem.id] ? 'rotate-180' : ''
+                        }`}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Expanded content */}
+              {expandedCases[caseItem.id] && (
+                <div className="p-4">
+                  {caseDetails[caseItem.id] ? (
+                    <div className="space-y-4">
+                      {/* {caseDetails[caseItem.id].map((detail, idx) => (
                   <div key={`${detail.id}-${idx}`} className="border-b pb-4 last:border-0">
                     <h4 className="font-medium mb-2">Judgment {idx + 1}</h4>
                     <div className="grid grid-cols-2 gap-4">
@@ -403,85 +479,85 @@ const handleCreateCases = async () => {
                   </div>
                 ))} */}
 
-                {caseDetails[caseItem.id].map((detail, idx) => (
-  <div key={`${detail.id}-${idx}`} className="border-b pb-4 last:border-0">
-    <div className="flex justify-between items-start mb-3">
-      <h4 className="font-medium text-sm text-blue-600">Judgment {idx + 1}</h4>
-      {detail.judgmentDate && (
-        <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-          {detail.judgmentDate}
-        </span>
-      )}
-    </div>
+                      {caseDetails[caseItem.id].map((detail, idx) => (
+                        <div key={`${detail.id}-${idx}`} className="border-b pb-4 last:border-0">
+                          <div className="flex justify-between items-start mb-3">
+                            <h4 className="font-medium text-sm text-blue-600">Judgment {idx + 1}</h4>
+                            {detail.judgmentDate && (
+                              <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                                {detail.judgmentDate}
+                              </span>
+                            )}
+                          </div>
 
-    <div className="flex flex-wrap gap-4">
-      {/* Column 1 - Case Info */}
-      <div className="flex-1 min-w-[200px] space-y-2">
-        <div>
-          <p className="text-gray-500 text-xs">Court</p>
-          <p className="font-medium text-sm">{detail.court}</p>
-        </div>
-        <div>
-          <p className="text-gray-500 text-xs">Date</p>
-          <p className="font-medium text-sm">
-            {new Date(detail.date).toLocaleDateString()}
-          </p>
-        </div>
-        <div>
-          <p className="text-gray-500 text-xs">Diary Number</p>
-          <p className="font-medium text-sm">{detail.diaryNumber}</p>
-        </div>
-      </div>
+                          <div className="flex flex-wrap gap-4">
+                            {/* Column 1 - Case Info */}
+                            <div className="flex-1 min-w-[200px] space-y-2">
+                              <div>
+                                <p className="text-gray-500 text-xs">Court</p>
+                                <p className="font-medium text-sm">{detail.court}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500 text-xs">Date</p>
+                                <p className="font-medium text-sm">
+                                  {new Date(detail.date).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500 text-xs">Diary Number</p>
+                                <p className="font-medium text-sm">{detail.diaryNumber}</p>
+                              </div>
+                            </div>
 
-      {/* Column 2 - Parties */}
-      <div className="flex-1 min-w-[200px] space-y-2">
-        <div>
-          <p className="text-gray-500 text-xs">Parties</p>
-          <p className="font-medium text-sm">{detail.parties}</p>
-        </div>
-        <div>
-          <p className="text-gray-500 text-xs">Advocates</p>
-          <p className="font-medium text-sm">
-            {detail.advocates || "N/A"}
-          </p>
-        </div>
-      </div>
+                            {/* Column 2 - Parties */}
+                            <div className="flex-1 min-w-[200px] space-y-2">
+                              <div>
+                                <p className="text-gray-500 text-xs">Parties</p>
+                                <p className="font-medium text-sm">{detail.parties}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500 text-xs">Advocates</p>
+                                <p className="font-medium text-sm">
+                                  {detail.advocates || "N/A"}
+                                </p>
+                              </div>
+                            </div>
 
-      {/* Column 3 - Bench & Actions */}
-      <div className="flex-1 min-w-[200px] space-y-2">
-        <div>
-          <p className="text-gray-500 text-xs">Bench</p>
-          <p className="font-medium text-sm">{detail.bench}</p>
-        </div>
-        {detail.judgmentUrl && (
-          <div className="mt-2">
-            <a
-              href={detail.judgmentUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center text-blue-600 hover:underline text-xs bg-blue-50 px-2 py-1 rounded"
-            >
-              <FileText className="w-3 h-3 mr-1" />
-              View Judgment PDF
-            </a>
-          </div>
-        )}
+                            {/* Column 3 - Bench & Actions */}
+                            <div className="flex-1 min-w-[200px] space-y-2">
+                              <div>
+                                <p className="text-gray-500 text-xs">Bench</p>
+                                <p className="font-medium text-sm">{detail.bench}</p>
+                              </div>
+                              {detail.judgmentUrl && (
+                                <div className="mt-2">
+                                  <a
+                                    href={detail.judgmentUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center text-blue-600 hover:underline text-xs bg-blue-50 px-2 py-1 rounded"
+                                  >
+                                    <FileText className="w-3 h-3 mr-1" />
+                                    View Judgment PDF
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-2 text-gray-500 text-xs">
+                      {loadingDetails[caseItem.id] ? 'Loading...' : 'Failed to load details'}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
-    </div>
-  </div>
-))}
-              </div>
-            ) : (
-              <div className="text-center py-2 text-gray-500 text-xs">
-                {loadingDetails[caseItem.id] ? 'Loading...' : 'Failed to load details'}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    )
-  })}
-</div>
 
       {/* Search and Create Case Modal */}
       {showNewCaseModal && (
@@ -497,7 +573,7 @@ const handleCreateCases = async () => {
                   setFoundCases([]);
                   setSelectedCases([]);
                   setSelectAll(false);
-                  setSearchParams({ number: "", year: "", court: "" });
+                  setSearchParams({ number: "", year: "", court: "", judgmentType: "", caseType: "" });
                 }}
                 className="p-1 rounded-full hover:bg-gray-100"
               >
@@ -558,6 +634,51 @@ const handleCreateCases = async () => {
                     </div>
                   </div>
 
+                  {searchParams.court === 'High Court' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Judgment Type
+                        </label>
+                        <select
+                          value={searchParams.judgmentType}
+                          onChange={(e) =>
+                            setSearchParams({ ...searchParams, judgmentType: e.target.value })
+                          }
+                          className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        >
+                          <option value="">Select judgment type</option>
+                          <option value="JUDGEMENT">JUDGEMENT</option>
+                          <option value="ORDER">ORDER</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {searchParams.court && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Case Type
+                        </label>
+                        <select
+                          value={searchParams.caseType}
+                          onChange={(e) =>
+                            setSearchParams({ ...searchParams, caseType: e.target.value })
+                          }
+                          className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        >
+                          <option value="">Select case type</option>
+                          {searchParams.court === 'High Court' ? HIGH_COURT_CASE_TYPES.map(type => (
+                            <option key={type} value={type}>{type}</option>
+                          )) : SUPREME_COURT_CASE_TYPES.map(type => (
+                            <option key={type} value={type}>{type}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex justify-end">
                     <button
                       onClick={handleSearchCase}
@@ -595,44 +716,50 @@ const handleCreateCases = async () => {
                         </label>
                       </div>
                     </div>
-                    
+
                     {foundCases.map((caseData) => (
-                      <div 
-                        key={caseData.id} 
-                        className={`bg-gray-50 p-4 rounded-md border ${
-                          selectedCases.some(c => c.id === caseData.id) ? 'border-blue-500' : ''
-                        }`}
+                      <div
+                        key={caseData.id}
+                        className={`bg-gray-50 p-4 rounded-md border ${selectedCases.some(c => c.id === caseData.id) ? 'border-blue-500' : ''
+                          }`}
                       >
                         <div className="flex justify-between items-start mb-2">
                           <h5 className="font-medium text-blue-600">
-                            {caseData.diaryNumber} - {caseData.parties.split("/")[0]}
+                            {caseData?.caseType} - {caseData.diaryNumber} - {caseData?.parties?.split("/")[0]}
                           </h5>
-                          {/* <button
+                          <button
                             onClick={() => handleToggleSelectCase(caseData)}
-                            className={`px-3 py-1 rounded text-sm ${
-                              selectedCases.some(c => c.id === caseData.id) 
-                                ? 'bg-green-600 text-white' 
+                            className={`px-3 py-1 rounded text-sm ${selectedCases.some(c => c.id === caseData.id)
+                                ? 'bg-green-600 text-white'
                                 : 'bg-gray-200 text-gray-700'
-                            }`}
+                              }`}
                           >
                             {selectedCases.some(c => c.id === caseData.id) ? 'Selected' : 'Select'}
-                          </button> */}
+                          </button>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           <p><span className="text-gray-600">Case Number:</span> {caseData.caseNumber}</p>
                           <p><span className="text-gray-600">Judgment Date:</span> {caseData.judgmentDate}</p>
                           <p><span className="text-gray-600">Bench:</span> {caseData.bench}</p>
                           <p><span className="text-gray-600">Court:</span> {caseData.court}</p>
-                          {caseData.judgmentUrl && (
+                          {caseData.judgmentUrl && 
+                           !(caseData.court === 'High Court' && caseData.judgmentType === 'ORDER') && (
                             <p className="col-span-2">
                               <span className="text-gray-600">Judgment:</span> 
                               <a 
-                                href={caseData.judgmentUrl} 
+                                href={Array.isArray(caseData.judgmentUrl) ? caseData.judgmentUrl[0] : caseData.judgmentUrl}
                                 target="_blank" 
                                 rel="noopener noreferrer" 
                                 className="text-blue-600 hover:underline ml-1"
+                                onClick={(e) => handlePdfClick(caseData, e)}
                               >
-                                View PDF
+                                {caseData.court === 'High Court' && 
+                                 caseData.judgmentType === 'JUDGEMENT' && 
+                                 loadingUrls[caseData.id] ? (
+                                  <span className="text-gray-500">Generating link...</span>
+                                ) : (
+                                  "View PDF"
+                                )}
                               </a>
                             </p>
                           )}

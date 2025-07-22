@@ -31,6 +31,7 @@ model User {
   nodesUpdated            FileSystemNode[]    @relation("file_system_nodes_updated_by_idx")
   nodes                   FileSystemNode[]    @relation("file_system_nodes_user_id_idx")
   individualOtpLogin      IndividualOtpLogin? @relation("user_otp_login")
+  notifications           notifications[]
   orgMemberships          OrgMembership[]     @relation("org_memberships_user_id_idx")
   organizationsCreated    Organization[]      @relation("organization_createdByUser")
   fileReviewComments      FileReviewComment[] @relation("reviewer_comment")
@@ -184,21 +185,27 @@ model FileReviewComment {
 }
 
 model CaseManagement {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  serialNumber String   @map("serial_number")
-  diaryNumber  String   @map("diary_number")
-  caseNumber   String   @map("case_number")
-  parties      String
-  advocates    String
-  bench        String
-  judgmentBy   String   @map("judgment_by")
-  judgmentDate String   @map("judgment_date")
-  judgmentText String   @map("judgment_text")
-  judgmentUrl  String   @map("judgment_url")
-  court        String
-  date         DateTime @default(now()) @map("date")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  serialNumber        String                @map("serial_number")
+  diaryNumber         String                @map("diary_number")
+  caseNumber          String?               @map("case_number")
+  parties             String?
+  advocates           String?
+  bench               String?
+  judgmentBy          String?               @map("judgment_by")
+  judgmentDate        String?               @map("judgment_date")
+  court               String
+  date                DateTime              @default(now()) @map("date")
+  createdAt           DateTime              @default(now()) @map("created_at")
+  updatedAt           DateTime              @updatedAt @map("updated_at")
+  judgmentUrl         String[]              @map("judgment_url")
+  file_path           String?               @default("")
+  judgmentText        String[]              @map("judgment_text")
+  caseType            String?               @default("") @map("case_type")
+  city                String?               @default("")
+  district            String?               @default("")
+  judgmentType        String?               @default("") @map("judgment_type")
+  extracted_judgments extracted_judgments[]
 
   @@map("case_management")
 }
@@ -211,7 +218,11 @@ model UserCase {
   userId      String   @map("user_id") @db.Uuid
   diaryNumber String   @map("diary_number")
   user        User     @relation("user_usercases", fields: [userId], references: [id])
-
+  caseType    String?  @default("") @map("case_type")
+  court       String  @default("")
+  city        String?  @default("")
+  district    String?  @default("")
+  
   @@map("user_cases")
 }
 
@@ -225,6 +236,32 @@ model client {
   user_id      String   @db.Uuid
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   users        User     @relation(fields: [user_id], references: [id])
+}
+
+model notifications {
+  id           String   @id(map: "Notifications_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  dairy_number String?
+  user_id      String?  @db.Uuid
+  method       String?
+  contact      String?
+  message      String?
+  status       String?  @default("'pending'::text")
+  users        User?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model extracted_judgments {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  case_id         String         @db.Uuid
+  judgment_url    String
+  extractedText   String
+  language        String?
+  is_synced       Boolean        @default(false)
+  created_at      DateTime       @default(now())
+  updated_at      DateTime
+  case_management CaseManagement @relation(fields: [case_id], references: [id])
+
+  @@unique([case_id, judgment_url])
 }
 
 enum OtpStatus {
