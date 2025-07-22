@@ -158,37 +158,36 @@ const ProjectHub = () => {
           {state.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <table className="w-full table-auto border-collapse">
             <thead className="bg-gray-100 text-left">
               <tr>
-                <th className="px-4 py-2">Name</th>
-                <th className="px-4 py-2">Created On</th>
-                <th className="px-4 py-2">Last Modified</th>
-                <th className="px-4 py-2 text-center">Actions</th>
+                <th className="px-4 py-3 font-semibold text-gray-700">Name</th>
+                <th className="px-4 py-3 font-semibold text-gray-700 w-32">Created On</th>
+                <th className="px-4 py-3 font-semibold text-gray-700 w-32">Last Modified</th>
+                <th className="px-4 py-3 text-center font-semibold text-gray-700 w-40">Actions</th>
               </tr>
             </thead>
             <tbody>
               {paginatedProjects.map((project) => (
-                <tr key={project.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-2">
-                    <div className="flex items-center gap-2">
+                <tr key={project.id} className="border-t hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
                       <Link
                         href={project.type == "FOLDER" ? `/projects/${project.id}` : `/projects/root/edit/${project.id}`}
-                        className="text-blue-600 hover:underline"
+                        className="flex items-center gap-3 hover:bg-gray-100 rounded px-2 py-1 -mx-2 -my-1 transition-colors"
                       >
-                        <span className="flex items-center">
-                          {project.type == "FOLDER" ?
-                            <Folder className="w-4 h-4 m-3 text-gray-500 shrink-0 fill-current" /> :
-                            <div className="m-3"><FileIconDisplay fileName={project.name} /></div>
-                          }
-                          {project.name}</span>
+                        {project.type == "FOLDER" ?
+                          <Folder className="w-5 h-5 text-blue-500 shrink-0" /> :
+                          <FileIconDisplay fileName={project.name} />
+                        }
+                        <span className="font-medium text-gray-900">{project.name}</span>
                       </Link>
                     </div>
                   </td>
-                  <td className="px-4 py-2 text-gray-500">
-                    {moment(project.createdAt).format("MMM D, YYYY h:mm A")}
+                  <td className="px-4 py-3 text-gray-600 text-sm">
+                    {moment(project.createdAt).format("MMM D, YYYY")}
                   </td>
-                  <td className="px-4 py-2 text-gray-500">
-                    {moment(project.updatedAt).format("MMM D, YYYY h:mm A")}
+                  <td className="px-4 py-3 text-gray-600 text-sm">
+                    {moment(project.updatedAt).format("MMM D, YYYY")}
                   </td>
-                  <td className="px-4 py-2 flex items-center justify-center">
+                  <td className="px-4 py-3 flex items-center justify-center">
                     <button
                       onClick={() => {
                         if (project.type == "FOLDER"){
@@ -197,7 +196,7 @@ const ProjectHub = () => {
                           router.push(`/projects/root/edit/${project.id}`)
                         }
                       }}
-                      className="text-sm px-3 py-1 bg-blue-500 text-white hover:bg-blue-600 rounded mr-2"
+                      className="text-sm px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded mr-2"
                     >
                       Open
                     </button>
@@ -208,7 +207,7 @@ const ProjectHub = () => {
                         }
                       }}
                       disabled={deletingNode == project.id}
-                      className="text-sm px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded"
+                      className="text-sm px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded"
                     >
                       {deletingNode == project.id ? (
                         <Loader2 className="w-4 h-5 animate-spin" />
