@@ -13,7 +13,9 @@ const prisma = new PrismaClient();
 const searchSchema = z.object({
   diaryNumber: z.string().min(1, "Diary number is required"),
   year: z.string().length(4, "Year must be 4 digits"),
-  court: z.string().optional().default("Supreme Court")
+  court: z.string().optional().default("Supreme Court"),
+  judgmentType: z.string().optional(),
+  caseType: z.string().optional()
 });
 
 export async function GET(request: NextAuthRequest) {
@@ -22,23 +24,45 @@ export async function GET(request: NextAuthRequest) {
     const queryParams = {
       diaryNumber: searchParams.get('diaryNumber'),
       year: searchParams.get('year'),
-      court: searchParams.get('court')
+      court: searchParams.get('court') ? decodeURIComponent(searchParams.get('court')!) : undefined,
+      judgmentType: searchParams.get('judgmentType') || '',
+      caseType: searchParams.get('caseType') || ''
     };
     
     const validated = searchSchema.parse(queryParams);
+    
     const fullDiaryNumber = `${validated.diaryNumber}/${validated.year}`;
 
-    const caseData = await prisma.caseManagement.findMany({
-      where: {
-        diaryNumber: {
-          equals: fullDiaryNumber,
-          mode: 'insensitive'
-        },
-        court: {
-          contains: validated.court,
-          mode: 'insensitive'
-        }
+    // Build where conditions dynamically
+    const whereConditions: any = {
+      diaryNumber: {
+        equals: fullDiaryNumber,
+        mode: 'insensitive'
+      },
+      court: {
+        contains: validated.court,
+        mode: 'insensitive'
       }
+    };
+
+    // Only add judgmentType filter if it has a value
+    if (validated.judgmentType && validated.judgmentType.trim() !== '') {
+      whereConditions.judgmentType = {
+        contains: validated.judgmentType,
+        mode: 'insensitive'
+      };
+    }
+
+    // Only add caseType filter if it has a value
+    if (validated.caseType && validated.caseType.trim() !== '') {
+      whereConditions.caseType = {
+        contains: validated.caseType,
+        mode: 'insensitive'
+      };
+    }
+
+    const caseData = await prisma.caseManagement.findMany({
+      where: whereConditions
     });
 
     if (caseData.length === 0) {  // Check if array is empty

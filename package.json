@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.9.0",
+    "@google-cloud/storage": "^7.16.0",
     "@hookform/resolvers": "^5.0.1",
     "@lexical/code": "^0.31.2",
     "@lexical/list": "^0.31.2",
