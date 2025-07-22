@@ -35,14 +35,14 @@ export async function GET(request: NextAuthRequest) {
 
     // Build where conditions dynamically
     const whereConditions: any = {
-      diaryNumber: {
-        equals: fullDiaryNumber,
-        mode: 'insensitive'
-      },
-      court: {
-        contains: validated.court,
-        mode: 'insensitive'
-      }
+        diaryNumber: {
+          equals: fullDiaryNumber,
+          mode: 'insensitive'
+        },
+        court: {
+          contains: validated.court,
+          mode: 'insensitive'
+        }
     };
 
     // Only add judgmentType filter if it has a value
