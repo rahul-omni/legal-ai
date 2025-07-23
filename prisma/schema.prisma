@@ -254,7 +254,7 @@ model extracted_judgments {
   id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   case_id         String         @db.Uuid
   judgment_url    String
-  extractedText   String
+  extractedText   String?        // Made optional to match database
   language        String?
   is_synced       Boolean        @default(false)
   created_at      DateTime       @default(now())
