@@ -10,7 +10,20 @@ import { auth } from "../../lib/auth/nextAuthConfig";
 const prisma = new PrismaClient();
  
 const createUserCaseSchema = z.object({
-  diaryNumber: z.string().min(1, "Diary number is required")
+  selectedCases: z.array(z.object({
+    id: z.string(),
+    diaryNumber: z.string(),
+    caseNumber: z.string().nullable().optional(),
+    court: z.string(),
+    caseType: z.string().nullable().optional(),
+    city: z.string().nullable().optional(),
+    district: z.string().nullable().optional(),
+    parties: z.string().nullable().optional(),
+    advocates: z.string().nullable().optional(),
+    bench: z.string().nullable().optional(),
+    judgmentBy: z.string().nullable().optional(),
+    judgmentDate: z.string().nullable().optional()
+  })).min(1, "Select at least one case")
 });
 
 export const POST = auth(async (request: NextAuthRequest) => {
@@ -24,49 +37,93 @@ export const POST = auth(async (request: NextAuthRequest) => {
       );
     }
 
-    // Parse input - now accepting single diaryNumber
+    // Parse input - now accepting array of complete case data
     const body = await request.json();
-    const { diaryNumber } = createUserCaseSchema.parse(body);
+    const { selectedCases } = createUserCaseSchema.parse(body);
     
-    if (!diaryNumber) {
+    if (!selectedCases || selectedCases.length === 0) {
       return NextResponse.json(
-        { success: false, message: "Diary number is required" },
+        { success: false, message: "At least one case is required" },
         { status: 400 }
       );
     }
 
-    // Check for existing diary number
-    const existingCase = await prisma.userCase.findFirst({
-      where: {
-        diaryNumber: diaryNumber,
-        userId: sessionUser.id // Also check user ownership
-      }
-    });
-    
-    if (existingCase) {
-      return NextResponse.json({
-        success: false,
-        message: "Case already exists",
-        data: {
-          duplicateDiaryNumber: diaryNumber
+    const results = [];
+    const errors = [];
+
+    for (const caseData of selectedCases) {
+      try {
+        console.log(`Processing case: ${caseData.diaryNumber}`);
+        
+        // Check for existing diary number
+        const existingCase = await prisma.userCase.findFirst({
+          where: {
+            diaryNumber: caseData.diaryNumber,
+            userId: sessionUser.id
+          }
+        });
+        
+        if (existingCase) {
+          console.log(`Duplicate case found: ${caseData.diaryNumber}`);
+          errors.push(`Case with diary number ${caseData.diaryNumber} already exists`);
+          continue;
         }
-      }, { status: 409 });
+
+        console.log(`Creating UserCase for: ${caseData.diaryNumber}`);
+        console.log(`Case data:`, {
+          diaryNumber: caseData.diaryNumber,
+          caseType: caseData.caseType,
+          court: caseData.court,
+          city: caseData.city,
+          district: caseData.district
+        });
+
+        // Create new user case with data from selectedCases (no need to fetch from CaseManagement)
+        const createdCase = await prisma.userCase.create({
+          data: {
+            userId: sessionUser.id,
+            diaryNumber: caseData.diaryNumber,
+            status: "PENDING",
+            caseType: caseData.caseType || "",
+            court: caseData.court || "",  // court is required in schema
+            city: caseData.city || "",
+            district: caseData.district || ""
+          }
+        });
+
+        console.log(`Successfully created case: ${createdCase.id}`);
+        results.push(createdCase);
+
+      } catch (error) {
+        console.error(`Detailed error for diary number ${caseData.diaryNumber}:`, {
+          error: error,
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          caseData: caseData
+        });
+        errors.push(`Failed to process diary number ${caseData.diaryNumber}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }
 
-    // Create new user case
-    const createdCase = await prisma.userCase.create({
-      data: {
-        userId: sessionUser.id,
-        diaryNumber: diaryNumber,
-        status: "PENDING"
-      }
-    });
+    // Return response based on results
+    if (results.length === 0) {
+      return NextResponse.json({
+        success: false,
+        message: "No cases were created",
+        errors: errors
+      }, { status: 400 });
+    }
+
+    const responseMessage = results.length === selectedCases.length 
+      ? `Successfully created ${results.length} case${results.length > 1 ? 's' : ''}`
+      : `Created ${results.length} out of ${selectedCases.length} cases`;
 
     return NextResponse.json({
       success: true,
-      message: "Successfully created case",
+      message: responseMessage,
       data: {
-        createdCase
+        createdCases: results,
+        errors: errors.length > 0 ? errors : undefined
       }
     }, { status: 201 });
 
@@ -107,10 +164,14 @@ export const GET = auth(async (request: NextAuthRequest) => {
         id:true,
         diaryNumber: true,
         createdAt: true,
-        status: true
+        status: true,
+        caseType: true,
+        court: true,
+        city: true,
+        district: true
       },
       orderBy: {
-        createdAt: 'desc' // Optional: order by creation date
+        createdAt: 'asc' // Optional: order by creation date
       }
     });
 

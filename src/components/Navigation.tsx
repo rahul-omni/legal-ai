@@ -12,6 +12,7 @@ import {
   Settings,
   Clock,
   Users,
+  Bell,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -43,6 +44,11 @@ const navigationItems = [
     name: "Clients",
     href: "/clients",
     icon: Users,
+  },
+  {
+    name: "Notifications",
+    href: "/notifications",
+    icon: Bell,
   },
 ];
 
