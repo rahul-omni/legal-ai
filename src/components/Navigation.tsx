@@ -1,12 +1,6 @@
 "use client";
 
-import { useUserContext } from "@/context/userContext";
-import { routeConfig } from "@/lib/routeConfig";
 import {
-  BarChart2,
-  ClipboardCheck,
-  FileStack,
-  FileText,
   FolderKanban,
   Gavel,
   Settings,
@@ -15,7 +9,7 @@ import {
   Bell,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const navigationItems = [
@@ -29,12 +23,6 @@ const navigationItems = [
     href: "/cases",
     icon: Gavel,
   },
-  // {
-  //   name: "Analytics",
-  //   href: "/analytics",
-  //   icon: BarChart2,
-  // },
-  
   {
     name: "Pending Reviews",
     href: "/pending-reviews",
