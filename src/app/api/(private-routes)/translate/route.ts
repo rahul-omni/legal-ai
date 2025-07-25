@@ -55,7 +55,7 @@ export async function POST(req: Request) {
                 },
                 { role: "user", content: chunk },
               ],
-              model: "gpt-3.5-turbo",
+              model: "gpt-4o",
             });
 
             translated = completion.choices[0].message.content || "";

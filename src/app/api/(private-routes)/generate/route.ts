@@ -23,14 +23,11 @@ export async function POST(request: Request) {
 
     // Create streaming response
     const stream = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are a legal document assistant. Respond only with clean, well-formatted rich text using tags like h1, p, h2, li. 
-
-          `
-                       //"You are a legal document assistant. Create clear and professional legal content."
+          content: `You are a legal document assistant. Respond in legal language and be a little elaborate in your answers.`
         },
         {
           role: "user",
