@@ -43,3 +43,4 @@ next-env.d.ts
 src/components/rough
 
 /prisma/scripts/judgements/
+/prisma/scripts/failure_reports/
