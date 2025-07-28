@@ -232,7 +232,7 @@ model UserCase {
   status      String   @default("PENDING")
   userId      String   @map("user_id") @db.Uuid
   diaryNumber String   @map("diary_number")
-  case_type   String?  @default("")
+  caseType    String?  @default("") @map("case_type")
   city        String?  @default("")
   court       String   @default("")
   district    String?  @default("")
