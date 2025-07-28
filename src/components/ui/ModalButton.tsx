@@ -15,10 +15,10 @@ export function ModalButton({
 }: ModalButtonProps) {
   const baseClasses = "rounded-md font-medium transition-colors";
   
-  const variantClasses = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700",
-    secondary: "bg-gray-200 text-gray-700 hover:bg-gray-300",
-    danger: "bg-red-600 text-white hover:bg-red-700",
+  const variants = {
+    primary: "bg-primary text-white hover:bg-primary-dark",
+    secondary: "bg-muted-light text-text-light hover:bg-muted",
+    danger: "bg-error text-white hover:bg-error-dark",
   };
   
   const sizeClasses = {
@@ -27,7 +27,7 @@ export function ModalButton({
     lg: "px-6 py-3 text-lg",
   };
   
-  const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className || ""}`;
+  const classes = `${baseClasses} ${variants[variant]} ${sizeClasses[size]} ${className || ""}`;
   
   return (
     <button className={classes} {...props}>

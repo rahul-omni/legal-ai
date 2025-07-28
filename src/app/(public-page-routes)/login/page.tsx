@@ -250,22 +250,22 @@ export default function LoginPage() {
        </div>
 
       {/* Right side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-blue-50">
-        <div className="w-full max-w-md space-y-8 bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">Sign in</h1>
-            <p className="mt-2 text-sm text-gray-600">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-info-light">
+        <div className="w-full max-w-md space-y-8 bg-background-light rounded-2xl shadow-xl p-8 border border-border-light">
+          <div>
+            <h1 className="text-3xl font-bold text-text">Sign in</h1>
+            <p className="mt-2 text-sm text-text-light">
               Access your legal workspace
             </p>
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-gray-200">
+          <div className="flex border-b border-border">
             <button
               className={`flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm ${
                 activeTab === "organization"
                   ? "border-primary text-primary"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  : "border-transparent text-muted hover:text-text-light hover:border-border-dark"
               }`}
               onClick={() => handleTabChange("organization")}
             >
@@ -275,7 +275,7 @@ export default function LoginPage() {
               className={`flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm ${
                 activeTab === "individual"
                   ? "border-primary text-primary"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  : "border-transparent text-muted hover:text-text-light hover:border-border-dark"
               }`}
               onClick={() => handleTabChange("individual")}
             >
@@ -288,28 +288,28 @@ export default function LoginPage() {
               {activeTab === "organization" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-text-light">
                       Email Address
                     </label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                      className="mt-1 block w-full px-4 py-3 border border-border rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                       placeholder="Enter your email"
                       required
                       disabled={isLoading("LOGGING_IN")}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-text-light">
                       Password
                     </label>
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                      className="mt-1 block w-full px-4 py-3 border border-border rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                       placeholder="Enter your password"
                       required
                       disabled={isLoading("LOGGING_IN")}
@@ -321,14 +321,14 @@ export default function LoginPage() {
               {activeTab === "individual" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-text-light">
                       Mobile Number
                     </label>
                     <input
                       type="tel"
                       value={mobileNumber}
                       onChange={(e) => setMobileNumber(e.target.value)}
-                      className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                      className="mt-1 block w-full px-4 py-3 border border-border rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                       placeholder="Enter your mobile number"
                       required
                       disabled={isLoading("SENDING_OTP") || isLoading("VERIFYING_OTP")}
@@ -337,7 +337,7 @@ export default function LoginPage() {
 
                   {otpSent && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-text-light">
                         OTP (Sent to your mobile)
                       </label>
                       <div className="flex gap-2">
@@ -345,7 +345,7 @@ export default function LoginPage() {
                           type="text"
                           value={otp}
                           onChange={(e) => setOtp(e.target.value)}
-                          className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                          className="mt-1 block w-full px-4 py-3 border border-border rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                           placeholder="Enter 6-digit OTP"
                           required
                           maxLength={6}
@@ -366,7 +366,7 @@ export default function LoginPage() {
                             : "Resend OTP"}
                         </button>
                         {otp.length > 0 && (
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted">
                             {otp.length}/6 digits
                           </span>
                         )}
@@ -378,8 +378,8 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="rounded-md bg-red-50 p-4">
-                <p className="text-sm text-red-700">{error}</p>
+              <div className="rounded-md bg-error-light p-4">
+                <p className="text-sm text-error-dark">{error}</p>
               </div>
             )}
 
@@ -482,7 +482,7 @@ export default function LoginPage() {
 
           <div className="mt-6 text-center space-y-4">
             {activeTab === "organization" && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-text-light">
                 <button 
                   type="button"
                   className="text-primary hover:text-primaryDark font-medium"
@@ -492,7 +492,7 @@ export default function LoginPage() {
                 </button>
               </p>
             )}
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-text-light">
               {"Don't have an account?"}{" "}
               <button
                 type="button"
