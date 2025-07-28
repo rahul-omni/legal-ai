@@ -124,7 +124,7 @@ async function transformCsvData(csvData: any[]) {
       parties: parties || '',
       advocates: advocates || '',
       bench: caseData.bench || 'UNSPECIFIED BENCH',
-      judgmentBy: caseData.judgement_by || '',
+      judgmentBy: caseData.judgment_by || '',
       judgmentDate: caseData.judgment_dates || '',
       judgmentText: caseData.Judgment_type || '',
       judgmentUrl:   judgmentUrl,

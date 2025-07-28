@@ -129,13 +129,17 @@ const ProjectHub = () => {
   return (
     <div className="flex flex-col h-screen">
       <header className="border-b bg-white px-6 py-4">
-        <h1 className="text-2xl font-semibold text-gray-800">Project Hub</h1>
-        <p className="text-sm text-gray-500">Manage your legal projects</p>
+        <h1 className="text-2xl font-semibold text-text-dark">Project Hub</h1>
+        <p className="text-sm text-muted">Manage your legal projects</p>
       </header>
 
       <div className="flex items-center justify-between border-b bg-white px-6 py-3">
+      <div className="relative">
+          <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted" />
+          <input type="text" value={state.searchQuery} onChange={(e) => dispatch({ type: "SET_SEARCH_QUERY", payload: e.target.value })} placeholder="Search projects..." className="pl-10 pr-4 py-2 border border-border rounded-md w-64 text-sm focus:ring-2 focus:ring-border-dark" />
+        </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => dispatch({ type: "SET_IS_NEW_PROJECT_MODAL_OPEN", payload: true })} className="bg-gray-900 text-white px-3 py-1.5 rounded-md flex items-center gap-2 text-sm hover:bg-gray-800">
+          <button onClick={() => dispatch({ type: "SET_IS_NEW_PROJECT_MODAL_OPEN", payload: true })} className="bg-primary text-white px-3 py-1.5 rounded-md flex items-center gap-2 text-sm hover:bg-primary-dark">
             <FolderPlus className="w-4 h-4" /> New Project
           </button>
 
@@ -147,44 +151,41 @@ const ProjectHub = () => {
           <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => handleFileUpload(e, true)} accept=".txt,.doc,.docx,.pdf,.png,.jpg,.jpeg" />
         </div>
 
-        <div className="relative">
-          <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input type="text" value={state.searchQuery} onChange={(e) => dispatch({ type: "SET_SEARCH_QUERY", payload: e.target.value })} placeholder="Search projects..." className="pl-10 pr-4 py-2 border rounded-md w-64 text-sm focus:ring-2 focus:ring-gray-200" />
-        </div>
+        
       </div>
 
-      <div className="flex-1 overflow-auto p-6 bg-gray-50">
+      <div className="flex-1 overflow-auto p-6 bg-background">
         <div className="w-full">
           {state.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <table className="w-full table-auto border-collapse">
-            <thead className="bg-gray-100 text-left">
+            <thead className="bg-background-dark text-left">
               <tr>
-                <th className="px-4 py-3 font-semibold text-gray-700">Name</th>
-                <th className="px-4 py-3 font-semibold text-gray-700 w-32">Created On</th>
-                <th className="px-4 py-3 font-semibold text-gray-700 w-32">Last Modified</th>
-                <th className="px-4 py-3 text-center font-semibold text-gray-700 w-40">Actions</th>
+                <th className="px-4 py-3 font-semibold text-text-light">Name</th>
+                <th className="px-4 py-3 font-semibold text-text-light w-40">Created On</th>
+                <th className="px-4 py-3 font-semibold text-text-light w-40">Last Modified</th>
+                <th className="px-4 py-3 text-center font-semibold text-text-light w-40">Actions</th>
               </tr>
             </thead>
             <tbody>
               {paginatedProjects.map((project) => (
-                <tr key={project.id} className="border-t hover:bg-gray-50 transition-colors">
+                <tr key={project.id} className="border-t hover:bg-background-dark transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <Link
                         href={project.type == "FOLDER" ? `/projects/${project.id}` : `/projects/root/edit/${project.id}`}
-                        className="flex items-center gap-3 hover:bg-gray-100 rounded px-2 py-1 -mx-2 -my-1 transition-colors"
+                        className="flex items-center gap-3 hover:bg-background-dark rounded px-2 py-1 -mx-2 -my-1 transition-colors"
                       >
                         {project.type == "FOLDER" ?
-                          <Folder className="w-5 h-5 text-blue-500 shrink-0" /> :
+                          <Folder className="w-5 h-5 text-primary shrink-0" /> :
                           <FileIconDisplay fileName={project.name} />
                         }
-                        <span className="font-medium text-gray-900">{project.name}</span>
+                        <span className="font-medium text-text">{project.name}</span>
                       </Link>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-600 text-sm">
+                  <td className="px-4 py-3 text-text-light text-sm">
                     {moment(project.createdAt).format("MMM D, YYYY")}
                   </td>
-                  <td className="px-4 py-3 text-gray-600 text-sm">
+                  <td className="px-4 py-3 text-text-light text-sm">
                     {moment(project.updatedAt).format("MMM D, YYYY")}
                   </td>
                   <td className="px-4 py-3 flex items-center justify-center">
@@ -196,7 +197,7 @@ const ProjectHub = () => {
                           router.push(`/projects/root/edit/${project.id}`)
                         }
                       }}
-                      className="text-sm px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded mr-2"
+                      className="text-sm px-3 py-1 bg-info-light text-info hover:bg-info rounded mr-2"
                     >
                       Open
                     </button>
@@ -207,7 +208,7 @@ const ProjectHub = () => {
                         }
                       }}
                       disabled={deletingNode == project.id}
-                      className="text-sm px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded"
+                      className="text-sm px-3 py-1 bg-error-light hover:bg-error-light text-error rounded"
                     >
                       {deletingNode == project.id ? (
                         <Loader2 className="w-4 h-5 animate-spin" />
@@ -240,13 +241,13 @@ const ProjectHub = () => {
             />
             <div className="flex justify-end gap-2">
               <button
-                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+                className="px-4 py-2 rounded bg-muted-light hover:bg-muted"
                 onClick={() => dispatch({ type: "SET_IS_NEW_PROJECT_MODAL_OPEN", payload: false })}
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                className="px-4 py-2 rounded bg-primary text-white hover:bg-primary-dark"
                 onClick={handleCreateProject}
                 disabled={state.createLoading}
               >

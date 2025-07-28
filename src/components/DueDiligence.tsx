@@ -56,34 +56,34 @@ export function DueDiligence() {
   const getStatusColor = (status: DueDiligenceItem['status']) => {
     switch (status) {
       case 'Completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-success-light text-success-dark';
       case 'Issues':
-        return 'bg-red-100 text-red-800';
+        return 'bg-error-light text-error-dark';
       case 'In Progress':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-info-light text-info-dark';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted-light text-muted-dark';
     }
   };
 
   const getPriorityColor = (priority: DueDiligenceItem['priority']) => {
     switch (priority) {
       case 'High':
-        return 'text-red-600';
+        return 'text-error';
       case 'Medium':
-        return 'text-yellow-600';
+        return 'text-warning';
       default:
-        return 'text-green-600';
+        return 'text-success';
     }
   };
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="p-6 bg-white border-b">
+      <div className="p-6 bg-background-light border-b">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-gray-800">Due Diligence</h1>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700">
+          <h1 className="text-2xl font-semibold text-text-dark">Due Diligence</h1>
+          <button className="px-4 py-2 bg-primary text-white rounded-lg flex items-center gap-2 hover:bg-primary-dark">
             <Plus className="w-4 h-4" />
             New Task
           </button>
@@ -96,12 +96,12 @@ export function DueDiligence() {
             <input
               type="text"
               placeholder="Search tasks..."
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <button className="px-4 py-2 border rounded-lg text-gray-600 flex items-center gap-2 hover:bg-gray-50">
+          <button className="px-4 py-2 border rounded-lg text-text-light flex items-center gap-2 hover:bg-background-dark">
             <Filter className="w-4 h-4" />
             Filters
           </button>
@@ -115,8 +115,8 @@ export function DueDiligence() {
               onClick={() => setSelectedCategory(category)}
               className={`px-4 py-2 rounded-full text-sm whitespace-nowrap
                 ${selectedCategory === category 
-                  ? 'bg-blue-100 text-blue-700 font-medium' 
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  ? 'bg-info-light text-info font-medium' 
+                  : 'bg-muted-light text-muted hover:bg-muted'}`}
             >
               {category}
             </button>
@@ -138,7 +138,7 @@ export function DueDiligence() {
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(item.status)}`}>
                     {item.status}
                   </span>
-                  <button className="p-1 hover:bg-gray-100 rounded">
+                  <button className="p-1 hover:bg-background-dark rounded">
                     <MoreVertical className="w-4 h-4 text-gray-400" />
                   </button>
                 </div>
@@ -187,10 +187,10 @@ export function DueDiligence() {
                   </span>
                 </div>
                 <div className="flex gap-2">
-                  <button className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50">
+                  <button className="px-3 py-1.5 text-sm border rounded hover:bg-background-dark">
                     Add Note
                   </button>
-                  <button className="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded hover:bg-blue-100">
+                  <button className="px-3 py-1.5 text-sm bg-info-light text-info rounded hover:bg-info">
                     Update Status
                   </button>
                 </div>

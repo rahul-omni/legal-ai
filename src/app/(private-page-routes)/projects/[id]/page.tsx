@@ -81,8 +81,8 @@ const ProjectFolderTable: React.FC = () => {
   return (
     <div className="w-full overflow-auto">
       <header className="border-b bg-white px-6 py-4">
-        <h1 className="text-2xl font-semibold text-gray-800">Project Hub</h1>
-        <p className="text-sm text-gray-500">Manage your legal projects</p>
+        <h1 className="text-2xl font-semibold text-text-dark">Project Hub</h1>
+        <p className="text-sm text-muted">Manage your legal projects</p>
       </header>
 
       <div className="flex items-center justify-between border-b bg-white px-6 py-3">
@@ -97,40 +97,40 @@ const ProjectFolderTable: React.FC = () => {
         <div className="mr-5">
           <button
             onClick={() => router.push(`/projects/${parentId}/edit`)}
-            className="text-sm px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded mr-2"
+            className="text-sm px-3 py-1 bg-info-light text-info hover:bg-info rounded mr-2"
           >
             Open Project
           </button>
         </div>
       </div>
-      <div className="flex-1 overflow-auto p-6 bg-gray-50">
+      <div className="flex-1 overflow-auto p-6 bg-background">
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <table className="w-full table-auto border-collapse">
-          <thead className="bg-gray-100 text-left">
+          <thead className="bg-background-dark text-left">
             <tr>
-              <th className="px-4 py-3 font-semibold text-gray-700">Name</th>
-              <th className="px-4 py-3 font-semibold text-gray-700 w-32">Created On</th>
-              <th className="px-4 py-3 font-semibold text-gray-700 w-32">Last Modified</th>
-              <th className="px-4 py-3 text-center font-semibold text-gray-700 w-40">Actions</th>
+              <th className="px-4 py-3 font-semibold text-text-light">Name</th>
+              <th className="px-4 py-3 font-semibold text-text-light w-32">Created On</th>
+              <th className="px-4 py-3 font-semibold text-text-light w-32">Last Modified</th>
+              <th className="px-4 py-3 text-center font-semibold text-text-light w-40">Actions</th>
             </tr>
           </thead>
           <tbody>
             {paginatedProjects.map((project) => (
-              <tr key={project.id} className="border-t hover:bg-gray-50 transition-colors">
+              <tr key={project.id} className="border-t hover:bg-background-dark transition-colors">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <Link
                       href={`/projects/${project.parentId}/edit/${project.id}`}
-                      className="flex items-center gap-3 hover:bg-gray-100 rounded px-2 py-1 -mx-2 -my-1 transition-colors"
+                      className="flex items-center gap-3 hover:bg-background-dark rounded px-2 py-1 -mx-2 -my-1 transition-colors"
                     >
                       <FileIconDisplay fileName={project.name} />
-                      <span className="font-medium text-gray-900">{project.name}</span>
+                      <span className="font-medium text-text">{project.name}</span>
                     </Link>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-gray-600 text-sm">
+                <td className="px-4 py-3 text-text-light text-sm">
                   {moment(project.createdAt).format("MMM D, YYYY")}
                 </td>
-                <td className="px-4 py-3 text-gray-600 text-sm">
+                <td className="px-4 py-3 text-text-light text-sm">
                   {moment(project.updatedAt).format("MMM D, YYYY")}
                 </td>
                 <td className="px-4 py-3 flex items-center justify-center">
@@ -141,7 +141,7 @@ const ProjectFolderTable: React.FC = () => {
                       }
                     }}
                     disabled={deletingNode == project.id}
-                    className="text-sm px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded"
+                    className="text-sm px-3 py-1 bg-error-light hover:bg-error-light text-error rounded"
                   >
                     {deletingNode == project.id ? (
                       <Loader2 className="w-4 h-5 animate-spin" />
@@ -164,8 +164,8 @@ const ProjectFolderTable: React.FC = () => {
               key={index + 1}
               onClick={() => setCurrentPage(index + 1)}
               className={`px-3 py-1 border rounded ${currentPage === index + 1
-                ? "bg-blue-500 text-white"
-                : "bg-white text-gray-700"
+                ? "bg-primary text-white"
+                : "bg-background-light text-text-light"
                 }`}
             >
               {index + 1}

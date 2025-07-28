@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Filter, ChevronLeft, ChevronRight, Bell, Search } from "lucide-react";
+import { Filter, Bell, Search } from "lucide-react";
 import { NotificationData, NotificationFilters, PaginationData } from "./types";
 import { NotificationItem } from "./NotificationItem";
 import { FilterModal } from "./FilterModal";
@@ -39,8 +39,6 @@ export function Notifications() {
         queryParams.append('dateTo', filters.dateTo);
       }
 
-      console.log('Fetching notifications with params:', queryParams.toString());
-
       const response = await fetch(`/api/notifications?${queryParams.toString()}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
@@ -55,8 +53,6 @@ export function Notifications() {
       if (!data.success) {
         throw new Error(data.message || 'Failed to fetch notifications');
       }
-
-      console.log('Notifications fetched successfully:', data);
       
       setNotifications(data.data || []);
       setPagination(prev => ({
@@ -107,83 +103,45 @@ export function Notifications() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Enhanced Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
-                <Bell className="w-6 h-6 text-white" />
-              </div>
-              
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  All Notifications
-                </h1>
-                <p className="text-gray-600 mt-1">
-                  {pagination.totalItems > 0 
-                    ? `${pagination.totalItems} notification${pagination.totalItems !== 1 ? 's' : ''} found`
-                    : 'Stay updated with your latest notifications'
-                  }
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowFilterModal(true)}
-                className={`relative px-6 py-3 border-2 border-cyan-400 text-cyan-600 rounded-xl flex items-center gap-2 hover:bg-cyan-50 transition-all duration-200 font-semibold shadow-sm hover:shadow-md ${
-                  hasActiveFilters ? 'bg-cyan-50 border-cyan-500' : ''
-                }`}
-              >
-                <Filter className="w-5 h-5" />
-                Filter
-                {hasActiveFilters && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-500 rounded-full"></div>
-                )}
-              </button>
-            </div>
-          </div>
-          
-          {/* Filter indicators */}
-          {hasActiveFilters && (
-            <div className="mt-6 flex items-center gap-3 flex-wrap">
-              <span className="text-sm text-gray-600 font-medium">Active filters:</span>
-              {filters.method && (
-                <span className="px-3 py-1 bg-cyan-100 text-cyan-800 rounded-lg text-sm font-medium">
-                  Method: {filters.method}
-                </span>
-              )}
-              {filters.dateFrom && (
-                <span className="px-3 py-1 bg-cyan-100 text-cyan-800 rounded-lg text-sm font-medium">
-                  From: {new Date(filters.dateFrom).toLocaleDateString()}
-                </span>
-              )}
-              {filters.dateTo && (
-                <span className="px-3 py-1 bg-cyan-100 text-cyan-800 rounded-lg text-sm font-medium">
-                  To: {new Date(filters.dateTo).toLocaleDateString()}
-                </span>
-              )}
-            </div>
-          )}
+    <div className="flex flex-col h-screen">
+      {/* Header */}
+      <header className="border-b bg-background-light px-6 py-4">
+        <h1 className="text-2xl font-semibold text-text-dark">Notifications</h1>
+        <p className="text-sm text-muted">Stay updated with your latest notifications</p>
+      </header>
+
+      {/* Action Bar */}
+      <div className="flex items-center justify-between border-b bg-background-light px-6 py-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowFilterModal(true)}
+            className={`border px-3 py-1.5 rounded-md flex items-center gap-2 text-sm hover:bg-background-dark ${
+              hasActiveFilters ? 'border-primary text-primary' : 'border-border text-text-light'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            {hasActiveFilters ? 'Filters Applied' : 'Filter'}
+          </button>
+        </div>
+
+        <div className="relative">
+          <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted" />
+          <input
+            type="text"
+            placeholder="Search notifications..."
+            className="pl-10 pr-4 py-2 border border-border rounded-md w-64 text-sm focus:ring-2 focus:ring-border-dark"
+          />
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="flex-1 overflow-auto px-6 pb-6 pt-2 bg-background">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-cyan-200 border-t-cyan-600 rounded-full animate-spin"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Bell className="w-6 h-6 text-cyan-600" />
-              </div>
-            </div>
-            <p className="text-gray-500 mt-4 font-medium">Loading notifications...</p>
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
           </div>
         ) : notifications.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-2"> 
             {notifications.map((notification) => (
               <NotificationItem
                 key={notification.id}
@@ -193,12 +151,10 @@ export function Notifications() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-20">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Search className="w-12 h-12 text-gray-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No notifications found</h3>
-            <p className="text-gray-500 max-w-md mx-auto">
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <Bell className="w-12 h-12 text-muted mb-4" />
+            <h3 className="text-lg font-medium text-text mb-2">No notifications</h3>
+            <p className="text-text-light max-w-md">
               {hasActiveFilters 
                 ? "No notifications match your current filters. Try adjusting your search criteria."
                 : "You're all caught up! New notifications will appear here when they arrive."
@@ -210,7 +166,7 @@ export function Notifications() {
                   setFilters({});
                   setPagination(prev => ({ ...prev, currentPage: 1 }));
                 }}
-                className="mt-4 px-6 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors font-medium"
+                className="mt-4 px-4 py-2 text-sm border border-border rounded-md hover:bg-background-dark"
               >
                 Clear filters
               </button>
@@ -219,46 +175,36 @@ export function Notifications() {
         )}
       </div>
 
-      {/* Enhanced Pagination */}
-      {pagination.totalItems > 0 && (
-        <div className="bg-white border-t border-gray-200 shadow-sm">
-          <div className="max-w-7xl mx-auto px-6 py-6">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600">
-                Showing <span className="font-semibold text-gray-900">
-                  {((pagination.currentPage - 1) * pagination.itemsPerPage) + 1}
-                </span> to <span className="font-semibold text-gray-900">
-                  {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)}
-                </span> of <span className="font-semibold text-gray-900">
-                  {pagination.totalItems}
-                </span> notifications
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => handlePageChange(pagination.currentPage - 1)}
-                  disabled={pagination.currentPage <= 1}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Previous
-                </button>
-                
-                <div className="flex items-center gap-2">
-                  <span className="px-4 py-2 text-sm text-gray-600 font-medium">
-                    Page {pagination.currentPage} of {pagination.totalPages}
-                  </span>
-                </div>
-                
-                <button
-                  onClick={() => handlePageChange(pagination.currentPage + 1)}
-                  disabled={pagination.currentPage >= pagination.totalPages}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-medium transition-colors"
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
+      {/* Pagination */}
+      {notifications.length > 0 && (
+        <div className="border-t border-border bg-background-light px-6 py-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-text-light">
+              Showing <span className="font-medium text-text">{((pagination.currentPage - 1) * pagination.itemsPerPage) + 1}</span>
+              {' '}-{' '}
+              <span className="font-medium text-text">
+                {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)}
+              </span>
+              {' '}of{' '}
+              <span className="font-medium text-text">{pagination.totalItems}</span>
+              {' '}notifications
+            </span>
+            
+            <div className="flex gap-2">
+              <button
+                onClick={() => handlePageChange(pagination.currentPage - 1)}
+                disabled={pagination.currentPage <= 1}
+                className="px-3 py-1.5 text-sm border border-border rounded hover:bg-background-dark disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => handlePageChange(pagination.currentPage + 1)}
+                disabled={pagination.currentPage >= pagination.totalPages}
+                className="px-3 py-1.5 text-sm border border-border rounded hover:bg-background-dark disabled:opacity-50"
+              >
+                Next
+              </button>
             </div>
           </div>
         </div>

@@ -14,8 +14,8 @@ export default function SignupPage() {
         <button
           className={`flex-1 py-2 font-medium ${
             signupType === "individual"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted"
           }`}
           onClick={() => setSignupType("individual")}
         >
@@ -24,8 +24,8 @@ export default function SignupPage() {
         <button
           className={`flex-1 py-2 font-medium ${
             signupType === "organization"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500"
+              ? "border-b-2 border-primary text-primary"
+              : "text-muted"
           }`}
           onClick={() => setSignupType("organization")}
         >

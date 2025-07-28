@@ -8,11 +8,11 @@ export default function EmailVerificationSuccessPage() {
   const email = useSearchParams().get("email") || "";
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
-      <div className="bg-white shadow-md rounded-lg p-8 max-w-md w-full text-center">
-        <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">Email Verified!</h1>
-        <p className="text-gray-600 mb-6">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-6">
+      <div className="bg-background-light shadow-md rounded-lg p-8 max-w-md w-full text-center">
+        <CheckCircle className="h-16 w-16 text-success mx-auto mb-4" />
+        <h1 className="text-3xl font-bold text-text-dark mb-4">Email Verified!</h1>
+        <p className="text-text-light mb-6">
           Your email has been successfully verified. You can now proceed to log in.
         </p>
         <button
