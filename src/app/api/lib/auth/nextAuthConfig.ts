@@ -47,6 +47,7 @@ const authOptions: NextAuthConfig = {
               id: user.id,
               email: user.email,
               name: user.name,
+              mobileNumber: user.mobileNumber,
               memberships: user.orgMemberships.map((m) => ({
                 organizationId: m.orgId,
                 organizationName: m.org.name,
@@ -78,6 +79,8 @@ const authOptions: NextAuthConfig = {
               email: user.email,
               name: user.name,
               mobileNumber: user.mobileNumber,
+
+              
             };
           }
 
@@ -94,6 +97,7 @@ const authOptions: NextAuthConfig = {
       if (user) {
         token.id = user.id;
         token.memberships = (user as any).memberships || [];
+        token.mobileNumber = user.mobileNumber || "";
       }
       return token;
     },
@@ -101,6 +105,7 @@ const authOptions: NextAuthConfig = {
       if (token) {
         session.user.id = token.id as string;
         session.user.memberships = token.memberships as any;
+        session.user.mobileNumber = token.mobileNumber as string;
       }
       return session;
     },

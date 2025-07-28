@@ -5,16 +5,18 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
+      mobileNumber: string;
       memberships: Array<{
         organizationId: string;
         organizationName: string;
         roleId: string;
       }>;
-    } & DefaultSession["user"];
+    };
   }
 
   interface User {
     id: string;
+    mobileNumber: string;
     memberships?: Array<{
       organizationId: string;
       organizationName: string;
@@ -26,6 +28,7 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     id: string;
+    mobileNumber: string;
     memberships: Array<{
       organizationId: string;
       organizationName: string;

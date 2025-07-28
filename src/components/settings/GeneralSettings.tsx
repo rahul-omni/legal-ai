@@ -25,6 +25,7 @@ export function GeneralSettings({ onLogout }: GeneralSettingsProps) {
             {userState.user?.name}
           </div>
           <div className="text-sm text-gray-500">{userState.user?.email}</div>
+            <div className="text-sm text-gray-500">{userState.user?.mobileNumber}</div> 
         </div>
       </div>
 

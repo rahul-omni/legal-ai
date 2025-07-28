@@ -1,6 +1,24 @@
 import { useState, useEffect } from "react";
 import { Plus, Search } from "lucide-react";
 import toast from "react-hot-toast";
+
+interface CaseData1 {
+  id: string;
+  serialNumber: string;
+  diaryNumber: string;
+  caseNumber: string;
+  parties: string;
+  advocates: string;
+  bench: string;
+  judgmentBy: string;
+  judgmentDate: string;
+  judgmentText: string;
+  judgmentUrl: string;
+  court: string;
+  date: string;
+  createdAt: string;
+  updatedAt: string;
+}
 import { CaseData, SearchParams, ValidationErrors } from "./caseManagementComponents/types";
 import { CaseList } from "./caseManagementComponents/CaseList";
 import { SearchModal } from "./caseManagementComponents/SearchModal";
@@ -155,21 +173,22 @@ export function CaseManagement() {
     try {
       setIsLoading(true);
       setError("");
-      const response = await fetch('/api/cases/user-cases', {
-        method: 'GET'
+      const response = await fetch("/api/cases/user-cases", {
+        method: "GET",
       });
       const data = await response.json();
+
 
       if (data.success && data.data) {
         setCases(data.data);
       } else {
-        setError(data.message || 'Failed to fetch cases');
-        toast.error(data.message || 'Failed to fetch cases');
+        setError(data.message || "Failed to fetch cases");
+        toast.error(data.message || "Failed to fetch cases");
       }
     } catch (error) {
-      console.error('Error fetching cases:', error);
-      setError('Failed to load cases');
-      toast.error('Failed to load cases');
+      console.error("Error fetching cases:", error);
+      setError("Failed to load cases");
+      toast.error("Failed to load cases");
     } finally {
       setIsLoading(false);
     }
@@ -277,10 +296,10 @@ export function CaseManagement() {
   };
 
   const handleToggleSelectCase = (caseData: CaseData) => {
-    setSelectedCases(prev => {
-      const isSelected = prev.some(c => c.id === caseData.id);
+    setSelectedCases((prev) => {
+      const isSelected = prev.some((c) => c.id === caseData.id);
       if (isSelected) {
-        return prev.filter(c => c.id !== caseData.id);
+        return prev.filter((c) => c.id !== caseData.id);
       } else {
         return [...prev, caseData];
       }
@@ -421,12 +440,13 @@ export function CaseManagement() {
             Case Management
           </h1>
 
+
           <button
             onClick={() => setShowNewCaseModal(true)}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
           >
             <Plus className="w-4 h-4" />
-            New Case
+            Add Case
           </button>
         </div>
 
