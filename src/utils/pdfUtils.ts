@@ -1,4 +1,6 @@
 import { getDocument, PDFPageProxy } from "pdfjs-dist";
+import pdf2md from "@opendocsg/pdf2md";
+import { marked } from "marked";
 
 interface TextItem {
   str: string;
@@ -121,75 +123,32 @@ const extractImagesFromPage = async (
   return images;
 };
 
-export const extractTextFromPDF = async (
-  file: File
-): Promise<ExtractedContent> => {
-  try {
-    console.log("Starting PDF extraction...");
-    const arrayBuffer = await file.arrayBuffer();
-    console.log("File converted to ArrayBuffer.");
+/**
+ * Converts a PDF File/Blob to HTML by first extracting Markdown using pdf2md, then converting it to HTML.
+ */
+export const extractTextFromPDF = async (file: File | Blob): Promise<{ html: string }> => {
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
 
-    const pdf = await getDocument({ data: arrayBuffer }).promise;
-    console.log(`PDF loaded with ${pdf.numPages} pages.`);
+  // Convert PDF to markdown
+  const markdown: string = await pdf2md(buffer, {});
 
-    let fullText = "";
-    let fullHtml = "";
-    const allImages: ImageItem[] = [];
+  // Convert markdown to HTML
+  const html: string = await marked(markdown);
 
-    for (let i = 1; i <= pdf.numPages; i++) {
-      console.log(`Processing page ${i}...`);
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      console.log(`Text content extracted for page ${i}.`);
-
-      // Extract text with positioning information
-      const textItems = content.items as TextItem[];
-      console.log(`Number of text items on page ${i}: ${textItems.length}`);
-      const formattedText = organizeTextItems(textItems);
-      fullText += `Page ${i}:\n${formattedText}\n\n`;
-
-      // Extract images
-      const pageImages = await extractImagesFromPage(page);
-      console.log(
-        `Number of images extracted from page ${i}: ${pageImages.length}`
-      );
-      allImages.push(...pageImages);
-
-      // Build HTML representation
-      let pageHtml = `<div class="pdf-page" data-page="${i}">`;
-      pageHtml += `<h4 class="pdf-page-header">Page ${i}</h4>`;
-
-      // Add text content
-      pageHtml += `<div class="pdf-text-content">${formattedText.replace(/\n\n/g, "</p><p>").replace(/\n/g, "<br>")}</div>`;
-
-      // Add images
-      if (pageImages.length > 0) {
-        pageHtml += '<div class="pdf-images">';
-        pageImages.forEach((img, idx) => {
-          pageHtml += `<img src="${img.src}" width="${img.width}" height="${img.height}" alt="PDF image ${idx + 1}" />`;
-        });
-        pageHtml += "</div>";
-      }
-
-      pageHtml += "</div>";
-      fullHtml += pageHtml;
-
-      console.log(`Finished processing page ${i}.`);
-    }
-
-    console.log("PDF extraction completed successfully.");
-    const data = {
-      text: fullText,
-      images: allImages,
-      html: `<div class="pdf-document">${fullHtml}</div>`,
-    };
-    console.log("Extracted content:", data);
-    return data;
-  } catch (error) {
-    console.error("Error extracting PDF content:", error);
-    throw error; // Re-throw the error to ensure the caller is aware of the failure
-  }
+  return { html: `<div class="docx-document">${html}</div>` };
 };
+
+export const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const base64 = (reader.result as string).split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = (error) => reject(error);
+  });
 
 interface TextItem {
   str: string;

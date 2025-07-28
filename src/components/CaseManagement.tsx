@@ -1,18 +1,8 @@
 import { useState, useEffect } from "react";
-import {
-  Plus,
-  Search,
-  X,
-  FileText,
-  Loader2,
-  Download,
-  Calendar,
-  Check,
-  ChevronDown,
-} from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import toast from "react-hot-toast";
 
-interface CaseData {
+interface CaseData1 {
   id: string;
   serialNumber: string;
   diaryNumber: string;
@@ -29,6 +19,9 @@ interface CaseData {
   createdAt: string;
   updatedAt: string;
 }
+import { CaseData, SearchParams, ValidationErrors } from "./caseManagementComponents/types";
+import { CaseList } from "./caseManagementComponents/CaseList";
+import { SearchModal } from "./caseManagementComponents/SearchModal";
 
 export function CaseManagement() {
   const [showNewCaseModal, setShowNewCaseModal] = useState(false);
@@ -38,74 +31,139 @@ export function CaseManagement() {
   const [cases, setCases] = useState<CaseData[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedCases, setSelectedCases] = useState<CaseData[]>([]); // Changed to array for multiple selection
+  const [selectedCases, setSelectedCases] = useState<CaseData[]>([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
-  const [searchParams, setSearchParams] = useState({
+  const [searchParams, setSearchParams] = useState<SearchParams>({
     number: "",
     year: "",
     court: "",
+    judgmentType: "",
+    caseType: "",
   });
 
-  // Add this to your existing state declarations
+  const [newlyCreatedCase, setNewlyCreatedCase] = useState<CaseData | null>(null);
+  const [expandedCases, setExpandedCases] = useState<Record<string, boolean>>({});
+  const [caseDetails, setCaseDetails] = useState<Record<string, CaseData[]>>({});
+  const [loadingDetails, setLoadingDetails] = useState<Record<string, boolean>>({});
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [loadingUrls, setLoadingUrls] = useState<Record<string, boolean>>({});
 
-  const [expandedCases, setExpandedCases] = useState<Record<string, boolean>>(
-    {}
-  );
-  const [caseDetails, setCaseDetails] = useState<Record<string, CaseData[]>>(
-    {}
-  ); // Changed to store array of cases
-  const [loadingDetails, setLoadingDetails] = useState<Record<string, boolean>>(
-    {}
-  );
+  // Validation function
+  const validateSearchForm = (): boolean => {
+    const errors: ValidationErrors = {};
+
+    if (!searchParams.number.trim()) {
+      errors.number = "Diary number is required";
+    }
+
+    if (!searchParams.year.trim()) {
+      errors.year = "Year is required";
+    } else if (!/^\d{4}$/.test(searchParams.year.trim())) {
+      errors.year = "Year must be a 4-digit number";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleCaseExpand = async (caseItem: CaseData) => {
     if (!caseItem?.id) {
-      console.error("Cannot expand - case item has no ID:", caseItem);
+      console.error('Cannot expand - case item has no ID:', caseItem);
       return;
     }
 
     const caseId = caseItem.id;
+    console.group(`Handling expand for case ${caseId}`);
 
     const isExpanded = expandedCases[caseId];
-    console.log("Current states:", {
+    console.log('Current states:', {
       expanded: expandedCases,
       details: caseDetails,
-      loading: loadingDetails,
+      loading: loadingDetails
     });
 
-    // Toggle expansion state
-    setExpandedCases((prev) => ({ ...prev, [caseId]: !isExpanded }));
+    setExpandedCases(prev => ({ ...prev, [caseId]: !isExpanded }));
 
     if (!isExpanded && !caseDetails[caseId]) {
       try {
-        setLoadingDetails((prev) => ({ ...prev, [caseId]: true }));
+        setLoadingDetails(prev => ({ ...prev, [caseId]: true }));
 
-        console.log(`Fetching details for diary ${caseItem.diaryNumber}`);
-        const response = await fetch(
-          `/api/cases/dairynumber?diaryNumber=${caseItem.diaryNumber}`
-        );
+        const diaryParts = caseItem.diaryNumber.split('/');
+        const diaryNumber = diaryParts[0];
+        const year = diaryParts[1];
+
+        console.log(`Searching for cases with diary: ${diaryNumber}, year: ${year}, court: ${caseItem.court}`);
+
+        const searchUrl = new URL("/api/cases/search", window.location.origin);
+        searchUrl.searchParams.append("diaryNumber", diaryNumber);
+        searchUrl.searchParams.append("year", year);
+        searchUrl.searchParams.append("court", caseItem.court);
+        
+        // Only append judgmentType if it exists and is not empty
+        if (caseItem.judgmentType) {
+          searchUrl.searchParams.append("judgmentType", caseItem.judgmentType);
+        }
+        
+        // Only append caseType if it exists and is not empty
+        if (caseItem.caseType) {
+          searchUrl.searchParams.append("caseType", caseItem.caseType);
+        }
+        
+        // Only append city if it exists
+        if (caseItem?.city) {
+          searchUrl.searchParams.append("city", caseItem.city);
+        }
+        
+        // Only append district if it exists
+        if (caseItem?.district) {
+          searchUrl.searchParams.append("district", caseItem.district);
+        }
+
+        const response = await fetch(searchUrl.toString());
         const data = await response.json();
-        console.log("API response:", data);
+        console.log('Search API response:', data);
 
         if (data.success && data.data?.length) {
-          // Store ALL cases from the response
-          setCaseDetails((prev) => ({
-            ...prev,
-            [caseId]: data.data,
+          const sortedCases = data.data.sort((a: CaseData, b: CaseData) => {
+            if (!a.judgmentDate && !b.judgmentDate) return 0;
+            if (!a.judgmentDate) return 1;
+            if (!b.judgmentDate) return -1;
+            
+            const parseDate = (dateStr: string) => {
+              const parts = dateStr.split('-');
+              if (parts.length === 3) {
+                return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+              }
+              return new Date(dateStr);
+            };
+            
+            const dateA = parseDate(a.judgmentDate);
+            const dateB = parseDate(b.judgmentDate);
+            
+            if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+            if (isNaN(dateA.getTime())) return 1;
+            if (isNaN(dateB.getTime())) return -1;
+            
+            return dateB.getTime() - dateA.getTime();
+          });
+          
+          setCaseDetails(prev => ({ 
+            ...prev, 
+            [caseId]: sortedCases 
           }));
         } else {
-          throw new Error(data.message || "No case data returned");
+          throw new Error(data.message || 'No case data returned from search');
         }
       } catch (error) {
-        console.error("Fetch error:", error);
-        // Fallback to the original case item as single item array
-        setCaseDetails((prev) => ({
+        console.error('Search error:', error);
+        setCaseDetails(prev => ({
           ...prev,
-          [caseId]: [caseItem],
+          [caseId]: [caseItem]
         }));
       } finally {
-        setLoadingDetails((prev) => ({ ...prev, [caseId]: false }));
+        setLoadingDetails(prev => ({ ...prev, [caseId]: false }));
       }
     }
     console.groupEnd();
@@ -120,12 +178,9 @@ export function CaseManagement() {
       });
       const data = await response.json();
 
+
       if (data.success && data.data) {
-        // console.log("Fetched cases:", data.data);
-
         setCases(data.data);
-
-        // console.log("cases:", cases);
       } else {
         setError(data.message || "Failed to fetch cases");
         toast.error(data.message || "Failed to fetch cases");
@@ -142,9 +197,17 @@ export function CaseManagement() {
   useEffect(() => {
     fetchUserCases();
   }, []);
-  console.log("cases:", cases);
+
 
   const handleSearchCase = async () => {
+    // Clear previous errors
+    setValidationErrors({});
+    
+    // Validate form
+    if (!validateSearchForm()) {
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError("");
@@ -152,16 +215,33 @@ export function CaseManagement() {
       setSelectedCases([]);
       setSelectAll(false);
 
-      if (!searchParams.number || !searchParams.year) {
-        throw new Error("Both diary number and year are required.");
-      }
-
       const searchUrl = new URL("/api/cases/search", window.location.origin);
       searchUrl.searchParams.append("diaryNumber", searchParams.number);
       searchUrl.searchParams.append("year", searchParams.year);
+      
+      // Only append court if it's selected
       if (searchParams.court) {
         searchUrl.searchParams.append("court", searchParams.court);
       }
+      
+      // Only append judgmentType if it's selected (not empty/"All")
+      if (searchParams.judgmentType) {
+        searchUrl.searchParams.append("judgmentType", searchParams.judgmentType);
+      }
+      
+      // Only append caseType if it's selected (not empty/"All Case Types")
+      if (searchParams.caseType) {
+        searchUrl.searchParams.append("caseType", searchParams.caseType);
+      }
+
+      console.log("Optimized Search URL:", searchUrl.toString());
+      console.log("Search Parameters:", {
+        diaryNumber: searchParams.number,
+        year: searchParams.year,
+        court: searchParams.court || "All Courts",
+        judgmentType: searchParams.judgmentType || "All Judgment Types", 
+        caseType: searchParams.caseType || "All Case Types"
+      });
 
       const response = await fetch(searchUrl.toString());
       const responseData = await response.json();
@@ -171,15 +251,44 @@ export function CaseManagement() {
       }
 
       if (responseData.data && responseData.data.length > 0) {
-        setFoundCases(responseData.data);
-        toast.success(`Found ${responseData.data.length} cases`);
+        // Sort cases by judgment date (newest first)
+        const sortedCases = responseData.data.sort((a: CaseData, b: CaseData) => {
+          // Handle cases where judgmentDate might be null or undefined
+          if (!a.judgmentDate && !b.judgmentDate) return 0;
+          if (!a.judgmentDate) return 1; // Put cases without dates at the end
+          if (!b.judgmentDate) return -1; // Put cases without dates at the end
+          
+          // Convert DD-MM-YYYY format to Date objects for proper comparison
+          const parseDate = (dateStr: string) => {
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+              // DD-MM-YYYY format: rearrange to YYYY-MM-DD for Date constructor
+              return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+            }
+            return new Date(dateStr);
+          };
+          
+          const dateA = parseDate(a.judgmentDate);
+          const dateB = parseDate(b.judgmentDate);
+          
+          // Handle invalid dates
+          if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+          if (isNaN(dateA.getTime())) return 1; // Invalid dates go to end
+          if (isNaN(dateB.getTime())) return -1; // Invalid dates go to end
+          
+          return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
+        });
+
+        setFoundCases(sortedCases);
+        console.log("Found and sorted cases:", sortedCases);
+        toast.success(`Found ${sortedCases.length} cases (sorted by newest first)`);
       } else {
         toast.success(responseData.message || "No matching cases found");
       }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "An unknown error occurred";
-      setError(errorMessage);
+      setValidationErrors({ general: errorMessage });
       toast.error(errorMessage || "Failed to search case");
     } finally {
       setIsLoading(false);
@@ -210,20 +319,14 @@ export function CaseManagement() {
     try {
       setIsSubmitting(true);
 
-      // Extract case IDs from selected cases
-      const diaryNumbers = selectedCases.map(
-        (caseData) => caseData.diaryNumber
-      );
-      console.log("Selected diary numbers:", diaryNumbers);
+      console.log("Selected cases:", selectedCases);
 
-      // Take only the first diary number
-      const firstDiaryNumber = diaryNumbers[0];
-      const response = await fetch("/api/cases/user-cases", {
-        method: "POST",
+      const response = await fetch('/api/cases/user-cases', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ diaryNumber: firstDiaryNumber }),
+        body: JSON.stringify({ selectedCases: selectedCases }),
       });
 
       const result = await response.json();
@@ -233,33 +336,99 @@ export function CaseManagement() {
         throw new Error(result.message || "Failed to save cases");
       }
 
-      // Show success message based on the actual API response
       if (result.success) {
-        toast.success(
-          `Successfully created Order for Diary Number ${result.data.createdCase.diaryNumber}`
-        );
+        toast.success(result.message);
+        if (result.data.errors && result.data.errors.length > 0) {
+          result.data.errors.forEach((error: string) => {
+            toast.error(error);
+          });
+        }
       } else {
         toast.error(result.message || "Case processed but got some errors");
       }
 
-      await fetchUserCases(); // Refresh the cases list
-      // Update UI
+      await fetchUserCases();
       setShowNewCaseModal(false);
       setFoundCases([]);
       setSelectedCases([]);
       setSearchParams({
-        number: "",
-        year: "",
-        court: "",
-      });
+        number: "", year: "", court: "", judgmentType: "", caseType: ""
+      })
+
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to create cases";
+      const errorMessage = err instanceof Error ? err.message : "Failed to create cases";
       toast.error(errorMessage);
       console.error("Error in handleCreateCases:", err);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const generateSignedUrlForCase = async (filePath: string) => {
+    try {
+      const response = await fetch('/api/signed-url', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filePath,
+          bucketName: process.env.NEXT_PUBLIC_HIGH_COURT_PDF_BUCKET || 'high-court-pdfs',
+          expirationMinutes: 30
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate signed URL');
+      }
+
+      const data = await response.json();
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error generating signed URL:', error);
+      throw error;
+    }
+  };
+
+  const handlePdfClick = async (caseData: CaseData, event: React.MouseEvent) => {
+    console.log("caseData:", caseData);
+
+    if (caseData.court === 'High Court' &&
+      caseData.judgmentType === 'JUDGEMENT' &&
+      caseData.file_path) {
+      console.log("Generating signed URL for High Court with JUDGEMENT type");
+      event.preventDefault();
+
+      try {
+        setLoadingUrls(prev => ({ ...prev, [caseData.id]: true }));
+        const signedUrl = await generateSignedUrlForCase(caseData.file_path);
+
+        window.open(signedUrl, '_blank', 'noopener,noreferrer');
+
+        setSignedUrls(prev => ({ ...prev, [caseData.id]: signedUrl }));
+      } catch (error) {
+        console.error('Error generating signed URL:', error);
+        toast.error('Failed to generate PDF link');
+      } finally {
+        setLoadingUrls(prev => ({ ...prev, [caseData.id]: false }));
+      }
+    }
+  };
+
+  const handleBackToSearch = () => {
+    setFoundCases([]);
+    setSelectedCases([]);
+    setSelectAll(false);
+    setValidationErrors({}); // Clear errors on back to search
+  };
+
+  const handleCloseModal = () => {
+    setShowNewCaseModal(false);
+    setFoundCases([]);
+    setSelectedCases([]);
+    setSelectAll(false);
+    setValidationErrors({});
+    setSearchParams({ number: "", year: "", court: "", judgmentType: "", caseType: "" });
   };
 
   return (
@@ -270,6 +439,7 @@ export function CaseManagement() {
           <h1 className="text-2xl font-semibold text-gray-800">
             Case Management
           </h1>
+
 
           <button
             onClick={() => setShowNewCaseModal(true)}
@@ -295,381 +465,35 @@ export function CaseManagement() {
       </div>
 
       {/* Cases List */}
+      <CaseList
+        cases={cases}
+        expandedCases={expandedCases}
+        caseDetails={caseDetails}
+        loadingDetails={loadingDetails}
+        onCaseExpand={handleCaseExpand}
+        handlePdfClick={handlePdfClick}
+      />
 
-      <div className="grid grid-cols-1 gap-2 mt-2 p-4">
-        {cases.length > 0 ? (
-          cases.map((caseItem, index) => {
-            if (!caseItem.id) {
-              console.log("cases 1", cases);
-
-              console.error("Rendering case with no ID:", caseItem);
-              return null;
-            }
-            return (
-              <div
-                key={caseItem.id}
-                className="bg-white border rounded-md hover:shadow-sm transition-shadow text-xs"
-              >
-                {/* Case header - clickable */}
-
-                <div
-                  className="flex justify-between items-center p-2 border-b cursor-pointer"
-                  onClick={() => handleCaseExpand(caseItem)}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-900">
-                      {index + 1}. {caseItem.caseNumber}
-                    </span>
-                    <span className="font-medium text-gray-900">
-                      Diary Number: {caseItem.diaryNumber}
-                    </span>
-                    {caseItem.judgmentDate && (
-                      <span className="text-gray-500">
-                        (Judgment: {caseItem.judgmentDate})
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {loadingDetails[caseItem.id] ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <ChevronDown
-                        className={`w-4 h-4 transition-transform ${
-                          expandedCases[caseItem.id] ? "rotate-180" : ""
-                        }`}
-                      />
-                    )}
-                  </div>
-                </div>
-
-                {/* Case details - initially hidden */}
-
-                {/* Expanded content */}
-                {expandedCases[caseItem.id] && (
-                  <div className="p-4">
-                    {caseDetails[caseItem.id] ? (
-                      <div className="space-y-4">
-                        {/* Display all judgments for this case */}
-                        {caseDetails[caseItem.id].map((detail, idx) => (
-                          <div
-                            key={`${detail.id}-${idx}`}
-                            className="border-b pb-4 last:border-0"
-                          >
-                            <div className="flex justify-between items-start mb-3">
-                              <h4 className="font-medium text-sm text-blue-600">
-                                Judgment {idx + 1}
-                              </h4>
-                              {detail.judgmentDate && (
-                                <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                                  {detail.judgmentDate}
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex flex-wrap gap-4">
-                              {/* Column 1 - Case Info */}
-                              <div className="flex-1 min-w-[200px] space-y-2">
-                                <div>
-                                  <p className="text-gray-500 text-xs">Court</p>
-                                  <p className="font-medium text-sm">
-                                    {detail.court}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-gray-500 text-xs">Date</p>
-                                  <p className="font-medium text-sm">
-                                    {new Date(detail.date).toLocaleDateString()}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-gray-500 text-xs">
-                                    Diary Number
-                                  </p>
-                                  <p className="font-medium text-sm">
-                                    {detail.diaryNumber}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Column 2 - Parties */}
-                              <div className="flex-1 min-w-[200px] space-y-2">
-                                <div>
-                                  <p className="text-gray-500 text-xs">
-                                    Parties
-                                  </p>
-                                  <p className="font-medium text-sm">
-                                    {detail.parties}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-gray-500 text-xs">
-                                    Advocates
-                                  </p>
-                                  <p className="font-medium text-sm">
-                                    {detail.advocates || "N/A"}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Column 3 - Bench & Actions */}
-                              <div className="flex-1 min-w-[200px] space-y-2">
-                                <div>
-                                  <p className="text-gray-500 text-xs">Bench</p>
-                                  <p className="font-medium text-sm">
-                                    {detail.bench}
-                                  </p>
-                                </div>
-
-                                {Array.isArray(detail.judgmentUrl) &&
-                                  detail.judgmentUrl.length > 0 && (
-                                    <div className="mt-2 space-y-1">
-                                      {detail.judgmentUrl.map((url, index) => (
-                                        <a
-                                          key={index}
-                                          href={url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="inline-flex items-center text-blue-600 hover:underline text-xs bg-blue-50 px-2 py-1 rounded"
-                                        >
-                                          <FileText className="w-3 h-3 mr-1" />
-                                          View Judgment PDF {index + 1}
-                                        </a>
-                                      ))}
-                                    </div>
-                                  )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-2 text-gray-500 text-xs">
-                        {loadingDetails[caseItem.id]
-                          ? "Loading..."
-                          : "Failed to load details"}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })
-        ) : (
-          <div className="flex justify-center items-center p-4">
-            <div className="font-bold text-black text-center">
-              No cases found. Please create a new case.
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Search and Create Case Modal */}
-      {showNewCaseModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-auto">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="text-lg font-semibold">
-                {foundCases.length > 0
-                  ? "Select Case(s) to Create"
-                  : "Search Case"}
-              </h3>
-              <button
-                onClick={() => {
-                  setShowNewCaseModal(false);
-                  setFoundCases([]);
-                  setSelectedCases([]);
-                  setSelectAll(false);
-                  setSearchParams({ number: "", year: "", court: "" });
-                }}
-                className="p-1 rounded-full hover:bg-gray-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="p-4 space-y-4">
-              {foundCases.length === 0 ? (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Diary Number <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={searchParams.number}
-                        onChange={(e) =>
-                          setSearchParams({
-                            ...searchParams,
-                            number: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        placeholder="e.g. 72381/1989"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Year <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={searchParams.year}
-                        onChange={(e) =>
-                          setSearchParams({
-                            ...searchParams,
-                            year: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        placeholder="e.g. 1989"
-                      />
-                    </div>
-
-                    <div className="col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Court
-                      </label>
-                      <select
-                        value={searchParams.court}
-                        onChange={(e) =>
-                          setSearchParams({
-                            ...searchParams,
-                            court: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      >
-                        <option value="">Select court</option>
-                        <option value="Supreme Court">Supreme Court</option>
-                        <option value="High Court">High Court</option>
-                        <option value="District Court">District Court</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end">
-                    <button
-                      onClick={handleSearchCase}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-1"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Searching...
-                        </>
-                      ) : (
-                        "Search Case"
-                      )}
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h4 className="font-medium text-gray-800">
-                        Found {foundCases.length} Order Related to this dairy
-                        number {foundCases[0].diaryNumber}
-                      </h4>
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          id="selectAll"
-                          checked={selectAll}
-                          onChange={handleToggleSelectAll}
-                          className="mr-2 h-4 w-4 text-blue-600 rounded"
-                        />
-                        <label
-                          htmlFor="selectAll"
-                          className="text-sm text-gray-700"
-                        >
-                          Select All
-                        </label>
-                      </div>
-                    </div>
-
-                    {foundCases.map((caseData) => (
-                      <div
-                        key={caseData.id}
-                        className={`bg-gray-50 p-4 rounded-md border ${
-                          selectedCases.some((c) => c.id === caseData.id)
-                            ? "border-blue-500"
-                            : ""
-                        }`}
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <h5 className="font-medium text-blue-600">
-                            {caseData.diaryNumber} -{" "}
-                            {caseData.parties.split("/")[0]}
-                          </h5>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <p>
-                            <span className="text-gray-600">Case Number:</span>{" "}
-                            {caseData.caseNumber}
-                          </p>
-                          <p>
-                            <span className="text-gray-600">
-                              Judgment Date:
-                            </span>{" "}
-                            {caseData.judgmentDate}
-                          </p>
-                          <p>
-                            <span className="text-gray-600">Bench:</span>{" "}
-                            {caseData.bench}
-                          </p>
-                          <p>
-                            <span className="text-gray-600">Court:</span>{" "}
-                            {caseData.court}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-gray-600">
-                      {selectedCases.length} case(s) selected
-                    </div>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => {
-                          setFoundCases([]);
-                          setSelectedCases([]);
-                          setSelectAll(false);
-                        }}
-                        className="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-100"
-                      >
-                        Back to Search
-                      </button>
-                      <button
-                        onClick={handleCreateCases}
-                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-1 disabled:opacity-50"
-                        disabled={selectedCases.length === 0 || isSubmitting}
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Creating...
-                          </>
-                        ) : (
-                          <>
-                            <Check className="w-4 h-4" />
-                            Create {selectedCases.length > 1 ? "Cases" : "Case"}
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Search Modal */}
+      <SearchModal
+        showModal={showNewCaseModal}
+        foundCases={foundCases}
+        selectedCases={selectedCases}
+        selectAll={selectAll}
+        searchParams={searchParams}
+        isLoading={isLoading}
+        isSubmitting={isSubmitting}
+        loadingUrls={loadingUrls}
+        errors={validationErrors}
+        onClose={handleCloseModal}
+        setSearchParams={setSearchParams}
+        onSearch={handleSearchCase}
+        onToggleSelectCase={handleToggleSelectCase}
+        onToggleSelectAll={handleToggleSelectAll}
+        handlePdfClick={handlePdfClick}
+        onCreateCases={handleCreateCases}
+        onBackToSearch={handleBackToSearch}
+      />
     </div>
   );
-}
+} 

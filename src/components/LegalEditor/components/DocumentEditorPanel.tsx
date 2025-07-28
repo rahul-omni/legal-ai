@@ -1,6 +1,7 @@
 import { useDocumentEditor } from "../reducersContexts/documentEditorReducerContext";
 import { DocumentPane } from "./DocumentPane";
 import { TabBar } from "./TabBar";
+import { Spinner } from "@/components/Loader";
 
 export function DocumentEditorPanel() {
   const { docEditorState } = useDocumentEditor();
@@ -9,7 +10,7 @@ export function DocumentEditorPanel() {
     <div className="flex-1 bg-white flex flex-col">
       <TabBar />
       <div className="flex-1 flex flex-col min-h-0">
-        {docEditorState.activeTabId ? (
+        {docEditorState.isFileLoading ? <Spinner/> : docEditorState.activeTabId ? (
           <DocumentPane key={docEditorState.activeTabId} />
         ) : (
           <NoDocumentOpenMessage />

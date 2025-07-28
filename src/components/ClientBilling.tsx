@@ -33,15 +33,15 @@ interface Bill {
 interface ClientBillingProps {
   clientId: string;
   clientName: string;
-  clientCompany?: string;
-  clientPhone?: string;
+  clientorganization?: string;
+  clientphone_no?: string;
 }
 
 export function ClientBilling({
   clientId,
   clientName,
-  clientCompany,
-  clientPhone,
+  clientorganization,
+  clientphone_no,
 }: ClientBillingProps) {
   const [bills, setBills] = useState<Bill[]>([]);
   const [showNewBillModal, setShowNewBillModal] = useState(false);
@@ -177,7 +177,7 @@ export function ClientBilling({
   };
 
   const sendWhatsAppMessage = async () => {
-    if (!clientPhone) {
+    if (!clientphone_no) {
       toast.success("Client phone number is not available");
       return;
     }
@@ -192,7 +192,7 @@ export function ClientBilling({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          phoneNumber: clientPhone,
+          phoneNumber: clientphone_no,
           message: messageText,
         }),
       });
@@ -515,9 +515,9 @@ export function ClientBilling({
                 <div className="font-medium text-sm flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-green-500" />
                   {clientName}{" "}
-                  {clientPhone ? `(${clientPhone})` : "(No phone number)"}
+                  {clientphone_no ? `(${clientphone_no})` : "(No phone number)"}
                 </div>
-                {!clientPhone && (
+                {!clientphone_no && (
                   <div className="mt-1 text-xs text-red-500">
                     No phone number available. Please update client information.
                   </div>
@@ -577,7 +577,7 @@ export function ClientBilling({
               <button
                 onClick={sendWhatsAppMessage}
                 className="px-3 py-1.5 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-1"
-                disabled={sendingMessage || !clientPhone}
+                disabled={sendingMessage || !clientphone_no}
               >
                 {sendingMessage ? (
                   <>

@@ -1,28 +1,18 @@
 "use client";
 
-import { useUserContext } from "@/context/userContext";
-import { routeConfig } from "@/lib/routeConfig";
 import {
-  BarChart2,
-  ClipboardCheck,
-  FileStack,
-  FileText,
   FolderKanban,
   Gavel,
   Settings,
   Clock,
   Users,
+  Bell,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const navigationItems = [
-  {
-    name: "Editor",
-    href: "/editor",
-    icon: FileText,
-  },
   {
     name: "Project Hub",
     href: "/projects",
@@ -34,12 +24,6 @@ const navigationItems = [
     icon: Gavel,
   },
   {
-    name: "Analytics",
-    href: "/analytics",
-    icon: BarChart2,
-  },
-  
-  {
     name: "Pending Reviews",
     href: "/pending-reviews",
     icon: Clock,
@@ -48,6 +32,11 @@ const navigationItems = [
     name: "Clients",
     href: "/clients",
     icon: Users,
+  },
+  {
+    name: "Notifications",
+    href: "/notifications",
+    icon: Bell,
   },
 ];
 
@@ -86,6 +75,7 @@ export function Navigation() {
             <Link
               key={item.name}
               href={item.href}
+              title={isExpanded ? "" : item.name}
               className={`
                 relative flex items-center gap-3 px-4 py-2 mx-2 rounded-md transition-colors
                 ${isExpanded ? "" : "justify-center"} 

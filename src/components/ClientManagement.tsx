@@ -14,16 +14,17 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { ClientBilling } from "./ClientBilling";
+import { useSession } from "next-auth/react";
 
 interface Client {
   id: string;
   name: string;
   email: string;
-  phone?: string;
-  company?: string;
+  phone_no?: string;
+  organization?: string;
   billingAddress?: string;
   gstNumber?: string;
   defaultBillingRate?: number;
@@ -36,60 +37,40 @@ export function ClientManagement() {
   const [showNewClientModal, setShowNewClientModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const session = useSession()
+  const { data } = session;
+  const [loader, setLoader] = useState(false);
 
   // Initial dummy clients with Indian context
-  const [clients, setClients] = useState<Client[]>([
-    {
-      id: "client1",
-      name: "Rajesh Sharma",
-      email: "rajesh@sharma.com",
-      phone: "+918431209936",
-      company: "Sharma Enterprises Pvt. Ltd.",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "client2",
-      name: "Tata Consultancy Services",
-      email: "legal@tcs.com",
-      phone: "+91 87654 32109",
-      company: "Tata Consultancy Services Ltd.",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "client3",
-      name: "Priya Patel",
-      email: "priya.patel@gmail.com",
-      phone: "+91 76543 21098",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "client4",
-      name: "Aditya Birla Group",
-      email: "legal@adityabirla.com",
-      phone: "+91 98765 12345",
-      company: "Aditya Birla Group",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "client5",
-      name: "Sundar Krishnan",
-      email: "sundar.k@outlook.com",
-      phone: "+91 89765 43210",
-      company: "Krishna Textiles",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ]);
+  const [clients, setClients] = useState<Client[]>([]);
+
+
+useEffect(() => {
+  const fetchClients = async () => {
+    try {
+      setLoader(true);
+      const response = await fetch(`/api/user-clients?user_id=${data?.user.id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch clients");
+      }
+      const result = await response.json();
+      setClients([...result.clients]);
+      setLoader(false); // assuming your API returns { clients: [...] }
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+    }
+  };
+
+  if (data?.user?.id) {
+    fetchClients();
+  }
+}, [data?.user?.id]);
 
   const [newClient, setNewClient] = useState<Partial<Client>>({
     name: "",
     email: "",
-    phone: "",
-    company: "",
+    phone_no: "",
+    organization: "",
     billingAddress: "",
     gstNumber: "",
     defaultBillingRate: 5000,
@@ -98,59 +79,64 @@ export function ClientManagement() {
 
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
-  const handleCreateClient = () => {
-    // Validate required fields
-    if (!newClient.name || !newClient.email) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
+  const handleCreateClient = async () => {
+      // Validate required fields
+      if (!newClient.name || !newClient.email) {
+        toast.error("Please fill in all required fields");
+        return;
+      }
 
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newClient.email || "")) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(newClient.email || "")) {
+        toast.error("Please enter a valid email address");
+        return;
+      }
 
-    setIsSubmitting(true);
+      setIsSubmitting(true);
 
-    // Simulate API call delay
-    setTimeout(() => {
-      // Create new client with dummy ID and timestamps
-      const createdClient: Client = {
-        id: `client-${Date.now()}`,
-        name: newClient.name || "",
-        email: newClient.email || "",
-        phone: newClient.phone,
-        company: newClient.company,
-        billingAddress: newClient.billingAddress,
-        gstNumber: newClient.gstNumber,
-        defaultBillingRate: newClient.defaultBillingRate,
-        paymentTerms: newClient.paymentTerms,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      try {
+        const response = await fetch("/api/user-clients", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...newClient,
+            userId: data?.user?.id, // make sure this is available
+          }),
+        });
 
-      // Add the new client to the state
-      setClients((prevClients) => [createdClient, ...prevClients]);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to create client");
+        }
 
-      // Close the modal and reset form
-      setShowNewClientModal(false);
-      setNewClient({
-        name: "",
-        email: "",
-        phone: "",
-        company: "",
-        billingAddress: "",
-        gstNumber: "",
-        defaultBillingRate: 5000,
-        paymentTerms: "30 days",
-      });
+        const { client } = await response.json();
 
-      setIsSubmitting(false);
-      toast.success("Client created successfully");
-    }, 500);
-  };
+        // Add the new client to the state
+        setClients((prevClients) => [client, ...prevClients]);
+
+        // Close the modal and reset form
+        setShowNewClientModal(false);
+        setNewClient({
+          name: "",
+          email: "",
+          phone_no: "",
+          organization: "",
+          billingAddress: "",
+          gstNumber: "",
+          defaultBillingRate: 5000,
+          paymentTerms: "30 days",
+        });
+
+        toast.success("Client created successfully");
+      } catch (error: any) {
+        toast.error(error.message || "Error creating client");
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
 
   // Filter clients based on search query
   const filteredClients = clients.filter((client) => {
@@ -158,7 +144,7 @@ export function ClientManagement() {
     return (
       client.name.toLowerCase().includes(searchLower) ||
       client.email.toLowerCase().includes(searchLower) ||
-      (client.company && client.company.toLowerCase().includes(searchLower))
+      (client.organization && client.organization.toLowerCase().includes(searchLower))
     );
   });
 
@@ -207,7 +193,7 @@ export function ClientManagement() {
 
       {/* Clients List */}
       <div className="flex-1 p-6 overflow-auto">
-        {filteredClients.length === 0 ? (
+        {loader ? <Loader2/> : filteredClients.length === 0 ? (
           <div className="text-center py-12">
             <User className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-1">
@@ -232,7 +218,7 @@ export function ClientManagement() {
           <div className="bg-white rounded-md border overflow-hidden">
             {/* Table Header */}
             <div className="grid grid-cols-12 gap-2 py-2 px-3 text-xs font-medium text-gray-500 border-b bg-gray-50">
-              <div className="col-span-3">Client / Company</div>
+              <div className="col-span-3">Client / organization</div>
               <div className="col-span-3">Contact</div>
               <div className="col-span-2">Billing</div>
               <div className="col-span-2">Cases</div>
@@ -250,9 +236,9 @@ export function ClientManagement() {
                     <div className="font-medium text-gray-900">
                       {client.name}
                     </div>
-                    {client.company && (
+                    {client.organization && (
                       <div className="text-xs text-gray-500 mt-0.5">
-                        {client.company}
+                        {client.organization}
                       </div>
                     )}
                   </div>
@@ -262,10 +248,10 @@ export function ClientManagement() {
                       <Mail className="w-3 h-3 text-gray-400" />
                       <span className="truncate">{client.email}</span>
                     </div>
-                    {client.phone && (
+                    {client.phone_no && (
                       <div className="flex items-center gap-1 mt-0.5">
                         <Phone className="w-3 h-3 text-gray-400" />
-                        <span>{client.phone}</span>
+                        <span>{client.phone_no}</span>
                       </div>
                     )}
                   </div>
@@ -328,7 +314,7 @@ export function ClientManagement() {
       {/* New Client Modal */}
       {showNewClientModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl" style={{height: "80vh", "overflow": "scroll"}}>
             <div className="flex justify-between items-center p-6 border-b">
               <h3 className="text-xl font-semibold">Add New Client</h3>
               <button
@@ -367,21 +353,21 @@ export function ClientManagement() {
                   </div>
                 </div>
 
-                {/* Company */}
+                {/* organization */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Company
+                    organization
                   </label>
                   <div className="relative">
                     <Building className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                       type="text"
-                      value={newClient.company}
+                      value={newClient.organization}
                       onChange={(e) =>
-                        setNewClient({ ...newClient, company: e.target.value })
+                        setNewClient({ ...newClient, organization: e.target.value })
                       }
                       className="w-full pl-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter company name"
+                      placeholder="Enter organization name"
                     />
                   </div>
                 </div>
@@ -414,9 +400,9 @@ export function ClientManagement() {
                     <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                       type="tel"
-                      value={newClient.phone}
+                      value={newClient.phone_no}
                       onChange={(e) =>
-                        setNewClient({ ...newClient, phone: e.target.value })
+                        setNewClient({ ...newClient, phone_no: e.target.value })
                       }
                       className="w-full pl-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Enter phone number"
@@ -564,16 +550,16 @@ export function ClientManagement() {
                       <Mail className="w-4 h-4 text-gray-400" />
                       <span>{selectedClient.email}</span>
                     </div>
-                    {selectedClient.phone && (
+                    {selectedClient.phone_no && (
                       <div className="flex items-center gap-2 text-sm">
                         <Phone className="w-4 h-4 text-gray-400" />
-                        <span>{selectedClient.phone}</span>
+                        <span>{selectedClient.phone_no}</span>
                       </div>
                     )}
-                    {selectedClient.company && (
+                    {selectedClient.organization && (
                       <div className="flex items-center gap-2 text-sm">
                         <Building className="w-4 h-4 text-gray-400" />
-                        <span>{selectedClient.company}</span>
+                        <span>{selectedClient.organization}</span>
                       </div>
                     )}
                   </div>
@@ -624,8 +610,8 @@ export function ClientManagement() {
               <ClientBilling
                 clientId={selectedClient.id}
                 clientName={selectedClient.name}
-                clientCompany={selectedClient.company}
-                clientPhone={selectedClient.phone}
+                clientorganization={selectedClient.organization}
+                clientphone_no={selectedClient.phone_no}
               />
             </div>
           </div>

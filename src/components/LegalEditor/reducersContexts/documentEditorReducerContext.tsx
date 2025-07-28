@@ -33,6 +33,10 @@ interface DocumentEditorState {
   translationVendor: TranslationVendor;
   localFileName: string;
   localContent: string;
+  isAIEdit: boolean;
+  isTranslating: boolean;
+  isFileLoading: boolean;
+  translatingTab: string;
 }
 
 // Action types - renamed to match handler functions
@@ -57,7 +61,10 @@ type DocumentEditorAction =
         callback?: (_newFile: FileSystemNodeProps) => void;
       };
     }
-  | { type: "UPDATE_TAB_CONTENT"; payload: { tabId: string; content: string } }
+  | { type: "UPDATE_TAB_CONTENT"; payload: { tabId: string; content: string, isAIEdit?: boolean } }
+  | { type: "UPDATE_IS_AI_EDIT"; payload : { isAIEdit: boolean } }
+  | { type: "IS_TRANSLATING"; payload : { isTranslating: boolean, translatingTab: string } }
+  | { type: "FILE_LOADING"; payload : { isFileLoading: boolean } }
   | {
       type: "UPDATE_TAB_NAME";
       payload: { tabId: string; name: string; fileId?: string };
@@ -88,6 +95,19 @@ function documentEditorReducer(
         activeTabId: action.payload,
       };
 
+    case "UPDATE_IS_AI_EDIT":
+      return {
+        ...state,
+        isAIEdit: !!action.payload.isAIEdit,
+      };
+    
+    case "IS_TRANSLATING":
+      return {
+        ...state,
+        isTranslating: !!action.payload.isTranslating,
+        translatingTab: action.payload.translatingTab
+      };
+
     case "TAB_CLOSE": {
       const newTabs = state.openTabs.filter((tab) => tab.id !== action.payload);
       return {
@@ -112,6 +132,9 @@ function documentEditorReducer(
 
     case "CANCEL_SAVE":
       return { ...state, isSaving: false };
+    
+    case "FILE_LOADING":
+      return { ...state, isFileLoading: !!action.payload.isFileLoading };
 
     case "FILE_SELECT": {
       const file = action.payload;
@@ -160,6 +183,7 @@ function documentEditorReducer(
             ? { ...tab, content: action.payload.content, isUnsaved: true }
             : tab
         ),
+        isAIEdit: !!action.payload.isAIEdit,
       };
 
     case "UPDATE_TAB_NAME":
@@ -209,6 +233,10 @@ const initialState: DocumentEditorState = {
   translationVendor: "openai",
   localFileName: "Untitled",
   localContent: "",
+  isAIEdit: false,
+  isTranslating: false,
+  isFileLoading: false,
+  translatingTab: "",
 };
 
 // Create context with default values
@@ -257,52 +285,71 @@ export function DocumentEditorProvider({
   };
 
   const handleTranslate = async (
-    vendor: TranslationVendor,
-    language: string
-  ): Promise<void> => {
-    docEditorDispatch({
-      type: "TRANSLATE",
-      payload: { vendor, language },
+  vendor: TranslationVendor,
+  language: string
+): Promise<void> => {
+  if (!docEditorState.activeTabId) return;
+
+  const activeTab = docEditorState.openTabs.find(
+    (tab) => tab.id === docEditorState.activeTabId
+  );
+  if (!activeTab) return;
+
+  docEditorDispatch({
+    type: "IS_TRANSLATING",
+    payload: { isTranslating: true, translatingTab:  activeTab.id},
+  });
+
+  try {
+    const response = await fetch("/api/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        vendor,
+        sourceText: activeTab.content,
+        targetLanguage: language,
+        mode: "formal",
+      }),
     });
 
-    if (!docEditorState.activeTabId) return;
+    if (!response.body) throw new Error("Empty stream");
 
-    const activeTab = docEditorState.openTabs.find(
-      (tab) => tab.id === docEditorState.activeTabId
-    );
-    if (!activeTab) return;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullContent = "";
 
-    try {
-      const sourceText = activeTab.content;
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
 
-      const response = await fetch("/api/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vendor,
-          sourceText,
-          targetLanguage: language,
-          mode: "formal",
-        }),
-      });
-
-      if (!response.ok) throw new Error("Translation failed");
-      const data = await response.json();
+      const chunk = decoder.decode(value, { stream: true });
+      fullContent += chunk;
 
       docEditorDispatch({
         type: "UPDATE_TAB_CONTENT",
         payload: {
           tabId: docEditorState.activeTabId,
-          content: data.translation,
+          content: fullContent,
+          isAIEdit: true,
         },
       });
-
-      return Promise.resolve();
-    } catch (error) {
-      console.error("Translation error:", error);
-      return Promise.reject(error);
     }
-  };
+
+    docEditorDispatch({
+      type: "IS_TRANSLATING",
+      payload: { isTranslating: false,  translatingTab:  "" },
+    });
+
+    return Promise.resolve();
+  } catch (error) {
+    console.error("Translation error:", error);
+    docEditorDispatch({
+      type: "IS_TRANSLATING",
+      payload: { isTranslating: false, translatingTab:  "" },
+    });
+    return Promise.reject(error);
+  }
+};
 
   const handleFileReviewRequest = () => {
     // This will be implemented in the DocumentPane component

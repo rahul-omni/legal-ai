@@ -22,22 +22,48 @@ class FileSystemNodeService {
     }
   }
 
-  async findNodesByParentId(
-    userId: string,
-    parentId: string | null
-  ): Promise<FileSystemNode[]> {
+  async getConcatenatedContentByIds(ids: string[]): Promise<string> {
     try {
-      return await db.fileSystemNode.findMany({
+      const nodes = await db.fileSystemNode.findMany({
         where: {
-          parentId: parentId || null,
-          userId,
+          id: {
+            in: ids,
+          },
         },
-        orderBy: { type: "desc" },
+        select: {
+          content: true, // Only fetch content
+        },
       });
-    } catch {
-      throw new ErrorNotFound("Failed to find nodes in the database");
-    }
+    return nodes.map((node) => node.content || "").join("\n"); // Join with newline or any separator
+  } catch {
+    throw new Error("Failed to retrieve and concatenate content from nodes");
   }
+}
+
+  async findNodesByParentId(
+  userId: string,
+  parentId: string | null,
+): Promise<Pick<FileSystemNode, 'id' | 'name' | 'type' | 'parentId' | 'isExpanded' | 'createdAt' | 'updatedAt'>[]> {
+  try {
+    return await db.fileSystemNode.findMany({
+      where: {
+        parentId: parentId || null,
+        userId,
+      },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        parentId: true,
+        isExpanded: true,
+        createdAt: true,
+        updatedAt: true
+      },
+    });
+  } catch {
+    throw new ErrorNotFound("Failed to find nodes in the database");
+  }
+}
 
   async createNode(
     node: CreateNodeInput,

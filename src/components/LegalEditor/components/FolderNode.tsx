@@ -1,7 +1,5 @@
-import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
-import useAxios from "@/hooks/api/useAxios";
 import { FileSystemNodeProps } from "@/types/fileSystem";
-import { Delete, FilePlus, Folder, FolderOpen, Trash2 } from "lucide-react";
+import { FilePlus, Folder, FolderOpen, Loader2 } from "lucide-react";
 import { JSX } from "react";
 
 interface FolderNodeProps {
@@ -14,6 +12,7 @@ interface FolderNodeProps {
     _parentId?: string
   ) => void;
   renderNode: (_node: FileSystemNodeProps, _depth: number) => JSX.Element;
+  loader: boolean
 }
 
 const FolderNode = ({
@@ -23,6 +22,7 @@ const FolderNode = ({
   onToggleExpand,
   onFileUpload,
   renderNode,
+  loader,
 }: FolderNodeProps) => {
   return (
     <div key={node.id} className="relative">
@@ -70,7 +70,7 @@ const FolderNode = ({
                 id={`file-${node.id}`}
                 type="file"
                 className="hidden"
-                accept=".docx,.pdf,.txt"
+                accept=".docx,.pdf,.txt, .png, .jpg, .jpeg"
                 onChange={async (e) => {
                   e.stopPropagation();
                   await onFileUpload(e, node.id);
@@ -80,15 +80,15 @@ const FolderNode = ({
           </div>
         </div>
       </div>
-      {node.isExpanded && Array.isArray(node.children) && (
+      {node.isExpanded &&  (
         <div className="ml-5">
-          {node.children.length > 0 ? (
+          {loader ? <Loader2 className="w-4 h-4 animate-spin" /> : (Array.isArray(node.children) && node.children.length > 0 ? (
             node.children.map((child) => renderNode(child, depth + 1))
           ) : (
             <div className="text-xs text-gray-400 italic ml-6 mt-1">
               Empty folder
             </div>
-          )}
+          ))}
         </div>
       )}
     </div>

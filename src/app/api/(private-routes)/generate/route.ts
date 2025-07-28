@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
+import { fileSystemNodeService } from "../../services/fileSystemNodeService";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -15,17 +16,18 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { text, prompt } = body;
+    const { text, prompt, files } = body;
+    const newText = await fileSystemNodeService.getConcatenatedContentByIds(files);
 
-    const userContent = text ? `${prompt}:\n\n${text}` : prompt;
+    const userContent = files.length ? `${prompt}:\n\n${newText}` : text ? `${prompt}:\n\n${text}` : prompt;
 
     // Create streaming response
     const stream = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are a legal document assistant. Respond only with clean, well-formatted rich text. Add proper HTML tags without head tag.`,
+          content: `You are a legal document assistant. Respond in legal language and be a little elaborate in your answers.`
         },
         {
           role: "user",

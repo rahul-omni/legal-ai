@@ -1,16 +1,16 @@
-import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
-import useAxios from "@/hooks/api/useAxios";
 import { Trash2 } from "lucide-react";
 import FileIconDisplay from "./FileIconDisplay";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { IconLoader } from "@/components/Loader";
-import { MouseEvent } from "react";
+import { trimName } from "@/helper/utils";
 
 interface FileNodeProps {
   node: FileSystemNodeProps;
   depth: number;
   selectedDocument?: FileSystemNodeProps;
   onDocumentSelect: (_file: FileSystemNodeProps) => void;
+  handleDelete: (e: React.MouseEvent<HTMLButtonElement>, fileId: string) => Promise<void>;
+  isDeleting: boolean
 }
 
 const FileNode = ({
@@ -18,13 +18,9 @@ const FileNode = ({
   depth,
   selectedDocument,
   onDocumentSelect,
+  handleDelete,
+  isDeleting,
 }: FileNodeProps) => {
-  const { fetchData, loading: deleteLoading } = useAxios();
-
-  const handleDelete = async (e: MouseEvent, nodeId: string) => {
-    e.stopPropagation();
-    await fetchData(apiRouteConfig.privateRoutes.node(nodeId), "DELETE");
-  };
 
   return (
     <div
@@ -43,18 +39,21 @@ const FileNode = ({
       <div className="flex justify-between w-full">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 flex items-center justify-center shrink-0">
-            <FileIconDisplay fileName={node.name} />
+            <FileIconDisplay fileName={node.name}/>
           </div>
-          <span className="text-sm text-gray-600/80">{node.name}</span>
+          <span className="text-sm text-gray-600/80" title={node.name}>{trimName(node.name)}</span>
         </div>
 
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 transition-opacity">
           <button
-            disabled={deleteLoading}
+            disabled={isDeleting}
             className="p-1 rounded-md hover:bg-gray-200/70 cursor-pointer"
-            onClick={(e) => handleDelete(e, node.id)}
+            onClick={(e) => {
+               e.preventDefault();
+               handleDelete(e, node.id);
+              }}
           >
-            {deleteLoading ? (
+            {isDeleting ? (
               <IconLoader />
             ) : (
               <Trash2 className="w-4 h-4 text-gray-500/80 hover:text-black" />
