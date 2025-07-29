@@ -15,7 +15,9 @@ const searchSchema = z.object({
   year: z.string().length(4, "Year must be 4 digits"),
   court: z.string().optional().default("Supreme Court"),
   judgmentType: z.string().optional(),
-  caseType: z.string().optional()
+  caseType: z.string().optional(),
+  city: z.string().optional(),
+  district: z.string().optional()
 });
 
 export async function GET(request: NextAuthRequest) {
@@ -26,7 +28,9 @@ export async function GET(request: NextAuthRequest) {
       year: searchParams.get('year'),
       court: searchParams.get('court') ? decodeURIComponent(searchParams.get('court')!) : undefined,
       judgmentType: searchParams.get('judgmentType') || '',
-      caseType: searchParams.get('caseType') || ''
+      caseType: searchParams.get('caseType') || '',
+      city: searchParams.get('city') || '',
+      district: searchParams.get('district') || ''
     };
     
     const validated = searchSchema.parse(queryParams);
@@ -61,6 +65,21 @@ export async function GET(request: NextAuthRequest) {
       };
     }
 
+    if(validated.city && validated.city.trim() !== ''){
+      whereConditions.city = {
+        contains: validated.city,
+        mode: 'insensitive'
+      };
+    }
+
+    if(validated.district && validated.district.trim() !== ''){
+      whereConditions.district = {
+        contains: validated.district,
+        mode: 'insensitive'
+      };
+    }
+    
+
     const caseData = await prisma.caseManagement.findMany({
       where: whereConditions
     });
@@ -72,7 +91,11 @@ export async function GET(request: NextAuthRequest) {
           message: 'No matching cases found',
           searchedParams: {
             diaryNumber: fullDiaryNumber,
-            court: validated.court
+            court: validated.court,
+            city: validated.city,
+            district: validated.district,
+            caseType: validated.caseType,
+            judgmentType: validated.judgmentType
           }
         }, 
         { status: 200 }

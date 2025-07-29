@@ -159,9 +159,9 @@ const ProjectHub = () => {
             <thead className="bg-background-dark text-left">
               <tr>
                 <th className="px-4 py-3 font-semibold text-text-light">Name</th>
-                <th className="px-4 py-3 font-semibold text-text-light w-32">Created On</th>
-                <th className="px-4 py-3 font-semibold text-text-light w-32">Last Modified</th>
-                <th className="px-4 py-3 text-center font-semibold text-text-light w-40">Actions</th>
+                <th className="px-4 py-3 font-semibold text-text-light w-40">Created On</th>
+                <th className="px-4 py-3 font-semibold text-text-light w-40">Last Modified</th>
+                <th className="px-4 py-3 font-semibold text-text-light w-40">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -187,19 +187,8 @@ const ProjectHub = () => {
                   <td className="px-4 py-3 text-text-light text-sm">
                     {moment(project.updatedAt).format("MMM D, YYYY")}
                   </td>
-                  <td className="px-4 py-3 flex items-center justify-center">
-                    <button
-                      onClick={() => {
-                        if (project.type == "FOLDER"){
-                          router.push(`/projects/${project.id}/edit`)
-                        }else{
-                          router.push(`/projects/root/edit/${project.id}`)
-                        }
-                      }}
-                      className="text-sm px-3 py-1 bg-info-light text-info hover:bg-info rounded mr-2"
-                    >
-                      Open
-                    </button>
+                  <td className="px-4 py-3">
+                    
                     <button
                       onClick={(e) => {
                         if (window.confirm("Are you sure you want to delete this project?")) {
