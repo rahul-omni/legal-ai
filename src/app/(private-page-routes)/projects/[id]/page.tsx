@@ -108,9 +108,9 @@ const ProjectFolderTable: React.FC = () => {
           <thead className="bg-background-dark text-left">
             <tr>
               <th className="px-4 py-3 font-semibold text-text-light">Name</th>
-              <th className="px-4 py-3 font-semibold text-text-light w-32">Created On</th>
-              <th className="px-4 py-3 font-semibold text-text-light w-32">Last Modified</th>
-              <th className="px-4 py-3 text-center font-semibold text-text-light w-40">Actions</th>
+              <th className="px-4 py-3 font-semibold text-text-light w-40">Created On</th>
+              <th className="px-4 py-3 font-semibold text-text-light w-40">Last Modified</th>
+              <th className="px-4 py-3 font-semibold text-text-light w-40">Actions</th>
             </tr>
           </thead>
           <tbody>
