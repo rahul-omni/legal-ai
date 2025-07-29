@@ -134,10 +134,6 @@ const ProjectHub = () => {
       </header>
 
       <div className="flex items-center justify-between border-b bg-white px-6 py-3">
-      <div className="relative">
-          <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted" />
-          <input type="text" value={state.searchQuery} onChange={(e) => dispatch({ type: "SET_SEARCH_QUERY", payload: e.target.value })} placeholder="Search projects..." className="pl-10 pr-4 py-2 border border-border rounded-md w-64 text-sm focus:ring-2 focus:ring-border-dark" />
-        </div>
         <div className="flex items-center gap-3">
           <button onClick={() => dispatch({ type: "SET_IS_NEW_PROJECT_MODAL_OPEN", payload: true })} className="bg-primary text-white px-3 py-1.5 rounded-md flex items-center gap-2 text-sm hover:bg-primary-dark">
             <FolderPlus className="w-4 h-4" /> New Project
@@ -151,7 +147,10 @@ const ProjectHub = () => {
           <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => handleFileUpload(e, true)} accept=".txt,.doc,.docx,.pdf,.png,.jpg,.jpeg" />
         </div>
 
-        
+        <div className="relative">
+          <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted" />
+          <input type="text" value={state.searchQuery} onChange={(e) => dispatch({ type: "SET_SEARCH_QUERY", payload: e.target.value })} placeholder="Search projects..." className="pl-10 pr-4 py-2 border border-border rounded-md w-64 text-sm focus:ring-2 focus:ring-border-dark" />
+        </div>
       </div>
 
       <div className="flex-1 overflow-auto p-6 bg-background">
@@ -160,8 +159,8 @@ const ProjectHub = () => {
             <thead className="bg-background-dark text-left">
               <tr>
                 <th className="px-4 py-3 font-semibold text-text-light">Name</th>
-                <th className="px-4 py-3 font-semibold text-text-light w-40">Created On</th>
-                <th className="px-4 py-3 font-semibold text-text-light w-40">Last Modified</th>
+                <th className="px-4 py-3 font-semibold text-text-light w-32">Created On</th>
+                <th className="px-4 py-3 font-semibold text-text-light w-32">Last Modified</th>
                 <th className="px-4 py-3 text-center font-semibold text-text-light w-40">Actions</th>
               </tr>
             </thead>

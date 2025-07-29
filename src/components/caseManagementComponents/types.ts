@@ -27,6 +27,8 @@ export interface SearchParams {
   court: string;  // Optional: Empty string = "All Courts"
   judgmentType: string; // Optional: Empty string = "All Judgment Types" 
   caseType: string;     // Optional: Empty string = "All Case Types"
+  city: string;
+  district: string;
 }
 
 export interface ValidationErrors {

@@ -1,24 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, Search } from "lucide-react";
 import toast from "react-hot-toast";
-
-interface CaseData1 {
-  id: string;
-  serialNumber: string;
-  diaryNumber: string;
-  caseNumber: string;
-  parties: string;
-  advocates: string;
-  bench: string;
-  judgmentBy: string;
-  judgmentDate: string;
-  judgmentText: string;
-  judgmentUrl: string;
-  court: string;
-  date: string;
-  createdAt: string;
-  updatedAt: string;
-}
 import { CaseData, SearchParams, ValidationErrors } from "./caseManagementComponents/types";
 import { CaseList } from "./caseManagementComponents/CaseList";
 import { SearchModal } from "./caseManagementComponents/SearchModal";
@@ -35,13 +17,17 @@ export function CaseManagement() {
   const [selectAll, setSelectAll] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
-  const [searchParams, setSearchParams] = useState<SearchParams>({
+  const defaultSearchParams:SearchParams = {
     number: "",
     year: "",
     court: "",
     judgmentType: "",
     caseType: "",
-  });
+    city: "",
+    district: ""
+  }
+
+  const [searchParams, setSearchParams] = useState<SearchParams>(defaultSearchParams);
 
   const [newlyCreatedCase, setNewlyCreatedCase] = useState<CaseData | null>(null);
   const [expandedCases, setExpandedCases] = useState<Record<string, boolean>>({});
@@ -157,22 +143,21 @@ export function CaseManagement() {
     try {
       setIsLoading(true);
       setError("");
-      const response = await fetch("/api/cases/user-cases", {
-        method: "GET",
+      const response = await fetch('/api/cases/user-cases', {
+        method: 'GET'
       });
       const data = await response.json();
-
 
       if (data.success && data.data) {
         setCases(data.data);
       } else {
-        setError(data.message || "Failed to fetch cases");
-        toast.error(data.message || "Failed to fetch cases");
+        setError(data.message || 'Failed to fetch cases');
+        toast.error(data.message || 'Failed to fetch cases');
       }
     } catch (error) {
-      console.error("Error fetching cases:", error);
-      setError("Failed to load cases");
-      toast.error("Failed to load cases");
+      console.error('Error fetching cases:', error);
+      setError('Failed to load cases');
+      toast.error('Failed to load cases');
     } finally {
       setIsLoading(false);
     }
@@ -211,6 +196,14 @@ export function CaseManagement() {
       
       if (searchParams.caseType) {
         searchUrl.searchParams.append("caseType", searchParams.caseType);
+      }
+
+      if (searchParams.city) {
+        searchUrl.searchParams.append("city", searchParams.city);
+      }
+
+      if (searchParams.district) {
+        searchUrl.searchParams.append("district", searchParams.district);
       }
 
       const response = await fetch(searchUrl.toString());
@@ -259,10 +252,10 @@ export function CaseManagement() {
   };
 
   const handleToggleSelectCase = (caseData: CaseData) => {
-    setSelectedCases((prev) => {
-      const isSelected = prev.some((c) => c.id === caseData.id);
+    setSelectedCases(prev => {
+      const isSelected = prev.some(c => c.id === caseData.id);
       if (isSelected) {
-        return prev.filter((c) => c.id !== caseData.id);
+        return prev.filter(c => c.id !== caseData.id);
       } else {
         return [...prev, caseData];
       }
@@ -311,9 +304,7 @@ export function CaseManagement() {
       setShowNewCaseModal(false);
       setFoundCases([]);
       setSelectedCases([]);
-      setSearchParams({
-        number: "", year: "", court: "", judgmentType: "", caseType: ""
-      })
+      setSearchParams(defaultSearchParams)
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to create cases";
@@ -352,7 +343,7 @@ export function CaseManagement() {
 
   const handlePdfClick = async (caseData: CaseData, event: React.MouseEvent) => {
     if (caseData.court === 'High Court' &&
-      caseData.judgmentType === 'JUDGMENT' &&
+      caseData.judgmentType === 'JUDGEMENT' &&
       caseData.file_path) {
       event.preventDefault();
 
@@ -385,7 +376,7 @@ export function CaseManagement() {
     setSelectedCases([]);
     setSelectAll(false);
     setValidationErrors({});
-    setSearchParams({ number: "", year: "", court: "", judgmentType: "", caseType: "" });
+    setSearchParams(defaultSearchParams);
   };
 
   return (
@@ -397,13 +388,12 @@ export function CaseManagement() {
             Case Management
           </h1>
 
-
           <button
             onClick={() => setShowNewCaseModal(true)}
             className="px-4 py-2 bg-primary text-white rounded-lg flex items-center gap-2 hover:bg-primary-dark"
           >
             <Plus className="w-4 h-4" />
-            Add Case
+            New Case
           </button>
         </div>
 

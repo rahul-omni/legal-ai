@@ -114,7 +114,9 @@ export function SearchResults({
                         </span>
                         {caseData.judgmentType && (
                           <span className="px-3 py-1.5 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
-                            {caseData.judgmentType}
+                            {caseData.judgmentType === 'JUDGEMENT' ? 'Judgement' : 
+                             caseData.judgmentType === 'ORDER' ? 'Order' : 
+                             caseData.judgmentType}
                           </span>
                         )}
                       </div>
@@ -154,7 +156,7 @@ export function SearchResults({
                           className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-primary bg-info-light rounded-lg hover:bg-info transition-colors border border-info/20"
                           onClick={(e) => {
                             if (caseData.court === 'High Court' && 
-                                caseData.judgmentType === 'JUDGMENT' &&
+                                caseData.judgmentType === 'JUDGEMENT' &&
                                 caseData.file_path) {
                               handlePdfClick(caseData, e);
                             }
@@ -162,7 +164,7 @@ export function SearchResults({
                         >
                           <FileText className="w-4 h-4" />
                           {caseData.court === 'High Court' &&
-                            caseData.judgmentType === 'JUDGMENT' &&
+                            caseData.judgmentType === 'JUDGEMENT' &&
                             loadingUrls[caseData.id] ? (
                             <>
                               <Loader2 className="w-4 h-4 animate-spin" />

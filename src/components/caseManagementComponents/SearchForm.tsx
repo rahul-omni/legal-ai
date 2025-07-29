@@ -1,5 +1,5 @@
 import { Loader2, Search } from "lucide-react";
-import { HIGH_COURT_CASE_TYPES, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
+import { HIGH_COURT_CASE_TYPES, HIGH_COURT_CITY, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
 import { SearchParams, ValidationErrors } from "./types";
 
 interface SearchFormProps {
@@ -53,8 +53,28 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
           )}
         </div>
 
+        {searchParams.court === 'High Court' && (
+          <div>
+            <label className="block text-sm font-medium text-text-light mb-2">
+              City
+            </label>
+            <select
+              value={searchParams.city}
+              onChange={(e) =>
+                setSearchParams({ ...searchParams, city: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light"
+            >
+              <option value="">All City</option>
+              {HIGH_COURT_CITY.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+        </div>
+        )}
+
         {/* Case Type Selection */}
-        {searchParams.court && (
+        {searchParams.court === "High Court" && (
           <div>
             <label className="block text-sm font-medium text-text-light mb-2">
               Case Type
@@ -91,7 +111,7 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ${
                 errors?.number ? 'border-error' : 'border-border'
               }`}
-              placeholder="e.g. 72381/1989"
+              placeholder="e.g. 72381"
             />
             {errors?.number && (
               <p className="mt-1 text-sm text-error">{errors.number}</p>
@@ -119,22 +139,24 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
           </div>
         </div>
 
-        {/* High Court Specific Options */}
+        {/* High Court City Options */}
         {searchParams.court === 'High Court' && (
           <div>
-            <label className="block text-sm font-medium text-text-light mb-2">
-              Judgment Type
+            <label htmlFor="judgmentType" className="block text-sm font-medium text-text mb-1">
+              Judgement Type
             </label>
             <select
+              id="judgmentType"
+              name="judgmentType"
               value={searchParams.judgmentType}
               onChange={(e) =>
                 setSearchParams({ ...searchParams, judgmentType: e.target.value })
               }
-              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light"
+              className="w-full px-3 py-2 border border-border rounded-md shadow-sm focus:ring-primary focus:border-primary"
             >
-              <option value="">All Judgment Types</option>
-              <option value="JUDGMENT">JUDGMENT</option>
-              <option value="ORDER">ORDER</option>
+              <option value="">All Types</option>
+              <option value="JUDGEMENT">Judgement</option>
+              <option value="ORDER">Order</option>
             </select>
           </div>
         )}
