@@ -38,14 +38,14 @@ export function SaveDropdown({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <div className="flex">
+      <div className="flex border-2 border-border rounded-lg">
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className={`px-3 py-1.5 text-sm ${
-            isNewFile ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'
-          } rounded-l-lg hover:bg-opacity-80 transition-colors flex items-center gap-2 border-r ${
-            isNewFile ? 'border-blue-200' : 'border-green-200'
+          className={`px-4 py-3 text-sm ${
+            isNewFile ? 'bg-primary text-white' : 'bg-white text-primary'
+          } rounded-l-lg hover:bg-opacity-80 transition-colors flex items-center gap-2 border-r 
+            
           } ${isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}
         >
           {isSaving ? (
@@ -59,8 +59,8 @@ export function SaveDropdown({
         <button
           onClick={() => setShowDropdown(!showDropdown)}
           disabled={isSaving}
-          className={`px-2 py-1.5 text-sm ${
-            isNewFile ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'
+          className={`px-4 py-3 text-sm ${
+            isNewFile ? 'bg-primary text-white' : 'bg-white text-primary'
           } rounded-r-lg hover:bg-opacity-80 transition-colors ${
             isSaving ? 'opacity-70 cursor-not-allowed' : ''
           }`}

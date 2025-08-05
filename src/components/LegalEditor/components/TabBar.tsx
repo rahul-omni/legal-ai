@@ -31,24 +31,19 @@ export function TabBar() {
   };
 
   return (
-    <div className="flex items-center h-9 border-b border-gray-200 bg-gray-50/80">
+    <div className="flex items-center h-9 border-gray-200 bg-gray-50/80 m-6">
       {/* New Tab Button */}
-      <button
-        onClick={handleNewFile}
-        className="h-full px-2 text-gray-500 hover:bg-gray-100 transition-colors border-l border-gray-200"
-      >
-        <Plus className="w-3.5 h-3.5" />
-      </button>
-      <div className="flex-1 flex items-center">
+      
+      <div className="flex items-center gap-2">
         {openTabs.map((tab) => (
           <div
             key={tab.id}
             onClick={() => handleTabClick(tab)}
-            className={`group flex items-center h-full px-3 py-1 rounded border-r border-gray-200 cursor-pointer
+            className={`group flex items-center h-full px-4 py-3 rounded-lg border-2 border-bo cursor-pointer
                       ${
                         activeTabId === tab.id
-                          ? "bg-white text-gray-700 border-b-0"
-                          : "text-gray-500 hover:bg-gray-100"
+                          ? "bg-white text-gray-700 border-b-2 border-border"
+                          : "text-gray-500 hover:bg-gray-100 border-b-2 border-border"
                       }`}
           >
             <span className="text-xs font-medium truncate max-w-[100px]">
@@ -70,6 +65,12 @@ export function TabBar() {
           </div>
         ))}
       </div>
+      <button
+        onClick={handleNewFile}
+        className="h-full w-auto flex items-center justify-center px-4 py-3 ml-2 bg-primary text-white hover:bg-primary/80 transition-colors border-2 border-border rounded-lg"
+      >
+        <Plus className="w-5 h-5" color="white" />
+      </button>
     </div>
   );
 }

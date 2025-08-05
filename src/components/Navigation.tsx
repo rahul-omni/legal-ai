@@ -46,14 +46,20 @@ export function Navigation() {
 
   return (
     <nav
-      className={`h-screen bg-white border-r flex flex-col transition-all duration-300 ${
+      className={`h-full bg-white border-r flex flex-col transition-all duration-300 ${
         isExpanded ? "w-64" : "w-16"
       }`}
     >
       {/* Logo Area */}
-      <div className="p-4 border-b flex items-center justify-between">
+      <div className="p-4 flex items-center justify-between">
         {isExpanded ? (
-          <span className="font-semibold text-lg">Legal Platform</span>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="text-xl font-semibold text-primary">
+                Vakeel<span className=" text-black">Assist</span>
+              </div>
+            </Link>
+          </div>
         ) : (
           <span className="font-semibold text-lg w-full text-center">LP</span>
         )}
