@@ -18,6 +18,8 @@ import { FileSystemNodeProps } from "@/types/fileSystem";
 import FileIconDisplay from "@/components/LegalEditor/components/FileIconDisplay";
 import useAxios from "@/hooks/api/useAxios";
 import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
+import { FileExplorer } from "@/components/ui/FileExplorer";
+import Header from "@/components/ui/Header";
 
 interface ProjectHubProps {
   projects: FileSystemNodeProps[];
@@ -128,32 +130,49 @@ const ProjectHub = () => {
 
   return (
     <div className="flex flex-col h-screen">
-      <header className="border-b bg-white px-6 py-4">
-        <h1 className="text-2xl font-semibold text-text-dark">Project Hub</h1>
-        <p className="text-sm text-muted">Manage your legal projects</p>
-      </header>
+      <div className="px-6 py-4 flex items-start justify-between">
+        <Header headerTitle="Project Hub" subTitle="Manage your legal projects" />
+        <div className="flex items-start gap-2">
+          <input type="file" ref={fileInputRef} className="hidden" accept=".txt,.doc,.docx,.pdf,.png,.jpg,.jpeg" onChange={(e) => handleFileUpload(e, false)} />
+          <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="border min-w-32 px-4 py-3 rounded-md flex items-center gap-2 text-sm hover:bg-gray-50">
+            <Upload className="w-4 h-4" />
+            {isUploading ? <Loader2 className="w-full h-4 animate-spin " /> : "Upload Files"}
+          </button>
+          <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => handleFileUpload(e, true)} accept=".txt,.doc,.docx,.pdf,.png,.jpg,.jpeg" />
 
-      <div className="flex items-center justify-between border-b bg-white px-6 py-3">
-        <div className="flex items-center gap-3">
-          <button onClick={() => dispatch({ type: "SET_IS_NEW_PROJECT_MODAL_OPEN", payload: true })} className="bg-primary text-white px-3 py-1.5 rounded-md flex items-center gap-2 text-sm hover:bg-primary-dark">
+          <button onClick={() => dispatch({ type: "SET_IS_NEW_PROJECT_MODAL_OPEN", payload: true })} className="bg-primary text-white px-4 py-3 rounded-md flex items-center gap-2 text-sm hover:bg-primary-dark">
             <FolderPlus className="w-4 h-4" /> New Project
           </button>
-
-          <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="border px-3 py-1.5 rounded-md flex items-center gap-2 text-sm hover:bg-gray-50">
-            <Upload className="w-4 h-4" />
-            {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Upload Files"}
-          </button>
-
-          <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => handleFileUpload(e, true)} accept=".txt,.doc,.docx,.pdf,.png,.jpg,.jpeg" />
         </div>
+      </div>
 
+      <div className="flex items-center justify-between px-6 py-3">
         <div className="relative">
           <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted" />
           <input type="text" value={state.searchQuery} onChange={(e) => dispatch({ type: "SET_SEARCH_QUERY", payload: e.target.value })} placeholder="Search projects..." className="pl-10 pr-4 py-2 border border-border rounded-md w-64 text-sm focus:ring-2 focus:ring-border-dark" />
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-6 bg-background">
+      <div className="flex-1 p-6 ">
+        <FileExplorer
+          items={paginatedProjects}
+          actions={[
+            {
+              label: 'Delete',
+              onClick: (item: FileSystemNodeProps, e: React.MouseEvent) => handleDelete(e, item.id),
+              variant: 'destructive',
+            }
+          ]}
+          loading={state.loading}
+          loadingItems={[deletingNode]}
+          emptyMessage="No Projects Found"
+          showPagination={true}
+          onPageChange={(page) => dispatch({ type: "SET_PAGE", payload: page })}
+          currentPage={state.currentPage}
+          totalItems={state.projects.length}
+        />
+      </div>
+      {/* <div className="flex-1 overflow-auto p-6 bg-background">
         <div className="w-full">
           {state.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <table className="w-full table-auto border-collapse">
             <thead className="bg-background-dark text-left">
@@ -188,7 +207,7 @@ const ProjectHub = () => {
                     {moment(project.updatedAt).format("MMM D, YYYY")}
                   </td>
                   <td className="px-4 py-3">
-                    
+
                     <button
                       onClick={(e) => {
                         if (window.confirm("Are you sure you want to delete this project?")) {
@@ -216,7 +235,7 @@ const ProjectHub = () => {
           <button disabled={state.currentPage === 1} onClick={() => dispatch({ type: "SET_PAGE", payload: state.currentPage - 1 })} className="px-3 py-1 text-sm bg-white border rounded disabled:opacity-50">Previous</button>
           <button disabled={state.currentPage * state.rowsPerPage >= state.projects.length} onClick={() => dispatch({ type: "SET_PAGE", payload: state.currentPage + 1 })} className="px-3 py-1 text-sm bg-white border rounded disabled:opacity-50">Next</button>
         </div>}
-      </div>
+      </div> */}
       {state.isNewProjectModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">

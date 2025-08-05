@@ -131,21 +131,32 @@ export function AIPopup({
 
   return (
     <div
-      className="absolute bottom-0 left-1/2 transform -translate-x-1/2 z-40 w-[750px] 
-                 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] 
-                 bg-gradient-to-r from-blue-50/80 via-blue-100/50 to-blue-50/80 
-                 backdrop-blur-sm rounded-full"
+      className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-40 w-[90%] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] 
+                 bg-background-light rounded-lg border border-primary-light"
     >
       {/* Main prompt form */}
-      <form onSubmit={handleSubmit} className="flex items-center gap-2 p-4">
-        {/* Control buttons */}
+      <form onSubmit={handleSubmit} className="flex items-center flex-col gap-3 p-4">
+        {/* Prompt input field */}
+        <textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Type your request..."
+          className="flex-1 w-full px-4 py-3 text-sm border-0 rounded-lg resize-none 
+                   focus:outline-none focus:ring-0 focus:border-0 
+                   bg-transparent text-text placeholder-muted"
+          rows={1}
+          disabled={isLoading}
+        />
+
+        <div className="flex items-center justify-between gap-2 w-full">
+          {/* Control buttons */}
         <div className="flex gap-2">
           <button
             title="Use Files"
             type="button"
             onClick={() => setShowContext(!showContext)}
-            className="p-1.5 bg-white/70 backdrop-blur-sm border border-blue-100 text-blue-600 
-                     rounded hover:bg-white transition-colors flex-shrink-0"
+            className="p-1.5 bg-transparent border-0 text-muted hover:text-text-light 
+                     transition-colors flex-shrink-0"
             aria-label="Add Context"
           >
             <FilePlus className="w-4 h-4" />
@@ -153,8 +164,8 @@ export function AIPopup({
 
           <label
             title="Add New File"
-            className="p-1.5 bg-white/70 backdrop-blur-sm text-blue-600 
-                     border border-blue-100 rounded hover:bg-white transition-colors flex-shrink-0 cursor-pointer"
+            className="p-1.5 bg-transparent text-muted hover:text-text-light 
+                     transition-colors flex-shrink-0 cursor-pointer"
           >
             <Paperclip className="w-4 h-4" />
             <input
@@ -169,34 +180,24 @@ export function AIPopup({
             title="Add Citation"
             type="button"
             onClick={() => setCitationModal(!citationModal)}
-            className="p-1.5 bg-white/70 backdrop-blur-sm border border-blue-100 text-blue-600 
-                     rounded hover:bg-white transition-colors flex-shrink-0"
+            className="p-1.5 bg-transparent border-0 text-muted hover:text-text-light 
+                     transition-colors flex-shrink-0"
             aria-label="Add Context"
           >
             <Gavel className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Prompt input field */}
-        <textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Type your request..."
-          className="flex-1 px-3 py-2 text-sm border border-blue-100 rounded-md resize-none 
-                   focus:outline-none focus:ring-1 focus:ring-blue-200 focus:border-blue-200 
-                   bg-white/70 backdrop-blur-sm text-gray-700"
-          rows={2}
-          disabled={isLoading}
-        />
+        
 
         {/* Submit button */}
         <button
           type="submit"
           disabled={isLoading || !prompt.trim()}
-          className="p-2 bg-gradient-to-r from-blue-400 to-blue-500 text-white 
-                   rounded-md hover:from-blue-500 hover:to-blue-600 
+          className="p-2 bg-primary text-white 
+                   rounded-full hover:bg-primary-dark 
                    disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0
-                   shadow-lg shadow-blue-400/25"
+                   shadow-lg"
         >
           {isLoading ? (
             <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
@@ -204,6 +205,8 @@ export function AIPopup({
             <ArrowUp className="w-4 h-4" />
           )}
         </button>
+        </div>
+        
       </form>
 
       {/* Context panel - appears above the form */}

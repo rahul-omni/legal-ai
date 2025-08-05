@@ -12,11 +12,11 @@ const FileIconDisplay = ({ fileName }: { fileName: string }) => {
       );
     case "docx":
     case "doc":
-      return <FileText className="w-4 h-4 text-blue-500/80" />;
+      return <FileText className="w-6 h-6 text-blue-500/80" />;
     case "txt":
-      return <File className="w-4 h-4 text-gray-500/80" />;
+      return <File className="w-6 h-6 text-gray-500/80" />;
     default:
-      return <FileIcon className="w-4 h-4 text-gray-400" />;
+      return <FileIcon className="w-6 h-6 text-gray-400" />;
   }
 };
 

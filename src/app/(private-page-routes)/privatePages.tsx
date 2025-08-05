@@ -1,6 +1,7 @@
 "use client";
 import { Spinner } from "@/components/Loader";
 import { Navigation } from "@/components/Navigation";
+import { TopNavbar } from "@/components/ui/TopNavbar";
 import { useRoleContext } from "@/context/roleContext";
 import { useUserContext } from "@/context/userContext";
 import useRoles from "@/hooks/api/useRoles";
@@ -37,9 +38,12 @@ const PrivatePages: FC<{
   }
 
   return (
-    <div className="flex">
+    <div className="h-screen flex flex-row">
       <Navigation />
-      <div className="h-screen overflow-auto flex-1">{children}</div>
+      <div className="flex flex-1 flex-col">
+        <TopNavbar />
+        <div className="flex-1 overflow-auto bg-background">{children}</div>
+      </div>
     </div>
   );
 };

@@ -11,7 +11,7 @@ export function LegalEditor() {
         <FileExplorerPanel />
         <DocumentEditorPanel />
         <SmartPromptsPanel />
-        <Toolbar />
+        {/* <Toolbar /> */}
         <FolderPickerModal />
       </div>
     </div>

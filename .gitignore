@@ -45,3 +45,5 @@ src/components/rough
 /prisma/scripts/judgements/
 /prisma/scripts/failure_reports/
 package-lock.json
+*.sql
+backups/
