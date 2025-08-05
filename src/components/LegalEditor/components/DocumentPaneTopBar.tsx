@@ -153,15 +153,15 @@ export function DocumentPaneTopBar({
   };
 
   return (
-    <div className="bg-background p-6">
-      <div className="flex justify-between items-center px-3 py-1">
-        <div className="flex items-center space-x-2">
+    <div className="bg-background px-6 pt-6 w-full">
+      <div className="flex justify-between items-center w-full px-3 py-1 gap-4">
+        <div className="flex flex-1/3 items-center h-auto space-x-2">
           <Header 
             headerTitle={`${activeTab?.name || "Untitled Document"}${!activeTab?.fileId ? " (Unsaved)" : ""}`}
           />
         </div>
 
-        <div className="flex items-center space-x-1">
+        <div className="flex flex-1 items-center space-x-1">
           <TranslationDropdown
             onTranslate={handleTranslate}
             isLoading={isLoading("TRANSLATE_TEXT")}
@@ -172,14 +172,14 @@ export function DocumentPaneTopBar({
           />
 
           {!explorerState.isNewFileMode && (
-            <button
+            <div
               onClick={onFileReviewRequest}
               className="ml-2 px-4 py-3 text-sm bg-white text-primary rounded-lg transition-colors border-2 border-border"
             >
               <span className="text-primary">
-                Review Request
+                Review
               </span>
-            </button>
+            </div>
           )}
 
           <SaveDropdown

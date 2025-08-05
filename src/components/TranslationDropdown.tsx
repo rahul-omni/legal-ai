@@ -38,7 +38,7 @@ export function TranslationDropdown({
         <button
           onClick={handleTranslate}
           disabled={docEditorState.isTranslating}
-          className="px-4 py-3 text-sm bg-white text-primary rounded-l-lg
+          className="px-4 py-3 text-sm bg-white text-primary rounded-l-lg w-[80px]
                   transition-colors disabled:opacity-50 flex items-center gap-2"
         >
           <span>Translate</span>
