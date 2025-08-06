@@ -35,5 +35,7 @@ export interface ValidationErrors {
   number?: string;
   year?: string;
   court?: string;
+  caseType?: string;
+  city?: string;
   general?: string;
 } 

@@ -32,12 +32,12 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
         {/* Court Selection */}
         <div>
           <label className="block text-sm font-medium text-text-light mb-2">
-            Court Type
+            Court Type <span className="text-error">*</span>
           </label>
           <select
             value={searchParams.court}
             onChange={(e) =>
-              setSearchParams({ ...searchParams, court: e.target.value, caseType: "" })
+              setSearchParams({ ...searchParams, court: e.target.value, caseType: "", year: "", city: "", judgmentType: "", number: "" })
             }
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light ${
               errors?.court ? 'border-error' : 'border-border'
@@ -46,7 +46,7 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
             <option value="">Select court type</option>
             <option value="Supreme Court">Supreme Court</option>
             <option value="High Court">High Court</option>
-            <option value="District Court">District Court</option>
+            {/* <option value="District Court">District Court</option> */}
           </select>
           {errors?.court && (
             <p className="mt-1 text-sm text-error">{errors.court}</p>
@@ -56,20 +56,25 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
         {searchParams.court === 'High Court' && (
           <div>
             <label className="block text-sm font-medium text-text-light mb-2">
-              City
+              City <span className="text-error">*</span>
             </label>
             <select
               value={searchParams.city}
               onChange={(e) =>
                 setSearchParams({ ...searchParams, city: e.target.value })
               }
-              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light ${
+                errors?.city ? 'border-error' : 'border-border'
+              }`}
             >
               <option value="">All City</option>
               {HIGH_COURT_CITY.map(type => (
                 <option key={type} value={type}>{type}</option>
               ))}
             </select>
+            {errors?.city && (
+            <p className="mt-1 text-sm text-error">{errors.city}</p>
+          )}
         </div>
         )}
 
@@ -77,14 +82,16 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
         {searchParams.court === "High Court" && (
           <div>
             <label className="block text-sm font-medium text-text-light mb-2">
-              Case Type
+              Case Type <span className="text-error">*</span>
             </label>
             <select
               value={searchParams.caseType}
               onChange={(e) =>
                 setSearchParams({ ...searchParams, caseType: e.target.value })
               }
-              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light"
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light ${
+                errors?.caseType ? 'border-error' : 'border-border'
+              }`}
             >
               <option value="">All Case Types</option>
               {searchParams.court === 'High Court' ? HIGH_COURT_CASE_TYPES.map(type => (
@@ -93,6 +100,9 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
                 <option key={type} value={type}>{type}</option>
               ))}
             </select>
+            {errors?.caseType && (
+              <p className="mt-1 text-sm text-error">{errors.caseType}</p>
+            )}
           </div>
         )}
 

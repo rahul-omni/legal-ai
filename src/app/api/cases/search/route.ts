@@ -4,6 +4,7 @@ import { handleError } from "@/app/api/lib/errors";
 import { userFromSession } from "@/lib/auth";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
+import { DELHI_COURT_CASE_TYPES_VALUE_MAPPING } from "@/lib/constants";
  
 import { z } from "zod";
  
@@ -18,7 +19,20 @@ const searchSchema = z.object({
   caseType: z.string().optional(),
   city: z.string().optional(),
   district: z.string().optional()
+}).refine((data) => {
+  // For High Court, caseType and city are required
+  if (data.court === "High Court") {
+    return data.caseType && data.caseType.trim() !== '' && 
+           data.city && data.city.trim() !== '';
+  }
+  return true;
+}, {
+  message: "Case type and city are required for High Court cases",
+  path: ["caseType", "city"]
 });
+
+
+
 
 export async function GET(request: NextAuthRequest) {
   try {
@@ -78,13 +92,68 @@ export async function GET(request: NextAuthRequest) {
         mode: 'insensitive'
       };
     }
+
+    let caseData = [];
     
 
-    const caseData = await prisma.caseManagement.findMany({
+    caseData = await prisma.caseManagement.findMany({
       where: whereConditions
     });
 
-    if (caseData.length === 0) {  // Check if array is empty
+    let scrapeResult = [];
+
+    if (caseData.length === 0 && validated.court === "High Court") {
+      const scrapeURL = process.env.SERVICE_URL + "/fetchHighCourtJudgments";
+      
+      // Ensure caseType exists before using it as index
+      if (!validated.caseType || !DELHI_COURT_CASE_TYPES_VALUE_MAPPING[validated.caseType as keyof typeof DELHI_COURT_CASE_TYPES_VALUE_MAPPING]) {
+        return NextResponse.json(
+          { 
+            success: false,
+            message: 'Invalid case type for High Court',
+            searchedParams: {
+              diaryNumber: fullDiaryNumber,
+              court: validated.court,
+              city: validated.city,
+              district: validated.district,
+              caseType: validated.caseType,
+              judgmentType: validated.judgmentType
+            }
+          }, 
+          { status: 400 }
+        );
+      }
+      
+      const payload = {
+          highCourt: "High Court of Delhi",
+          bench: "Principal Bench at Delhi",
+          diaryNumber: fullDiaryNumber,
+          caseTypeValue: DELHI_COURT_CASE_TYPES_VALUE_MAPPING[validated.caseType as keyof typeof DELHI_COURT_CASE_TYPES_VALUE_MAPPING].toString()
+      }
+      
+      try {
+
+        const response = await fetch(scrapeURL, {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+        scrapeResult = data?.result || [];
+        
+        // Re-fetch from database after scraping
+        caseData = await prisma.caseManagement.findMany({
+          where: whereConditions
+        });
+      } catch (err) {
+        console.error("Error fetching High Court judgments:", err);
+      }
+    }
+
+    if (caseData.length === 0 && scrapeResult.length === 0) {  // Check if array is empty
       return NextResponse.json(
         { 
           success: false,

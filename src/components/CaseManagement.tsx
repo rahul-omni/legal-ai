@@ -50,6 +50,22 @@ export function CaseManagement() {
       errors.year = "Year must be a 4-digit number";
     }
 
+    if (!searchParams.court.trim()) {
+      errors.court = "Court is required";
+    }
+
+    if(searchParams.court === "High Court") {
+      if (!searchParams.caseType.trim()) {
+        errors.caseType = "Case type is required";
+      }
+    }
+
+    if(searchParams.court === "High Court") {
+      if (!searchParams.city.trim()) {
+        errors.city = "City is required";
+      }
+    }
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
