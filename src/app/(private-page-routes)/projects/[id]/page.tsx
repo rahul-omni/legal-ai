@@ -17,6 +17,7 @@ import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
 import Header from "@/components/ui/Header";
 import { FileExplorer } from "@/components/ui/FileExplorer";
 import { FileSystemNodeProps } from "@/types/fileSystem";
+import Button from "@/components/ui/Button";
 
 interface Project {
   id: string;
@@ -90,29 +91,14 @@ const ProjectFolderTable: React.FC = () => {
       <div className="px-6 py-4 flex items-start justify-between border-b">
         <Header headerTitle="Project Hub" subTitle="Manage your legal projects" />
         <div className="flex items-start gap-2">
-          <button disabled={isUploading} onClick={() => fileInputRef.current?.click()} className="bg-primary text-white min-w-32 px-4 py-3 rounded-md flex items-center gap-2 text-sm hover:bg-primary-dark">
-            <Upload className="w-4 h-4" />
-            {isUploading ? <Loader2 className="w-full h-4 animate-spin " /> : "Upload Files"}
-          </button>
+          <Button disabled={isUploading} onClick={() => fileInputRef.current?.click()} icon={<Upload className="w-4 h-4" />} loading={isUploading}>
+            Upload Files
+          </Button>
           <input type="file" ref={fileInputRef} className="hidden" accept=".txt,.doc,.docx,.pdf,.png,.jpg,.jpeg" onChange={(e) => handleFileUpload(e, false)} />
         </div>
       
       </div>
 
-
-      {/* <div className="flex items-center justify-between border-b bg-white px-6 py-3">
-        <div className="flex items-center gap-3">
-          <input type="file" ref={fileInputRef} className="hidden" accept=".txt,.doc,.docx,.pdf,.png,.jpg,.jpeg" onChange={(e) => handleFileUpload(e, false)} />
-        </div>
-        <div className="mr-5">
-          <button
-            onClick={() => router.push(`/projects/${parentId}/edit`)}
-            className="text-sm px-3 py-1 bg-info-light text-info hover:bg-info rounded mr-2"
-          >
-            Open Project
-          </button>
-        </div>
-      </div> */}
       
       <div className="flex-1 p-6">
       <FileExplorer
@@ -122,12 +108,13 @@ const ProjectFolderTable: React.FC = () => {
             {
               label: 'Delete',
               onClick: (item: FileSystemNodeProps, e: React.MouseEvent) => handleDelete(e, item.id),
-              variant: 'destructive',
+              variant: 'secondary',
             }
           ]}
           loading={loading}
           loadingItems={[deletingNode]}
           emptyMessage="No Projects Found"
+          className="text-sm"
         />
         </div>
 

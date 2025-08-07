@@ -7,9 +7,9 @@ export function DocumentEditorPanel() {
   const { docEditorState } = useDocumentEditor();
 
   return (
-    <div className="flex-1 bg-background flex flex-col min-h-0">
+    <div className="flex-1 bg-background flex flex-col h-full">
       
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 relative flex flex-col min-h-0">
         {docEditorState.isFileLoading ? <Spinner/> : docEditorState.activeTabId ? (
           <DocumentPane key={docEditorState.activeTabId} />
         ) : (

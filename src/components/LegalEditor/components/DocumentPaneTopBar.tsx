@@ -14,6 +14,7 @@ import {
 import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 import { useFolderPicker } from "../reducersContexts/folderPickerReducerContext";
 import Header from "@/components/ui/Header";
+import  Button  from "@/components/ui/Button";
 
 interface DocumentPaneTopBarProps {
   onFileReviewRequest: () => void;
@@ -153,11 +154,12 @@ export function DocumentPaneTopBar({
   };
 
   return (
-    <div className="bg-background p-6">
-      <div className="flex justify-between items-center px-3 py-1">
+    <div className="bg-background">
+      <div className="flex justify-between items-center px-6 py-1">
         <div className="flex items-center space-x-2">
           <Header 
             headerTitle={`${activeTab?.name || "Untitled Document"}${!activeTab?.fileId ? " (Unsaved)" : ""}`}
+            truncate={true}
           />
         </div>
 
@@ -171,21 +173,24 @@ export function DocumentPaneTopBar({
             onVendorChange={handleVendorChange}
           />
 
+          
+
           {!explorerState.isNewFileMode && (
-            <button
+
+            <Button
+              variant="secondary"
+              size="md"
+              fullWidth={true}
+              className="ml-2"
               onClick={onFileReviewRequest}
-              className="ml-2 px-4 py-3 text-sm bg-white text-primary rounded-lg transition-colors border-2 border-border"
             >
-              <span className="text-primary">
-                Review Request
-              </span>
-            </button>
+              Review
+            </Button>
           )}
 
           <SaveDropdown
             onSave={handleSave}
             onSaveAs={handleSaveAs}
-            isNewFile={!activeTab?.fileId}
             isSaving={isSaving}
           />
         </div>

@@ -21,7 +21,7 @@ export function TopNavbar({
 }: TopNavbarProps) {
   return (
     <nav className={`bg-white border-b border-border shadow-sm ${className}`}>
-      <div className="px-6 py-3 flex justify-end">
+      <div className="px-6 py-1 flex justify-end">
         <div className="flex items-center justify-between">
           
 
@@ -32,7 +32,7 @@ export function TopNavbar({
 
             <Link
               href="/settings"
-              className="flex items-center gap-2 px-3 py-2 text-sm text-text hover:bg-background rounded-lg transition-colors"
+              className="flex items-center gap-2 text-sm text-text hover:bg-background rounded-lg transition-colors"
             >
               <div className="flex items-center gap-2">
                 {user?.avatar ? (

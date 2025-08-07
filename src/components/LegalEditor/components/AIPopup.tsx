@@ -131,8 +131,8 @@ export function AIPopup({
 
   return (
     <div
-      className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-40 w-[90%] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] 
-                 bg-background-light rounded-lg border border-primary-light"
+      className="absolute bottom-5 left-1/2 transform -translate-x-1/2 z-40 w-[90%] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] 
+                 bg-background-light rounded-lg border border-primary"
     >
       {/* Main prompt form */}
       <form onSubmit={handleSubmit} className="flex items-center flex-col gap-3 p-4">
@@ -141,7 +141,7 @@ export function AIPopup({
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Type your request..."
-          className="flex-1 w-full px-4 py-3 text-sm border-0 rounded-lg resize-none 
+          className="flex-1 w-full p-1 text-sm border-0 rounded-lg resize-none 
                    focus:outline-none focus:ring-0 focus:border-0 
                    bg-transparent text-text placeholder-muted"
           rows={1}

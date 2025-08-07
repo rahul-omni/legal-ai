@@ -34,20 +34,21 @@ export function TranslationDropdown({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <div className="flex border-2 border-border rounded-lg">
+      <div className="inline-flex border border-border rounded-lg">
+        {/* Main Action Button */}
         <button
           onClick={handleTranslate}
           disabled={docEditorState.isTranslating}
-          className="px-4 py-3 text-sm bg-white text-primary rounded-l-lg
-                  transition-colors disabled:opacity-50 flex items-center gap-2"
+          className="pl-3 pr-1 py-2 text-sm bg-white text-text hover:bg-background-dark focus:ring-border/50 shadow-sm rounded-l-lg transition-colors disabled:opacity-50 flex items-center gap-2"
         >
           <span>Translate</span>
-          {docEditorState.isTranslating && <div className="animate-spin">⏳</div>}
+          {docEditorState.isTranslating && <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full"></div>}
         </button>
+        
+        {/* Dropdown Toggle Button */}
         <button
           onClick={() => setShowDropdown(!showDropdown)}
-          className="px-2 py-1.5 text-sm bg-white text-primary rounded-r-lg
-                   transition-colors"
+          className="pl-1 pr-3 py-2 text-sm bg-white text-text hover:bg-background-dark focus:ring-border/50 shadow-sm rounded-r-lg -ml-px transition-colors"
         >
           <ChevronDown className="w-4 h-4" />
         </button>

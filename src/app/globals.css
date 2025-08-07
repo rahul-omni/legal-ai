@@ -3,8 +3,15 @@
 @tailwind utilities;
 
 @layer base {
-  body {
+  html, body {
     @apply bg-background text-text;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  #__next {
+    height: 100vh;
+    overflow: hidden;
   }
 }
 
@@ -96,12 +103,12 @@
   margin-bottom: 0.5em;
 }
 
-/* Force scrolling in editor */
+/* Force scrolling in editor
 .tiptap {
   overflow-y: visible !important;
   height: auto !important;
   min-height: 200px;
-}
+} */
 
 .ProseMirror {
   min-height: 200px;

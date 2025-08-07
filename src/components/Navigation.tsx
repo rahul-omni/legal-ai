@@ -11,6 +11,8 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import VakeelAssistLogo from "./svg/VakeelAssistLogo";
+import VakeelAssistLogoIcon from "./svg/VakeelAssistLogoIcon";
 
 const navigationItems = [
   {
@@ -55,13 +57,13 @@ export function Navigation() {
         {isExpanded ? (
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2">
-              <div className="text-xl font-semibold text-primary">
-                Vakeel<span className=" text-black">Assist</span>
-              </div>
+              <VakeelAssistLogo width={149} height={26} />
             </Link>
           </div>
         ) : (
-          <span className="font-semibold text-lg w-full text-center">LP</span>
+          <div className="flex items-center justify-center">
+            <VakeelAssistLogoIcon width={22} height={19} />
+          </div>
         )}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -83,11 +85,11 @@ export function Navigation() {
               href={item.href}
               title={isExpanded ? "" : item.name}
               className={`
-                relative flex items-center gap-3 px-4 py-2 mx-2 rounded-md transition-colors
+                relative flex items-center gap-3 px-4 py-2 rounded-none transition-colors
                 ${isExpanded ? "" : "justify-center"} 
                 ${
                   isActive
-                    ? "bg-indigo-50 text-indigo-600"
+                    ? "bg-primary text-white"
                     : "text-gray-600 hover:bg-gray-50"
                 }
               `}
