@@ -6,11 +6,12 @@ import moment from 'moment';
 import { FileSystemNodeProps } from '@/types/fileSystem';
 import FileIconDisplay from '@/components/LegalEditor/components/FileIconDisplay';
 import { useRouter } from 'next/navigation';
+import Button from './Button';
 
 export interface FileExplorerAction {
   label: string;
   onClick: (item: FileSystemNodeProps, e: React.MouseEvent) => void;
-  variant?: 'default' | 'destructive';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
   loading?: boolean;
   disabled?: boolean;
 }
@@ -61,7 +62,7 @@ export function FileExplorer({
 
   const getFileIcon = (item: FileSystemNodeProps) => {
     if (item.type === 'FOLDER') {
-      return <Folder className="w-5 h-5 text-primary shrink-0" />;
+      return <Folder className="w-5 h-5 text-text shrink-0" />;
     }
     return <FileIconDisplay fileName={item.name} />;
   };
@@ -125,11 +126,11 @@ export function FileExplorer({
           {showHeader && (
             <thead className="bg-background-dark text-left">
               <tr>
-                <th className="px-4 py-3 font-semibold text-text-light">Name</th>
-                <th className="px-4 py-3 font-semibold text-text-light w-40">Created On</th>
-                <th className="px-4 py-3 font-semibold text-text-light w-40">Last Modified</th>
+                <th className="px-4 py-3 font-semibold text-text">Name</th>
+                <th className="px-4 py-3 font-semibold text-text w-40">Created On</th>
+                <th className="px-4 py-3 font-semibold text-text w-40">Last Modified</th>
                 {actions.length > 0 && (
-                  <th className="px-4 py-3 font-semibold text-text-light w-40">Actions</th>
+                  <th className="px-4 py-3 font-semibold text-text w-40">Actions</th>
                 )}
               </tr>
             </thead>
@@ -158,22 +159,18 @@ export function FileExplorer({
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       {actions.map((action, index) => (
-                        <button
-                          key={index}
+                        <Button
+                          variant={action.variant}
                           onClick={(e) => action.onClick(item, e)}
-                          disabled={action.disabled || loadingItems.includes(item.id)}
-                          className={`text-sm px-3 py-1 rounded transition-colors ${
-                            action.variant === 'destructive'
-                              ? 'bg-error-light hover:bg-error-light text-error'
-                              : 'bg-primary-light hover:bg-primary text-primary'
-                          } disabled:opacity-50`}
+                          disabled={action.disabled}
+                          loading={loadingItems.includes(item.id)}
                         >
                           {loadingItems.includes(item.id) ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             action.label
                           )}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </td>

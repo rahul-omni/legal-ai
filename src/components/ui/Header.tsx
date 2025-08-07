@@ -5,13 +5,16 @@ import React from "react";
 interface HeaderProps {
   headerTitle: string;
   subTitle?: string;
+  truncate?: boolean;
 }
 
-const Header = ({ headerTitle, subTitle }: HeaderProps) => {
+const Header = ({ headerTitle, subTitle, truncate = false }: HeaderProps) => {
 
   return (
-    <header className="gap-2">
-        <h1 className="text-2xl font-semibold text-text-dark">{headerTitle}</h1>
+    <header className="gap-2 py-3">
+        <h1 className={`text-2xl font-medium text-text-dark ${truncate ? "truncate max-w-xs" : ""}`}>
+          {truncate && headerTitle.length > 20 ? `${headerTitle.substring(0, 20)}...` : headerTitle}
+        </h1>
         {subTitle && <p className="text-sm text-muted">{subTitle}</p>}
     </header>
   );

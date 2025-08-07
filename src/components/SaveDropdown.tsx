@@ -4,14 +4,12 @@ import { useRef, useState } from 'react';
 interface SaveDropdownProps {
   onSave: () => void;
   onSaveAs: () => void;
-  isNewFile?: boolean;
   isSaving?: boolean;
 }
 
 export function SaveDropdown({ 
   onSave, 
   onSaveAs, 
-  isNewFile = false, 
   isSaving = false 
 }: SaveDropdownProps) {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -38,32 +36,26 @@ export function SaveDropdown({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <div className="flex border-2 border-border rounded-lg">
+      <div className="inline-flex border border-border rounded-lg">
+        {/* Main Action Button */}
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className={`px-4 py-3 text-sm ${
-            isNewFile ? 'bg-primary text-white' : 'bg-white text-primary'
-          } rounded-l-lg hover:bg-opacity-80 transition-colors flex items-center gap-2 border-r 
-            
-          } ${isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}
+          className="pl-3 pr-1 py-2 text-sm bg-primary text-white hover:bg-primary-dark focus:ring-primary/50 shadow-sm rounded-l-lg transition-colors disabled:opacity-50 flex items-center gap-2"
         >
           {isSaving ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <Save className="w-4 h-4" />
           )}
-          {isNewFile ? 'Create' : 'Save'}
+          Save
         </button>
         
+        {/* Dropdown Toggle Button */}
         <button
           onClick={() => setShowDropdown(!showDropdown)}
           disabled={isSaving}
-          className={`px-4 py-3 text-sm ${
-            isNewFile ? 'bg-primary text-white' : 'bg-white text-primary'
-          } rounded-r-lg hover:bg-opacity-80 transition-colors ${
-            isSaving ? 'opacity-70 cursor-not-allowed' : ''
-          }`}
+          className="pl-1 pr-3 py-2 text-sm bg-primary text-white hover:bg-primary-dark focus:ring-primary/50 shadow-sm rounded-r-lg -ml-px transition-colors"
         >
           <ChevronDown className="w-4 h-4" />
         </button>
@@ -75,17 +67,13 @@ export function SaveDropdown({
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className={`group flex w-full items-center px-4 py-2.5 text-sm ${
-                isNewFile ? 'text-blue-700 hover:bg-blue-50' : 'text-gray-700 hover:bg-green-50'
-              }`}
+              className="group flex w-full items-center px-4 py-2.5 text-sm text-text hover:bg-background-dark transition-colors"
             >
-              <Save className={`w-4 h-4 mr-3 ${
-                isNewFile ? 'text-blue-400 group-hover:text-blue-500' : 'text-gray-400 group-hover:text-green-500'
-              }`} />
+              <Save className="w-4 h-4 mr-3 text-muted group-hover:text-text" />
               <div className="flex flex-col items-start">
-                <span className="font-medium">{isNewFile ? 'Create' : 'Save'}</span>
-                <span className="text-xs text-gray-500">
-                  {isNewFile ? 'Create new file' : 'Save changes to current file'}
+                <span>Save</span>
+                <span className="text-xs text-muted">
+                  Save changes to current file
                 </span>
               </div>
               {isSaving && <Loader2 className="w-4 h-4 ml-auto animate-spin" />}
@@ -94,12 +82,12 @@ export function SaveDropdown({
             <button
               onClick={handleSaveAs}
               disabled={isSaving}
-              className="group flex w-full items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+              className="group flex w-full items-center px-4 py-2.5 text-sm text-text hover:bg-background-dark transition-colors"
             >
-              <Save className="w-4 h-4 mr-3 text-gray-400 group-hover:text-gray-500" />
+              <Save className="w-4 h-4 mr-3 text-muted group-hover:text-text" />
               <div className="flex flex-col items-start">
-                <span className="font-medium">Save As...</span>
-                <span className="text-xs text-gray-500">Save as a new file</span>
+                <span>Save As...</span>
+                <span className="text-xs text-muted">Save as a new file</span>
               </div>
             </button>
           </div>

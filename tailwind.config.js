@@ -10,9 +10,9 @@ module.exports = {
       colors: {
         // Primary colors
         primary: {
-          light: "#6366f1",
-          DEFAULT: "#4f46e5",
-          dark: "#4338ca",
+          light: "#06b6d4", // Light cyan/teal
+          DEFAULT: "#0891b2", // Vibrant teal
+          dark: "#0e7490", // Darker teal
         },
         
         // Secondary colors

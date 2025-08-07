@@ -5,7 +5,7 @@ export function Toolbar() {
   const { state, dispatch } = useUIState();
 
   return (
-    <div className="absolute top-0 right-0 z-50 flex gap-1 px-1">
+    <div className="absolute top-16 right-5 z-50 flex gap-1 px-1">
       <div className="flex gap-1 bg-[#f9f9f9] shadow-sm rounded p-1">
         <button
           onClick={() => dispatch({ type: "TOGGLE_LEFT_PANEL" })}

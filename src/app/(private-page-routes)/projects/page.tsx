@@ -20,6 +20,7 @@ import useAxios from "@/hooks/api/useAxios";
 import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
 import { FileExplorer } from "@/components/ui/FileExplorer";
 import Header from "@/components/ui/Header";
+import Button from "@/components/ui/Button";
 
 interface ProjectHubProps {
   projects: FileSystemNodeProps[];
@@ -134,15 +135,14 @@ const ProjectHub = () => {
         <Header headerTitle="Project Hub" subTitle="Manage your legal projects" />
         <div className="flex items-start gap-2">
           <input type="file" ref={fileInputRef} className="hidden" accept=".txt,.doc,.docx,.pdf,.png,.jpg,.jpeg" onChange={(e) => handleFileUpload(e, false)} />
-          <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="border min-w-32 px-4 py-3 rounded-md flex items-center gap-2 text-sm hover:bg-gray-50">
-            <Upload className="w-4 h-4" />
+          <Button onClick={() => fileInputRef.current?.click()} disabled={isUploading} icon={<Upload className="w-4 h-4" />} loading={isUploading} variant="secondary">
             {isUploading ? <Loader2 className="w-full h-4 animate-spin " /> : "Upload Files"}
-          </button>
+          </Button>
           <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => handleFileUpload(e, true)} accept=".txt,.doc,.docx,.pdf,.png,.jpg,.jpeg" />
 
-          <button onClick={() => dispatch({ type: "SET_IS_NEW_PROJECT_MODAL_OPEN", payload: true })} className="bg-primary text-white px-4 py-3 rounded-md flex items-center gap-2 text-sm hover:bg-primary-dark">
-            <FolderPlus className="w-4 h-4" /> New Project
-          </button>
+          <Button onClick={() => dispatch({ type: "SET_IS_NEW_PROJECT_MODAL_OPEN", payload: true })} icon={<FolderPlus className="w-4 h-4" />} loading={state.createLoading}>
+            New Project
+          </Button>
         </div>
       </div>
 
@@ -160,7 +160,7 @@ const ProjectHub = () => {
             {
               label: 'Delete',
               onClick: (item: FileSystemNodeProps, e: React.MouseEvent) => handleDelete(e, item.id),
-              variant: 'destructive',
+              variant: 'secondary',
             }
           ]}
           loading={state.loading}
@@ -170,6 +170,7 @@ const ProjectHub = () => {
           onPageChange={(page) => dispatch({ type: "SET_PAGE", payload: page })}
           currentPage={state.currentPage}
           totalItems={state.projects.length}
+          className="text-sm"
         />
       </div>
       {/* <div className="flex-1 overflow-auto p-6 bg-background">
