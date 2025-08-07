@@ -160,6 +160,7 @@ export function FileExplorer({
                     <div className="flex items-center gap-2">
                       {actions.map((action, index) => (
                         <Button
+                          key={`${item.id}-${action.label}-${index}`}
                           variant={action.variant}
                           onClick={(e) => action.onClick(item, e)}
                           disabled={action.disabled}
