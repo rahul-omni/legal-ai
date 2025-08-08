@@ -50,25 +50,27 @@ export const DocumentEditor: FC<DocumentEditorProps> = ({
   }, 300);
 
   return (
-    <LexicalComposer initialConfig={initialConfig}>
-      <EditorInitializer
-        localContent={localContent}
-        setEditorRef={(editor) => {
-          lexicalEditorRef.current = editor;
-        }}
-      />
-      <ToolbarPlugin />
-      <div className="editor-inner">
-        <RichTextPlugin
-          placeholder={
-            <div className="editor-placeholder">enter text here...</div>
-          }
-          contentEditable={<ContentEditable className="editor-input" />}
-          ErrorBoundary={LexicalErrorBoundary}
+    <div className="editor-container">
+      <LexicalComposer initialConfig={initialConfig}>
+        <EditorInitializer
+          localContent={localContent}
+          setEditorRef={(editor) => {
+            lexicalEditorRef.current = editor;
+          }}
         />
-        <OnChangePlugin onChange={handleEditorChange} />
-        <HistoryPlugin />
-      </div>
-    </LexicalComposer>
+        <ToolbarPlugin />
+        <div className="editor-inner">
+          <RichTextPlugin
+            placeholder={
+              <div className="editor-placeholder">enter text here...</div>
+            }
+            contentEditable={<ContentEditable className="editor-input" />}
+            ErrorBoundary={LexicalErrorBoundary}
+          />
+          <OnChangePlugin onChange={handleEditorChange} />
+          <HistoryPlugin />
+        </div>
+      </LexicalComposer>
+    </div>
   );
 };

@@ -11,6 +11,8 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import VakeelAssistLogo from "./svg/VakeelAssistLogo";
+import VakeelAssistLogoIcon from "./svg/VakeelAssistLogoIcon";
 
 const navigationItems = [
   {
@@ -46,16 +48,22 @@ export function Navigation() {
 
   return (
     <nav
-      className={`h-screen bg-white border-r flex flex-col transition-all duration-300 ${
+      className={`h-full bg-white border-r flex flex-col transition-all duration-300 ${
         isExpanded ? "w-64" : "w-16"
       }`}
     >
       {/* Logo Area */}
-      <div className="p-4 border-b flex items-center justify-between">
+      <div className="p-4 flex items-center justify-between">
         {isExpanded ? (
-          <span className="font-semibold text-lg">Legal Platform</span>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="flex items-center gap-2">
+              <VakeelAssistLogo width={149} height={26} />
+            </Link>
+          </div>
         ) : (
-          <span className="font-semibold text-lg w-full text-center">LP</span>
+          <div className="flex items-center justify-center">
+            <VakeelAssistLogoIcon width={22} height={19} />
+          </div>
         )}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -77,11 +85,11 @@ export function Navigation() {
               href={item.href}
               title={isExpanded ? "" : item.name}
               className={`
-                relative flex items-center gap-3 px-4 py-2 mx-2 rounded-md transition-colors
+                relative flex items-center gap-3 px-4 py-2 rounded-none transition-colors
                 ${isExpanded ? "" : "justify-center"} 
                 ${
                   isActive
-                    ? "bg-indigo-50 text-indigo-600"
+                    ? "bg-primary text-white"
                     : "text-gray-600 hover:bg-gray-50"
                 }
               `}

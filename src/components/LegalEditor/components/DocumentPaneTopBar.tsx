@@ -13,6 +13,8 @@ import {
 } from "../reducersContexts/documentEditorReducerContext";
 import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 import { useFolderPicker } from "../reducersContexts/folderPickerReducerContext";
+import Header from "@/components/ui/Header";
+import  Button  from "@/components/ui/Button";
 
 interface DocumentPaneTopBarProps {
   onFileReviewRequest: () => void;
@@ -152,13 +154,13 @@ export function DocumentPaneTopBar({
   };
 
   return (
-    <div className="bg-white border-b border-gray-200">
-      <div className="flex justify-between items-center px-3 py-1">
+    <div className="bg-background">
+      <div className="flex justify-between items-center px-6 py-1">
         <div className="flex items-center space-x-2">
-          <h2 className="text-sm font-medium text-gray-700 truncate max-w-md">
-            {activeTab?.name || "Untitled Document"}{" "}
-            {!activeTab?.fileId && "(Unsaved)"}
-          </h2>
+          <Header 
+            headerTitle={`${activeTab?.name || "Untitled Document"}${!activeTab?.fileId ? " (Unsaved)" : ""}`}
+            truncate={true}
+          />
         </div>
 
         <div className="flex items-center space-x-1">
@@ -171,19 +173,24 @@ export function DocumentPaneTopBar({
             onVendorChange={handleVendorChange}
           />
 
+          
+
           {!explorerState.isNewFileMode && (
-            <button
+
+            <Button
+              variant="secondary"
+              size="md"
+              fullWidth={true}
+              className="ml-2"
               onClick={onFileReviewRequest}
-              className="ml-2 px-3 py-1.5 text-sm bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
             >
-              Review Request
-            </button>
+              Review
+            </Button>
           )}
 
           <SaveDropdown
             onSave={handleSave}
             onSaveAs={handleSaveAs}
-            isNewFile={!activeTab?.fileId}
             isSaving={isSaving}
           />
         </div>

@@ -14,6 +14,10 @@ import { handleApiError } from "@/helper/handleApiError";
 import FileIconDisplay from "@/components/LegalEditor/components/FileIconDisplay";
 import useAxios from "@/hooks/api/useAxios";
 import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
+import Header from "@/components/ui/Header";
+import { FileExplorer } from "@/components/ui/FileExplorer";
+import { FileSystemNodeProps } from "@/types/fileSystem";
+import Button from "@/components/ui/Button";
 
 interface Project {
   id: string;
@@ -78,101 +82,43 @@ const ProjectFolderTable: React.FC = () => {
     setIsDeletingNode("")
   };
 
+  const onItemClick = (item: FileSystemNodeProps) => {
+    router.push(`/projects/${parentId}/edit`)
+  }
+
   return (
     <div className="w-full overflow-auto">
-      <header className="border-b bg-white px-6 py-4">
-        <h1 className="text-2xl font-semibold text-gray-800">Project Hub</h1>
-        <p className="text-sm text-gray-500">Manage your legal projects</p>
-      </header>
-
-      <div className="flex items-center justify-between border-b bg-white px-6 py-3">
-        <div className="flex items-center gap-3">
-          <button disabled={isUploading} onClick={() => fileInputRef.current?.click()} className="border px-3 py-1.5 rounded-md flex items-center gap-2 text-sm hover:bg-gray-50">
-            <Upload className="w-4 h-4" />
-            {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Upload Files"}
-          </button>
-
+      <div className="px-6 py-4 flex items-start justify-between border-b">
+        <Header headerTitle="Project Hub" subTitle="Manage your legal projects" />
+        <div className="flex items-start gap-2">
+          <Button disabled={isUploading} onClick={() => fileInputRef.current?.click()} icon={<Upload className="w-4 h-4" />} loading={isUploading}>
+            Upload Files
+          </Button>
           <input type="file" ref={fileInputRef} className="hidden" accept=".txt,.doc,.docx,.pdf,.png,.jpg,.jpeg" onChange={(e) => handleFileUpload(e, false)} />
         </div>
-        <div className="mr-5">
-          <button
-            onClick={() => router.push(`/projects/${parentId}/edit`)}
-            className="text-sm px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded mr-2"
-          >
-            Open Project
-          </button>
-        </div>
-      </div>
-      <div className="flex-1 overflow-auto p-6 bg-gray-50">
-        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <table className="w-full table-auto border-collapse">
-          <thead className="bg-gray-100 text-left">
-            <tr>
-              <th className="px-4 py-3 font-semibold text-gray-700">Name</th>
-              <th className="px-4 py-3 font-semibold text-gray-700 w-32">Created On</th>
-              <th className="px-4 py-3 font-semibold text-gray-700 w-32">Last Modified</th>
-              <th className="px-4 py-3 text-center font-semibold text-gray-700 w-40">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedProjects.map((project) => (
-              <tr key={project.id} className="border-t hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <Link
-                      href={`/projects/${project.parentId}/edit/${project.id}`}
-                      className="flex items-center gap-3 hover:bg-gray-100 rounded px-2 py-1 -mx-2 -my-1 transition-colors"
-                    >
-                      <FileIconDisplay fileName={project.name} />
-                      <span className="font-medium text-gray-900">{project.name}</span>
-                    </Link>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-gray-600 text-sm">
-                  {moment(project.createdAt).format("MMM D, YYYY")}
-                </td>
-                <td className="px-4 py-3 text-gray-600 text-sm">
-                  {moment(project.updatedAt).format("MMM D, YYYY")}
-                </td>
-                <td className="px-4 py-3 flex items-center justify-center">
-                  <button
-                    onClick={(e) => {
-                      if (window.confirm("Are you sure you want to delete this file?")) {
-                        handleDelete(e, project.id);
-                      }
-                    }}
-                    disabled={deletingNode == project.id}
-                    className="text-sm px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded"
-                  >
-                    {deletingNode == project.id ? (
-                      <Loader2 className="w-4 h-5 animate-spin" />
-                    ) : (
-                      "Delete"
-                    )}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          {paginatedProjects.length == 0 && <tr><td colSpan={4} className="p-6 text-center">No Files in this Project</td></tr>}
-          </tbody>
-        </table>}
+      
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-4 gap-2">
-          {Array.from({ length: totalPages }).map((_, index) => (
-            <button
-              key={index + 1}
-              onClick={() => setCurrentPage(index + 1)}
-              className={`px-3 py-1 border rounded ${currentPage === index + 1
-                ? "bg-blue-500 text-white"
-                : "bg-white text-gray-700"
-                }`}
-            >
-              {index + 1}
-            </button>
-          ))}
+      
+      <div className="flex-1 p-6">
+      <FileExplorer
+          items={paginatedProjects}
+          onItemClick={onItemClick}
+          actions={[
+            {
+              label: 'Delete',
+              onClick: (item: FileSystemNodeProps, e: React.MouseEvent) => handleDelete(e, item.id),
+              variant: 'secondary',
+            }
+          ]}
+          loading={loading}
+          loadingItems={[deletingNode]}
+          emptyMessage="No Projects Found"
+          className="text-sm"
+        />
         </div>
-      )}
+
+     
     </div>
   );
 };

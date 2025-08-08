@@ -17,7 +17,9 @@ import { AIPopup } from "./AIPopup";
 import { DocumentEditor } from "./DocumentEditor";
 import { DocumentPaneTopBar } from "./DocumentPaneTopBar";
 import { ReviewRequestModal } from "./ReviewRequestModal";
-
+import { TabBar } from "./TabBar";
+import { Toolbar } from "./Toolbar";
+  
 interface GenerationState {
   isGenerating: boolean;
   loading: boolean;
@@ -185,23 +187,26 @@ export function DocumentPane() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="relative flex flex-col h-full">
       <DocumentPaneTopBar onFileReviewRequest={onFileReviewRequest} />
-      <div className="flex-1 relative bg-white">
+      <TabBar />
+      <Toolbar />
+ 
+      <div className="flex-1 bg-white mx-6 min-h-0">
         <DocumentEditor
           localContent={updateContent(initialContent)}
           handleSelectionChange={setSelectedText}
           activeTabId={docEditorState.activeTabId || ""}
         />
 
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-[600px]">
-          <AIPopup
+        {/* <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-full"> */}
+        <AIPopup
             onPromptSubmit={handlePromptSubmit}
             selectedText={selectedText}
             cursorPosition={undefined}
             isFolderPickerOpen={docEditorState.isFolderPickerOpen}
-          />
-        </div>
+            />
+        {/* </div> */}
         <GenerationIndicator isGenerating={generationState.loading} />
       </div>
       {activeTab?.fileId && (

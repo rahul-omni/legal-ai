@@ -1,4 +1,5 @@
 import { NotificationData } from "./types";
+import { Bell } from "lucide-react";
 
 interface NotificationItemProps {
   notification: NotificationData;
@@ -22,33 +23,40 @@ export function NotificationItem({ notification, formatDateTime }: NotificationI
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
-      <div className="flex justify-between items-start">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium text-gray-900 mb-1">
-            {getTitle(notification.message || '')}
-          </h3>
-          {getDescription(notification.message || '') && (
-            <p className="text-sm text-gray-600 whitespace-pre-line">
-              {getDescription(notification.message || '')}
-            </p>
-          )}
-          
-          {/* Additional metadata */}
-          <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-            {notification.dairy_number && (
-              <span>Diary: {notification.dairy_number}</span>
-            )}
-            {notification.method && (
-              <span>Method: {capitalizeFirst(notification.method)}</span>
-            )}
+    <div className="border-b hover:bg-background-dark transition-colors">
+      <div className="px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-info-light rounded-lg flex items-center justify-center">
+            <Bell className="w-4 h-4 text-info" />
           </div>
-        </div>
-        
-        <div className="flex-shrink-0 ml-4">
-          <time className="text-sm text-gray-500">
-            {formatDateTime(notification.created_at)}
-          </time>
+          
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-text">
+              {getTitle(notification.message || '')}
+            </h3>
+            {getDescription(notification.message || '') && (
+              <p className="text-sm text-text-light mt-1">
+                {getDescription(notification.message || '')}
+              </p>
+            )}
+            
+            {/* Metadata */}
+            <div className="flex items-center gap-4 mt-2 text-xs">
+              {notification.dairy_number && (
+                <span className="text-muted">
+                  Diary: {notification.dairy_number}
+                </span>
+              )}
+              {notification.method && (
+                <span className="text-muted">
+                  Method: {capitalizeFirst(notification.method)}
+                </span>
+              )}
+              <time className="text-muted">
+                {formatDateTime(notification.created_at)}
+              </time>
+            </div>
+          </div>
         </div>
       </div>
     </div>

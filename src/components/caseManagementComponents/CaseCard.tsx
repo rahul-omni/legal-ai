@@ -27,26 +27,26 @@ export function CaseCard({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 text-sm">
+    <div className="bg-background-light border border-border rounded-lg hover:shadow-md transition-all duration-200 text-sm">
       {/* Case header - clickable */}
       <div
-        className="flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+        className="flex justify-between items-center p-4 cursor-pointer hover:bg-background-dark transition-colors"
         onClick={() => onExpandToggle(caseItem)}
       >
         <div className="flex items-center gap-6 flex-1">
           {/* Court Badge */}
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-              <span className="text-blue-600 font-semibold text-sm">
+            <div className="w-8 h-8 bg-info-light rounded-lg flex items-center justify-center">
+              <span className="text-info font-semibold text-sm">
                 {index + 1}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-900">
+              <span className="font-semibold text-text">
                 {caseItem.court}
               </span>
-              <span className="text-gray-400">•</span>
-              <span className="text-gray-600 font-medium">
+              <span className="text-muted">•</span>
+              <span className="text-text-light font-medium">
                 Diary: {caseItem.diaryNumber}
               </span>
             </div>
@@ -56,7 +56,7 @@ export function CaseCard({
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               {caseItem.caseType && (
-                <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                <span className="px-2 py-1 bg-info-light text-info text-xs font-medium rounded">
                   {caseItem.caseType}
                 </span>
               )}

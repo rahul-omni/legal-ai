@@ -56,7 +56,7 @@ const FileNode = ({
             {isDeleting ? (
               <IconLoader />
             ) : (
-              <Trash2 className="w-4 h-4 text-gray-500/80 hover:text-black" />
+              <Trash2 className="w-4 h-4 text-error hover:text-error-dark" />
             )}
           </button>
         </div>

@@ -1,24 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, Search } from "lucide-react";
 import toast from "react-hot-toast";
-
-interface CaseData1 {
-  id: string;
-  serialNumber: string;
-  diaryNumber: string;
-  caseNumber: string;
-  parties: string;
-  advocates: string;
-  bench: string;
-  judgmentBy: string;
-  judgmentDate: string;
-  judgmentText: string;
-  judgmentUrl: string;
-  court: string;
-  date: string;
-  createdAt: string;
-  updatedAt: string;
-}
 import { CaseData, SearchParams, ValidationErrors } from "./caseManagementComponents/types";
 import { CaseList } from "./caseManagementComponents/CaseList";
 import { SearchModal } from "./caseManagementComponents/SearchModal";
@@ -35,13 +17,17 @@ export function CaseManagement() {
   const [selectAll, setSelectAll] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
-  const [searchParams, setSearchParams] = useState<SearchParams>({
+  const defaultSearchParams:SearchParams = {
     number: "",
     year: "",
     court: "",
     judgmentType: "",
     caseType: "",
-  });
+    city: "",
+    district: ""
+  }
+
+  const [searchParams, setSearchParams] = useState<SearchParams>(defaultSearchParams);
 
   const [newlyCreatedCase, setNewlyCreatedCase] = useState<CaseData | null>(null);
   const [expandedCases, setExpandedCases] = useState<Record<string, boolean>>({});
@@ -64,6 +50,22 @@ export function CaseManagement() {
       errors.year = "Year must be a 4-digit number";
     }
 
+    if (!searchParams.court.trim()) {
+      errors.court = "Court is required";
+    }
+
+    if(searchParams.court === "High Court") {
+      if (!searchParams.caseType.trim()) {
+        errors.caseType = "Case type is required";
+      }
+    }
+
+    if(searchParams.court === "High Court") {
+      if (!searchParams.city.trim()) {
+        errors.city = "City is required";
+      }
+    }
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -75,15 +77,7 @@ export function CaseManagement() {
     }
 
     const caseId = caseItem.id;
-    console.group(`Handling expand for case ${caseId}`);
-
     const isExpanded = expandedCases[caseId];
-    console.log('Current states:', {
-      expanded: expandedCases,
-      details: caseDetails,
-      loading: loadingDetails
-    });
-
     setExpandedCases(prev => ({ ...prev, [caseId]: !isExpanded }));
 
     if (!isExpanded && !caseDetails[caseId]) {
@@ -94,36 +88,29 @@ export function CaseManagement() {
         const diaryNumber = diaryParts[0];
         const year = diaryParts[1];
 
-        console.log(`Searching for cases with diary: ${diaryNumber}, year: ${year}, court: ${caseItem.court}`);
-
         const searchUrl = new URL("/api/cases/search", window.location.origin);
         searchUrl.searchParams.append("diaryNumber", diaryNumber);
         searchUrl.searchParams.append("year", year);
         searchUrl.searchParams.append("court", caseItem.court);
         
-        // Only append judgmentType if it exists and is not empty
         if (caseItem.judgmentType) {
           searchUrl.searchParams.append("judgmentType", caseItem.judgmentType);
         }
         
-        // Only append caseType if it exists and is not empty
         if (caseItem.caseType) {
           searchUrl.searchParams.append("caseType", caseItem.caseType);
         }
         
-        // Only append city if it exists
         if (caseItem?.city) {
           searchUrl.searchParams.append("city", caseItem.city);
         }
         
-        // Only append district if it exists
         if (caseItem?.district) {
           searchUrl.searchParams.append("district", caseItem.district);
         }
 
         const response = await fetch(searchUrl.toString());
         const data = await response.json();
-        console.log('Search API response:', data);
 
         if (data.success && data.data?.length) {
           const sortedCases = data.data.sort((a: CaseData, b: CaseData) => {
@@ -166,29 +153,27 @@ export function CaseManagement() {
         setLoadingDetails(prev => ({ ...prev, [caseId]: false }));
       }
     }
-    console.groupEnd();
   };
 
   const fetchUserCases = async () => {
     try {
       setIsLoading(true);
       setError("");
-      const response = await fetch("/api/cases/user-cases", {
-        method: "GET",
+      const response = await fetch('/api/cases/user-cases', {
+        method: 'GET'
       });
       const data = await response.json();
-
 
       if (data.success && data.data) {
         setCases(data.data);
       } else {
-        setError(data.message || "Failed to fetch cases");
-        toast.error(data.message || "Failed to fetch cases");
+        setError(data.message || 'Failed to fetch cases');
+        toast.error(data.message || 'Failed to fetch cases');
       }
     } catch (error) {
-      console.error("Error fetching cases:", error);
-      setError("Failed to load cases");
-      toast.error("Failed to load cases");
+      console.error('Error fetching cases:', error);
+      setError('Failed to load cases');
+      toast.error('Failed to load cases');
     } finally {
       setIsLoading(false);
     }
@@ -200,10 +185,8 @@ export function CaseManagement() {
 
 
   const handleSearchCase = async () => {
-    // Clear previous errors
     setValidationErrors({});
     
-    // Validate form
     if (!validateSearchForm()) {
       return;
     }
@@ -219,29 +202,25 @@ export function CaseManagement() {
       searchUrl.searchParams.append("diaryNumber", searchParams.number);
       searchUrl.searchParams.append("year", searchParams.year);
       
-      // Only append court if it's selected
       if (searchParams.court) {
         searchUrl.searchParams.append("court", searchParams.court);
       }
       
-      // Only append judgmentType if it's selected (not empty/"All")
       if (searchParams.judgmentType) {
         searchUrl.searchParams.append("judgmentType", searchParams.judgmentType);
       }
       
-      // Only append caseType if it's selected (not empty/"All Case Types")
       if (searchParams.caseType) {
         searchUrl.searchParams.append("caseType", searchParams.caseType);
       }
 
-      console.log("Optimized Search URL:", searchUrl.toString());
-      console.log("Search Parameters:", {
-        diaryNumber: searchParams.number,
-        year: searchParams.year,
-        court: searchParams.court || "All Courts",
-        judgmentType: searchParams.judgmentType || "All Judgment Types", 
-        caseType: searchParams.caseType || "All Case Types"
-      });
+      if (searchParams.city) {
+        searchUrl.searchParams.append("city", searchParams.city);
+      }
+
+      if (searchParams.district) {
+        searchUrl.searchParams.append("district", searchParams.district);
+      }
 
       const response = await fetch(searchUrl.toString());
       const responseData = await response.json();
@@ -251,18 +230,14 @@ export function CaseManagement() {
       }
 
       if (responseData.data && responseData.data.length > 0) {
-        // Sort cases by judgment date (newest first)
         const sortedCases = responseData.data.sort((a: CaseData, b: CaseData) => {
-          // Handle cases where judgmentDate might be null or undefined
           if (!a.judgmentDate && !b.judgmentDate) return 0;
-          if (!a.judgmentDate) return 1; // Put cases without dates at the end
-          if (!b.judgmentDate) return -1; // Put cases without dates at the end
+          if (!a.judgmentDate) return 1;
+          if (!b.judgmentDate) return -1;
           
-          // Convert DD-MM-YYYY format to Date objects for proper comparison
           const parseDate = (dateStr: string) => {
             const parts = dateStr.split('-');
             if (parts.length === 3) {
-              // DD-MM-YYYY format: rearrange to YYYY-MM-DD for Date constructor
               return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
             }
             return new Date(dateStr);
@@ -271,23 +246,20 @@ export function CaseManagement() {
           const dateA = parseDate(a.judgmentDate);
           const dateB = parseDate(b.judgmentDate);
           
-          // Handle invalid dates
           if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
-          if (isNaN(dateA.getTime())) return 1; // Invalid dates go to end
-          if (isNaN(dateB.getTime())) return -1; // Invalid dates go to end
+          if (isNaN(dateA.getTime())) return 1;
+          if (isNaN(dateB.getTime())) return -1;
           
-          return dateB.getTime() - dateA.getTime(); // Descending order (newest first)
+          return dateB.getTime() - dateA.getTime();
         });
 
         setFoundCases(sortedCases);
-        console.log("Found and sorted cases:", sortedCases);
         toast.success(`Found ${sortedCases.length} cases (sorted by newest first)`);
       } else {
         toast.success(responseData.message || "No matching cases found");
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "An unknown error occurred";
+      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
       setValidationErrors({ general: errorMessage });
       toast.error(errorMessage || "Failed to search case");
     } finally {
@@ -296,10 +268,10 @@ export function CaseManagement() {
   };
 
   const handleToggleSelectCase = (caseData: CaseData) => {
-    setSelectedCases((prev) => {
-      const isSelected = prev.some((c) => c.id === caseData.id);
+    setSelectedCases(prev => {
+      const isSelected = prev.some(c => c.id === caseData.id);
       if (isSelected) {
-        return prev.filter((c) => c.id !== caseData.id);
+        return prev.filter(c => c.id !== caseData.id);
       } else {
         return [...prev, caseData];
       }
@@ -319,8 +291,6 @@ export function CaseManagement() {
     try {
       setIsSubmitting(true);
 
-      console.log("Selected cases:", selectedCases);
-
       const response = await fetch('/api/cases/user-cases', {
         method: 'POST',
         headers: {
@@ -330,7 +300,6 @@ export function CaseManagement() {
       });
 
       const result = await response.json();
-      console.log("Create cases response:", result);
 
       if (!response.ok) {
         throw new Error(result.message || "Failed to save cases");
@@ -351,9 +320,7 @@ export function CaseManagement() {
       setShowNewCaseModal(false);
       setFoundCases([]);
       setSelectedCases([]);
-      setSearchParams({
-        number: "", year: "", court: "", judgmentType: "", caseType: ""
-      })
+      setSearchParams(defaultSearchParams)
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to create cases";
@@ -391,12 +358,9 @@ export function CaseManagement() {
   };
 
   const handlePdfClick = async (caseData: CaseData, event: React.MouseEvent) => {
-    console.log("caseData:", caseData);
-
     if (caseData.court === 'High Court' &&
       caseData.judgmentType === 'JUDGEMENT' &&
       caseData.file_path) {
-      console.log("Generating signed URL for High Court with JUDGEMENT type");
       event.preventDefault();
 
       try {
@@ -428,35 +392,34 @@ export function CaseManagement() {
     setSelectedCases([]);
     setSelectAll(false);
     setValidationErrors({});
-    setSearchParams({ number: "", year: "", court: "", judgmentType: "", caseType: "" });
+    setSearchParams(defaultSearchParams);
   };
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div className="h-full flex flex-col bg-background">
       {/* Header */}
-      <div className="p-6 bg-white border-b">
+      <div className="p-6 bg-background-light border-b">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-gray-800">
+          <h1 className="text-2xl font-semibold text-text-dark">
             Case Management
           </h1>
 
-
           <button
             onClick={() => setShowNewCaseModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+            className="px-4 py-2 bg-primary text-white rounded-lg flex items-center gap-2 hover:bg-primary-dark"
           >
             <Plus className="w-4 h-4" />
-            Add Case
+            New Case
           </button>
         </div>
 
         <div className="flex gap-4">
           <div className="flex-1 relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
             <input
               type="text"
               placeholder="Search cases..."
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />

@@ -31,24 +31,18 @@ export function TabBar() {
   };
 
   return (
-    <div className="flex items-center h-9 border-b border-gray-200 bg-gray-50/80">
+    <div className="flex items-center h-9 border-gray-200 bg-background mx-6 mt-2">
       {/* New Tab Button */}
-      <button
-        onClick={handleNewFile}
-        className="h-full px-2 text-gray-500 hover:bg-gray-100 transition-colors border-l border-gray-200"
-      >
-        <Plus className="w-3.5 h-3.5" />
-      </button>
-      <div className="flex-1 flex items-center">
+      <div className="flex items-center h-full">
         {openTabs.map((tab) => (
           <div
             key={tab.id}
             onClick={() => handleTabClick(tab)}
-            className={`group flex items-center h-full px-3 py-1 rounded border-r border-gray-200 cursor-pointer
+            className={`group flex items-center h-full px-3 py-2 border-t-2 border-l-2 border-border-light   m-0 cursor-pointer
                       ${
                         activeTabId === tab.id
-                          ? "bg-white text-gray-700 border-b-0"
-                          : "text-gray-500 hover:bg-gray-100"
+                          ? "bg-[#fff] text-text border-border"
+                          : "text-gray-500 hover:bg-gray-100 border-border" 
                       }`}
           >
             <span className="text-xs font-medium truncate max-w-[100px]">
@@ -63,13 +57,19 @@ export function TabBar() {
                 e.stopPropagation();
                 handleTabClose(tab.id);
               }}
-              className="ml-1.5 p-0.5 rounded-sm hover:bg-gray-200/80 opacity-0 group-hover:opacity-100 transition-opacity"
+              className=" p-0.5 rounded-sm hover:bg-gray-200/80 opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <X className="w-3 h-3 text-gray-400" />
             </button>
           </div>
         ))}
       </div>
+      <button
+        onClick={handleNewFile}
+        className="h-full w-auto flex items-center justify-center px-3 bg-border-light text-gray-500 hover:bg-border-dark transition-colors border-l-2 border-t-2 border-r-2 border-border-light hover:border-border-dark"
+      >
+        <Plus className="w-5 h-5 text-muted-dark" />
+      </button>
     </div>
   );
 }
