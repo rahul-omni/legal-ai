@@ -19,26 +19,31 @@ const navigationItems = [
     name: "Project Hub",
     href: "/projects",
     icon: FolderKanban,
+    id: 'projecthub'
   },
   {
     name: "Cases",
     href: "/cases",
     icon: Gavel,
+    id: 'cases'
   },
   {
     name: "Pending Reviews",
     href: "/pending-reviews",
     icon: Clock,
+    id: 'pendingreviews'
   },
   {
     name: "Clients",
     href: "/clients",
     icon: Users,
+    id: 'clients'
   },
   {
     name: "Notifications",
     href: "/notifications",
     icon: Bell,
+    id: 'notifications'
   },
 ];
 
@@ -81,6 +86,7 @@ export function Navigation() {
 
           return (
             <Link
+              id={item.id || item.name}
               key={item.name}
               href={item.href}
               title={isExpanded ? "" : item.name}

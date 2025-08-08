@@ -96,12 +96,12 @@ model Organization {
 }
 
 model OrgMembership {
-  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId    String       @map("user_id") @db.Uuid
   orgId     String       @map("organization_id") @db.Uuid
   createdAt DateTime     @default(now()) @map("created_at")
   updatedAt DateTime     @updatedAt @map("updated_at")
   roleId    String       @map("role_id") @db.Uuid
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   org       Organization @relation("org_memberships_org_id_idx", fields: [orgId], references: [id])
   user      User         @relation("org_memberships_user_id_idx", fields: [userId], references: [id])
 
@@ -110,7 +110,6 @@ model OrgMembership {
 }
 
 model Invitation {
-  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email        String
   token        String?          @unique
   expiresAt    DateTime?        @map("expires_at")
@@ -119,6 +118,7 @@ model Invitation {
   createdAt    DateTime         @default(now()) @map("created_at")
   updatedAt    DateTime         @updatedAt @map("updated_at")
   roleId       String           @map("role_id") @db.Uuid
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organization Organization     @relation("organization_invitations_org_id_idx", fields: [orgId], references: [id], onDelete: Cascade)
   role         Role             @relation("invitation_role_id_idx", fields: [roleId], references: [id])
 
@@ -137,6 +137,7 @@ model FileSystemNode {
   createdBy     String?          @map("created_by") @db.Uuid
   updatedBy     String?          @map("updated_by") @db.Uuid
   userId        String?          @map("user_id") @db.Uuid
+  is_default    Boolean          @default(false)
   FileReview    FileReview[]     @relation("file_review")
   createdByUser User?            @relation("file_system_nodes_created_by_idx", fields: [createdBy], references: [id])
   parent        FileSystemNode?  @relation("file_system_node_hierarchy", fields: [parentId], references: [id])
@@ -262,6 +263,32 @@ model extracted_judgments {
   case_management CaseManagement @relation(fields: [case_id], references: [id])
 
   @@unique([case_id, judgment_url])
+}
+
+model api_analytics {
+  id        Int      @id @default(autoincrement())
+  route     String
+  date      DateTime
+  count     Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@unique([route, date])
+}
+
+model website_feedback {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email       String?  @unique @db.VarChar(255)
+  rating      Int      @default(1)
+  suggestion  String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime
+  ipAddress   String?  @db.VarChar(45)
+  fingerprint String?  @unique
+  deviceId    String?  @db.VarChar(255)
+
+  @@index([created_at])
+  @@index([ipAddress])
+  @@index([rating])
 }
 
 enum OtpStatus {

@@ -3,6 +3,7 @@ import { TabsProvider } from "@/components/LegalEditor/reducersContexts/tabsCont
 import type { Metadata } from "next";
 import { SessionProvider } from "next-auth/react";
 import PrivatePages from "./privatePages";
+import FirstTimeGuide from "@/components/FirstTimeGuide";
 
 export const metadata: Metadata = {
   title: "Legal Document Platform",
@@ -19,6 +20,7 @@ export default function RootLayout({
       <RoleProvider>
         <SessionProvider>
           <PrivatePages>{children}</PrivatePages>
+          <FirstTimeGuide />
         </SessionProvider>
       </RoleProvider>
     </TabsProvider>
