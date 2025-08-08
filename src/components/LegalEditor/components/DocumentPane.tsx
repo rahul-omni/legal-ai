@@ -39,23 +39,35 @@ export function DocumentPane() {
 
   const [initialContent, setInitialContent] = useState<string>("")
 
+  const activeTab = docEditorState.openTabs.find(
+    (tab) => tab.id === docEditorState.activeTabId
+  );
+
   useEffect(()=>{
     setInitialContent(activeTab?.content || "")
   }, [docEditorState.activeTabId])
 
-   useEffect(()=>{
-    if(docEditorState.isAIEdit){
-      setInitialContent(activeTab?.content || "")
-      docEditorDispatch({
-        type: "UPDATE_IS_AI_EDIT",
-        payload: { isAIEdit: false },
-      });
-    }
-  }, [docEditorState.isAIEdit])
-
-  const activeTab = docEditorState.openTabs.find(
-    (tab) => tab.id === docEditorState.activeTabId
-  );
+    // Add this effect to properly handle tab changes
+ 
+  useEffect(() => {
+  if (activeTab) {
+    setInitialContent(activeTab.content || "");
+    // Reset any states that might affect AIPopup visibility
+    docEditorDispatch({ 
+      type: "UPDATE_IS_AI_EDIT", 
+      payload: { isAIEdit: false } 
+    });
+  }
+}, [activeTab?.id]);
+  //  useEffect(()=>{
+  //   if(docEditorState.isAIEdit){
+  //     setInitialContent(activeTab?.content || "")
+  //     docEditorDispatch({
+  //       type: "UPDATE_IS_AI_EDIT",
+  //       payload: { isAIEdit: false },
+  //     });
+  //   }
+  // }, [docEditorState.isAIEdit])
   let tempElements: { para: ParagraphNode | null; text: TextNode | null } = {
     para: null,
     text: null,
@@ -194,14 +206,25 @@ export function DocumentPane() {
           activeTabId={docEditorState.activeTabId || ""}
         />
 
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-[600px]">
+        {/* <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-[600px]">
           <AIPopup
             onPromptSubmit={handlePromptSubmit}
             selectedText={selectedText}
             cursorPosition={undefined}
             isFolderPickerOpen={docEditorState.isFolderPickerOpen}
           />
-        </div>
+        </div> */}
+          {/* Only show AIPopup if we have an active tab with content initialized */}
+        {activeTab &&  !docEditorState.isSaving &&(
+          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-[600px]">
+            <AIPopup
+              onPromptSubmit={handlePromptSubmit}
+              selectedText={selectedText}
+              cursorPosition={undefined}
+              isFolderPickerOpen={docEditorState.isFolderPickerOpen}
+            />
+          </div>
+        )}
         <GenerationIndicator isGenerating={generationState.loading} />
       </div>
       {activeTab?.fileId && (

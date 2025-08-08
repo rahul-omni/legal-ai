@@ -37,6 +37,7 @@ interface DocumentEditorState {
   isTranslating: boolean;
   isFileLoading: boolean;
   translatingTab: string;
+  
 }
 
 // Action types - renamed to match handler functions
@@ -75,17 +76,21 @@ function documentEditorReducer(
   state: DocumentEditorState,
   action: DocumentEditorAction
 ): DocumentEditorState {
+  console.log("isfolderPickerOpen:", state.isFolderPickerOpen);
+  
   switch (action.type) {
     case "NEW_FILE": {
       const newTabId = `tab-${Date.now()}`;
       return {
         ...state,
         isNewFileMode: true,
+         isFolderPickerOpen:  false, // ✅ Add this line
         openTabs: [
           ...state.openTabs,
           { id: newTabId, name: "Untitled", content: "", isUnsaved: true },
         ],
         activeTabId: newTabId,
+        isAIEdit: false, // Reset AI edit state
       };
     }
 
@@ -131,14 +136,18 @@ function documentEditorReducer(
       return { ...state, isSaving: true };
 
     case "CANCEL_SAVE":
-      return { ...state, isSaving: false };
+      return { ...state, isSaving: false ,isFolderPickerOpen: false };
     
     case "FILE_LOADING":
       return { ...state, isFileLoading: !!action.payload.isFileLoading };
 
+       
+
     case "FILE_SELECT": {
       const file = action.payload;
       const existingTab = state.openTabs.find((tab) => tab.fileId === file.id);
+    
+      
 
       if (existingTab) {
         return {
@@ -147,6 +156,8 @@ function documentEditorReducer(
           isNewFileMode: false,
         };
       }
+    
+   
 
       const newTabId = `tab-${Date.now()}`;
       const newTab = {
@@ -277,7 +288,9 @@ export function DocumentEditorProvider({
 
   // Handler functions - simplified with direct dispatch calls
   const handleNewFile = () => {
-    docEditorDispatch({ type: "NEW_FILE" });
+    docEditorDispatch({ type: "NEW_FILE" ,  });
+
+    
   };
 
   const handleTabClose = (tabId: string) => {

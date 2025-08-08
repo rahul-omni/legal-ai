@@ -13,6 +13,7 @@ import {
 } from "../reducersContexts/documentEditorReducerContext";
 import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 import { useFolderPicker } from "../reducersContexts/folderPickerReducerContext";
+import { useParams } from "next/navigation";
 
 interface DocumentPaneTopBarProps {
   onFileReviewRequest: () => void;
@@ -37,6 +38,8 @@ export function DocumentPaneTopBar({
   const { explorerState } = useExplorerContext();
   const { isLoading } = useLoadingContext();
   const { dispatch: folderPickerDispatch } = useFolderPicker();
+  const params = useParams();
+  const pId = params.id as string;
 
   const activeTab = useMemo(
     () => openTabs.find((tab) => tab.id === activeTabId),
@@ -91,23 +94,53 @@ export function DocumentPaneTopBar({
       payload: { name, content, parentId, fileId, callback },
     });
   };
+ const handleNewFileSave = async (tab: TabInfo) => {
+  const fileName = window.prompt("Enter file name:", tab.name);
+  if (!fileName) return;
 
-  const handleNewFileSave = async (tab: TabInfo) => {
-    const fileName = window.prompt("Enter file name:", tab.name);
-    if (!fileName) return;
-
-    const htmlContent = generateEditorHtml(lexicalEditorRef.current!);
-    handleInitiateSave(fileName, htmlContent, undefined, null, (newFile) => {
-      docEditorDispatch({
-        type: "UPDATE_TAB_NAME",
-        payload: { tabId: tab.id, name: newFile.name, fileId: newFile.id },
-      });
-      docEditorDispatch({
-        type: "UPDATE_TAB_CONTENT",
-        payload: { tabId: tab.id, content: newFile.content! },
-      });
+  const htmlContent = generateEditorHtml(lexicalEditorRef.current!);
+  
+  handleInitiateSave(fileName, htmlContent, pId, null, (newFile) => {
+    docEditorDispatch({
+      type: "UPDATE_TAB_NAME",
+      payload: { tabId: tab.id, name: newFile.name, fileId: newFile.id },
     });
-  };
+    
+    docEditorDispatch({
+      type: "UPDATE_TAB_CONTENT",
+      payload: { 
+        tabId: tab.id, 
+        content: newFile.content!,
+      },
+    });
+    
+    // Reset saving state and ensure popup visibility
+    docEditorDispatch({ type: "CANCEL_SAVE" });
+  });
+};
+  // const handleNewFileSave = async (tab: TabInfo) => {
+  //   const fileName = window.prompt("Enter file name:", tab.name);
+  //   if (!fileName) return;
+
+  // //  console.log("parentId:", parentId);
+  //  console.log("pId:", pId);
+   
+  //   const htmlContent = generateEditorHtml(lexicalEditorRef.current!);
+  //   handleInitiateSave(fileName, htmlContent, pId, null, (newFile) => {
+  //     docEditorDispatch({
+  //       type: "UPDATE_TAB_NAME",
+  //       payload: { tabId: tab.id, name: newFile.name, fileId: newFile.id  },
+  //     });
+  //     docEditorDispatch({
+  //       type: "UPDATE_TAB_CONTENT",
+  //       payload: { tabId: tab.id, content: newFile.content! ,  isAIEdit: true,},
+  //     });
+  //      docEditorDispatch({
+  //     type: "UPDATE_IS_AI_EDIT",
+  //     payload: { isAIEdit: true }, // ✅ Ensures popup shows even if above is missed
+  //   });
+  //   });
+  // };
 
   const handleSave = async () => {
     if (!activeTabId || !activeTab) return;

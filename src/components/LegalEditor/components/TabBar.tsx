@@ -5,6 +5,8 @@ import {
   useDocumentEditor,
 } from "../reducersContexts/documentEditorReducerContext";
 import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
+ 
+import { useParams } from "next/navigation";
 
 export function TabBar() {
   const {
@@ -15,7 +17,9 @@ export function TabBar() {
   } = useDocumentEditor();
   const { explorerState, explorerDispatch } = useExplorerContext();
   const { openTabs, activeTabId } = state;
-
+   
+  const params =useParams()
+   
   const handleTabClick = (tab: TabInfo) => {
     docEditorDispatch({ type: "TAB_CLICK", payload: tab.id });
 
@@ -26,19 +30,25 @@ export function TabBar() {
       tab.fileId ?? undefined
     );
 
+    console.log("state", state);
+
     if (!fileNode) return;
     explorerDispatch({ type: "SELECT_FILE", payload: fileNode });
   };
-
-  return (
+   
+    
+  
+   return (
     <div className="flex items-center h-9 border-b border-gray-200 bg-gray-50/80">
       {/* New Tab Button */}
+      {params.fileId ? null :
       <button
         onClick={handleNewFile}
         className="h-full px-2 text-gray-500 hover:bg-gray-100 transition-colors border-l border-gray-200"
       >
-        <Plus className="w-3.5 h-3.5" />
-      </button>
+        {/* <Plus className="w-3.5 h-3.5" />  */}
+         <Plus className="w-3.5 h-3.5" />
+      </button>}
       <div className="flex-1 flex items-center">
         {openTabs.map((tab) => (
           <div

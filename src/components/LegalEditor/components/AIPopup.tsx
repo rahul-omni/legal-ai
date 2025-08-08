@@ -127,7 +127,13 @@ export function AIPopup({
   };
 
   // Skip rendering if folder picker is open
-  if (isFolderPickerOpen) return null;
+  // if (isFolderPickerOpen) return null;
+  // Replace the current visibility check with:
+const shouldShowPopup = !isFolderPickerOpen && 
+                       !close && 
+                       (!selectedText || selectedText.trim().length > 0);
+
+if (!shouldShowPopup) return null;
 
   return (
     <div
