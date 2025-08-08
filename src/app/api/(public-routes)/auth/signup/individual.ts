@@ -1,74 +1,4 @@
-// import {
-//   ErrorAlreadyExists,
-//   ErrorResponse,
-//   handleError,
-// } from "@/app/api/lib/errors";
-// import { db } from "@/app/api/lib/db";
-// import bcrypt from "bcryptjs";
-// import { NextResponse } from "next/server";
-// import { logger } from "../../../lib/logger";
-// import { sendVerificationEmail } from "../../../lib/mail";
-// import {
-//   generateVerificationToken,
-//   getTokenExpiry,
-// } from "../../../helper/verificationTokens";
-// import { IndividualSignupRequest, IndividualSignupResponse } from "../types";
 
-// export default async function handler(
-//   data: IndividualSignupRequest
-// ): Promise<NextResponse<IndividualSignupResponse | ErrorResponse>> {
-//   try {
-//     const { name, email, password, roleId } = data;
-
-//     logger.info("Signup request received", { email });
-
-//     // Check if user already exists
-//     const existingUser = await db.user.findUnique({
-//       where: { email },
-//       select: { id: true },
-//     });
-
-//     if (existingUser) {
-//       logger.warn("User already exists", { email });
-//       throw new ErrorAlreadyExists("User");
-//     }
-
-//     const hashedPassword = await bcrypt.hash(password, 12);
-
-//     const verificationToken = generateVerificationToken();
-
-//     logger.info("Verification token generated", { verificationToken });
-
-//     const tokenExpiry = getTokenExpiry();
-
-//     const user = await db.user.create({
-//       data: {
-//         name,
-//         email,
-//         verificationToken,
-//         verificationTokenExpiry: tokenExpiry,
-//         password: hashedPassword,
-//         isVerified: false,
-//       },
-//     });
-
-//     logger.info("User created successfully", { userId: user.id });
-
-//     await sendVerificationEmail(email, verificationToken);
-
-//     const { password: _, ...userDetails } = user;
-//     return NextResponse.json(
-//       {
-//         user: userDetails,
-//         message: "User created successfully",
-//       },
-//       { status: 201 }
-//     );
-//   } catch (error) {
-//     logger.error("Signup error", { error: error });
-//     return handleError(error);
-//   }
-// }
 
  import {
   ErrorAlreadyExists,
@@ -144,6 +74,38 @@ export default async function handler(
     });
 
     logger.info("User registration completed", { userId: updatedUser.id });
+    // After successful signup (individual/organization), add:
+const [defaultFolder, rootFile] = await db.$transaction([
+  // 1. Create default folder ("My Documents")
+  db.fileSystemNode.create({
+    data: {
+      name: "My Documents",
+      type: "FOLDER",
+      userId: updatedUser.id, // or updatedUser.id for individual
+    },
+  }),
+
+  // 2. Create root-level file ("Welcome.docx")
+  db.fileSystemNode.create({
+    data: {
+      name: "Welcome.docx",
+      type: "FILE",
+      content: "<div>This is a placeholder DOCX file. Upload or generate one to replace it.</div>", // Base64 or placeholder
+      userId: updatedUser.id,
+    },
+  }),
+]);
+
+// 3. Create nested file inside the folder ("My Documents/Quick Start.docx")
+await db.fileSystemNode.create({
+  data: {
+    name: "Quick Start.docx",
+    type: "FILE",
+    content: "<div>This is a placeholder DOCX file. Upload or generate one to replace it. Inside folder</div>", // Base64 or placeholder
+    parentId: defaultFolder.id,
+    userId: updatedUser.id,
+  },
+});
 
     // 7. Send verification email
     await sendVerificationEmail(email, verificationToken);

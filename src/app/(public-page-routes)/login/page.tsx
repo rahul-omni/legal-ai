@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [activeTab, setActiveTab] = useState<"organization" | "individual">("organization");
+  const [activeTab, setActiveTab] = useState<"organization" | "individual">("individual");
   const [resendDisabled, setResendDisabled] = useState(false);
   const [resendTimer, setResendTimer] = useState(30);
   const { startLoading, stopLoading, isLoading } = useLoadingContext();
