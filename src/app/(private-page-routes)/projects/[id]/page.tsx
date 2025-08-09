@@ -87,7 +87,7 @@ const ProjectFolderTable: React.FC = () => {
   }
 
   return (
-    <div className="w-full overflow-auto">
+    <div className="w-full h-full min-h-0 flex flex-col">
       <div className="px-6 py-4 flex items-start justify-between border-b">
         <Header headerTitle="Project Hub" subTitle="Manage your legal projects" />
         <div className="flex items-start gap-2">
@@ -100,7 +100,7 @@ const ProjectFolderTable: React.FC = () => {
       </div>
 
       
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-6 overflow-auto min-h-0">
       <FileExplorer
           items={paginatedProjects}
           onItemClick={onItemClick}

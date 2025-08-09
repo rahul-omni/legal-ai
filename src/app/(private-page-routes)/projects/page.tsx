@@ -130,7 +130,7 @@ const ProjectHub = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-full min-h-0">
       <div className="px-6 py-4 flex items-start justify-between">
         <Header headerTitle="Project Hub" subTitle="Manage your legal projects" />
         <div className="flex items-start gap-2">
@@ -153,7 +153,7 @@ const ProjectHub = () => {
         </div>
       </div>
 
-      <div className="flex-1 p-6 ">
+      <div className="flex-1 p-6 overflow-auto min-h-0">
         <FileExplorer
           items={paginatedProjects}
           actions={[

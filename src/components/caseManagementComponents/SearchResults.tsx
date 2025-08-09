@@ -40,7 +40,7 @@ export function SearchResults({
                 Search Results
               </h4>
             </div>
-            <span className="px-3 py-1.5 bg-blue-50 text-blue-700 text-sm font-semibold rounded-full border border-blue-200">
+            <span className="px-3 py-1.5 bg-info-light text-primary text-sm font-semibold rounded-full border border-info/20">
               {foundCases.length} case{foundCases.length !== 1 ? 's' : ''} found
             </span>
           </div>
@@ -51,7 +51,7 @@ export function SearchResults({
                 id="selectAll"
                 checked={selectAll}
                 onChange={onToggleSelectAll}
-                className="w-5 h-5 text-blue-600 border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                className="w-5 h-5 text-primary border-2 border-gray-300 rounded focus:ring-primary focus:ring-2"
               />
               <label htmlFor="selectAll" className="text-sm font-semibold text-gray-700 cursor-pointer">
                 Select All
@@ -146,26 +146,21 @@ export function SearchResults({
                   </div>
 
                   {/* PDF Button */}
-                  {caseData.judgmentUrl &&
-                    !(caseData.court === 'High Court' && caseData.judgmentType === 'ORDER') && (
-                      <div className="ml-6 flex-shrink-0">
-                        <a
-                          href={Array.isArray(caseData.judgmentUrl) ? caseData.judgmentUrl[0] : caseData.judgmentUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-primary bg-info-light rounded-lg hover:bg-info transition-colors border border-info/20"
-                          onClick={(e) => {
-                            if (caseData.court === 'High Court' && 
-                                caseData.judgmentType === 'JUDGEMENT' &&
-                                caseData.file_path) {
+                  {caseData.judgmentUrl && (
+                    <div className="ml-6 flex-shrink-0">
+                      <a
+                        href={Array.isArray(caseData.judgmentUrl) ? caseData.judgmentUrl[0] : caseData.judgmentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-primary bg-info-light rounded-lg hover:bg-primary-dark hover:text-white transition-colors border border-info/20"
+                        onClick={(e) => {
+                            if (caseData.court === 'High Court' && caseData.file_path) {
                               handlePdfClick(caseData, e);
                             }
                           }}
                         >
-                          <FileText className="w-4 h-4" />
-                          {caseData.court === 'High Court' &&
-                            caseData.judgmentType === 'JUDGEMENT' &&
-                            loadingUrls[caseData.id] ? (
+                        <FileText className="w-4 h-4" />
+                          {caseData.court === 'High Court' && loadingUrls[caseData.id] ? (
                             <>
                               <Loader2 className="w-4 h-4 animate-spin" />
                               <span>Generating...</span>
@@ -173,9 +168,9 @@ export function SearchResults({
                           ) : (
                             "View PDF"
                           )}
-                        </a>
-                      </div>
-                    )}
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -190,7 +185,7 @@ export function SearchResults({
             {selectedCases.length} case{selectedCases.length !== 1 ? 's' : ''} selected
           </span>
           {selectedCases.length > 0 && (
-            <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
+            <span className="px-3 py-1 bg-info-light text-primary text-xs font-semibold rounded-full">
               Ready to create
             </span>
           )}
@@ -204,7 +199,7 @@ export function SearchResults({
           </button>
           <button
             onClick={onCreateCases}
-            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            className="px-6 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             disabled={selectedCases.length === 0 || isSubmitting}
           >
             {isSubmitting ? (
