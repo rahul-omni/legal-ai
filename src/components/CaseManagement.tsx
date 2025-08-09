@@ -358,14 +358,12 @@ export function CaseManagement() {
   };
 
   const handlePdfClick = async (caseData: CaseData, event: React.MouseEvent) => {
-    if (caseData.court === 'High Court' &&
-      caseData.judgmentType === 'JUDGEMENT' &&
-      caseData.file_path) {
+    
       event.preventDefault();
 
       try {
         setLoadingUrls(prev => ({ ...prev, [caseData.id]: true }));
-        const signedUrl = await generateSignedUrlForCase(caseData.file_path);
+        const signedUrl = await generateSignedUrlForCase(caseData.file_path || '');
 
         window.open(signedUrl, '_blank', 'noopener,noreferrer');
 
@@ -376,7 +374,6 @@ export function CaseManagement() {
       } finally {
         setLoadingUrls(prev => ({ ...prev, [caseData.id]: false }));
       }
-    }
   };
 
   const handleBackToSearch = () => {
@@ -396,7 +393,7 @@ export function CaseManagement() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="flex flex-col bg-background">
       {/* Header */}
       <div className="p-6 bg-background-light border-b">
         <div className="flex items-center justify-between mb-6">

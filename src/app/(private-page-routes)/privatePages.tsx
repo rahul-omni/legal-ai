@@ -42,7 +42,7 @@ const PrivatePages: FC<{
       <Navigation />
       <div className="flex flex-1 flex-col">
         <TopNavbar />
-        <div className="flex-1 overflow-hidden bg-background h-full">{children}</div>
+        <div className="flex-1 overflow-auto bg-background h-full min-h-0">{children}</div>
       </div>
     </div>
   );

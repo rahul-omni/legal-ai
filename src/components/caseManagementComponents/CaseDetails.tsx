@@ -137,7 +137,7 @@ export function CaseDetails({ caseItem, caseDetails, isLoading, handlePdfClick }
                       <span className="text-sm text-text-light block mb-1">Bench</span>
                       <span className="text-sm font-semibold text-text-dark">{detail.bench}</span>
                     </div>
-                    {detail.judgmentUrl && !(detail.court === 'High Court' && detail.judgmentType === 'ORDER') && (
+                    {detail.judgmentUrl && (
                       <div className="pt-2">
                         <a
                           href={Array.isArray(detail.judgmentUrl) ? detail.judgmentUrl[0] : detail.judgmentUrl}
@@ -145,9 +145,7 @@ export function CaseDetails({ caseItem, caseDetails, isLoading, handlePdfClick }
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-primary rounded-lg hover:bg-primary-dark transition-colors border border-info/20"
                           onClick={(e) => {
-                            if (detail.court === 'High Court' && 
-                              detail.judgmentType === 'JUDGEMENT' &&
-                              detail.file_path) {
+                            if (detail.court === 'High Court' && detail.file_path) {
                               handlePdfClick(detail, e);
                             }
                           }}
