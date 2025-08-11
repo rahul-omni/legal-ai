@@ -72,7 +72,7 @@ export function TranslationDropdown({
         {/* Main Action Button */}
         <button
           onClick={()=>{
-            handleTranslate(selectedVendor, selectedLanguage);
+            handleTranslate();
           }}
           disabled={docEditorState.isTranslating}
           className="pl-3 pr-1 py-2 text-sm bg-white text-text hover:bg-background-dark focus:ring-border/50 shadow-sm rounded-l-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
