@@ -15,7 +15,7 @@ const createUserCaseSchema = z.object({
     diaryNumber: z.string(),
     caseNumber: z.string().nullable().optional(),
     court: z.string(),
-    caseType: z.string().nullable().optional(),
+    case_type: z.string().nullable().optional(),
     city: z.string().nullable().optional(),
     district: z.string().nullable().optional(),
     parties: z.string().nullable().optional(),
@@ -40,6 +40,7 @@ export const POST = auth(async (request: NextAuthRequest) => {
     // Parse input - now accepting array of complete case data
     const body = await request.json();
     const { selectedCases } = createUserCaseSchema.parse(body);
+    console.log(selectedCases, "selectedCases");
     
     if (!selectedCases || selectedCases.length === 0) {
       return NextResponse.json(
@@ -72,7 +73,7 @@ export const POST = auth(async (request: NextAuthRequest) => {
         console.log(`Creating UserCase for: ${caseData.diaryNumber}`);
         console.log(`Case data:`, {
           diaryNumber: caseData.diaryNumber,
-          caseType: caseData.caseType,
+          caseType: caseData.case_type,
           court: caseData.court,
           city: caseData.city,
           district: caseData.district
@@ -84,7 +85,7 @@ export const POST = auth(async (request: NextAuthRequest) => {
             userId: sessionUser.id,
             diaryNumber: caseData.diaryNumber,
             status: "PENDING",
-            caseType: caseData.caseType || "",
+            caseType: caseData.case_type || "",
             court: caseData.court || "",  // court is required in schema
             city: caseData.city || "",
             district: caseData.district || ""

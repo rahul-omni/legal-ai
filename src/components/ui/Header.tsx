@@ -11,7 +11,7 @@ interface HeaderProps {
 const Header = ({ headerTitle, subTitle, truncate = false }: HeaderProps) => {
 
   return (
-    <header className="gap-2 py-3">
+    <header className="gap-2">
         <h1 className={`text-2xl font-medium text-text-dark ${truncate ? "truncate max-w-xs" : ""}`}>
           {truncate && headerTitle.length > 20 ? `${headerTitle.substring(0, 20)}...` : headerTitle}
         </h1>

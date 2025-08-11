@@ -23,7 +23,7 @@ export function NotificationItem({ notification, formatDateTime }: NotificationI
   };
 
   return (
-    <div className="border-b hover:bg-background-dark transition-colors">
+    <div className="bg-background-light border-b hover:bg-background-dark transition-colors">
       <div className="px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-info-light rounded-lg flex items-center justify-center">

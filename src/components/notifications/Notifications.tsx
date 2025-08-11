@@ -3,6 +3,8 @@ import { Filter, Bell, Search } from "lucide-react";
 import { NotificationData, NotificationFilters, PaginationData } from "./types";
 import { NotificationItem } from "./NotificationItem";
 import { FilterModal } from "./FilterModal";
+import Header from "../ui/Header";
+import Button from "../ui/Button";
 
 export function Notifications() {
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
@@ -104,24 +106,20 @@ export function Notifications() {
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Header */}
-      <header className="border-b bg-background-light px-6 py-4">
-        <h1 className="text-2xl font-semibold text-text-dark">Notifications</h1>
-        <p className="text-sm text-muted">Stay updated with your latest notifications</p>
-      </header>
+      <div className="p-6 bg-background">
+        <Header headerTitle="Notifications" subTitle="Stay updated with your latest notifications" />
+      </div>
 
       {/* Action Bar */}
-      <div className="flex items-center justify-between border-b bg-background-light px-6 py-3">
+      <div className="flex items-center justify-between px-6">
         <div className="flex items-center gap-3">
-          <button
+          <Button
             onClick={() => setShowFilterModal(true)}
-            className={`border px-3 py-1.5 rounded-md flex items-center gap-2 text-sm hover:bg-background-dark ${
-              hasActiveFilters ? 'border-primary text-primary' : 'border-border text-text-light'
-            }`}
+            variant="secondary"
           >
             <Filter className="w-4 h-4" />
             {hasActiveFilters ? 'Filters Applied' : 'Filter'}
-          </button>
+          </Button>
         </div>
 
         <div className="relative">

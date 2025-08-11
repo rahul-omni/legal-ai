@@ -19,7 +19,7 @@ export function CaseList({
   handlePdfClick
 }: CaseListProps) {
   return (
-    <div className="grid grid-cols-1 gap-2 mt-2 p-4">
+    <div className="grid grid-cols-1 gap-2 px-6">
       {cases.map((caseItem, index) => (
         <CaseCard
           key={caseItem.id}

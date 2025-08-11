@@ -18,6 +18,8 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { ClientBilling } from "./ClientBilling";
 import { useSession } from "next-auth/react";
+import Header from "./ui/Header";
+import  Button from "./ui/Button";
 
 interface Client {
   id: string;
@@ -165,18 +167,16 @@ useEffect(() => {
   return (
     <div className="h-full flex flex-col bg-gray-50">
       {/* Header */}
-      <div className="p-6 bg-white border-b">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-gray-800">
-            Client Management
-          </h1>
-          <button
+      <div className="p-6 bg-background">
+        <div className="flex items-start justify-between mb-6">
+          <Header headerTitle="Client Management" subTitle="Manage your clients" />
+          <Button
             onClick={() => setShowNewClientModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+            variant="primary"
           >
             <Plus className="w-4 h-4" />
             New Client
-          </button>
+          </Button>
         </div>
 
         {/* Search and Filters */}
@@ -191,10 +191,10 @@ useEffect(() => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <button className="px-4 py-2 border rounded-lg text-gray-600 flex items-center gap-2 hover:bg-gray-50">
+          <Button variant="secondary">
             <Filter className="w-4 h-4" />
             Filters
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -212,13 +212,13 @@ useEffect(() => {
                 : "Get started by adding your first client"}
             </p>
             {!searchQuery && (
-              <button
+              <Button
                 onClick={() => setShowNewClientModal(true)}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg inline-flex items-center gap-2 hover:bg-blue-700"
+                variant="primary"
               >
                 <Plus className="w-4 h-4" />
                 Add Client
-              </button>
+              </Button>
             )}
           </div>
         ) : (

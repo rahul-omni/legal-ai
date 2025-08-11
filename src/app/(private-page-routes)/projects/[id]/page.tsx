@@ -18,6 +18,8 @@ import Header from "@/components/ui/Header";
 import { FileExplorer } from "@/components/ui/FileExplorer";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import Button from "@/components/ui/Button";
+import Breadcrumb from "@/components/ui/Breadcrumb";
+import { useBreadcrumbs } from "@/hooks/useBreadcrumbs";
 
 interface Project {
   id: string;
@@ -88,7 +90,7 @@ const ProjectFolderTable: React.FC = () => {
 
   return (
     <div className="w-full h-full min-h-0 flex flex-col">
-      <div className="px-6 py-4 flex items-start justify-between border-b">
+      <div className="px-6 py-6 flex items-start justify-between">
         <Header headerTitle="Project Hub" subTitle="Manage your legal projects" />
         <div className="flex items-start gap-2">
           <Button disabled={isUploading} onClick={() => fileInputRef.current?.click()} icon={<Upload className="w-4 h-4" />} loading={isUploading}>
