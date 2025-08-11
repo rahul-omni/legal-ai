@@ -60,8 +60,7 @@ export async function POST(req: Request) {
 
             translated = completion.choices[0].message.content || "";
           }
-
-          const html = marked(translated);
+          const html = marked(translated || "");
           controller.enqueue(encoder.encode(html + "\n\n")); // send it immediately
         }
 

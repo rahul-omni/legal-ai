@@ -27,17 +27,18 @@ export function TranslationDropdown({
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { docEditorState } = useDocumentEditor();
-
-  const handleTranslate = async () => {
-    await onTranslate(selectedVendor, selectedLanguage);
-  };
+  const {
+    handleTranslate,
+  } = useDocumentEditor();
 
   return (
     <div className="relative" ref={dropdownRef}>
       <div className="inline-flex border border-border rounded-lg">
         {/* Main Action Button */}
         <button
-          onClick={handleTranslate}
+          onClick={()=>{
+            handleTranslate(selectedVendor, selectedLanguage);
+          }}
           disabled={docEditorState.isTranslating}
           className="pl-3 pr-1 py-2 text-sm bg-white text-text hover:bg-background-dark focus:ring-border/50 shadow-sm rounded-l-lg transition-colors disabled:opacity-50 flex items-center gap-2"
         >

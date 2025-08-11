@@ -4,7 +4,7 @@ export async function translateWithSarvam(text: string, targetLanguage: string) 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.SARVAM_API_KEY}`
+        'api-subscription-key': `${process.env.SARVAM_API_KEY}`,
       },
       body: JSON.stringify({
         input: text,
@@ -14,8 +14,7 @@ export async function translateWithSarvam(text: string, targetLanguage: string) 
         mode: 'formal',
         model: 'mayura:v1',
         enable_preprocessing: false,
-        output_script: 'roman',
-        numerals_format: 'international'
+        numerals_format: 'international',
       })
     });
 
@@ -24,7 +23,7 @@ export async function translateWithSarvam(text: string, targetLanguage: string) 
     }
 
     const data = await response.json();
-    return data.translation;
+    return data.translated_text;
   } catch (error) {
     console.error('Sarvam translation error:', error);
     throw error;

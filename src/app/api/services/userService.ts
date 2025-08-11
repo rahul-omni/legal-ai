@@ -78,6 +78,20 @@ class UserService {
     }
   }
 
+  async updateClient(client_id: string, data: any) {
+    try {
+      return await db.client.update({
+        where: { id: client_id },
+        data: {
+          ...data,
+          updatedAt: new Date(), // ensure the timestamp is refreshed
+        },
+      });
+    } catch {
+      throw new Error("Failed to update client in the database");
+    }
+  }
+
   async createNewClient(data: {
     userId: string;
     name: string;

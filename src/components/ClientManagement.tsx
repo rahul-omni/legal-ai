@@ -33,6 +33,17 @@ interface Client {
   updatedAt: string;
 }
 
+const basicClient = {
+  name: "",
+  email: "",
+  phone_no: "",
+  organization: "",
+  billingAddress: "",
+  gstNumber: "",
+  defaultBillingRate: 5000,
+  paymentTerms: "30 days",
+}
+
 export function ClientManagement() {
   const [showNewClientModal, setShowNewClientModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,6 +51,7 @@ export function ClientManagement() {
   const session = useSession()
   const { data } = session;
   const [loader, setLoader] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Initial dummy clients with Indian context
   const [clients, setClients] = useState<Client[]>([]);
@@ -66,77 +78,72 @@ useEffect(() => {
   }
 }, [data?.user?.id]);
 
-  const [newClient, setNewClient] = useState<Partial<Client>>({
-    name: "",
-    email: "",
-    phone_no: "",
-    organization: "",
-    billingAddress: "",
-    gstNumber: "",
-    defaultBillingRate: 5000,
-    paymentTerms: "30 days",
-  });
+  const [newClient, setNewClient] = useState<Partial<Client>>(basicClient);
 
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   const handleCreateClient = async () => {
-      // Validate required fields
-      if (!newClient.name || !newClient.email) {
-        toast.error("Please fill in all required fields");
-        return;
+    // Validate required fields
+    if (!newClient.name || !newClient.email) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newClient.email || "")) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const url = isEditing
+        ? `/api/user-clients?client_id=${newClient.id}` // For PUT
+        : `/api/user-clients`; // For POST
+
+      const response = await fetch(url, {
+        method: isEditing ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...newClient,
+          userId: data?.user?.id, // Ensure this is available
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to ${isEditing ? "update" : "create"} client`);
       }
 
-      // Basic email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(newClient.email || "")) {
-        toast.error("Please enter a valid email address");
-        return;
-      }
+      const { client } = await response.json();
 
-      setIsSubmitting(true);
-
-      try {
-        const response = await fetch("/api/user-clients", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...newClient,
-            userId: data?.user?.id, // make sure this is available
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to create client");
+      setClients((prevClients) => {
+        if (isEditing) {
+          // Replace updated client in state
+          return prevClients.map((c) => (c.id === client.id ? client : c));
+        } else {
+          // Add new client to the top
+          return [client, ...prevClients];
         }
+      });
 
-        const { client } = await response.json();
+      // Close modal & reset form
+      setShowNewClientModal(false);
+      setNewClient(basicClient);
 
-        // Add the new client to the state
-        setClients((prevClients) => [client, ...prevClients]);
+      setIsEditing(false);
 
-        // Close the modal and reset form
-        setShowNewClientModal(false);
-        setNewClient({
-          name: "",
-          email: "",
-          phone_no: "",
-          organization: "",
-          billingAddress: "",
-          gstNumber: "",
-          defaultBillingRate: 5000,
-          paymentTerms: "30 days",
-        });
-
-        toast.success("Client created successfully");
-      } catch (error: any) {
-        toast.error(error.message || "Error creating client");
-      } finally {
-        setIsSubmitting(false);
-      }
-    };
+      toast.success(`Client ${isEditing ? "updated" : "created"} successfully`);
+    } catch (error: any) {
+      toast.error(error.message || `Error ${isEditing ? "updating" : "creating"} client`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Filter clients based on search query
   const filteredClients = clients.filter((client) => {
@@ -297,7 +304,21 @@ useEffect(() => {
                     >
                       <FileText className="w-3.5 h-3.5" />
                     </button>
-                    <button className="p-1 text-gray-500 hover:bg-gray-100 rounded">
+                    <button className="p-1 text-gray-500 hover:bg-gray-100 rounded" onClick={()=>{
+                      setNewClient({
+                        id: client.id || "",
+                        name: client.name || "",
+                        email: client.email || "",
+                        phone_no: client.phone_no ||"",
+                        organization: client.organization || "",
+                        billingAddress: client.billingAddress ||"",
+                        gstNumber: client.gstNumber || "",
+                        defaultBillingRate: client.defaultBillingRate || 5000,
+                        paymentTerms: client.paymentTerms || "30 days",
+                      })
+                      setShowNewClientModal(true);
+                      setIsEditing(true)
+                    }}>
                       <Edit className="w-3.5 h-3.5" />
                     </button>
                     <button className="p-1 text-gray-500 hover:bg-gray-100 rounded">
@@ -318,7 +339,11 @@ useEffect(() => {
             <div className="flex justify-between items-center p-6 border-b">
               <h3 className="text-xl font-semibold">Add New Client</h3>
               <button
-                onClick={() => setShowNewClientModal(false)}
+                onClick={() => {
+                  setShowNewClientModal(false);
+                  setIsEditing(false);
+                  setNewClient(basicClient);
+                }}
                 className="p-1 rounded-full hover:bg-gray-100"
               >
                 <X className="h-6 w-6" />
@@ -516,7 +541,7 @@ useEffect(() => {
                     Creating...
                   </>
                 ) : (
-                  "Create Client"
+                  isEditing ? "Edit Client" : "Create Client"
                 )}
               </button>
             </div>

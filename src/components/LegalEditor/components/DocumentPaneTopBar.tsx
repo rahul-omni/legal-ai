@@ -3,7 +3,7 @@ import { useLoadingContext } from "@/context/loadingContext";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { $generateHtmlFromNodes } from "@lexical/html";
 import { LexicalEditor } from "lexical";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { SaveDropdown } from "../../SaveDropdown";
 import { TranslationDropdown } from "../../TranslationDropdown";
@@ -15,6 +15,7 @@ import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 import { useFolderPicker } from "../reducersContexts/folderPickerReducerContext";
 import Header from "@/components/ui/Header";
 import  Button  from "@/components/ui/Button";
+import { TranslationVendor } from "@/lib/translation/types";
 
 interface DocumentPaneTopBarProps {
   onFileReviewRequest: () => void;
@@ -28,8 +29,6 @@ export function DocumentPaneTopBar({
       activeTabId,
       openTabs,
       isSaving,
-      selectedLanguage,
-      translationVendor,
     },
     lexicalEditorRef,
     docEditorDispatch,
@@ -39,6 +38,8 @@ export function DocumentPaneTopBar({
   const { explorerState } = useExplorerContext();
   const { isLoading } = useLoadingContext();
   const { dispatch: folderPickerDispatch } = useFolderPicker();
+  const [selectedLanguage, setSelectedLanguage] = useState('hi-IN');
+  const [translationVendor, setTranslationVendoe] = useState<TranslationVendor>('openai');
 
   const activeTab = useMemo(
     () => openTabs.find((tab) => tab.id === activeTabId),
@@ -53,12 +54,13 @@ export function DocumentPaneTopBar({
     return content;
   };
 
-  const handleLanguageChange = (language: string) =>
-    handleTranslate(translationVendor, language);
+  const handleLanguageChange = (language: string) =>{
+    setSelectedLanguage(language)
+  }
 
-  const handleVendorChange = (vendor: any) =>
-    handleTranslate(vendor, selectedLanguage);
-
+  const handleVendorChange = (vendor: TranslationVendor) => {
+    setTranslationVendoe(vendor)
+  }
   const handleExistingFileSave = async (tab: TabInfo) => {
     if (!tab.fileId) return;
 
