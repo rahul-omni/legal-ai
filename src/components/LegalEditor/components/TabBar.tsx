@@ -5,6 +5,7 @@ import {
   useDocumentEditor,
 } from "../reducersContexts/documentEditorReducerContext";
 import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
+import { useParams } from "next/navigation";
 
 export function TabBar() {
   const {
@@ -15,6 +16,8 @@ export function TabBar() {
   } = useDocumentEditor();
   const { explorerState, explorerDispatch } = useExplorerContext();
   const { openTabs, activeTabId } = state;
+  const params = useParams();
+  const parentId = params.id as string;
 
   const handleTabClick = (tab: TabInfo) => {
     docEditorDispatch({ type: "TAB_CLICK", payload: tab.id });
@@ -64,12 +67,12 @@ export function TabBar() {
           </div>
         ))}
       </div>
-      <button
+      {(parentId != "root") && <button
         onClick={handleNewFile}
         className="h-full w-auto flex items-center justify-center px-3 bg-border-light text-gray-500 hover:bg-border-dark transition-colors border-l-2 border-t-2 border-r-2 border-border-light hover:border-border-dark"
       >
         <Plus className="w-5 h-5 text-muted-dark" />
-      </button>
+      </button>}
     </div>
   );
 }

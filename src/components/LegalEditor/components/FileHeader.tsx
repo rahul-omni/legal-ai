@@ -17,10 +17,11 @@ export const FileExplorerHeader: FC<{
   fileLoader,
 }) => {
     const params = useParams();
-    const fileId = params.fileId as string
+    const fileId = params.fileId as string;
+    const parentId = params.id as string;
     return (
       <div>
-        {(fileId && fileId.length) ? <div className="w-full m-3 text-sm text-gray-400">You are viewing a single file</div> : <div className="p-4 bg-[#f9f9f9] sticky top-0 z-10">
+        {(fileId && fileId.length && parentId === "root") ? <div className="w-full m-3 text-sm text-gray-400">You are viewing a single file</div> : <div className="p-4 bg-[#f9f9f9] sticky top-0 z-10">
           {/* Search */}
 
           <div className="relative mb-3">
