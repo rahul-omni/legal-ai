@@ -83,7 +83,7 @@ const ProjectFolderTable: React.FC = () => {
   };
 
   const onItemClick = (item: FileSystemNodeProps) => {
-    router.push(`/projects/${parentId}/edit`)
+    router.push(`/projects/${parentId}/edit/${item.id}`)
   }
 
   return (

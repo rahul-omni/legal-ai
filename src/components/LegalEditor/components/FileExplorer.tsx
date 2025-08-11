@@ -46,7 +46,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
 
   const fetchRootNodes = async () => {
     try {
-      if (parentId && params.fileId?.length){
+      if (parentId == "root" && params.fileId?.length){
         const node = await fetchNodes(parentId, fileIdParam);
         explorerDispatch({ type: "LOAD_FILES", payload: node });
         if (node.length){
@@ -55,6 +55,12 @@ export const FileExplorer: FC<FileExplorerProps> = ({
       }else if (parentId){
         const node = await fetchNodes(parentId);
         explorerDispatch({ type: "LOAD_FILES", payload: node });
+        if (params.fileId?.length){
+          const newFiles = await fetchNodes(parentId, fileIdParam);
+          if (newFiles.length){
+            onDocumentSelect(newFiles[0]);
+          }
+        }
       }
     } catch (error) {
       handleApiError(error);
