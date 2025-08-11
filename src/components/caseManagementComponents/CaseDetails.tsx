@@ -151,7 +151,7 @@ export function CaseDetails({ caseItem, caseDetails, isLoading, handlePdfClick }
                           }}
                         >
                           <FileText className="w-4 h-4" />
-                          View Judgment PDF
+                          PDF
                         </a>
                       </div>
                     )}

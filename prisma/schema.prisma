@@ -137,7 +137,7 @@ model FileSystemNode {
   createdBy     String?          @map("created_by") @db.Uuid
   updatedBy     String?          @map("updated_by") @db.Uuid
   userId        String?          @map("user_id") @db.Uuid
-  isDefault     Boolean          @default(false)  @map("is_default")
+  isDefault     Boolean          @default(false) @map("is_default")
   FileReview    FileReview[]     @relation("file_review")
   createdByUser User?            @relation("file_system_nodes_created_by_idx", fields: [createdBy], references: [id])
   parent        FileSystemNode?  @relation("file_system_node_hierarchy", fields: [parentId], references: [id])
@@ -291,10 +291,6 @@ model website_feedback {
   @@index([ipAddress])
   @@index([rating])
 }
-
- 
-
- 
 
 enum OtpStatus {
   PENDING

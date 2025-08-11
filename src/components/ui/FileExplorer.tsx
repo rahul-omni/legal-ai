@@ -96,7 +96,7 @@ export function FileExplorer({
   if (loading) {
     return (
       <div className={`w-full ${className}`}>
-        <div className="rounded-md border-2 border-border-dark overflow-hidden">
+        <div className="rounded-md border-0 border-border-dark overflow-hidden">
           <table className="w-full table-auto border-collapse">
             {showHeader && (
               <thead className="bg-background-dark text-left">
@@ -121,12 +121,12 @@ export function FileExplorer({
 
   return (
     <div className={`w-full ${className}`}>
-      <div className="rounded-md border-2 border-border-dark overflow-hidden">
+      <div className="rounded-md border border-solid border-border-dark overflow-hidden">
         <table className="w-full table-auto border-collapse">
           {showHeader && (
             <thead className="bg-background-dark text-left">
               <tr>
-                <th className="px-4 py-3 font-semibold text-text">Name</th>
+                <th className="px-4 py-3 font-semibold text-text w-1/2">Name</th>
                 <th className="px-4 py-3 font-semibold text-text w-40">Created On</th>
                 <th className="px-4 py-3 font-semibold text-text w-40">Last Modified</th>
                 {actions.length > 0 && (
@@ -137,7 +137,7 @@ export function FileExplorer({
           )}
           <tbody>
             {paginatedItems.map((item) => (
-              <tr key={item.id} className="border-t hover:bg-background-dark transition-colors">
+              <tr key={item.id} className="border-t bg-background-light hover:bg-background-dark transition-colors">
                 <td className="px-4 py-3 cursor-pointer" onClick={() => handleItemClick(item)} >
                   <div className="flex items-center gap-3">
                     <div
@@ -149,10 +149,10 @@ export function FileExplorer({
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-text-light text-sm">
+                <td className="px-4 py-3 text-text text-sm">
                   {formatDate(item.createdAt)}
                 </td>
-                <td className="px-4 py-3 text-text-light text-sm">
+                <td className="px-4 py-3 text-text text-sm">
                   {formatDate(item.updatedAt)}
                 </td>
                 {actions.length > 0 && (
