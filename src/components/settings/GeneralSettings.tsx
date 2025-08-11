@@ -30,7 +30,7 @@ export function GeneralSettings({ onLogout }: GeneralSettingsProps) {
       </div>
 
       <div className="space-y-6">
-        <div>
+        {/* <div>
           <label
             htmlFor="theme"
             className="block text-sm font-medium text-gray-700 mb-1"
@@ -62,7 +62,7 @@ export function GeneralSettings({ onLogout }: GeneralSettingsProps) {
             <option value="hi">Hindi</option>
             <option value="bn">Bengali</option>
           </select>
-        </div>
+        </div> */}
 
         <div className="pt-6 mt-6 border-t">
           <h3 className="text-md font-medium text-gray-800 mb-4">Account</h3>
