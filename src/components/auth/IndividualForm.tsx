@@ -13,7 +13,14 @@ const schema = z.object({
   name: z.string().min(1, "Name is required"),
   mobileNumber: z.string().min(10, "Invalid mobile number").max(10),
   otp: z.string().min(6, "OTP must be 6 digits").max(6).optional(),
-  email: z.string().email("Invalid email address").optional(),
+  email: z
+  .string()
+  .trim()
+  .optional()
+  .refine(
+    (val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+    "Invalid email address"
+  )
 });
 
 type FormData = z.infer<typeof schema>;
@@ -209,7 +216,7 @@ export default function IndividualForm({
                 autoComplete="email"
                 {...register("email")}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                placeholder="Email address(optional)"
               />
               {errors.email && (
                 <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>

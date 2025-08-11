@@ -263,16 +263,6 @@ export default function LoginPage() {
           <div className="flex border-b border-border">
             <button
               className={`flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm ${
-                activeTab === "organization"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted hover:text-text-light hover:border-border-dark"
-              }`}
-              onClick={() => handleTabChange("organization")}
-            >
-              Organization
-            </button>
-            <button
-              className={`flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm ${
                 activeTab === "individual"
                   ? "border-primary text-primary"
                   : "border-transparent text-muted hover:text-text-light hover:border-border-dark"
@@ -280,6 +270,16 @@ export default function LoginPage() {
               onClick={() => handleTabChange("individual")}
             >
               Individual
+            </button>
+            <button
+              className={`flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm ${
+                activeTab === "organization"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted hover:text-text-light hover:border-border-dark"
+              }`}
+              onClick={() => handleTabChange("organization")}
+            >
+              Organization
             </button>
           </div>
 
@@ -296,8 +296,7 @@ export default function LoginPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="mt-1 block w-full px-4 py-3 border border-border rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                      placeholder="Enter your email"
-                      required
+                      placeholder="Enter your email(optional)"
                       disabled={isLoading("LOGGING_IN")}
                     />
                   </div>
