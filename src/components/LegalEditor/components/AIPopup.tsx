@@ -1,13 +1,16 @@
 "use client";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { ArrowUp, FilePlus, Gavel, Loader2, Paperclip, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import TreeNode from "../../TreeNode";
 import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 
 const suggestions = [
   "Cite a Supreme Court case on the measure of damages for breach of a construction contract where the contractor abandoned work midway.",
   "Cite a Supreme Court case discussing the conditions under which anticipatory bail may be denied in cases involving economic offences.",
+  "Cite a Supreme Court case on the measure of damages for breach of a construction contract where the contractor abandoned work midway.",
+  "Cite a Supreme Court case discussing the conditions under which anticipatory bail may be denied in cases involving economic offences.",
+  "Cite a Supreme Court case on the measure of damages for breach of a construction contract where the contractor abandoned work midway.",
 ]
 
 
@@ -44,6 +47,9 @@ export function AIPopup({
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<any[]>([]);
+  
+  // Ref for citation modal
+  const citationModalRef = useRef<HTMLDivElement>(null);
 
   // File handling state
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -79,6 +85,23 @@ export function AIPopup({
   useEffect(() => {
     setClose(false);
   }, [selectedText])
+
+  // Close citation modal when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (citationModalRef.current && !citationModalRef.current.contains(event.target as Node)) {
+        setCitationModal(false);
+      }
+    };
+
+    if (citationModal) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [citationModal]);
 
   // Document selection handler
   const handleDocumentSelect = (file: FileSystemNodeProps) => {
@@ -338,9 +361,12 @@ export function AIPopup({
           </div>
         )}
       {citationModal && (
-        <div className="absolute bottom-full left-0 w-full min-h-[80vh] mb-2 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[300px] overflow-y-auto p-4">
+        <div 
+          ref={citationModalRef}
+          className="absolute bottom-full left-0 w-full min-h-[40vh] mb-2 bg-white rounded-lg shadow-lg border border-solid border-border max-h-[300px] overflow-y-auto p-4"
+        >
           <div className="sticky top-0 z-10 bg-white">
-            <div className="flex items-center gap-2 bg-white shadow-sm rounded-lg p-2 border w-full max-w-3xl mx-auto">
+            <div className="flex items-center gap-2 bg-white shadow-sm rounded-lg p-2 border w-full mx-auto">
               <input
                 type="text"
                 value={searchQuery}

@@ -12,6 +12,7 @@ import PDFTextViewer from "./PDFTextViewer";
 import PdfViewer from "./PdfViewer";
 import { Modal } from "./ui/Modal";
 import { ModalButton, ModalFooter } from "./ui/ModalButton";
+import Header from "./ui/Header";
 
 export function PendingReviews() {
   const router = useRouter();
@@ -381,9 +382,9 @@ export function PendingReviews() {
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Pending Reviews</h1>
+    <div className="container p-6">
+      <div className="flex justify-between items-start mb-6">
+        <Header headerTitle="Pending Reviews" subTitle="Pending Reviews" />
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-500">Filter:</span>
           <select

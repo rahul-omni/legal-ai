@@ -107,7 +107,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#f9f9f9]">
+    <div className="h-full flex flex-col bg-background-dark">
       <FileExplorerHeader
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -116,7 +116,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
         fileLoader={fileLoader}
       />
 
-      <div className="flex-1 overflow-y-auto p-2 bg-[#f9f9f9]">
+      <div className="flex-1 overflow-y-auto p-2 bg-background-dark">
         {loading ? (
           <Spinner />
         ) : (

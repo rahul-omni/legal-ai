@@ -131,7 +131,7 @@ const ProjectHub = () => {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="px-6 py-4 flex items-start justify-between">
+      <div className="px-6 py-6 flex items-start justify-between">
         <Header headerTitle="Project Hub" subTitle="Manage your legal projects" />
         <div className="flex items-start gap-2">
           <input type="file" ref={fileInputRef} className="hidden" accept=".txt,.doc,.docx,.pdf,.png,.jpg,.jpeg" onChange={(e) => handleFileUpload(e, false)} />
@@ -146,7 +146,7 @@ const ProjectHub = () => {
         </div>
       </div>
 
-      <div className="flex items-center justify-between px-6 py-3">
+      <div className="flex items-center justify-between px-6">
         <div className="relative">
           <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted" />
           <input type="text" value={state.searchQuery} onChange={(e) => dispatch({ type: "SET_SEARCH_QUERY", payload: e.target.value })} placeholder="Search projects..." className="pl-10 pr-4 py-2 border border-border rounded-md w-64 text-sm focus:ring-2 focus:ring-border-dark" />

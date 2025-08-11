@@ -7,6 +7,7 @@ import {
   Clock,
   Users,
   Bell,
+  Menu,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -58,7 +59,7 @@ export function Navigation() {
       }`}
     >
       {/* Logo Area */}
-      <div className="p-4 flex items-center justify-between">
+      <div className={`py-4 flex items-center justify-between ${isExpanded ? "px-4" : "px-1"}`}>
         {isExpanded ? (
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2">
@@ -74,14 +75,14 @@ export function Navigation() {
           onClick={() => setIsExpanded(!isExpanded)}
           className="p-1 hover:bg-gray-100 rounded"
         >
-          {isExpanded ? "←" : "→"}
+          <Menu />
         </button>
       </div>
 
       {/* Navigation Items */}
       <div className="flex-1 overflow-y-auto py-2">
         {navigationItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || (pathname.includes(item.href) && item.href !== "/")  ;
           const Icon = item.icon;
 
           return (
@@ -91,7 +92,7 @@ export function Navigation() {
               href={item.href}
               title={isExpanded ? "" : item.name}
               className={`
-                relative flex items-center gap-3 px-4 py-2 rounded-none transition-colors
+                relative flex items-center gap-3 px-4 py-3 rounded-none transition-colors
                 ${isExpanded ? "" : "justify-center"} 
                 ${
                   isActive

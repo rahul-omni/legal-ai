@@ -4,6 +4,8 @@ import toast from "react-hot-toast";
 import { CaseData, SearchParams, ValidationErrors } from "./caseManagementComponents/types";
 import { CaseList } from "./caseManagementComponents/CaseList";
 import { SearchModal } from "./caseManagementComponents/SearchModal";
+import Header from "./ui/Header";
+import Button from "./ui/Button";
 
 export function CaseManagement() {
   const [showNewCaseModal, setShowNewCaseModal] = useState(false);
@@ -109,6 +111,7 @@ export function CaseManagement() {
           searchUrl.searchParams.append("district", caseItem.district);
         }
 
+        console.log(searchUrl.toString(), "searchUrl");
         const response = await fetch(searchUrl.toString());
         const data = await response.json();
 
@@ -395,19 +398,17 @@ export function CaseManagement() {
   return (
     <div className="flex flex-col bg-background">
       {/* Header */}
-      <div className="p-6 bg-background-light border-b">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-text-dark">
-            Case Management
-          </h1>
+      <div className="p-6 bg-background">
+        <div className="flex items-start justify-between mb-6">
+          <Header headerTitle="Case Management" subTitle="Manage your cases" />
 
-          <button
+          <Button
             onClick={() => setShowNewCaseModal(true)}
-            className="px-4 py-2 bg-primary text-white rounded-lg flex items-center gap-2 hover:bg-primary-dark"
+            variant="primary"
           >
             <Plus className="w-4 h-4" />
             New Case
-          </button>
+          </Button>
         </div>
 
         <div className="flex gap-4">
@@ -416,7 +417,7 @@ export function CaseManagement() {
             <input
               type="text"
               placeholder="Search cases..."
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              className=" pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
