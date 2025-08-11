@@ -65,7 +65,7 @@ export async function GET(request: NextAuthRequest) {
 
     // Only add judgmentType filter if it has a value
     if (validated.judgmentType && validated.judgmentType.trim() !== '') {
-      whereConditions.judgmentType = {
+      whereConditions.judgment_type = {
         contains: validated.judgmentType,
         mode: 'insensitive'
       };
@@ -73,7 +73,7 @@ export async function GET(request: NextAuthRequest) {
 
     // Only add caseType filter if it has a value
     if (validated.caseType && validated.caseType.trim() !== '') {
-      whereConditions.caseType = {
+      whereConditions.case_type = {
         contains: validated.caseType,
         mode: 'insensitive'
       };
@@ -94,6 +94,8 @@ export async function GET(request: NextAuthRequest) {
     }
 
     let caseData = [];
+
+    console.log(whereConditions, "whereConditions");
     
 
     caseData = await prisma.caseManagement.findMany({

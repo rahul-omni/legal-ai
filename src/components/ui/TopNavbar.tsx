@@ -21,14 +21,14 @@ export function TopNavbar({
 }: TopNavbarProps) {
   return (
     <nav className={`bg-white border-b border-border shadow-sm ${className}`}>
-      <div className="px-6 py-1 flex justify-end">
+      <div className="px-6 py-2 flex justify-end">
         <div className="flex items-center justify-between">
           
 
           <div className="flex items-center gap-4">
-            <button className="p-2 text-muted hover:text-text hover:bg-background rounded-lg transition-colors">
+            {/* <button className="p-2 text-muted hover:text-text hover:bg-background rounded-lg transition-colors">
               <Bell className="w-5 h-5" />
-            </button>
+            </button> */}
 
             <Link
               href="/settings"

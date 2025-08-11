@@ -24,7 +24,7 @@ const NoDocumentOpenMessage = () => {
     <div className="flex-1 flex items-center justify-center bg-gray-50">
       <div className="text-center">
         <h3 className="text-lg font-medium text-gray-700 mb-2">
-          No Document Open
+          No Document Selected
         </h3>
         <p className="text-sm text-gray-500">
           Open a file from the file explorer to start working

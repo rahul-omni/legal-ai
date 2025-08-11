@@ -3,8 +3,8 @@ import {
   SARVAM_LANGUAGES,
   TranslationVendor,
 } from "@/lib/translation/types";
-import { ChevronDown } from "lucide-react";
-import { useRef, useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
 import { useDocumentEditor } from "./LegalEditor/reducersContexts/documentEditorReducerContext";
 
 interface TranslationDropdownProps {
@@ -27,9 +27,44 @@ export function TranslationDropdown({
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { docEditorState } = useDocumentEditor();
-  const {
-    handleTranslate,
-  } = useDocumentEditor();
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDropdown]);
+
+  // Close dropdown when pressing Escape
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showDropdown]);
+
+  const handleTranslate = async () => {
+    setShowDropdown(false);
+    await onTranslate(selectedVendor, selectedLanguage);
+  };
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -40,18 +75,20 @@ export function TranslationDropdown({
             handleTranslate(selectedVendor, selectedLanguage);
           }}
           disabled={docEditorState.isTranslating}
-          className="pl-3 pr-1 py-2 text-sm bg-white text-text hover:bg-background-dark focus:ring-border/50 shadow-sm rounded-l-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+          className="pl-3 pr-1 py-2 text-sm bg-white text-text hover:bg-background-dark focus:ring-border/50 shadow-sm rounded-l-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           <span>Translate</span>
-          {docEditorState.isTranslating && <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full"></div>}
         </button>
         
         {/* Dropdown Toggle Button */}
         <button
           onClick={() => setShowDropdown(!showDropdown)}
-          className="pl-1 pr-3 py-2 text-sm bg-white text-text hover:bg-background-dark focus:ring-border/50 shadow-sm rounded-r-lg -ml-px transition-colors"
+          className="pl-1 pr-3 py-2 text-sm bg-white text-text hover:bg-background-dark focus:ring-border/50 shadow-sm rounded-r-lg -ml-px transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={docEditorState.isTranslating}
         >
-          <ChevronDown className="w-4 h-4" />
+          {docEditorState.isTranslating ? 
+          <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full"></div> 
+          : showDropdown ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
       </div>
 
