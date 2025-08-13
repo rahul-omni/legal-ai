@@ -189,8 +189,12 @@ export function DocumentPane() {
   return (
     <div className="relative flex flex-col h-full">
       <DocumentPaneTopBar onFileReviewRequest={onFileReviewRequest} />
-      <TabBar />
-      <Toolbar />
+      <div className="flex w-full flex-row justify-between max-w-full">
+        <TabBar />
+        <Toolbar />
+      </div>
+
+
  
       <div className="flex-1 bg-white mx-6 min-h-0">
         <DocumentEditor

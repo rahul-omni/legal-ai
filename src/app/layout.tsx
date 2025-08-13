@@ -2,7 +2,15 @@ import { LoadingProvider } from "@/context/loadingContext";
 import { UserProvider } from "@/context/userContext";
 import { Toaster } from "react-hot-toast";
 import type { Metadata } from "next";
+import { Nunito_Sans } from "next/font/google";
 import "./globals.css";
+
+const nunitoSans = Nunito_Sans({
+  subsets: ["latin"],
+  weight: ["200", "300", "400", "500", "600", "700", "800"],
+  variable: "--font-nunito-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Legal Document Platform",
@@ -16,12 +24,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Lobster&family=Montserrat:wght@400;600&family=Open+Sans:wght@400;600&family=Oswald:wght@400;600&family=Pacifico&family=Playfair+Display:wght@400;700&family=Raleway:wght@400;600&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet" />
-      </head>
-      <body>
+      <body className={nunitoSans.className}>
         <Toaster
           position="top-right"
           toastOptions={{ success: { duration: 4000 } }}

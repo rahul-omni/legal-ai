@@ -1,4 +1,4 @@
-import { Save, ChevronDown, Loader2 } from 'lucide-react';
+import { Save, ChevronDown, Loader2, ChevronUp } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 
 interface SaveDropdownProps {
@@ -70,12 +70,12 @@ export function SaveDropdown({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <div className="inline-flex border border-border rounded-lg">
+      <div className="inline-flex border bg-primary hover:bg-primary-dark border-border rounded-lg">
         {/* Main Action Button */}
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="pl-3 pr-1 py-2 text-sm bg-primary text-white hover:bg-primary-dark focus:ring-primary/50 shadow-sm rounded-l-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+          className="pl-3 pr-1 py-2 text-sm text-white shadow-sm rounded-l-lg transition-colors disabled:opacity-50 flex items-center gap-2"
         >
           {isSaving ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -89,9 +89,9 @@ export function SaveDropdown({
         <button
           onClick={() => setShowDropdown(!showDropdown)}
           disabled={isSaving}
-          className="pl-1 pr-3 py-2 text-sm bg-primary text-white hover:bg-primary-dark focus:ring-primary/50 shadow-sm rounded-r-lg -ml-px transition-colors"
+          className="pl-1 pr-3 py-2 text-sm text-white shadow-sm rounded-r-lg -ml-px transition-colors"
         >
-          <ChevronDown className="w-4 h-4" />
+          {showDropdown ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
       </div>
 

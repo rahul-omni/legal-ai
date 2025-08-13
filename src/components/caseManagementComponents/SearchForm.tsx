@@ -1,4 +1,5 @@
 import { Loader2, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { HIGH_COURT_CASE_TYPES, HIGH_COURT_CITY, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
 import { SearchParams, ValidationErrors } from "./types";
 
@@ -11,6 +12,29 @@ interface SearchFormProps {
 }
 
 export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch, errors }: SearchFormProps) {
+  const loadingMessages = useMemo(
+    () => [
+      "Validating inputs...",
+      "Contacting court services...",
+      "Fetching case records...",
+      "Parsing judgments...",
+      "Almost there...",
+    ],
+    []
+  );
+  const [messageIndex, setMessageIndex] = useState(0);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setMessageIndex(0);
+      return;
+    }
+    const intervalId = window.setInterval(() => {
+      setMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+    }, 10000);
+    return () => window.clearInterval(intervalId);
+  }, [isLoading, loadingMessages.length]);
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Form Header */}
@@ -181,7 +205,7 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Searching...
+                {loadingMessages[messageIndex]}
               </>
             ) : (
               <>

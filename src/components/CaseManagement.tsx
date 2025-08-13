@@ -310,13 +310,13 @@ export function CaseManagement() {
 
       if (result.success) {
         toast.success(result.message);
-        if (result.data.errors && result.data.errors.length > 0) {
-          result.data.errors.forEach((error: string) => {
-            toast.error(error);
-          });
-        }
+        // if (result.data.errors && result.data.errors.length > 0) {
+        //   result.data.errors.forEach((error: string) => {
+        //     toast.error(error);
+        //   });
+        // }
       } else {
-        toast.error(result.message || "Case processed but got some errors");
+        // toast.error(result.message || "Case processed but got some errors");
       }
 
       await fetchUserCases();

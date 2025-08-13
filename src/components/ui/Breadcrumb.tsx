@@ -23,7 +23,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
   className 
 }) => {
   const allItems = showHome 
-    ? [{ label: '', href: '/dashboard', icon: <Home className="w-4 h-4" /> }, ...items]
+    ? [{ label: '', href: '/dashboard', icon: <Home className="w-3 h-3" /> }, ...items]
     : items;
 
   return (
@@ -31,12 +31,12 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
       aria-label="Breadcrumb" 
       className={cn("flex items-center space-x-2 text-sm", className)}
     >
-      <ol className="flex items-center space-x-2">
+      <ol className="flex items-center space-x-2 py-2">
         {allItems.map((item, index) => {
           const isLast = index === allItems.length - 1;
           
           return (
-            <li key={index} className="flex items-center space-x-2">
+            <li key={index} className="flex items-center space-x-2 text-xs">
               {item.href && !isLast ? (
                 <Link 
                   href={item.href}
@@ -49,7 +49,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
                 <span 
                   className={cn(
                     "flex items-center space-x-1",
-                    isLast ? "text-text font-medium" : "text-muted"
+                    isLast ? "text-text" : "text-muted"
                   )}
                 >
                   {item.icon && <span>{item.icon}</span>}

@@ -154,7 +154,7 @@ export function AIPopup({
 
   return (
     <div
-      className="absolute bottom-5 left-1/2 transform -translate-x-1/2 z-40 w-[90%] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] 
+      className="absolute bottom-5 left-1/2 transform -translate-x-1/2 z-40 w-[90%] shadow-[0_15px_30px_-8px_rgba(0,0,0,0.3)] 
                  bg-background-light rounded-lg border border-primary"
     >
       {/* Main prompt form */}
@@ -219,8 +219,7 @@ export function AIPopup({
           disabled={isLoading || !prompt.trim()}
           className="p-2 bg-primary text-white 
                    rounded-full hover:bg-primary-dark 
-                   disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0
-                   shadow-lg"
+                   disabled:bg-muted disabled:cursor-not-allowed transition-colors flex-shrink-0"
         >
           {isLoading ? (
             <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>

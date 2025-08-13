@@ -188,5 +188,5 @@ export const SUPREME_COURT_CASE_TYPES = [
 
 
 export const HIGH_COURT_CITY = [
-  "Delhi",
+  "Delhi"
 ] as const

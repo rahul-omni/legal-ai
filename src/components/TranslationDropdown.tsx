@@ -68,14 +68,14 @@ export function TranslationDropdown({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <div className="inline-flex border border-border rounded-lg">
+      <div className="inline-flex border bg-background-light hover:bg-background-dark border-border rounded-lg">
         {/* Main Action Button */}
         <button
           onClick={()=>{
             handleTranslate();
           }}
           disabled={docEditorState.isTranslating}
-          className="pl-3 pr-1 py-2 text-sm bg-white text-text hover:bg-background-dark focus:ring-border/50 shadow-sm rounded-l-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="pl-3 pr-1 py-2 text-sm text-text  focus:ring-border/50 shadow-sm rounded-l-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           <span>Translate</span>
         </button>
@@ -83,7 +83,7 @@ export function TranslationDropdown({
         {/* Dropdown Toggle Button */}
         <button
           onClick={() => setShowDropdown(!showDropdown)}
-          className="pl-1 pr-3 py-2 text-sm bg-white text-text hover:bg-background-dark focus:ring-border/50 shadow-sm rounded-r-lg -ml-px transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="pl-1 pr-3 py-2 text-sm text-text focus:ring-border/50 shadow-sm rounded-r-lg -ml-px transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={docEditorState.isTranslating}
         >
           {docEditorState.isTranslating ? 

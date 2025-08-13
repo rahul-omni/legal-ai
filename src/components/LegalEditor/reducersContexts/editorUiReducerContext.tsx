@@ -8,16 +8,16 @@ export interface UIState {
 
 // Define action types - renamed to match handler functions
 type UIAction =
-  | { type: "TOGGLE_LEFT_PANEL" }
+  | { type: "TOGGLE_LEFT_PANEL", payload?: boolean }
   | { type: "TOGGLE_SMART_PROMPTS" }
 
 // Define reducer
 function uiReducer(state: UIState, action: UIAction): UIState {
   switch (action.type) {
     case "TOGGLE_LEFT_PANEL":
-      return { ...state, showLeftPanel: !state.showLeftPanel };
+      return { ...state, showLeftPanel: !state.showLeftPanel, showSmartPrompts: false };
     case "TOGGLE_SMART_PROMPTS":
-      return { ...state, showSmartPrompts: !state.showSmartPrompts };
+      return { ...state, showSmartPrompts: !state.showSmartPrompts, showLeftPanel: false };
     default:
       return state;
   }

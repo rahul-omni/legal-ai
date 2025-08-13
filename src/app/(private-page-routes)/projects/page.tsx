@@ -21,6 +21,8 @@ import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
 import { FileExplorer } from "@/components/ui/FileExplorer";
 import Header from "@/components/ui/Header";
 import Button from "@/components/ui/Button";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
+import { useConfirmation } from "@/hooks/useConfirmation";
 
 interface ProjectHubProps {
   projects: FileSystemNodeProps[];
@@ -57,6 +59,7 @@ const ProjectHub = () => {
   const [deletingNode, setIsDeletingNode] = useState("")
 
   const [folderName, setFolderName] = useState("");
+  const { confirmationState, confirm, handleConfirm, handleClose } = useConfirmation();
 
   const handleCreateProject = async () => {
     if (!folderName.trim()) return toast.error("Folder name is required");
@@ -122,11 +125,27 @@ const ProjectHub = () => {
   }, []);
 
   const handleDelete = async (e: any, nodeId: string) => {
-    setIsDeletingNode(nodeId)
     e.stopPropagation();
-    await fetchData(apiRouteConfig.privateRoutes.node(nodeId), "DELETE");
-    loadProjects()
-    setIsDeletingNode("")
+    
+    // Find the item to get its name for the confirmation
+    const itemToDelete = state.projects.find(project => project.id === nodeId);
+    const itemName = itemToDelete?.name || 'this item';
+    
+    confirm(
+      {
+        title: 'Delete Project',
+        message: `Are you sure you want to delete "${itemName}"? This action cannot be undone and will permanently remove the project and all its contents.`,
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        variant: 'danger',
+      },
+      async () => {
+        setIsDeletingNode(nodeId);
+        await fetchData(apiRouteConfig.privateRoutes.node(nodeId), "DELETE");
+        loadProjects();
+        setIsDeletingNode("");
+      }
+    );
   };
 
   return (
@@ -201,6 +220,19 @@ const ProjectHub = () => {
           </div>
         </div>
       )}
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationState.isOpen}
+        onClose={handleClose}
+        onConfirm={handleConfirm}
+        title={confirmationState.title}
+        message={confirmationState.message}
+        confirmText={confirmationState.confirmText}
+        cancelText={confirmationState.cancelText}
+        variant={confirmationState.variant}
+        icon={confirmationState.icon}
+        isLoading={confirmationState.isLoading}
+      />
     </div>
   );
 };

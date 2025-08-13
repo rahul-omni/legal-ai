@@ -1,8 +1,9 @@
 "use client";
 
 import React from 'react';
-import { User, Bell, Search } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export interface TopNavbarProps {
   user?: {
@@ -19,16 +20,20 @@ export function TopNavbar({
   user, 
   className = '' 
 }: TopNavbarProps) {
+  const router = useRouter();
   return (
-    <nav className={`bg-white border-b border-border shadow-sm ${className}`}>
+    <nav className={`bg-white border-b border-border  z-20${className}`}>
       <div className="px-6 py-2 flex justify-end">
         <div className="flex items-center justify-between">
           
 
           <div className="flex items-center gap-4">
-            {/* <button className="p-2 text-muted hover:text-text hover:bg-background rounded-lg transition-colors">
+            <button 
+            className="p-2 text-muted hover:text-text hover:bg-background rounded-lg transition-colors"
+            onClick={() => router.push('/notifications')}
+            >
               <Bell className="w-5 h-5" />
-            </button> */}
+            </button>
 
             <Link
               href="/settings"
