@@ -1,25 +1,18 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, Upload } from "lucide-react";
-import { createNode, fetchNodes, uploadFile } from "@/app/apiServices/nodeServices";
-import moment from "moment";
-import { getDocument } from "pdfjs-dist";
-import { extractTextFromPDF, fileToBase64 } from "@/utils/pdfUtils";
-import { FileService } from "@/lib/fileService";
-import toast from "react-hot-toast";
-import { handleApiError } from "@/helper/handleApiError";
-import FileIconDisplay from "@/components/LegalEditor/components/FileIconDisplay";
+import { Upload } from "lucide-react";
+import { fetchNodes, uploadFile } from "@/app/apiServices/nodeServices";
 import useAxios from "@/hooks/api/useAxios";
 import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
 import Header from "@/components/ui/Header";
 import { FileExplorer } from "@/components/ui/FileExplorer";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import Button from "@/components/ui/Button";
-import Breadcrumb from "@/components/ui/Breadcrumb";
-import { useBreadcrumbs } from "@/hooks/useBreadcrumbs";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
+import { useConfirmation } from "@/hooks/useConfirmation";
+import { Spinner } from "@/components/Loader";
 
 interface Project {
   id: string;
@@ -35,13 +28,16 @@ const ProjectFolderTable: React.FC = () => {
   const params = useParams();
   const parentId = params?.id as string;
   const [projects, setProjects] = useState<any[]>([]);
+  const [projectName, setProjectName] = useState<string>("Project Hub");
   const [loading, setLoading] = useState(true);
+  const [loadingProjectHeader, setLoadingProjectHeader] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
   const { fetchData } = useAxios();
-  const [deletingNode, setIsDeletingNode] = useState("113")
+  const [deletingNode, setIsDeletingNode] = useState("");
+  const { confirmationState, confirm, handleConfirm, handleClose } = useConfirmation();
 
   const loadProjects = async () => {
     try {
@@ -54,13 +50,31 @@ const ProjectFolderTable: React.FC = () => {
       setLoading(false);
     }
   };
+
+  
+  const getProjectName = async () => {
+    try {
+      setLoadingProjectHeader(true);
+      const response = await fetchNodes('', parentId);
+      setProjectName(response[0].name)
+    } catch (error) {
+      console.error("Failed to fetch project name:", error);
+    } finally {
+      setLoadingProjectHeader(false);
+    }
+  }
+
+  // const getProjectName = async () => {
+  //   const response = await fetchData(apiRouteConfig.privateRoutes.node(parentId), "GET");
+  //   return response.name;
+  // }
   useEffect(() => {
     if (parentId) {
       loadProjects();
-    }
+      getProjectName();
+    }  
   }, [parentId]);
 
-  const totalPages = Math.ceil(projects.length / ITEMS_PER_PAGE);
   const paginatedProjects = projects.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
@@ -77,11 +91,27 @@ const ProjectFolderTable: React.FC = () => {
   };
 
   const handleDelete = async (e: any, nodeId: string) => {
-    setIsDeletingNode(nodeId)
     e.stopPropagation();
-    await fetchData(apiRouteConfig.privateRoutes.node(nodeId), "DELETE");
-    loadProjects()
-    setIsDeletingNode("")
+    
+    // Find the item to get its name for the confirmation
+    const itemToDelete = projects.find(project => project.id === nodeId);
+    const itemName = itemToDelete?.name || 'this item';
+    
+    confirm(
+      {
+        title: 'Delete File',
+        message: `Are you sure you want to delete "${itemName}"? This action cannot be undone.`,
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        variant: 'danger',
+      },
+      async () => {
+        setIsDeletingNode(nodeId);
+        await fetchData(apiRouteConfig.privateRoutes.node(nodeId), "DELETE");
+        loadProjects();
+        setIsDeletingNode("");
+      }
+    );
   };
 
   const onItemClick = (item: FileSystemNodeProps) => {
@@ -89,9 +119,15 @@ const ProjectFolderTable: React.FC = () => {
   }
 
   return (
+    <>
+    {loadingProjectHeader ? (
+      <div className="flex justify-center items-center h-full">
+        <Spinner />
+      </div>
+    ) : (
     <div className="w-full h-full min-h-0 flex flex-col">
       <div className="px-6 py-6 flex items-start justify-between">
-        <Header headerTitle="Project Hub" subTitle="Manage your legal projects" />
+        <Header headerTitle={projectName} subTitle="Manage your legal project" />
         <div className="flex items-start gap-2">
           <Button disabled={isUploading} onClick={() => fileInputRef.current?.click()} icon={<Upload className="w-4 h-4" />} loading={isUploading}>
             Upload Files
@@ -120,8 +156,22 @@ const ProjectFolderTable: React.FC = () => {
         />
         </div>
 
-     
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationState.isOpen}
+        onClose={handleClose}
+        onConfirm={handleConfirm}
+        title={confirmationState.title}
+        message={confirmationState.message}
+        confirmText={confirmationState.confirmText}
+        cancelText={confirmationState.cancelText}
+        variant={confirmationState.variant}
+        icon={confirmationState.icon}
+        isLoading={confirmationState.isLoading}
+      />
     </div>
+    )}
+    </>
   );
 };
 

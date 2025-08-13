@@ -6,7 +6,7 @@
   background: #fff;
   padding: 4px;
   vertical-align: middle;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 3px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -136,7 +136,7 @@
   position: relative;
   tab-size: 1;
   outline: 0;
-  padding: 16px;
+  padding: 32px 64px;
   margin-bottom: 150px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -156,8 +156,9 @@
   overflow: hidden;
   position: absolute;
   text-overflow: ellipsis;
-  top: 16px;
-  left: 16px;
+  top: 32px;
+  left: 64px;
+
   font-size: 15px;
   user-select: none;
   display: inline-block;

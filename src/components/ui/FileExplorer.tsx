@@ -99,7 +99,7 @@ export function FileExplorer({
         <div className="rounded-md border-0 border-border-dark overflow-hidden">
           <table className="w-full table-auto border-collapse">
             {showHeader && (
-              <thead className="bg-background-dark text-left">
+              <thead className="bg-background-medium text-left">
                 <tr>
                   <th className="px-4 py-3 font-semibold text-text-light">Name</th>
                   <th className="px-4 py-3 font-semibold text-text-light w-40">Created On</th>
@@ -119,18 +119,19 @@ export function FileExplorer({
     );
   }
 
+
   return (
     <div className={`w-full ${className}`}>
       <div className="rounded-md border border-solid border-border-dark overflow-hidden">
         <table className="w-full table-auto border-collapse">
           {showHeader && (
-            <thead className="bg-background-dark text-left">
+            <thead className="bg-background-medium text-left">
               <tr>
-                <th className="px-4 py-3 font-semibold text-text w-1/2">Name</th>
-                <th className="px-4 py-3 font-semibold text-text w-40">Created On</th>
-                <th className="px-4 py-3 font-semibold text-text w-40">Last Modified</th>
+                <th className="px-4 py-3 font-semibold text-text w-1/2">NAME</th>
+                <th className="px-4 py-3 font-semibold text-text w-40">CREATED ON</th>
+                <th className="px-4 py-3 font-semibold text-text w-40">LAST MODIFIED</th>
                 {actions.length > 0 && (
-                  <th className="px-4 py-3 font-semibold text-text w-40">Actions</th>
+                  <th className="px-4 py-3 font-semibold text-text w-40">ACTIONS</th>
                 )}
               </tr>
             </thead>

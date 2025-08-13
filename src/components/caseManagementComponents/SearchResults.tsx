@@ -101,7 +101,7 @@ export function SearchResults({
                         </div>
                         <div>
                           <h5 className="font-bold text-gray-900 text-lg">
-                            {caseData?.caseType} - {caseData.diaryNumber}
+                            {caseData.diaryNumber}
                           </h5>
                           <p className="text-sm text-gray-600 font-medium">
                             {caseData?.parties?.split("/")[0]}
@@ -205,14 +205,14 @@ export function SearchResults({
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Creating...
+                Subscribing...
               </>
             ) : (
               <>
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                Create {selectedCases.length > 1 ? 'Cases' : 'Case'}
+                Subscribe {selectedCases.length > 1 ? 'Cases' : 'Case'}
               </>
             )}
           </button>

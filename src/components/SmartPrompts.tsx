@@ -365,7 +365,7 @@ export function SmartPrompts() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b">
+      <div className="p-4">
         <input
           type="text"
           placeholder="Search prompts..."

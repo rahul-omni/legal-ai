@@ -7,6 +7,10 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        'nunito-sans': ['var(--font-nunito-sans)', 'sans-serif'],
+        sans: ['var(--font-nunito-sans)', 'sans-serif'],
+      },
       colors: {
         // Primary colors
         primary: {
@@ -25,8 +29,10 @@ module.exports = {
         // Background colors
         background: {
           light: "#ffffff",
-          DEFAULT: "#f8fafc",
-          dark: "#f1f5f9",
+          medium: "#fcfdfd",
+          DEFAULT: "#fafafa",
+          dark: "#f5f5f5",
+          darker: "#ededed",
         },
         
         // Text colors
@@ -74,9 +80,12 @@ module.exports = {
         // Muted colors (for subtle elements)
         muted: {
           light: "#f9fafb",
+          medium: "#ababac",
           DEFAULT: "#9ca3af",
           dark: "#6b7280",
         },
+
+
         
         // Legacy compatibility
         primaryDark: "#4338ca",

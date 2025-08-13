@@ -2,7 +2,6 @@ import { SmartPromptsPanel } from "../SmartPromptsPanel";
 import { DocumentEditorPanel } from "./components/DocumentEditorPanel";
 import { FileExplorerPanel } from "./components/FileExplorerPanel";
 import { FolderPickerModal } from "./components/FolderPickerModal";
-import { Toolbar } from "./components/Toolbar";
 
 export function LegalEditor() {
   return (
@@ -11,7 +10,6 @@ export function LegalEditor() {
         <FileExplorerPanel />
         <DocumentEditorPanel />
         <SmartPromptsPanel />
-        {/* <Toolbar /> */}
         <FolderPickerModal />
       </div>
     </div>

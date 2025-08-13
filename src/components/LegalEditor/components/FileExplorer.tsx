@@ -120,7 +120,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
         {loading ? (
           <Spinner />
         ) : (
-          <div className="space-y-0.5">
+          <div className="space-y-2">
             {isArray(fileTree) ? (
               fileTree.map((node) => renderNode(node))
             ) : (

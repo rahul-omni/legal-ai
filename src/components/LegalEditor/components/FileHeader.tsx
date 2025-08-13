@@ -21,10 +21,10 @@ export const FileExplorerHeader: FC<{
     const parentId = params.id as string;
     return (
       <div>
-        {(fileId && fileId.length && parentId === "root") ? <div className="w-full m-3 text-sm text-gray-400">You are viewing a single file</div> : <div className="p-4 bg-[#f9f9f9] sticky top-0 z-10">
+        {(fileId && fileId.length && parentId === "root") ? <div className="w-full m-3 text-sm text-gray-400">You are viewing a single file</div> : <div className="p-4 bg-background-dark sticky top-0 z-10">
           {/* Search */}
 
-          <div className="relative mb-3">
+          {/* <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
@@ -35,7 +35,7 @@ export const FileExplorerHeader: FC<{
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-          </div>
+          </div> */}
 
           {/* Files Header */}
           <div className="flex items-center justify-between">
