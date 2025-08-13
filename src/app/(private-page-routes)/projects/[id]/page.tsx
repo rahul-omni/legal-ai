@@ -100,7 +100,7 @@ const ProjectFolderTable: React.FC = () => {
     confirm(
       {
         title: 'Delete File',
-        message: `Are you sure you want to delete "${itemName}"? This action cannot be undone.`,
+        message: `Are you sure you want to delete? This action cannot be undone and will permanently remove the project and all its contents.`,
         confirmText: 'Delete',
         cancelText: 'Cancel',
         variant: 'danger',
@@ -126,7 +126,7 @@ const ProjectFolderTable: React.FC = () => {
       </div>
     ) : (
     <div className="w-full h-full min-h-0 flex flex-col">
-      <div className="px-6 py-6 flex items-start justify-between">
+      <div className="px-6 pt-6 flex items-start justify-between">
         <Header headerTitle={projectName} subTitle="Manage your legal project" />
         <div className="flex items-start gap-2">
           <Button disabled={isUploading} onClick={() => fileInputRef.current?.click()} icon={<Upload className="w-4 h-4" />} loading={isUploading}>

@@ -14,7 +14,7 @@ export function Toolbar() {
             state.showLeftPanel ? "bg-background-light shadow-sm" : "bg-transparent"
           } hover:bg-background-dark hover:shadow-sm transition-all`}
         >
-          <PanelLeft className="w-4 h-4 text-text-dark hover:text-white" />
+          <PanelLeft className="w-4 h-4 text-text-dark" />
         </button>
         <button
           onClick={() => dispatch({ type: "TOGGLE_SMART_PROMPTS" })}

@@ -133,7 +133,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 justify-end">
+        <div className="flex gap-3 justify-center">
           <Button
             variant="secondary"
             onClick={onClose}

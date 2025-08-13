@@ -4,7 +4,11 @@ import { Loader2 } from "lucide-react";
 export const Spinner = () => {
   return (
     <div className="flex items-center justify-center h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div
+        className="h-16 w-16 rounded-full border-8 border-primary border-t-transparent animate-spin"
+        aria-label="Loading"
+        role="status"
+      />
     </div>
   );
 };
