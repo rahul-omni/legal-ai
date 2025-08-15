@@ -220,6 +220,7 @@ model ExtractedJudgments {
   isSynced      Boolean        @default(false) @map("is_synced")
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
+  summary       String?        @default("")
   case          CaseManagement @relation("case_extracted_judgments", fields: [caseId], references: [id])
 
   @@unique([caseId, judgmentUrl], name: "case_url_unique")
