@@ -26,6 +26,7 @@ export function CaseManagement() {
     judgmentType: "",
     caseType: "",
     city: "",
+    bench:"",
     district: ""
   }
 
@@ -37,7 +38,43 @@ export function CaseManagement() {
   const [loadingDetails, setLoadingDetails] = useState<Record<string, boolean>>({});
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [loadingUrls, setLoadingUrls] = useState<Record<string, boolean>>({});
+     
+   function normalizeCaseData(rawCase: any, index: number): CaseData {
+  // Handle both snake_case and camelCase property names
+  const getValue = (keys: string[], defaultValue = '') => {
+    for (const key of keys) {
+      if (rawCase[key] !== undefined) return rawCase[key];
+    }
+    return defaultValue;
+  };
 
+  return {
+    id: rawCase.id || `${getValue(['diaryNumber', 'Diary Number'], 'case')}-${index}`,
+    serialNumber: getValue(['serialNumber', 'Serial Number']),
+    diaryNumber: getValue(['diaryNumber', 'Diary Number']),
+    caseNumber: getValue(['caseNumber', 'Case Number']),
+    court: getValue(['court', 'Court'], 'High Court'),
+    bench: getValue(['bench', 'Bench']),
+    judgmentBy: getValue(['judgmentBy', 'Judgment By']),
+    judgmentDate: getValue(['judgmentDate', 'judgment_date']),
+    judgmentText: Array.isArray(rawCase.judgmentText) 
+      ? rawCase.judgmentText.join('\n') 
+      : getValue(['judgmentText', 'Judgment']),
+    judgmentUrl: Array.isArray(rawCase.judgmentUrl) 
+      ? rawCase.judgmentUrl[0] 
+      : (rawCase.judgmentLinks?.[0]?.url || ''),
+    parties: getValue(['parties', 'Petitioner / Respondent']),
+    advocates: getValue(['advocates', 'Petitioner/Respondent Advocate']),
+    date: rawCase.date || '',
+    createdAt: rawCase.createdAt || rawCase.created_at || new Date().toISOString(),
+    updatedAt: rawCase.updatedAt || rawCase.updated_at || new Date().toISOString(),
+    file_path: rawCase.file_path || '',
+    judgmentType: getValue(['judgmentType', 'Judgment', 'judgment_type']),
+    caseType: getValue(['caseType', 'case_type']),
+    city: getValue(['city', 'City']),
+    district: getValue(['district', 'District'])
+  };
+}
   // Validation function
   const validateSearchForm = (): boolean => {
     const errors: ValidationErrors = {};
@@ -72,91 +109,80 @@ export function CaseManagement() {
     return Object.keys(errors).length === 0;
   };
 
+   
+
   const handleCaseExpand = async (caseItem: CaseData) => {
-    if (!caseItem?.id) {
-      console.error('Cannot expand - case item has no ID:', caseItem);
-      return;
-    }
+  if (!caseItem?.id) {
+    console.error('Cannot expand - case item has no ID:', caseItem);
+    return;
+  }
+  console.log("caseItem  handleExpand:", caseItem);
 
-    const caseId = caseItem.id;
-    const isExpanded = expandedCases[caseId];
-    setExpandedCases(prev => ({ ...prev, [caseId]: !isExpanded }));
+  const caseId = caseItem.id;
+  const isExpanded = expandedCases[caseId];
+  setExpandedCases(prev => ({ ...prev, [caseId]: !isExpanded }));
 
-    if (!isExpanded && !caseDetails[caseId]) {
-      try {
-        setLoadingDetails(prev => ({ ...prev, [caseId]: true }));
+  if (!isExpanded && !caseDetails[caseId]) {
+    try {
+      setLoadingDetails(prev => ({ ...prev, [caseId]: true }));
 
-        const diaryParts = caseItem.diaryNumber.split('/');
-        const diaryNumber = diaryParts[0];
-        const year = diaryParts[1];
+      const diaryParts = caseItem.diaryNumber.split('/');
+      const diaryNumber = diaryParts[0];
+      const year = diaryParts[1];
 
-        const searchUrl = new URL("/api/cases/search", window.location.origin);
-        searchUrl.searchParams.append("diaryNumber", diaryNumber);
-        searchUrl.searchParams.append("year", year);
-        searchUrl.searchParams.append("court", caseItem.court);
-        
-        if (caseItem.judgmentType) {
-          searchUrl.searchParams.append("judgmentType", caseItem.judgmentType);
-        }
-        
-        if (caseItem.caseType) {
-          searchUrl.searchParams.append("caseType", caseItem.caseType);
-        }
-        
-        if (caseItem?.city) {
-          searchUrl.searchParams.append("city", caseItem.city);
-        }
-        
-        if (caseItem?.district) {
-          searchUrl.searchParams.append("district", caseItem.district);
-        }
+      const searchUrl = new URL("/api/cases/search", window.location.origin);
+      searchUrl.searchParams.append("diaryNumber", diaryNumber);
+      searchUrl.searchParams.append("year", year);
+      searchUrl.searchParams.append("court", caseItem.court);
 
-        console.log(searchUrl.toString(), "searchUrl");
-        const response = await fetch(searchUrl.toString());
-        const data = await response.json();
+      // Fallbacks for missing fields
+      const caseType = caseItem.caseType || ""; // or use a sensible default
+      const city = caseItem.city || "";      // or use a sensible default
 
-        if (data.success && data.data?.length) {
-          const sortedCases = data.data.sort((a: CaseData, b: CaseData) => {
-            if (!a.judgmentDate && !b.judgmentDate) return 0;
-            if (!a.judgmentDate) return 1;
-            if (!b.judgmentDate) return -1;
-            
-            const parseDate = (dateStr: string) => {
-              const parts = dateStr.split('-');
-              if (parts.length === 3) {
-                return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-              }
-              return new Date(dateStr);
-            };
-            
-            const dateA = parseDate(a.judgmentDate);
-            const dateB = parseDate(b.judgmentDate);
-            
-            if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
-            if (isNaN(dateA.getTime())) return 1;
-            if (isNaN(dateB.getTime())) return -1;
-            
-            return dateB.getTime() - dateA.getTime();
-          });
-          
-          setCaseDetails(prev => ({ 
-            ...prev, 
-            [caseId]: sortedCases 
-          }));
-        } else {
-          throw new Error(data.message || 'No case data returned from search');
-        }
-      } catch (error) {
-        console.error('Search error:', error);
+      searchUrl.searchParams.append("caseType", caseType);
+      searchUrl.searchParams.append("city", city);
+
+      if (caseItem.judgmentType) {
+        searchUrl.searchParams.append("judgmentType", caseItem.judgmentType);
+      }
+      if (caseItem.district) {
+        searchUrl.searchParams.append("district", caseItem.district);
+      }
+      if (caseItem.bench) {
+        searchUrl.searchParams.append("bench", caseItem.bench);
+      }
+
+      console.log(searchUrl.toString(), "searchUrl");
+      const response = await fetch(searchUrl.toString());
+      const data = await response.json();
+
+      if (data.success && data.data?.length) {
+        const sortedCases = data.data.sort((a: CaseData, b: CaseData) => {
+          // ...sorting logic...
+          // ...existing code...
+        });
+
         setCaseDetails(prev => ({
           ...prev,
-          [caseId]: [caseItem]
+          [caseId]: sortedCases
         }));
-      } finally {
-        setLoadingDetails(prev => ({ ...prev, [caseId]: false }));
+        console.log("caseDetails:", caseDetails);
+        console.log("Sorted cases:", sortedCases);
+
+      } else {
+        throw new Error(data.message || 'No case data returned from search');
       }
+    } catch (error) {
+      console.error('Search error:', error);
+      setCaseDetails(prev => ({
+        ...prev,
+        [caseId]: [caseItem]
+      }));
+    } finally {
+      setLoadingDetails(prev => ({ ...prev, [caseId]: false }));
     }
-  };
+  }
+};
 
   const fetchUserCases = async () => {
     try {
@@ -183,9 +209,12 @@ export function CaseManagement() {
   };
 
   useEffect(() => {
+    
+    
     fetchUserCases();
   }, []);
 
+  
 
   const handleSearchCase = async () => {
     setValidationErrors({});
@@ -225,6 +254,9 @@ export function CaseManagement() {
         searchUrl.searchParams.append("district", searchParams.district);
       }
 
+      if (searchParams.bench) {
+        searchUrl.searchParams.append("bench", searchParams.bench);
+      }
       const response = await fetch(searchUrl.toString());
       const responseData = await response.json();
 
@@ -232,35 +264,72 @@ export function CaseManagement() {
         throw new Error(responseData.message || "Search failed");
       }
 
-      if (responseData.data && responseData.data.length > 0) {
-        const sortedCases = responseData.data.sort((a: CaseData, b: CaseData) => {
-          if (!a.judgmentDate && !b.judgmentDate) return 0;
-          if (!a.judgmentDate) return 1;
-          if (!b.judgmentDate) return -1;
-          
-          const parseDate = (dateStr: string) => {
-            const parts = dateStr.split('-');
-            if (parts.length === 3) {
-              return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-            }
-            return new Date(dateStr);
-          };
-          
-          const dateA = parseDate(a.judgmentDate);
-          const dateB = parseDate(b.judgmentDate);
-          
-          if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
-          if (isNaN(dateA.getTime())) return 1;
-          if (isNaN(dateB.getTime())) return -1;
-          
-          return dateB.getTime() - dateA.getTime();
-        });
+       
+//       if (responseData.data && responseData.data.length > 0) {
+//   // Normalize all cases
+//     const normalizedCases = responseData.data.map((rawCase: CaseData, i: number) => 
+//   normalizeCaseData(rawCase, i)
+// );
+//   const sortedCases = normalizedCases.sort((a: CaseData, b: CaseData) => {
+//     if (!a.judgmentDate && !b.judgmentDate) return 0;
+//     if (!a.judgmentDate) return 1;
+//     if (!b.judgmentDate) return -1;
 
-        setFoundCases(sortedCases);
-        toast.success(`Found ${sortedCases.length} cases (sorted by newest first)`);
-      } else {
-        toast.success(responseData.message || "No matching cases found");
+//     const parseDate = (dateStr: string) => {
+//       const parts = dateStr.split('-');
+//       if (parts.length === 3) {
+//         return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+//       }
+//       return new Date(dateStr);
+//     };
+
+//     const dateA = parseDate(a.judgmentDate);
+//     const dateB = parseDate(b.judgmentDate);
+
+//     if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+//     if (isNaN(dateA.getTime())) return 1;
+//     if (isNaN(dateB.getTime())) return -1;
+
+//     return dateB.getTime() - dateA.getTime();
+//   });
+
+//   setFoundCases(sortedCases);
+//   toast.success(`Found ${sortedCases.length} cases (sorted by newest first)`);
+// }
+
+if (responseData.data && responseData.data.length > 0) {
+  // Flatten nested processedResults arrays
+  const flatCases = responseData.data.flatMap((d: any) => d.processedResults || []);
+  // Normalize all cases
+  const normalizedCases = flatCases.map((rawCase: CaseData, i: number) => 
+    normalizeCaseData(rawCase, i)
+  );
+  const sortedCases = normalizedCases.sort((a: CaseData, b: CaseData) => {
+    if (!a.judgmentDate && !b.judgmentDate) return 0;
+    if (!a.judgmentDate) return 1;
+    if (!b.judgmentDate) return -1;
+
+    const parseDate = (dateStr: string) => {
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
       }
+      return new Date(dateStr);
+    };
+
+    const dateA = parseDate(a.judgmentDate);
+    const dateB = parseDate(b.judgmentDate);
+
+    if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+    if (isNaN(dateA.getTime())) return 1;
+    if (isNaN(dateB.getTime())) return -1;
+
+    return dateB.getTime() - dateA.getTime();
+  });
+    
+  setFoundCases(sortedCases);
+  toast.success(`Found ${sortedCases.length} cases (sorted by newest first)`);
+}
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
       setValidationErrors({ general: errorMessage });
@@ -269,6 +338,8 @@ export function CaseManagement() {
       setIsLoading(false);
     }
   };
+
+ 
 
   const handleToggleSelectCase = (caseData: CaseData) => {
     setSelectedCases(prev => {
@@ -290,16 +361,18 @@ export function CaseManagement() {
     setSelectAll(!selectAll);
   };
 
-  const handleCreateCases = async () => {
+  const handleCreateCases1 = async () => {
     try {
       setIsSubmitting(true);
+
+ 
 
       const response = await fetch('/api/cases/user-cases', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ selectedCases: selectedCases }),
+        body: JSON.stringify({ selectedCases:  selectedCases }),
       });
 
       const result = await response.json();
@@ -308,17 +381,16 @@ export function CaseManagement() {
         throw new Error(result.message || "Failed to save cases");
       }
 
-      if (result.success) {
-        toast.success(result.message);
-        // if (result.data.errors && result.data.errors.length > 0) {
-        //   result.data.errors.forEach((error: string) => {
-        //     toast.error(error);
-        //   });
-        // }
-      } else {
-        // toast.error(result.message || "Case processed but got some errors");
+       
+        if (result.success) {
+      toast.success(result.message);
+      if (result.data.errors && result.data.errors.length > 0) {
+        // Show only unique errors
+        (Array.from(new Set(result.data.errors)) as string[]).forEach((error: string) => {
+          toast.error(error);
+        });
       }
-
+    }
       await fetchUserCases();
       setShowNewCaseModal(false);
       setFoundCases([]);
@@ -333,7 +405,67 @@ export function CaseManagement() {
       setIsSubmitting(false);
     }
   };
+   
 
+  const handleCreateCases = async () => {
+  try {
+    setIsSubmitting(true);
+     
+    // Ensure caseType and city are present for each selected case
+    const normalizedCases = selectedCases.map((caseItem) => {
+      // Find the matching case in foundCases
+      const found = foundCases.find(fc => fc.id === caseItem.id || fc.diaryNumber === caseItem.diaryNumber);
+
+      return {
+        ...caseItem,
+        case_type: caseItem.caseType   || found?.caseType ||  "",
+        city: caseItem.city || found?.city || "",
+      };
+    });
+
+    console.log("Normalized cases:", normalizedCases);
+
+
+    const response = await fetch('/api/cases/user-cases', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ selectedCases: normalizedCases }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || "Failed to save cases");
+    }
+
+    if (result.success) {
+      toast.success(result.message);
+      if (result.data.errors && result.data.errors.length > 0) {
+        (Array.from(new Set(result.data.errors)) as string[]).forEach((error: string) => {
+          toast.error(error);
+        });
+      }
+    }
+    await fetchUserCases();
+    setShowNewCaseModal(false);
+    setFoundCases([]);
+    setSelectedCases([]);
+    setSearchParams(defaultSearchParams);
+
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Failed to create cases";
+    toast.error(errorMessage);
+    console.error("Error in handleCreateCases:", err);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+ useEffect(() => {
+     console.log("Found cases updated:", foundCases);
+   }, [foundCases]);
   const generateSignedUrlForCase = async (filePath: string) => {
     try {
       const response = await fetch('/api/signed-url', {

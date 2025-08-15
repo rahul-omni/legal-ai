@@ -1,6 +1,7 @@
 import { Loader2, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { HIGH_COURT_CASE_TYPES, HIGH_COURT_CITY, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
+//import { HIGH_COURT_CASE_TYPES, HIGH_COURT_CITY, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
+import {  APPELLATE_BOMBAY_HIGH_COURT_CASE_TYPES, AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES, BOMBAY_HIGH_COURT_BENCH, GOA_BOMBAY_HIGH_COURT_CASE_TYPES, HIGH_COURT_CASE_TYPES, HIGH_COURT_CITY, NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES, ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES, SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
 import { SearchParams, ValidationErrors } from "./types";
 
 interface SearchFormProps {
@@ -34,6 +35,27 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
     }, 10000);
     return () => window.clearInterval(intervalId);
   }, [isLoading, loadingMessages.length]);
+  function getCaseTypesForBench(bench: string) {
+    switch(bench) {
+      case "Appellate Side,Bombay":
+        return APPELLATE_BOMBAY_HIGH_COURT_CASE_TYPES;
+      case "Bench at Aurangabad":
+        return AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES;
+      case "Bench at Nagpur":
+        return NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES;
+      case "High court of Bombay at Goa":
+        return GOA_BOMBAY_HIGH_COURT_CASE_TYPES;
+      case "Special Court (TORTS) Bombay":
+        return SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES;
+      case "Original Side,Bombay":
+        return ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES;
+      default:
+        return [];
+    }
+  }
+
+ console.log("Search Params:", searchParams);
+ 
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -61,7 +83,16 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
           <select
             value={searchParams.court}
             onChange={(e) =>
-              setSearchParams({ ...searchParams, court: e.target.value, caseType: "", year: "", city: "", judgmentType: "", number: "" })
+              setSearchParams({ 
+                ...searchParams, 
+                court: e.target.value, 
+                caseType: "", 
+                year: "", 
+                city: "", 
+                bench: "",
+                judgmentType: "", 
+                number: "" 
+              })
             }
             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light ${
               errors?.court ? 'border-error' : 'border-border'
@@ -70,14 +101,14 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
             <option value="">Select court type</option>
             <option value="Supreme Court">Supreme Court</option>
             <option value="High Court">High Court</option>
-            {/* <option value="District Court">District Court</option> */}
           </select>
           {errors?.court && (
             <p className="mt-1 text-sm text-error">{errors.court}</p>
           )}
         </div>
 
-        {searchParams.court === 'High Court' && (
+        {/* City Selection (only for High Court) */}
+        {searchParams.court === "High Court" && (
           <div>
             <label className="block text-sm font-medium text-text-light mb-2">
               City <span className="text-error">*</span>
@@ -85,24 +116,60 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
             <select
               value={searchParams.city}
               onChange={(e) =>
-                setSearchParams({ ...searchParams, city: e.target.value })
+                setSearchParams({ 
+                  ...searchParams, 
+                  city: e.target.value, 
+                  bench: "",
+                  caseType: "" 
+                })
               }
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light ${
                 errors?.city ? 'border-error' : 'border-border'
               }`}
             >
-              <option value="">All City</option>
-              {HIGH_COURT_CITY.map(type => (
-                <option key={type} value={type}>{type}</option>
+              <option value="">Select City</option>
+              {HIGH_COURT_CITY.map(city => (
+                <option key={city} value={city}>{city}</option>
               ))}
             </select>
             {errors?.city && (
-            <p className="mt-1 text-sm text-error">{errors.city}</p>
-          )}
-        </div>
+              <p className="mt-1 text-sm text-error">{errors.city}</p>
+            )}
+          </div>
         )}
 
-        {/* Case Type Selection */}
+        {/* Bench Selection (only for Mumbai High Court) */}
+        {searchParams.court === "High Court" && searchParams.city === "Mumbai" && (
+          <div>
+            <label className="block text-sm font-medium text-text-light mb-2">
+              Bench <span className="text-error">*</span>
+            </label>
+            <select
+              value={searchParams.bench}
+              onChange={(e) =>
+                setSearchParams({ 
+                  ...searchParams, 
+                  bench: e.target.value,
+                  caseType: "" 
+                })
+              }
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light ${
+                errors?.bench ? 'border-error' : 'border-border'
+              }`}
+            >
+              <option value="">Select Bench</option>
+              {BOMBAY_HIGH_COURT_BENCH.map(bench => (
+                <option key={bench} value={bench}>{bench}</option>
+              ))}
+            </select>
+            {errors?.bench && (
+              <p className="mt-1 text-sm text-error">{errors.bench}</p>
+            )}
+          </div>
+        )}
+
+       
+        {/* Case Type for High Court (with bench-specific options for Mumbai) */}
         {searchParams.court === "High Court" && (
           <div>
             <label className="block text-sm font-medium text-text-light mb-2">
@@ -117,12 +184,16 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
                 errors?.caseType ? 'border-error' : 'border-border'
               }`}
             >
-              <option value="">All Case Types</option>
-              {searchParams.court === 'High Court' ? HIGH_COURT_CASE_TYPES.map(type => (
-                <option key={type} value={type}>{type}</option>
-              )) : SUPREME_COURT_CASE_TYPES.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
+              <option value="">Select Case Type</option>
+              {searchParams.city === "Mumbai" && searchParams.bench ? (
+                getCaseTypesForBench(searchParams.bench).map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))
+              ) : (
+                HIGH_COURT_CASE_TYPES.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))
+              )}
             </select>
             {errors?.caseType && (
               <p className="mt-1 text-sm text-error">{errors.caseType}</p>
@@ -210,7 +281,7 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
             ) : (
               <>
                 <Search className="w-4 h-4" />
-                Search Cases
+                Search Cases1
               </>
             )}
           </button>
@@ -218,4 +289,4 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
       </div>
     </div>
   );
-} 
+}

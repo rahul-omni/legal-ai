@@ -27,7 +27,8 @@ export function SearchResults({
   isSubmitting
 }: SearchResultsProps) {
   const isSelected = (caseData: CaseData) => selectedCases.some(c => c.id === caseData.id);
-
+    console.log("Found Cases Search Result:", foundCases);
+    
   return (
     <>
       <div className="space-y-6">
@@ -67,7 +68,7 @@ export function SearchResults({
         <div className="space-y-3">
           {foundCases.map((caseData, index) => (
             <div
-              key={caseData.id}
+              key={caseData.id || `${caseData.diaryNumber}-${index}`} // Use id if present, else fallback
               onClick={() => onToggleSelectCase(caseData)}
               className={`relative border-2 rounded-xl transition-all duration-200 cursor-pointer ${
                 isSelected(caseData)
