@@ -263,40 +263,7 @@ export function CaseManagement() {
       if (!response.ok || !responseData.success) {
         throw new Error(responseData.message || "Search failed");
       }
-
-       
-//       if (responseData.data && responseData.data.length > 0) {
-//   // Normalize all cases
-//     const normalizedCases = responseData.data.map((rawCase: CaseData, i: number) => 
-//   normalizeCaseData(rawCase, i)
-// );
-//   const sortedCases = normalizedCases.sort((a: CaseData, b: CaseData) => {
-//     if (!a.judgmentDate && !b.judgmentDate) return 0;
-//     if (!a.judgmentDate) return 1;
-//     if (!b.judgmentDate) return -1;
-
-//     const parseDate = (dateStr: string) => {
-//       const parts = dateStr.split('-');
-//       if (parts.length === 3) {
-//         return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-//       }
-//       return new Date(dateStr);
-//     };
-
-//     const dateA = parseDate(a.judgmentDate);
-//     const dateB = parseDate(b.judgmentDate);
-
-//     if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
-//     if (isNaN(dateA.getTime())) return 1;
-//     if (isNaN(dateB.getTime())) return -1;
-
-//     return dateB.getTime() - dateA.getTime();
-//   });
-
-//   setFoundCases(sortedCases);
-//   toast.success(`Found ${sortedCases.length} cases (sorted by newest first)`);
-// }
-
+ 
 if (responseData.data && responseData.data.length > 0) {
   // Flatten nested processedResults arrays
   const flatCases = responseData.data.flatMap((d: any) => d.processedResults || []);

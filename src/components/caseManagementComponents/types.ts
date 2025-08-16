@@ -1,25 +1,3 @@
-// export interface CaseData {
-//   id: string;
-//   serialNumber: string;
-//   diaryNumber: string;
-//   caseNumber: string;
-//   parties: string;
-//   advocates: string;
-//   bench: string;
-//   judgmentBy: string;
-//   judgmentDate: string;
-//   judgmentText: string;
-//   judgmentUrl: string;
-//   court: string;
-//   date: string;
-//   createdAt: string;
-//   updatedAt: string;
-//   file_path?: string; // Added for High Court signed URLs
-//   caseType?: string;
-//   judgmentType?: string;
-//   city?: string;
-//   district?: string;
-// }
 
 export interface CaseData {
   id: string;
