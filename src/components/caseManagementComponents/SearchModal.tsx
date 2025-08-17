@@ -50,7 +50,7 @@ export function SearchModal({
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b">
           <h3 className="text-lg font-semibold text-gray-900">
-            {foundCases.length > 0 ? "Select Case(s) to Create" : "Search CaseM"}
+            {foundCases.length > 0 ? "Select Case(s) to Create" : "Search Case"}
           </h3>
           <button
             onClick={onClose}

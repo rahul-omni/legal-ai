@@ -281,7 +281,7 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
             ) : (
               <>
                 <Search className="w-4 h-4" />
-                Search Cases1
+                Search Cases
               </>
             )}
           </button>
