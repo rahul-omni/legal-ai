@@ -32,7 +32,7 @@ export function TopNavbar({
             className="p-2 text-muted hover:text-text hover:bg-background rounded-lg transition-colors"
             onClick={() => router.push('/notifications')}
             >
-              <Bell className="w-5 h-5" />
+              <Bell className="w-5 h-5" id='notifications'/>
             </button>
 
             <Link

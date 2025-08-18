@@ -63,6 +63,15 @@ export default function FirstTimeGuide() {
             },
           },
           {
+            element: "#settings",
+            popover: {
+              title: "Settings",
+              description: "Manage your profile and previews.",
+              side: "bottom",
+              align: "start",
+            },
+          },
+          {
             element: "#notifications",
             popover: {
               title: "🔔 Notifications",
