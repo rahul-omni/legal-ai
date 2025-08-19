@@ -6,6 +6,7 @@ import { CaseList } from "./caseManagementComponents/CaseList";
 import { SearchModal } from "./caseManagementComponents/SearchModal";
 import Header from "./ui/Header";
 import Button from "./ui/Button";
+import { uniq } from "lodash";
 
 export function CaseManagement() {
   const [showNewCaseModal, setShowNewCaseModal] = useState(false);
@@ -266,7 +267,19 @@ export function CaseManagement() {
  
 if (responseData.data && responseData.data.length > 0) {
   // Flatten nested processedResults arrays
-  const flatCases = responseData.data.flatMap((d: any) => d.processedResults || []);
+  // const flatCases = responseData.data.flatMap((d: any) => d.processedResults || []);
+
+    let flatCases: any[] = [];
+
+  // Check if data is DB result (array of cases) or scraped (array of objects with processedResults)
+  if (responseData.data[0]?.diaryNumber) {
+    // DB result: use directly
+    flatCases = responseData.data;
+  } else {
+    // Scraped result: flatten processedResults
+    flatCases = responseData.data.flatMap((d: any) => d.processedResults || []);
+  }
+
   // Normalize all cases
   const normalizedCases = flatCases.map((rawCase: CaseData, i: number) => 
     normalizeCaseData(rawCase, i)
@@ -328,50 +341,7 @@ if (responseData.data && responseData.data.length > 0) {
     setSelectAll(!selectAll);
   };
 
-  const handleCreateCases1 = async () => {
-    try {
-      setIsSubmitting(true);
-
  
-
-      const response = await fetch('/api/cases/user-cases', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ selectedCases:  selectedCases }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to save cases");
-      }
-
-       
-        if (result.success) {
-      toast.success(result.message);
-      if (result.data.errors && result.data.errors.length > 0) {
-        // Show only unique errors
-        (Array.from(new Set(result.data.errors)) as string[]).forEach((error: string) => {
-          toast.error(error);
-        });
-      }
-    }
-      await fetchUserCases();
-      setShowNewCaseModal(false);
-      setFoundCases([]);
-      setSelectedCases([]);
-      setSearchParams(defaultSearchParams)
-
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to create cases";
-      toast.error(errorMessage);
-      console.error("Error in handleCreateCases:", err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
    
 
   const handleCreateCases = async () => {
@@ -379,18 +349,39 @@ if (responseData.data && responseData.data.length > 0) {
     setIsSubmitting(true);
      
     // Ensure caseType and city are present for each selected case
-    const normalizedCases = selectedCases.map((caseItem) => {
-      // Find the matching case in foundCases
-      const found = foundCases.find(fc => fc.id === caseItem.id || fc.diaryNumber === caseItem.diaryNumber);
+    // Add bench to normalizedCases
+ const normalizedFoundCases = foundCases.map(fc => ({
+  ...fc,
+  case_type: fc.caseType   || "",
+  city: fc.city || "",
+  bench: fc.bench || ""
+}));
 
+// Merge found values into only the selected cases
+    const normalizedSelected = selectedCases.map(item => {
+      const found = normalizedFoundCases.find(fc => fc.id === item.id || fc.diaryNumber === item.diaryNumber);
       return {
-        ...caseItem,
-        case_type: caseItem.caseType   || found?.caseType ||  "",
-        city: caseItem.city || found?.city || "",
+        ...item,
+        // keep both camelCase and snake_case for backend compatibility
+        caseType: item.caseType || found?.caseType || "",
+
+        city: item.city || found?.city || "",
+        bench: item.bench || found?.bench || ""
       };
     });
 
-    console.log("Normalized cases:", normalizedCases);
+    // Deduplicate by diaryNumber (fallback to id)
+    const uniqueMap = new Map<string, typeof normalizedSelected[number]>();
+    for (const c of normalizedSelected) {
+      const key = (c.diaryNumber || c.id || "").toString();
+      if (!uniqueMap.has(key)) uniqueMap.set(key, c);
+    }
+    const uniqueCases = Array.from(uniqueMap.values());
+
+      
+ console.log("Unique cases to create:", uniqueCases);
+
+    // console.log("Unique cases to create:", uniqueCases);
 
 
     const response = await fetch('/api/cases/user-cases', {
@@ -398,7 +389,7 @@ if (responseData.data && responseData.data.length > 0) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ selectedCases: normalizedCases }),
+      body: JSON.stringify({ selectedCases:   uniqueCases }),
     });
 
     const result = await response.json();

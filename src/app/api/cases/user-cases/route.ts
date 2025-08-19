@@ -15,7 +15,7 @@ const createUserCaseSchema = z.object({
     diaryNumber: z.string(),
     caseNumber: z.string().nullable().optional(),
     court: z.string(),
-    case_type: z.string().nullable().optional(),
+     caseType: z.string().nullable().optional(),
     city: z.string().nullable().optional(),
     district: z.string().nullable().optional(),
     parties: z.string().nullable().optional(),
@@ -62,23 +62,29 @@ export const POST = auth(async (request: NextAuthRequest) => {
         const existingCase = await prisma.userCase.findFirst({
           where: {
             diaryNumber: caseData.diaryNumber,
-            userId: sessionUser.id
+            userId: sessionUser.id,
+            city: caseData.city,
+            bench: caseData.bench,
+            //  caseType: caseData.caseType
           }
         });
-
-        if (existingCase) {
-          console.log(`Duplicate case found: ${caseData.diaryNumber}`);
-          errors.push(`Case with diary number ${caseData.diaryNumber} already exists`);
-          continue;
-        }
+       
+         if (existingCase) {
+      console.log(`Duplicate case found: ${caseData.diaryNumber} (${caseData.city}, ${caseData.bench}, ${caseData.caseType})`);
+      errors.push(
+        `Case with diary number ${caseData.diaryNumber}, city "${caseData.city}", bench "${caseData.bench}", and case type "${caseData.caseType}" already exists`
+      );
+      continue;
+    }
 
         console.log(`Creating UserCase for: ${caseData.diaryNumber}`);
         console.log(`Case data:`, {
           diaryNumber: caseData.diaryNumber,
-          caseType: caseData.case_type,
+          caseType: caseData.caseType,
           court: caseData.court,
           city: caseData.city,
-          district: caseData.district
+          district: caseData.district,
+          bench: caseData.bench 
         });
 
         // Create new user case with data from selectedCases (no need to fetch from CaseManagement)
@@ -87,14 +93,17 @@ export const POST = auth(async (request: NextAuthRequest) => {
             userId: sessionUser.id,
             diaryNumber: caseData.diaryNumber,
             status: "PENDING",
-            caseType: caseData.case_type || "",
+            caseType: caseData.caseType || "",
             court: caseData.court || "",
             city: caseData.city || "",
-            district: caseData.district || ""
+            district: caseData.district || "",
+            bench: caseData.bench || "",
           }
         });
 
         console.log(`Successfully created case: ${createdCase.id}`);
+        console.log("Created case data:",  results);
+      
         results.push(createdCase);
 
       } catch (error) {
@@ -112,7 +121,7 @@ export const POST = auth(async (request: NextAuthRequest) => {
     if (results.length === 0) {
       return NextResponse.json({
         success: false,
-        message: "No cases were created",
+        message:  errors.join(", "),
         errors: errors
       }, { status: 400 });
     }
