@@ -117,6 +117,9 @@ export function SearchResults({
                           <span className="px-3 py-1.5 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
                             {caseData.judgmentType === 'JUDGEMENT' ? 'Judgement' : 
                              caseData.judgmentType === 'ORDER' ? 'Order' : 
+                              caseData.judgmentType === 'Interim Order' ? 'Interim Order' :
+                              caseData.judgmentType === 'Registrar Order' ? 'Registrar Order' :
+                              caseData.judgmentType === 'Farad Order' ? 'Farad Order' :
                              caseData.judgmentType}
                           </span>
                         )}

@@ -262,6 +262,9 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
               <option value="">All Types</option>
               <option value="JUDGEMENT">Judgement</option>
               <option value="ORDER">Order</option>
+              <option value="Interim Order">Interim Order</option>
+              <option value="Registrar Order">Registrar Order</option>
+              <option value="Farad Order">Farad Order</option>
             </select>
           </div>
         )}

@@ -153,6 +153,7 @@ async function scrapeHighCourt(url: string, payload: any) {
   }
 }
 
+ 
 const scraperCircuitBreaker = new ScraperCircuitBreaker(scrapeHighCourt);
 
 async function logSearchAttempt(params: any, result: any) {
@@ -225,6 +226,17 @@ if (validated.caseType && validated.caseType.trim() !== "") {
   whereConditions.case_type = { contains: validated.caseType, mode: 'insensitive' };
 }
 
+ // judgmentType: optional — when provided, support comma-separated values
+if (validated.judgmentType && validated.judgmentType.toString().trim() !== "") {
+  const jt = validated.judgmentType.toString();
+  const parts = jt.split(',').map(p => p.trim()).filter(Boolean);
+  if (parts.length === 1) {
+    whereConditions.judgment_type = { equals: parts[0], mode: 'insensitive' };
+  } else if (parts.length > 1) {
+    // add OR clause for multiple judgment types
+    whereConditions.OR = parts.map(p => ({ judgment_type: { equals: p, mode: 'insensitive' } }));
+  }
+}
 
 console.log("Where conditions:", whereConditions);
 
@@ -235,7 +247,8 @@ console.log("Where conditions:", whereConditions);
     const canScrape = validated.court === "High Court"
   && validated.city && validated.city.trim() !== ""
   && validated.caseType && validated.caseType.trim() !== "";
-
+   
+ 
    // Fallback: if nothing matched with filters (bench/case_type/city), try diaryNumber-only
    // This prevents unnecessary scraping when the diary number exists but other fields differ.
 if (caseData.length === 0 && fullDiaryNumber) {
@@ -247,29 +260,53 @@ if (caseData.length === 0 && fullDiaryNumber) {
   if (fallback.length > 0) {
     console.log("Fallback DB match by diaryNumber found, skipping scraper:", fallback.length, fallback);
    // caseData = fallback;
-     const preferred = fallback.filter(r =>
+     // Prefer rows matching requested court
+        const preferred = fallback.filter(r =>
           (r.court || '').toLowerCase().includes((validated.court || '').toLowerCase())
         );
 
+    if (validated.judgmentType && validated.judgmentType.toString().trim() !== "") {
+          const parts = validated.judgmentType.toString()
+            .split(',')
+            .map(p => p.trim().toLowerCase())
+            .filter(Boolean);
 
-    if (preferred.length > 0) {
-          console.log("Fallback DB match by diaryNumber found for requested court, skipping scraper:", preferred.length, preferred);
-          caseData = preferred;
-        } else {
-          console.log("DiaryNumber exists in DB but under different court(s):", Array.from(new Set(fallback.map(r => r.court))));
-          // If request is for High Court and scraping parameters are present, proceed to scrape
-          if (validated.court === "High Court" &&  canScrape) {
-            console.log("Diary present only under different court; proceeding to attempt High Court scrape.");
-            // leave caseData empty so the scraper will run
+          const preferredWithJudgment = preferred.filter(r =>
+            parts.includes((r.judgment_type || '').toLowerCase())
+          );
+
+          if (preferredWithJudgment.length > 0) {
+            console.log("Returning preferred rows matching requested court + judgmentType:", preferredWithJudgment.length);
+            caseData = preferredWithJudgment;
           } else {
-            // otherwise return the existing fallback rows (different court)
+            // Requested judgmentType not present in DB for this diary -> do NOT scrape or return unrelated rows
+            console.log("Requested judgmentType not present in DB for diary; returning empty result (no scrape).");
+            await logSearchAttempt(validated, { caseData: [], scrapeResult: null });
+            return NextResponse.json({
+              success: false,
+              message: 'No case found with requested judgmentType',
+              data: []
+            }, { status: 404 });
+          }
+        } else {
+      console.log("DiaryNumber exists but no row matches requested court+judgmentType; available courts:", Array.from(new Set(fallback.map(r => r.court))));
+           // No judgmentType requested: accept preferred if any, otherwise decide whether to scrape or return fallback
+          if (preferred.length > 0) {
+            console.log("Returning preferred rows matching requested court:", preferred.length);
+            caseData = preferred;
+          } else if (validated.court === "High Court" && canScrape) {
+            console.log("No preferred rows found; will attempt High Court scrape.");
+            // leave caseData empty so scraper may run
+          } else {
+            console.log("Returning diary-only fallback rows (no scrape).");
             caseData = fallback;
           }
-        }
+
+      }
   }
-
-
 }
+
+ 
     let scrapeResult: any = { success: false };
 
     // Only attempt scraping when DB returned nothing AND we have required params
@@ -423,11 +460,12 @@ if (scrapeResult.success && scrapeResult.result.length > 0) {
 }
 
 // ...existing code...
-  } catch (scrapeError) {
+  } catch (scrapeError:any) {
     console.error('Scraping failed:', scrapeError);
     scrapeResult = {
       success: false,
-      error:  'Scraping Unknown error',
+      error:  scrapeError.message || 'Scraping Unknown error',
+      isTimeout: !!scrapeError?.isTimeout 
     };
   }
 }
