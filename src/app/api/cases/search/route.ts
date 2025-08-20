@@ -3,7 +3,7 @@ import { handleError } from "@/app/api/lib/errors";
 import { userFromSession } from "@/lib/auth";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
-import { DELHI_COURT_CASE_TYPES_VALUE_MAPPING, APPELLATE_BOMBAY_COURT_CASE_TYPES_VALUE_MAPPING, NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, GOA_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING } from "@/lib/constants";
+import { DELHI_COURT_CASE_TYPES_VALUE_MAPPING, APPELLATE_BOMBAY_COURT_CASE_TYPES_VALUE_MAPPING, NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, GOA_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, KOLHAPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING } from "@/lib/constants";
 import { z } from "zod";
 import { PrismaClient } from '@prisma/client';
 import { ca } from "zod/v4/locales";
@@ -26,6 +26,7 @@ const prisma = new PrismaClient();
       "Appellate Side,Bombay": APPELLATE_BOMBAY_COURT_CASE_TYPES_VALUE_MAPPING,
       "Bench at Aurangabad":   AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,
       "Bench at Nagpur":  NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,
+      "Bombay High Court,Bench at Kolhapur":KOLHAPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,
       "Original Side,Bombay":  ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,
       "High court of Bombay at Goa":  GOA_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,
       "Special Court (TORTS) Bombay":  SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING
@@ -45,73 +46,34 @@ const searchSchema = z.object({
   district: z.string().optional()
 })
 
-// .refine((data) => {
-//   if (data.court === "High Court") {
-//     return data.caseType && data.caseType.trim() !== '' && 
-//            data.city && data.city.trim() !== '';
-//   }
-//   return true;
-// }, {
-//   message: "Case type and city are required for High Court cases",
-//   path: ["caseType", "city"]
-// });
+ 
 
-class ScraperCircuitBreaker {
-  private state: "CLOSED" | "OPEN" | "HALF" = "CLOSED";
-  private failureCount = 0;
-  private successCount = 0;
-  private nextAttempt = Date.now();
-
-  constructor(
-    private request: Function,
-    private options = {
-      failureThreshold: 3,
-      successThreshold: 2,
-      timeout: 60000
-    }
-  ) {}
-
-  async fire(...args: any[]) {
-    if (this.state === "OPEN") {
-      if (this.nextAttempt <= Date.now()) {
-        this.state = "HALF";
-      } else {
-        throw new Error("Circuit breaker is OPEN - scraping temporarily disabled");
-      }
-    }
-    
+async function performScrapeWithRetries(url: string, payload: any, retries = 2) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const response = await this.request(...args);
-      return this.success(response);
-    } catch (err) {
-      console.error("Scraping error:", err);
-      const error = err instanceof Error ? err : new Error(String(err));
-    return this.fail(error);
-    }
-  }
+      return await scrapeHighCourt(url, payload);
+    } catch (err: any) {
+      const msg = err?.message || '';
+      const isTimeout = !!err?.isTimeout || /timed out|timeout/i.test(msg);
+      const isNetwork = /network|ECONNRESET|ENOTFOUND|ECONNREFUSED/i.test(msg);
 
-  private success(response: any) {
-    if (this.state === "HALF") {
-      this.successCount++;
-      if (this.successCount > this.options.successThreshold) {
-        this.successCount = 0;
-        this.state = "CLOSED";
+      console.error(`Scrape attempt ${attempt} failed:`, msg);
+
+      if (attempt < retries && (isTimeout || isNetwork)) {
+        const backoff = 1000 * Math.pow(2, attempt - 1);
+        await new Promise((r) => setTimeout(r, backoff));
+        continue;
       }
-    }
-    this.failureCount = 0;
-    return response;
-  }
 
-  private fail(err: Error) {
-    this.failureCount++;
-    if (this.failureCount >= this.options.failureThreshold) {
-      this.state = "OPEN";
-      this.nextAttempt = Date.now() + this.options.timeout;
+      throw err;
     }
-    throw err;
   }
 }
 
+// Provide a small object with .fire to keep existing usage unchanged
+const scraperCircuitBreaker = {
+  fire: performScrapeWithRetries
+};
 async function scrapeHighCourt(url: string, payload: any) {
   try {
     const controller = new AbortController();
@@ -152,9 +114,6 @@ async function scrapeHighCourt(url: string, payload: any) {
     };
   }
 }
-
- 
-const scraperCircuitBreaker = new ScraperCircuitBreaker(scrapeHighCourt);
 
 async function logSearchAttempt(params: any, result: any) {
   const logEntry = {
@@ -501,11 +460,6 @@ if (Array.isArray(scrapeResult.processedResults)) {
     // Case 2a: Scraping found results
     console.log("Found cases via scraping:", results);
 
-    // response = {
-    //   success: true,
-    //   message: 'CasesNumber found via scraping',
-    //   data: results
-    // };
 
       const flatItems = results.flatMap(r => r.processedResults ?? r);
 

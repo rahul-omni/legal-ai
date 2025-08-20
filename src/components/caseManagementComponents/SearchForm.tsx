@@ -1,7 +1,7 @@
 import { Loader2, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 //import { HIGH_COURT_CASE_TYPES, HIGH_COURT_CITY, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
-import {  APPELLATE_BOMBAY_HIGH_COURT_CASE_TYPES, AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES, BOMBAY_HIGH_COURT_BENCH, GOA_BOMBAY_HIGH_COURT_CASE_TYPES, HIGH_COURT_CASE_TYPES, HIGH_COURT_CITY, NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES, ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES, SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
+import {  APPELLATE_BOMBAY_COURT_CASE_TYPES_VALUE_MAPPING,   AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, BOMBAY_HIGH_COURT_BENCH, DELHI_COURT_CASE_TYPES_VALUE_MAPPING, GOA_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_CITY,  KOLHAPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,   NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,  ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,  SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
 import { SearchParams, ValidationErrors } from "./types";
 
 interface SearchFormProps {
@@ -38,17 +38,23 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
   function getCaseTypesForBench(bench: string) {
     switch(bench) {
       case "Appellate Side,Bombay":
-        return APPELLATE_BOMBAY_HIGH_COURT_CASE_TYPES;
+        return Object.keys(APPELLATE_BOMBAY_COURT_CASE_TYPES_VALUE_MAPPING);  
+      //return Object.keys(APPELLATE_BOMBAY_HIGH_COURT_CASE_TYPES).map((key) => APPELLATE_BOMBAY_HIGH_COURT_CASE_TYPES[key as keyof typeof APPELLATE_BOMBAY_HIGH_COURT_CASE_TYPES]);
       case "Bench at Aurangabad":
-        return AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES;
+        return Object.keys(AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING);  
+       // return AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES;
       case "Bench at Nagpur":
-        return NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES;
+        return Object.keys(NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING);  
+       // return NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES;
+      case "Bombay High Court,Bench at Kolhapur":
+        return Object.keys(KOLHAPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING);  
+       // return KOLHAPUR_BOMBAY_HIGH_COURT_CASE_TYPES;  
       case "High court of Bombay at Goa":
-        return GOA_BOMBAY_HIGH_COURT_CASE_TYPES;
+        return   Object.keys( GOA_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING);  ;
       case "Special Court (TORTS) Bombay":
-        return SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES;
+        return  Object.keys( SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING);  ;
       case "Original Side,Bombay":
-        return ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES;
+        return Object.keys(ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING);
       default:
         return [];
     }
@@ -190,7 +196,7 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
                   <option key={type} value={type}>{type}</option>
                 ))
               ) : (
-                HIGH_COURT_CASE_TYPES.map(type => (
+                 Object.keys(DELHI_COURT_CASE_TYPES_VALUE_MAPPING).map(type => (
                   <option key={type} value={type}>{type}</option>
                 ))
               )}

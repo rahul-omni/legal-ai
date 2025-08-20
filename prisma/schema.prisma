@@ -248,6 +248,23 @@ model UserCase {
   @@map("user_cases")
 }
 
+model Causelist {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+ 
+  serialNumber  String  @default("")
+  type          String? @default("")
+  city         String?  @default("")
+  court        String   @default("")
+  district     String?  @default("")
+  url          String?  @default("")
+  date         String?  @default("")
+  causeListType String?  @default("")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+   
+  @@map("cause_list")
+}
+
 model client {
   name         String
   organization String
