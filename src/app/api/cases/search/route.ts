@@ -3,14 +3,14 @@ import { handleError } from "@/app/api/lib/errors";
 import { userFromSession } from "@/lib/auth";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
-import { DELHI_COURT_CASE_TYPES_VALUE_MAPPING, APPELLATE_BOMBAY_COURT_CASE_TYPES_VALUE_MAPPING, NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, GOA_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, KOLHAPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING } from "@/lib/constants";
+import { DELHI_COURT_CASE_TYPES_VALUE_MAPPING, APPELLATE_BOMBAY_COURT_CASE_TYPES_VALUE_MAPPING, NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, GOA_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, KOLHAPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, ALLAHABAD_HIGH_COURT_ALLAHABAD_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, ALLAHABAD_HIGH_COURT_ALLAHABAD_HIGH_COURT_LUCKNOW_BENCH_CASE_TYPES_VALUE_MAPPING, CALCUTTA_HIGH_COURT_APPELLATE_SIDE_CASE_TYPES_VALUE_MAPPING, CALCUTTA_HIGH_COURT_CIRCUIT_BENCH_AT_JALPAIGURI_CASE_TYPES_VALUE_MAPPING, CALCUTTA_HIGH_COURT_CIRCUIT_BENCH_AT_PORT_BLAIR_CASE_TYPES_VALUE_MAPPING, CALCUTTA_HIGH_COURT_ORIGINAL_SIDE_CASE_TYPES_VALUE_MAPPING, GAUHATI_HIGH_COURT_AIZAWL_BENCH_CASE_TYPES_VALUE_MAPPING, GAUHATI_HIGH_COURT_PRINCIPAL_SEAT_AT_GUWAHATI_CASE_TYPES_VALUE_MAPPING, GAUHATI_HIGH_COURT_KOHIMA_BENCH_CASE_TYPES_VALUE_MAPPING, GAUHATI_HIGH_COURT_ITANAGAR_BENCH_CASE_TYPES_VALUE_MAPPING, HIGH_COURT_FOR_STATE_OF_TELANGANA_PRINCIPAL_BENCH_AT_HYDERABAD_CASE_TYPES_VALUE_MAPPING, HIGH_COURT_OF_ANDHRA_PRADESH_PRINCIPAL_BENCH_AT_ANDHRA_PRADESH_CASE_TYPES_VALUE_MAPPING, HIGH_COURT_OF_CHHATTISGARH_PRINCIPAL_BENCH_CHHATTISGARH_CASE_TYPES_VALUE_MAPPING, HIGH_COURT_OF_GUJARAT_GUJARAT_HIGH_COURT_CASE_TYPES_VALUE_MAPPING } from "@/lib/constants";
 import { z } from "zod";
 import { PrismaClient } from '@prisma/client';
 import { ca } from "zod/v4/locales";
 
 const prisma = new PrismaClient();
 
-
+// where unknown error scrape failed add ypu need chekc your all field again
  const HIGH_COURT_SCRAPERS = {
   "Delhi": {
     endpoint: "fetchHighCourtJudgments",
@@ -33,7 +33,81 @@ const prisma = new PrismaClient();
     },
     highCourtName: "Bombay High Court",
     requiresBench: false
+  },
+  "Allahabad": {
+    endpoint: "fetchHighCourtJudgments",
+    defaultBench: "Allahabad High Court",
+    benchMappings: {
+      "Allahabad High Court": ALLAHABAD_HIGH_COURT_ALLAHABAD_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,
+      "Allahabad High Court Lucknow Bench":  ALLAHABAD_HIGH_COURT_ALLAHABAD_HIGH_COURT_LUCKNOW_BENCH_CASE_TYPES_VALUE_MAPPING,
+
+    },
+    highCourtName: "Allahabad High Court",
+    requiresBench: false
+  },
+  "Calcutta": {
+    endpoint: "fetchHighCourtJudgments",
+    defaultBench: "Appellate side",
+    benchMappings: {
+      "Appellate side":CALCUTTA_HIGH_COURT_APPELLATE_SIDE_CASE_TYPES_VALUE_MAPPING,
+        "Circuit Bench At Jalpaiguri":CALCUTTA_HIGH_COURT_CIRCUIT_BENCH_AT_JALPAIGURI_CASE_TYPES_VALUE_MAPPING,
+        "Circuit Bench At Port Blair": CALCUTTA_HIGH_COURT_CIRCUIT_BENCH_AT_PORT_BLAIR_CASE_TYPES_VALUE_MAPPING,
+        "Original Side": CALCUTTA_HIGH_COURT_ORIGINAL_SIDE_CASE_TYPES_VALUE_MAPPING,
+      
+    },
+    highCourtName: "Calcutta High Court",
+    requiresBench: false
+  },
+  "Guwahati": {
+    endpoint: "fetchHighCourtJudgments",
+    defaultBench: "Aizawl Bench",
+    benchMappings: {
+     "Aizawl Bench":GAUHATI_HIGH_COURT_AIZAWL_BENCH_CASE_TYPES_VALUE_MAPPING,
+      "Itanagar Bench":GAUHATI_HIGH_COURT_ITANAGAR_BENCH_CASE_TYPES_VALUE_MAPPING,
+      "Kohima Bench": GAUHATI_HIGH_COURT_KOHIMA_BENCH_CASE_TYPES_VALUE_MAPPING,
+     "Principal Seat at Guwahati":GAUHATI_HIGH_COURT_PRINCIPAL_SEAT_AT_GUWAHATI_CASE_TYPES_VALUE_MAPPING,
+    },
+    highCourtName: "Gauhati High Court",
+    requiresBench: false
+  },
+  "Hyderabad": {
+    endpoint: "fetchHighCourtJudgments",
+    defaultBench: "Principal Bench at Hyderabad",
+    benchMappings: {
+      "Principal Bench at Hyderabad":HIGH_COURT_FOR_STATE_OF_TELANGANA_PRINCIPAL_BENCH_AT_HYDERABAD_CASE_TYPES_VALUE_MAPPING
+    },
+    highCourtName: "High Court for State of Telangana",
+    requiresBench: false
+  },
+   "Andhra Pradesh": {
+    endpoint: "fetchHighCourtJudgments",
+    defaultBench:  "Principal Bench at Andhra Pradesh",
+    benchMappings: {
+      "Principal Bench at Andhra Pradesh": HIGH_COURT_OF_ANDHRA_PRADESH_PRINCIPAL_BENCH_AT_ANDHRA_PRADESH_CASE_TYPES_VALUE_MAPPING,
+    },
+    highCourtName: "High Court of Andhra Pradesh",
+    requiresBench: false
+  },
+   "Chhattisgarh": {
+    endpoint: "fetchHighCourtJudgments",
+    defaultBench:  "Principal Bench Chhattisgarh",
+    benchMappings: {
+      "Principal Bench Chhattisgarh":  HIGH_COURT_OF_CHHATTISGARH_PRINCIPAL_BENCH_CHHATTISGARH_CASE_TYPES_VALUE_MAPPING
+    },
+    highCourtName: "High Court of Chhattisgarh",
+    requiresBench: false
+  },
+  "Gujarat": {
+    endpoint: "fetchHighCourtJudgments",
+    defaultBench:    "Gujarat High Court",
+    benchMappings: {
+        "Gujarat High Court":  HIGH_COURT_OF_GUJARAT_GUJARAT_HIGH_COURT_CASE_TYPES_VALUE_MAPPING
+    },
+    highCourtName:  "Gujarat High Court",
+    requiresBench: false
   }
+
+
 };
 const searchSchema = z.object({
   diaryNumber: z.string().min(1, "Diary number is required"),
@@ -48,7 +122,7 @@ const searchSchema = z.object({
 
  
 
-async function performScrapeWithRetries(url: string, payload: any, retries = 2) {
+async function performScrapeWithRetries1(url: string, payload: any, retries = 2) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       return await scrapeHighCourt(url, payload);
@@ -69,12 +143,39 @@ async function performScrapeWithRetries(url: string, payload: any, retries = 2) 
     }
   }
 }
+// ...existing code...
+async function performScrapeWithRetries(url: string, payload: any, retries = 2) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const start = Date.now();
+    try {
+      const res = await scrapeHighCourt(url, payload);
+      console.log(`Scrape attempt ${attempt} took ${Date.now() - start}ms`);
+      return res;
+    } catch (err: any) {
+      const msg = err?.message || '';
+      const isTimeout = /timed out|timeout|waiting for function failed/i.test(msg);
+      const isNetwork = /network|ECONNRESET|ENOTFOUND|ECONNREFUSED/i.test(msg);
 
+      console.error(`Scrape attempt ${attempt} failed:`, msg);
+
+      if (attempt < retries && (isTimeout || isNetwork)) {
+        const backoff = 1000 * Math.pow(2, attempt - 1);
+        console.log(`Retrying scrape in ${backoff}ms (attempt ${attempt + 1} of ${retries})`);
+        await new Promise((r) => setTimeout(r, backoff));
+        continue;
+      }
+
+      // rethrow so caller can handle and log appropriately
+      throw err;
+    }
+  }
+}
 // Provide a small object with .fire to keep existing usage unchanged
 const scraperCircuitBreaker = {
   fire: performScrapeWithRetries
 };
 async function scrapeHighCourt(url: string, payload: any) {
+  const start = Date.now()
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120000); // 120 seconds timeout
@@ -88,30 +189,53 @@ async function scrapeHighCourt(url: string, payload: any) {
 
     clearTimeout(timeout);
 
+    // if (!response.ok) {
+    //   throw new Error(`Scraper responded with status ${response.status}`);
+    // }
+     // if not OK, capture body for debugging
     if (!response.ok) {
-      throw new Error(`Scraper responded with status ${response.status}`);
+      let respText: string;
+      try {
+        respText = await response.text();
+      } catch (e) {
+        respText = `<failed to read response text: ${(e as Error).message}>`;
+      }
+ console.error(`Scraper responded with status ${response.status}. Body:`, respText);
+
+      // detect remote function timeout strings and annotate
+      const isRemoteTimeout = /waiting for function failed|timeout \d+ms exceeded|timed out/i.test(respText + '');
+      const err = new Error(`Scraper responded with status ${response.status}: ${respText}`);
+      // attach flag so caller can decide to retry or return 504
+      (err as any).isTimeout = isRemoteTimeout || response.status === 504 || response.status === 524;
+      (err as any).status = response.status;
+      throw err;
     }
 
     const data = await response.json();
     
     // Handle different response formats
-    if (data.error) {
-      console.error('Scraper service error:', data.error);
-      return { success: false, error: data.error };
+    if (data?.error) {
+      console.error('Scraper service error:', data.error, 'full response:', data);
+      return { success: false, error: data.error, raw: data, tookMs: Date.now() - start };
     }
+
     
     return {
       success: true,
       result: data.result || data.data || [],
-      processedResults: data.processedResults || data.result || []
+      processedResults: data.processedResults || data.result || [],
+       tookMs: Date.now() - start
     };
-  } catch (err) {
-    console.error("Scraping error:", err);
-    return { 
-      success: false, 
-      error:   'Unknown error',
-        
-    };
+  } catch (err:any) {
+    const took = Date.now() - start;
+    console.error("Scraping error:", err?.message || err, "tookMs:", took);
+    // bubble structured error for caller
+    if (err?.name === 'AbortError' || err?.isTimeout) {
+      const e = new Error('Scraper timeout');
+      (e as any).isTimeout = true;
+      throw e;
+    }
+    throw err;
   }
 }
 
@@ -220,10 +344,36 @@ if (caseData.length === 0 && fullDiaryNumber) {
     console.log("Fallback DB match by diaryNumber found, skipping scraper:", fallback.length, fallback);
    // caseData = fallback;
      // Prefer rows matching requested court
-        const preferred = fallback.filter(r =>
-          (r.court || '').toLowerCase().includes((validated.court || '').toLowerCase())
-        );
-
+        // const preferred = fallback.filter(r =>
+        //   (r.court || '').toLowerCase().includes((validated.court || '').toLowerCase())
+        // );
+       // ...existing code...
+    
+    const preferred = fallback.filter(r => {
+      // must match court
+      if (!r.court || !(r.court || '').toLowerCase().includes((validated.court || '').toLowerCase())) {
+        return false;
+      }
+      // if city requested, require exact city match
+      if (validated.city && validated.city.trim() !== '') {
+        if (!r.city || (r.city || '').toLowerCase() !== validated.city.trim().toLowerCase()) {
+          return false;
+        }
+      }
+      // if bench requested, require exact bench match
+      if (validated.bench && validated.bench.trim() !== '') {
+        if (!r.bench || (r.bench || '').toLowerCase() !== validated.bench.trim().toLowerCase()) {
+          return false;
+        }
+      }
+      // if caseType requested, require it to be contained in stored case_type
+      if (validated.caseType && validated.caseType.trim() !== '') {
+        if (!r.case_type || !(r.case_type || '').toLowerCase().includes(validated.caseType.trim().toLowerCase())) {
+          return false;
+        }
+      }
+      return true;
+   });
     if (validated.judgmentType && validated.judgmentType.toString().trim() !== "") {
           const parts = validated.judgmentType.toString()
             .split(',')
@@ -308,14 +458,82 @@ if (caseData.length === 0 && fullDiaryNumber) {
   }
 
   // --- UPDATED: Use bench-specific mapping for Mumbai ---
-  let caseTypeMapping;
+  // let caseTypeMapping;
+  // if ("caseTypeMapping" in highCourtConfig) {
+  //   caseTypeMapping = highCourtConfig.caseTypeMapping;
+  // } else if (validated.city === "Mumbai" && highCourtConfig.benchMappings && validated.bench) {
+  //   caseTypeMapping = highCourtConfig.benchMappings[validated.bench as keyof typeof highCourtConfig.benchMappings];
+  // } else if (validated.city === "Allahabad" && highCourtConfig.benchMappings && validated.bench) {
+  //   caseTypeMapping = highCourtConfig.benchMappings[validated.bench as keyof typeof highCourtConfig.benchMappings];
+  // }
+
+  // if (!validated.caseType || !caseTypeMapping) {
+  //   const response = { 
+  //     success: false,
+  //     message: `Invalid case type for ${validated.city} High Court`,
+  //     searchedParams: {
+  //       ...validated,
+  //       diaryNumber: fullDiaryNumber,
+  //       bench: validated.bench || highCourtConfig.defaultBench
+  //     }
+  //   };
+  //   await logSearchAttempt(validated, response);
+  //   return NextResponse.json(response, { status: 400 });
+  // }
+  
+  // const scrapeURL = `${process.env.SERVICE_URL}${highCourtConfig.endpoint}`;
+  // const payload = {
+  //   highCourt: highCourtConfig.highCourtName,
+  //   bench: validated.bench || highCourtConfig.defaultBench,
+  //   diaryNumber: fullDiaryNumber,
+  //   caseType: validated.caseType,
+  //   caseTypeValue: String(caseTypeMapping[validated.caseType as keyof typeof caseTypeMapping]),
+  //   judgmentType: validated.judgmentType,
+  //   city: validated.city
+  // };
+  
+  // console.log('Attempting to scrape with payload:', payload);
+
+  // ...existing code...
+
+// helper: resolve numeric code from mapping by exact key or cleaned label
+function resolveCaseTypeValue(mapping: Record<string, number | null> | undefined, selectedLabel?: string): number | undefined {
+  if (!mapping || !selectedLabel) return undefined;
+  const label = selectedLabel.trim();
+  // exact key match first
+  if (Object.prototype.hasOwnProperty.call(mapping, label)) {
+    const v = (mapping as any)[label];
+    return v === null ? undefined : v;
+  }
+  // fallback: match cleaned label (strip trailing -digits)
+  for (const [k, v] of Object.entries(mapping)) {
+    const m = k.match(/^(.*?)-(\d+)\s*$/);
+    const clean = m ? m[1].trim() : k.trim();
+    if (clean === label) {
+      return typeof v === "number" ? v : (m ? Number(m[2]) : undefined);
+    }
+  }
+  return undefined;
+}
+
+// ...existing code...
+// inside GET(), replace the caseTypeMapping + payload block with this:
+  // pick mapping: global or bench-specific mapping (if present)
+  let caseTypeMapping: Record<string, number | null> | undefined = undefined;
   if ("caseTypeMapping" in highCourtConfig) {
-    caseTypeMapping = highCourtConfig.caseTypeMapping;
-  } else if (validated.city === "Mumbai" && highCourtConfig.benchMappings && validated.bench) {
-    caseTypeMapping = highCourtConfig.benchMappings[validated.bench as keyof typeof highCourtConfig.benchMappings];
+    caseTypeMapping = (highCourtConfig as any).caseTypeMapping;
+  } else if (highCourtConfig.benchMappings && validated.bench) {
+    caseTypeMapping = (highCourtConfig as any).benchMappings[validated.bench as keyof typeof highCourtConfig.benchMappings];
   }
 
-  if (!validated.caseType || !caseTypeMapping) {
+  // resolve numeric value for the selected caseType label (handles keys with "-<num>" suffix and cleaned labels)
+  const resolvedCaseTypeValue = resolveCaseTypeValue(caseTypeMapping, validated.caseType);
+ console.log('Case type mapping keys (sample 10):', caseTypeMapping ? Object.keys(caseTypeMapping).slice(0,10) : 'none');
+  console.log('Selected caseType label:', validated.caseType);
+  console.log('Resolved caseTypeValue:', resolvedCaseTypeValue);
+  console.log('Validated bench:', validated.bench, 'highCourtConfig.defaultBench:', highCourtConfig?.defaultBench);
+
+  if (!validated.caseType || !caseTypeMapping || resolvedCaseTypeValue === undefined) {
     const response = { 
       success: false,
       message: `Invalid case type for ${validated.city} High Court`,
@@ -328,19 +546,20 @@ if (caseData.length === 0 && fullDiaryNumber) {
     await logSearchAttempt(validated, response);
     return NextResponse.json(response, { status: 400 });
   }
-  
+
   const scrapeURL = `${process.env.SERVICE_URL}${highCourtConfig.endpoint}`;
   const payload = {
     highCourt: highCourtConfig.highCourtName,
     bench: validated.bench || highCourtConfig.defaultBench,
     diaryNumber: fullDiaryNumber,
     caseType: validated.caseType,
-    caseTypeValue: String(caseTypeMapping[validated.caseType as keyof typeof caseTypeMapping]),
+    caseTypeValue: String(resolvedCaseTypeValue),
     judgmentType: validated.judgmentType,
     city: validated.city
   };
-  
-  console.log('Attempting to scrape with payload:', payload);
+console.log('Attempting to scrape with payload:', payload);
+// ...existing code...
+// ...existing code...
   
   try {
     scrapeResult = await scraperCircuitBreaker.fire(scrapeURL, payload);
