@@ -232,11 +232,19 @@ export function CaseManagement() {
       setSelectAll(false);
 
       const searchUrl = new URL("/api/cases/search", window.location.origin);
+      let searchUrlV2 = new URL("/api/cases/searchV2", window.location.origin);
+
       searchUrl.searchParams.append("diaryNumber", searchParams.number);
       searchUrl.searchParams.append("year", searchParams.year);
+
+      if(searchParams.number && searchParams.year){
+        searchUrlV2.searchParams.append("diaryNumber", searchParams.number);
+        searchUrlV2.searchParams.append("year", searchParams.year);
+      }
       
       if (searchParams.court) {
         searchUrl.searchParams.append("court", searchParams.court);
+        searchUrlV2.searchParams.append("court", searchParams.court);
       }
       
       if (searchParams.judgmentType) {
@@ -245,6 +253,7 @@ export function CaseManagement() {
       
       if (searchParams.caseType) {
         searchUrl.searchParams.append("caseType", searchParams.caseType);
+        searchUrlV2.searchParams.append("caseType", searchParams.caseType);
       }
 
       if (searchParams.city) {
@@ -258,7 +267,13 @@ export function CaseManagement() {
       if (searchParams.bench) {
         searchUrl.searchParams.append("bench", searchParams.bench);
       }
-      const response = await fetch(searchUrl.toString());
+
+      let response;
+      if(searchParams.court === "Supreme Court"){
+        response = await fetch(searchUrlV2.toString());
+      }else{
+        response = await fetch(searchUrl.toString());
+      }
       const responseData = await response.json();
 
       if (!response.ok || !responseData.success) {

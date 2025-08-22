@@ -1,7 +1,7 @@
 import { Loader2, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 //import { HIGH_COURT_CASE_TYPES, HIGH_COURT_CITY, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
-import {  APPELLATE_BOMBAY_HIGH_COURT_CASE_TYPES, AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES, BOMBAY_HIGH_COURT_BENCH, GOA_BOMBAY_HIGH_COURT_CASE_TYPES, HIGH_COURT_CASE_TYPES, HIGH_COURT_CITY, NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES, ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES, SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
+import { APPELLATE_BOMBAY_HIGH_COURT_CASE_TYPES, AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES, BOMBAY_HIGH_COURT_BENCH, GOA_BOMBAY_HIGH_COURT_CASE_TYPES, HIGH_COURT_CASE_TYPES, HIGH_COURT_CITY, NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES, ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES, SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
 import { SearchParams, ValidationErrors } from "./types";
 
 interface SearchFormProps {
@@ -201,11 +201,33 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
           </div>
         )}
 
+        {searchParams.court === "Supreme Court" && (
+          <div>
+            <label className="block text-sm font-medium text-text-light mb-2">
+              Case Type
+            </label>
+            <select
+              value={searchParams.caseType}
+              onChange={(e) =>
+                setSearchParams({ ...searchParams, caseType: e.target.value })
+              }
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light ${errors?.caseType ? 'border-error' : 'border-border'
+              }`}
+            >
+              <option value="">Select Case Type</option>
+              {SUPREME_COURT_CASE_TYPES.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+        )}
+      
+
         {/* Case Details */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-text-light mb-2">
-              Diary Number <span className="text-error">*</span>
+              Diary Number/Case Number <span className="text-error">*</span>
             </label>
             <input
               type="text"
@@ -213,9 +235,8 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
               onChange={(e) =>
                 setSearchParams({ ...searchParams, number: e.target.value })
               }
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ${
-                errors?.number ? 'border-error' : 'border-border'
-              }`}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ${errors?.number ? 'border-error' : 'border-border'
+                }`}
               placeholder="e.g. 72381"
             />
             {errors?.number && (
