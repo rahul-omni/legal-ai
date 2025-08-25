@@ -107,6 +107,26 @@ export function CaseManagement() {
       }
     }
 
+    if(searchParams.court === "Supreme Court") {
+      if (!searchParams.caseType.trim()) {
+        errors.caseType = "Case type is required";
+      }
+    }
+
+    if(searchParams.court === "District Court") {
+      if (!searchParams.district.trim()) {
+        errors.district = "District is required";
+      }
+
+      if (!searchParams.courtComplex.trim()) {
+        errors.courtComplex = "Court complex is required";
+      }
+
+      if (!searchParams.caseType.trim()) {
+        errors.caseType = "Case type is required";
+      }
+    }
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
