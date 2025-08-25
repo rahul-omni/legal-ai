@@ -31,6 +31,7 @@ export interface SearchParams {
   city: string;  // Optional: Empty string = "All Cities"
   bench: string; // Optional: Empty string = "All Bench Types"
   district: string;
+  courtComplex: string;
 }
 
 export interface ValidationErrors {
@@ -41,4 +42,6 @@ export interface ValidationErrors {
   city?: string;
   bench?: string;
   general?: string;
+  district?: string;
+  courtComplex?: string;
 } 

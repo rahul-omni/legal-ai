@@ -1,8 +1,20 @@
 import { Loader2, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 //import { HIGH_COURT_CASE_TYPES, HIGH_COURT_CITY, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
-import { APPELLATE_BOMBAY_HIGH_COURT_CASE_TYPES, AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES, BOMBAY_HIGH_COURT_BENCH, GOA_BOMBAY_HIGH_COURT_CASE_TYPES, HIGH_COURT_CASE_TYPES, HIGH_COURT_CITY, NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES, ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES, SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
+import { 
+  APPELLATE_BOMBAY_HIGH_COURT_CASE_TYPES, 
+  AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES, 
+  BOMBAY_HIGH_COURT_BENCH, 
+  GOA_BOMBAY_HIGH_COURT_CASE_TYPES, 
+  HIGH_COURT_CASE_TYPES, 
+  HIGH_COURT_CITY, 
+  NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES, 
+  ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES, 
+  SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES, 
+  SUPREME_COURT_CASE_TYPES,
+} from "@/lib/constants";
 import { SearchParams, ValidationErrors } from "./types";
+import { getAvailableDistricts, getCourtComplexesForDistrict, getDistrictCourtCaseTypes } from "@/helper/utils";
 
 interface SearchFormProps {
   searchParams: SearchParams;
@@ -53,8 +65,6 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
         return [];
     }
   }
-
- console.log("Search Params:", searchParams);
  
 
   return (
@@ -101,6 +111,7 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
             <option value="">Select court type</option>
             <option value="Supreme Court">Supreme Court</option>
             <option value="High Court">High Court</option>
+            <option value="District Court">District Court</option>
           </select>
           {errors?.court && (
             <p className="mt-1 text-sm text-error">{errors.court}</p>
@@ -135,6 +146,93 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
             {errors?.city && (
               <p className="mt-1 text-sm text-error">{errors.city}</p>
             )}
+          </div>
+        )}
+
+        {/* District Selection (only for District Court) */}
+        {searchParams.court === "District Court" && (
+          <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-text-light mb-2">
+              District <span className="text-error">*</span>
+            </label>
+            <select
+              value={searchParams.district}
+              onChange={(e) =>
+                setSearchParams({ 
+                  ...searchParams, 
+                  district: e.target.value,
+                  courtComplex: "",
+                  caseType: ""
+                })
+              }
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light ${
+                errors?.district ? 'border-error' : 'border-border'
+              }`}
+            >
+              <option value="">Select District</option>
+              {getAvailableDistricts().map(district => (
+                <option key={district} value={district}>
+                  {district.charAt(0).toUpperCase() + district.slice(1)}
+                </option>
+              ))}
+            </select>
+            {errors?.district && (
+              <p className="mt-1 text-sm text-error">{errors.district}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-text-light mb-2">
+              Court Complex <span className="text-error">*</span>
+            </label>
+            <select
+              value={searchParams.courtComplex}
+              onChange={(e) =>
+                setSearchParams({ 
+                  ...searchParams, 
+                  courtComplex: e.target.value,
+                  caseType: ""
+                })
+              }
+              disabled={!searchParams.district}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light ${
+                errors?.courtComplex ? 'border-error' : 'border-border'
+              } ${!searchParams.district ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <option value="">Select Court Complex</option>
+              {searchParams.district && getCourtComplexesForDistrict(searchParams.district).map(complex => (
+                <option key={complex} value={complex}>{complex}</option>
+              ))}
+            </select>
+            {errors?.courtComplex && (
+              <p className="mt-1 text-sm text-error">{errors.courtComplex}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-text-light mb-2">
+              Case Type <span className="text-error">*</span>
+            </label>
+            <select
+              value={searchParams.caseType}
+              onChange={(e) =>
+                setSearchParams({ ...searchParams, caseType: e.target.value })
+              }
+              disabled={!searchParams.courtComplex}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light ${
+                errors?.caseType ? 'border-error' : 'border-border'
+              } ${!searchParams.courtComplex ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <option value="">Select Case Type</option>
+              {searchParams.district && searchParams.courtComplex && 
+                getDistrictCourtCaseTypes(searchParams.district, searchParams.courtComplex).map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))
+              }
+            </select>
+            {errors?.caseType && (
+              <p className="mt-1 text-sm text-error">{errors.caseType}</p>
+            )}
+            </div>
           </div>
         )}
 

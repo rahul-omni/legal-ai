@@ -3,7 +3,7 @@
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { getCaseNumber } from "@/helper/utils";
 
 const prisma = new PrismaClient();
@@ -32,18 +32,15 @@ export async function GET(request: NextAuthRequest) {
     try {
         let caseData: any[] = [];
         const { searchParams } = new URL(request.url);
-        console.log("Search params:", searchParams);
 
         let queryParams = {
-            diaryNumber: searchParams.get('diaryNumber'),
-            year: searchParams.get('year'),
-            court: searchParams.get('court') || "",
-            caseType: searchParams.get('caseType') || "",
+            diaryNumber: searchParams.get('diaryNumber')?.trim(),
+            year: searchParams.get('year')?.trim(),
+            court: searchParams.get('court')?.trim() || "",
+            caseType: searchParams.get('caseType')?.trim() || "",
         };
 
         const validated = searchSchema.parse(queryParams);
-        console.log("Validated:", validated);
-        console.log("Query params:", queryParams);
 
         const hasDiaryNumberSearch = isValidString(validated.diaryNumber) && isValidString(validated.year);
 
@@ -56,54 +53,49 @@ export async function GET(request: NextAuthRequest) {
 
             const caseNumbersArray = getCaseNumber(validated.diaryNumber!, validated.year!, validated.caseType!);
             console.log("Case numbers array:", caseNumbersArray);
-
+            
+            // Create OR conditions for all case number variations
+            const caseNumberConditions = caseNumbersArray.map(caseNumber => ({
+                caseNumber: {
+                    equals: caseNumber,
+                    mode: Prisma.QueryMode.insensitive
+                }
+            }));
+            
             caseData = await prisma.caseManagement.findMany({
                 where: {
-                    OR: [
-                        {
-                            caseNumber: {
-                                equals: caseNumbersArray[0],
-                                mode: 'insensitive'
-                            }
-                        },
-                        {
-                            caseNumber: {
-                                equals: caseNumbersArray[1],
-                                mode: 'insensitive'
-                            }
-                        }
-                    ],
+                    OR: caseNumberConditions,
                     ...(hasCourt && {
                         court: {
                             equals: validated.court,
-                            mode: 'insensitive'
+                            mode: Prisma.QueryMode.insensitive
                         }
                     })
                 }
             });
-            console.log("Case data from case number search:", caseData);
+            console.log("Case data from case number search");
 
         } else if (hasDiaryNumberSearch) {
 
             const fullDiaryNumber = `${validated.diaryNumber}/${validated.year}`;
-            console.log("Full diary number:", fullDiaryNumber);
 
             caseData = await prisma.caseManagement.findMany({
                 where: {
                     diaryNumber: {
                         equals: fullDiaryNumber,
-                        mode: 'insensitive'
+                        mode: Prisma.QueryMode.insensitive
                     },
                     ...(hasCourt && {
                         court: {
                             equals: validated.court,
-                            mode: 'insensitive'
+                            mode: Prisma.QueryMode.insensitive
                         }
                     })
                 }
             });
-            console.log("Case data from diary number search:", caseData);
+            console.log("Case data from diary number search");
         } else {
+            console.log("No valid search parameters provided. Please provide diary number and year.");
             return NextResponse.json({
                 success: false,
                 message: "No valid search parameters provided. Please provide diary number and year.",
@@ -144,6 +136,14 @@ export async function GET(request: NextAuthRequest) {
             body: JSON.stringify(payload)
         });
         const scrapperResponse = await response.json();
+        // const scrapperResponse = {
+        //     success: true,
+        //     data: [
+        //         {
+        //             case_number: "1234567890"
+        //         }
+        //     ]
+        // }
         // Extract case number from the first element of the scraper response
         let caseNumberResponse: string | null = null;
 
@@ -156,7 +156,7 @@ export async function GET(request: NextAuthRequest) {
                 where: {
                     caseNumber: {
                         equals: caseNumberResponse,
-                        mode: 'insensitive'
+                        mode: Prisma.QueryMode.insensitive
                     }
                 }
             });
