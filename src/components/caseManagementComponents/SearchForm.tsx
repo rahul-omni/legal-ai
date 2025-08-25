@@ -302,7 +302,7 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
         {searchParams.court === "Supreme Court" && (
           <div>
             <label className="block text-sm font-medium text-text-light mb-2">
-              Case Type
+              Case Type <span className="text-error">*</span>
             </label>
             <select
               value={searchParams.caseType}
@@ -317,6 +317,9 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
                 <option key={type} value={type}>{type}</option>
               ))}
             </select>
+            {errors?.caseType && (
+              <p className="mt-1 text-sm text-error">{errors.caseType}</p>
+            )}
           </div>
         )}
       
@@ -325,7 +328,7 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-text-light mb-2">
-              Diary Number/Case Number <span className="text-error">*</span>
+              Case Number <span className="text-error">*</span>
             </label>
             <input
               type="text"

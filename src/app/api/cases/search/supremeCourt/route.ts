@@ -18,7 +18,7 @@ const searchSchema = z.object({
     diaryNumber: z.string().nullable(),
     year: z.string().nullable(),
     court: z.string().default("Supreme Court"),
-    caseType: z.string().optional(),
+    caseType: z.string()
 }).refine((data) => {
     // Both diaryNumber and year must be provided and non-empty
     return data.diaryNumber && data.diaryNumber.trim() !== "" &&
@@ -49,7 +49,7 @@ export async function GET(request: NextAuthRequest) {
         const hasCourt = isValidString(validated.court);
 
 
-        if (hasDiaryNumberSearch && hasCaseType) {
+        if (hasDiaryNumberSearch && hasCaseType && validated.caseType !== "Diary Number") {
 
             const caseNumbersArray = getCaseNumber(validated.diaryNumber!, validated.year!, validated.caseType!);
             console.log("Case numbers array:", caseNumbersArray);
@@ -75,7 +75,7 @@ export async function GET(request: NextAuthRequest) {
             });
             console.log("Case data from case number search");
 
-        } else if (hasDiaryNumberSearch) {
+        } else if (hasDiaryNumberSearch && validated.caseType === "Diary Number") {
 
             const fullDiaryNumber = `${validated.diaryNumber}/${validated.year}`;
 
@@ -115,14 +115,14 @@ export async function GET(request: NextAuthRequest) {
         
         let payload = {}
 
-        if (hasDiaryNumberSearch && hasCaseType) {
+        if (hasDiaryNumberSearch && hasCaseType && validated.caseType !== "Diary Number") {
             payload = {
                 caseNumber: validated.diaryNumber,
                 caseYear: validated.year,
                 caseType: validated.caseType
             }
 
-        } else if (hasDiaryNumberSearch) {
+        } else if (hasDiaryNumberSearch && validated.caseType === "Diary Number") {
             payload = {
                 diaryNumber: validated.diaryNumber + "/" + validated.year,
             }
@@ -136,14 +136,7 @@ export async function GET(request: NextAuthRequest) {
             body: JSON.stringify(payload)
         });
         const scrapperResponse = await response.json();
-        // const scrapperResponse = {
-        //     success: true,
-        //     data: [
-        //         {
-        //             case_number: "1234567890"
-        //         }
-        //     ]
-        // }
+
         // Extract case number from the first element of the scraper response
         let caseNumberResponse: string | null = null;
 
