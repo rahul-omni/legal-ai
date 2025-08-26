@@ -20,6 +20,8 @@ export interface CaseData {
   judgmentType?: string;
   city?: string;
   district?: string;
+  courtComplex?: string;
+  courtType?: string;
 }
 
 export interface SearchParams {
