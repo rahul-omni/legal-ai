@@ -15,14 +15,16 @@ const createUserCaseSchema = z.object({
     diaryNumber: z.string(),
     caseNumber: z.string().nullable().optional(),
     court: z.string(),
-     caseType: z.string().nullable().optional(),
+    caseType: z.string().nullable().optional(),
     city: z.string().nullable().optional(),
     district: z.string().nullable().optional(),
     parties: z.string().nullable().optional(),
     advocates: z.string().nullable().optional(),
     bench: z.string().nullable().optional(),
     judgmentBy: z.string().nullable().optional(),
-    judgmentDate: z.string().nullable().optional()
+    judgmentDate: z.string().nullable().optional(),
+    courtComplex: z.string().nullable().optional(),
+    courtType: z.string().nullable().optional()
   })).min(1, "Select at least one case")
 });
 
@@ -41,8 +43,8 @@ export const POST = auth(async (request: NextAuthRequest) => {
 
     // Parse input - now accepting array of complete case data
     const body = await request.json();
+
     const { selectedCases } = createUserCaseSchema.parse(body);
-    console.log(selectedCases, "selectedCases");
 
     if (!selectedCases || selectedCases.length === 0) {
       return NextResponse.json(
@@ -66,6 +68,11 @@ export const POST = auth(async (request: NextAuthRequest) => {
             city: caseData.city,
             bench: caseData.bench,
             //  caseType: caseData.caseType
+            courtComplex: caseData.courtComplex,
+            district: caseData.district,
+            caseType: caseData.caseType,
+            case_number: caseData.caseNumber,
+            court: caseData.court,
           }
         });
        
@@ -84,7 +91,11 @@ export const POST = auth(async (request: NextAuthRequest) => {
           court: caseData.court,
           city: caseData.city,
           district: caseData.district,
-          bench: caseData.bench 
+          bench: caseData.bench ,
+          courtComplex: caseData.courtComplex,
+          case_type: caseData.caseType,
+          case_number: caseData.caseNumber,
+          courtType: caseData.courtType,
         });
 
         // Create new user case with data from selectedCases (no need to fetch from CaseManagement)
@@ -98,6 +109,9 @@ export const POST = auth(async (request: NextAuthRequest) => {
             city: caseData.city || "",
             district: caseData.district || "",
             bench: caseData.bench || "",
+            courtComplex: caseData.courtComplex || "",
+            case_number: caseData.caseNumber || "",
+            courtType: caseData.courtType || "",
           }
         });
 
@@ -193,7 +207,9 @@ export const GET = auth(async (request: NextAuthRequest) => {
         caseType: true,
         court: true,
         city: true,
-        district: true
+        district: true,
+        courtComplex: true,
+        courtType: true,
       },
       orderBy: {
         createdAt: 'asc' // Optional: order by creation date
