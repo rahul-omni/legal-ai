@@ -3,112 +3,15 @@ import { handleError } from "@/app/api/lib/errors";
 import { userFromSession } from "@/lib/auth";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
-import { DELHI_COURT_CASE_TYPES_VALUE_MAPPING, APPELLATE_BOMBAY_COURT_CASE_TYPES_VALUE_MAPPING, NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, GOA_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, KOLHAPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, ALLAHABAD_HIGH_COURT_ALLAHABAD_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, ALLAHABAD_HIGH_COURT_ALLAHABAD_HIGH_COURT_LUCKNOW_BENCH_CASE_TYPES_VALUE_MAPPING, CALCUTTA_HIGH_COURT_APPELLATE_SIDE_CASE_TYPES_VALUE_MAPPING, CALCUTTA_HIGH_COURT_CIRCUIT_BENCH_AT_JALPAIGURI_CASE_TYPES_VALUE_MAPPING, CALCUTTA_HIGH_COURT_CIRCUIT_BENCH_AT_PORT_BLAIR_CASE_TYPES_VALUE_MAPPING, CALCUTTA_HIGH_COURT_ORIGINAL_SIDE_CASE_TYPES_VALUE_MAPPING, GAUHATI_HIGH_COURT_AIZAWL_BENCH_CASE_TYPES_VALUE_MAPPING, GAUHATI_HIGH_COURT_PRINCIPAL_SEAT_AT_GUWAHATI_CASE_TYPES_VALUE_MAPPING, GAUHATI_HIGH_COURT_KOHIMA_BENCH_CASE_TYPES_VALUE_MAPPING, GAUHATI_HIGH_COURT_ITANAGAR_BENCH_CASE_TYPES_VALUE_MAPPING, HIGH_COURT_FOR_STATE_OF_TELANGANA_PRINCIPAL_BENCH_AT_HYDERABAD_CASE_TYPES_VALUE_MAPPING, HIGH_COURT_OF_ANDHRA_PRADESH_PRINCIPAL_BENCH_AT_ANDHRA_PRADESH_CASE_TYPES_VALUE_MAPPING, HIGH_COURT_OF_CHHATTISGARH_PRINCIPAL_BENCH_CHHATTISGARH_CASE_TYPES_VALUE_MAPPING, HIGH_COURT_OF_GUJARAT_GUJARAT_HIGH_COURT_CASE_TYPES_VALUE_MAPPING } from "@/lib/constants";
+ 
 import { z } from "zod";
 import { PrismaClient } from '@prisma/client';
 import { ca } from "zod/v4/locales";
-
+import { HIGH_COURT_SCRAPERS, resolveCaseTypeValue } from "@/lib/highCourtScrapers";
+import { scraperCircuitBreaker } from "@/lib/scraper";
 const prisma = new PrismaClient();
 
-// where unknown error scrape failed add ypu need chekc your all field again
- const HIGH_COURT_SCRAPERS = {
-  "Delhi": {
-    endpoint: "fetchHighCourtJudgments",
-    defaultBench: "Principal Bench at Delhi",
-    caseTypeMapping: DELHI_COURT_CASE_TYPES_VALUE_MAPPING,
-    highCourtName: "High Court of Delhi",
-    requiresBench: false
-  },
-  "Mumbai": {
-    endpoint: "fetchHighCourtJudgments",
-    defaultBench: "Appellate Side,Bombay",
-    benchMappings: {
-      "Appellate Side,Bombay": APPELLATE_BOMBAY_COURT_CASE_TYPES_VALUE_MAPPING,
-      "Bench at Aurangabad":   AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,
-      "Bench at Nagpur":  NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,
-      "Bombay High Court,Bench at Kolhapur":KOLHAPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,
-      "Original Side,Bombay":  ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,
-      "High court of Bombay at Goa":  GOA_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,
-      "Special Court (TORTS) Bombay":  SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING
-    },
-    highCourtName: "Bombay High Court",
-    requiresBench: false
-  },
-  "Allahabad": {
-    endpoint: "fetchHighCourtJudgments",
-    defaultBench: "Allahabad High Court",
-    benchMappings: {
-      "Allahabad High Court": ALLAHABAD_HIGH_COURT_ALLAHABAD_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,
-      "Allahabad High Court Lucknow Bench":  ALLAHABAD_HIGH_COURT_ALLAHABAD_HIGH_COURT_LUCKNOW_BENCH_CASE_TYPES_VALUE_MAPPING,
-
-    },
-    highCourtName: "Allahabad High Court",
-    requiresBench: false
-  },
-  "Calcutta": {
-    endpoint: "fetchHighCourtJudgments",
-    defaultBench: "Appellate side",
-    benchMappings: {
-      "Appellate side":CALCUTTA_HIGH_COURT_APPELLATE_SIDE_CASE_TYPES_VALUE_MAPPING,
-        "Circuit Bench At Jalpaiguri":CALCUTTA_HIGH_COURT_CIRCUIT_BENCH_AT_JALPAIGURI_CASE_TYPES_VALUE_MAPPING,
-        "Circuit Bench At Port Blair": CALCUTTA_HIGH_COURT_CIRCUIT_BENCH_AT_PORT_BLAIR_CASE_TYPES_VALUE_MAPPING,
-        "Original Side": CALCUTTA_HIGH_COURT_ORIGINAL_SIDE_CASE_TYPES_VALUE_MAPPING,
-      
-    },
-    highCourtName: "Calcutta High Court",
-    requiresBench: false
-  },
-  "Guwahati": {
-    endpoint: "fetchHighCourtJudgments",
-    defaultBench: "Aizawl Bench",
-    benchMappings: {
-     "Aizawl Bench":GAUHATI_HIGH_COURT_AIZAWL_BENCH_CASE_TYPES_VALUE_MAPPING,
-      "Itanagar Bench":GAUHATI_HIGH_COURT_ITANAGAR_BENCH_CASE_TYPES_VALUE_MAPPING,
-      "Kohima Bench": GAUHATI_HIGH_COURT_KOHIMA_BENCH_CASE_TYPES_VALUE_MAPPING,
-     "Principal Seat at Guwahati":GAUHATI_HIGH_COURT_PRINCIPAL_SEAT_AT_GUWAHATI_CASE_TYPES_VALUE_MAPPING,
-    },
-    highCourtName: "Gauhati High Court",
-    requiresBench: false
-  },
-  "Hyderabad": {
-    endpoint: "fetchHighCourtJudgments",
-    defaultBench: "Principal Bench at Hyderabad",
-    benchMappings: {
-      "Principal Bench at Hyderabad":HIGH_COURT_FOR_STATE_OF_TELANGANA_PRINCIPAL_BENCH_AT_HYDERABAD_CASE_TYPES_VALUE_MAPPING
-    },
-    highCourtName: "High Court for State of Telangana",
-    requiresBench: false
-  },
-   "Andhra Pradesh": {
-    endpoint: "fetchHighCourtJudgments",
-    defaultBench:  "Principal Bench at Andhra Pradesh",
-    benchMappings: {
-      "Principal Bench at Andhra Pradesh": HIGH_COURT_OF_ANDHRA_PRADESH_PRINCIPAL_BENCH_AT_ANDHRA_PRADESH_CASE_TYPES_VALUE_MAPPING,
-    },
-    highCourtName: "High Court of Andhra Pradesh",
-    requiresBench: false
-  },
-   "Chhattisgarh": {
-    endpoint: "fetchHighCourtJudgments",
-    defaultBench:  "Principal Bench Chhattisgarh",
-    benchMappings: {
-      "Principal Bench Chhattisgarh":  HIGH_COURT_OF_CHHATTISGARH_PRINCIPAL_BENCH_CHHATTISGARH_CASE_TYPES_VALUE_MAPPING
-    },
-    highCourtName: "High Court of Chhattisgarh",
-    requiresBench: false
-  },
-  "Gujarat": {
-    endpoint: "fetchHighCourtJudgments",
-    defaultBench:    "Gujarat High Court",
-    benchMappings: {
-        "Gujarat High Court":  HIGH_COURT_OF_GUJARAT_GUJARAT_HIGH_COURT_CASE_TYPES_VALUE_MAPPING
-    },
-    highCourtName:  "Gujarat High Court",
-    requiresBench: false
-  }
-
-
-};
+ 
 const searchSchema = z.object({
   diaryNumber: z.string().min(1, "Diary number is required"),
   year: z.string().length(4, "Year must be 4 digits"),
@@ -119,126 +22,18 @@ const searchSchema = z.object({
   city: z.string().optional(),
   district: z.string().optional()
 })
+// Add helper functions before the preferred filter
+function normalize(s?: string) {
+  return (s || '').toString().trim().toLowerCase();
+}
 
+function flexibleMatch(stored?: string, requested?: string) {
+  const ns = normalize(stored);
+  const nr = normalize(requested);
+  if (!ns || !nr) return !nr; // if no requested value, accept any stored value
+  return ns.includes(nr) || nr.includes(ns);
+}
  
-
-async function performScrapeWithRetries1(url: string, payload: any, retries = 2) {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      return await scrapeHighCourt(url, payload);
-    } catch (err: any) {
-      const msg = err?.message || '';
-      const isTimeout = !!err?.isTimeout || /timed out|timeout/i.test(msg);
-      const isNetwork = /network|ECONNRESET|ENOTFOUND|ECONNREFUSED/i.test(msg);
-
-      console.error(`Scrape attempt ${attempt} failed:`, msg);
-
-      if (attempt < retries && (isTimeout || isNetwork)) {
-        const backoff = 1000 * Math.pow(2, attempt - 1);
-        await new Promise((r) => setTimeout(r, backoff));
-        continue;
-      }
-
-      throw err;
-    }
-  }
-}
-// ...existing code...
-async function performScrapeWithRetries(url: string, payload: any, retries = 2) {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    const start = Date.now();
-    try {
-      const res = await scrapeHighCourt(url, payload);
-      console.log(`Scrape attempt ${attempt} took ${Date.now() - start}ms`);
-      return res;
-    } catch (err: any) {
-      const msg = err?.message || '';
-      const isTimeout = /timed out|timeout|waiting for function failed/i.test(msg);
-      const isNetwork = /network|ECONNRESET|ENOTFOUND|ECONNREFUSED/i.test(msg);
-
-      console.error(`Scrape attempt ${attempt} failed:`, msg);
-
-      if (attempt < retries && (isTimeout || isNetwork)) {
-        const backoff = 1000 * Math.pow(2, attempt - 1);
-        console.log(`Retrying scrape in ${backoff}ms (attempt ${attempt + 1} of ${retries})`);
-        await new Promise((r) => setTimeout(r, backoff));
-        continue;
-      }
-
-      // rethrow so caller can handle and log appropriately
-      throw err;
-    }
-  }
-}
-// Provide a small object with .fire to keep existing usage unchanged
-const scraperCircuitBreaker = {
-  fire: performScrapeWithRetries
-};
-async function scrapeHighCourt(url: string, payload: any) {
-  const start = Date.now()
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 120000); // 120 seconds timeout
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      signal: controller.signal
-    });
-
-    clearTimeout(timeout);
-
-    // if (!response.ok) {
-    //   throw new Error(`Scraper responded with status ${response.status}`);
-    // }
-     // if not OK, capture body for debugging
-    if (!response.ok) {
-      let respText: string;
-      try {
-        respText = await response.text();
-      } catch (e) {
-        respText = `<failed to read response text: ${(e as Error).message}>`;
-      }
- console.error(`Scraper responded with status ${response.status}. Body:`, respText);
-
-      // detect remote function timeout strings and annotate
-      const isRemoteTimeout = /waiting for function failed|timeout \d+ms exceeded|timed out/i.test(respText + '');
-      const err = new Error(`Scraper responded with status ${response.status}: ${respText}`);
-      // attach flag so caller can decide to retry or return 504
-      (err as any).isTimeout = isRemoteTimeout || response.status === 504 || response.status === 524;
-      (err as any).status = response.status;
-      throw err;
-    }
-
-    const data = await response.json();
-    
-    // Handle different response formats
-    if (data?.error) {
-      console.error('Scraper service error:', data.error, 'full response:', data);
-      return { success: false, error: data.error, raw: data, tookMs: Date.now() - start };
-    }
-
-    
-    return {
-      success: true,
-      result: data.result || data.data || [],
-      processedResults: data.processedResults || data.result || [],
-       tookMs: Date.now() - start
-    };
-  } catch (err:any) {
-    const took = Date.now() - start;
-    console.error("Scraping error:", err?.message || err, "tookMs:", took);
-    // bubble structured error for caller
-    if (err?.name === 'AbortError' || err?.isTimeout) {
-      const e = new Error('Scraper timeout');
-      (e as any).isTimeout = true;
-      throw e;
-    }
-    throw err;
-  }
-}
-
 async function logSearchAttempt(params: any, result: any) {
   const logEntry = {
     timestamp: new Date(),
@@ -266,7 +61,7 @@ export async function GET(request: NextAuthRequest) {
       diaryNumber: searchParams.get('diaryNumber'),
       year: searchParams.get('year'),
       court: searchParams.get('court') ? decodeURIComponent(searchParams.get('court')!) : undefined,
-      judgmentType: searchParams.get('judgmentType') || '',
+      judgmentType: searchParams.get('judgmentType') ?? undefined,
       caseType: searchParams.get('caseType') || '',
       bench: searchParams.get('bench') || '',
       city: searchParams.get('city') || '',
@@ -275,62 +70,46 @@ export async function GET(request: NextAuthRequest) {
  
     const validated = searchSchema.parse(queryParams);
     const fullDiaryNumber = `${validated.diaryNumber}/${validated.year}`;
-// Force bench for Delhi High Court
-if (validated.city === "Delhi") {
-  validated.bench = "Principal Bench at Delhi";
-}
 
+    // Build where condition
 
-// Ensure Mumbai uses default bench when none provided so bench-specific mappings work
-if (validated.city === "Mumbai" && (!validated.bench || validated.bench.trim() === "")) {
-  validated.bench = HIGH_COURT_SCRAPERS["Mumbai"].defaultBench;
-}
+    let caseData: any[] = [];
+        if (validated.court === "High Court") {
+      // High Court: Full search with fallback  scraping capability
+      const whereConditions: any = {
+        diaryNumber: { equals: fullDiaryNumber, mode: 'insensitive' as const},
+        court: { equals: validated.court, mode: 'insensitive' as const},
+      }; 
+      
+      if (validated.city && validated.city.trim() !== "") {
+        whereConditions.city = { equals: validated.city, mode: 'insensitive' };
+      }
+      
+      if (validated.bench && validated.bench.trim() !== "") {
+        whereConditions.bench = { equals: validated.bench, mode: 'insensitive' };
+      }
+      
+      if (validated.caseType && validated.caseType.trim() !== "") {
+        whereConditions.case_type = { contains: validated.caseType, mode: 'insensitive' };
+      }
+      
+      if (validated.judgmentType && validated.judgmentType.toString().trim() !== "") {
+        const jt = validated.judgmentType.toString();
+        const parts = jt.split(',').map(p => p.trim()).filter(Boolean);
+        if (parts.length === 1) {
+          whereConditions.judgment_type = { equals: parts[0], mode: 'insensitive' };
+        } else if (parts.length > 1) {
+          whereConditions.OR = parts.map(p => ({ judgment_type: { equals: p, mode: 'insensitive' } }));
+        }
+      }
 
- 
-
-    // Build where conditions
-     
- const whereConditions: any = {
-  diaryNumber: { equals: fullDiaryNumber, mode: 'insensitive' },
-  court: { equals: validated.court, mode: 'insensitive' },
-   
-}; 
-
-if (validated.city && validated.city.trim() !== "") {
-  whereConditions.city = { equals: validated.city, mode: 'insensitive' };
-}
-
-if (validated.bench && validated.bench.trim() !== "") {
-  whereConditions.bench = { equals: validated.bench, mode: 'insensitive' };
-}
-
-// make case_type flexible so "WP" can match "WP(Cr. ...)" stored values
-if (validated.caseType && validated.caseType.trim() !== "") {
-  whereConditions.case_type = { contains: validated.caseType, mode: 'insensitive' };
-}
-
- // judgmentType: optional — when provided, support comma-separated values
-if (validated.judgmentType && validated.judgmentType.toString().trim() !== "") {
-  const jt = validated.judgmentType.toString();
-  const parts = jt.split(',').map(p => p.trim()).filter(Boolean);
-  if (parts.length === 1) {
-    whereConditions.judgment_type = { equals: parts[0], mode: 'insensitive' };
-  } else if (parts.length > 1) {
-    // add OR clause for multiple judgment types
-    whereConditions.OR = parts.map(p => ({ judgment_type: { equals: p, mode: 'insensitive' } }));
-  }
-}
-
-console.log("Where conditions:", whereConditions);
-
-
-    // First try database lookup
-    let caseData = await prisma.caseManagement.findMany({ where: whereConditions });
-    console.log("Initial case data from DB:", caseData.length, caseData);
-    const canScrape = validated.court === "High Court"
-  && validated.city && validated.city.trim() !== ""
-  && validated.caseType && validated.caseType.trim() !== "";
-   
+  
+    console.log("High Court search - Where conditions:", whereConditions);
+      caseData = await prisma.caseManagement.findMany({ where: whereConditions });
+      console.log("High Court initial DB result:", caseData.length);
+      
+      const canScrape = validated.city && validated.city.trim() !== ""
+       && validated.caseType && validated.caseType.trim() !== "";
  
    // Fallback: if nothing matched with filters (bench/case_type/city), try diaryNumber-only
    // This prevents unnecessary scraping when the diary number exists but other fields differ.
@@ -342,39 +121,27 @@ if (caseData.length === 0 && fullDiaryNumber) {
   });
   if (fallback.length > 0) {
     console.log("Fallback DB match by diaryNumber found, skipping scraper:", fallback.length, fallback);
-   // caseData = fallback;
-     // Prefer rows matching requested court
-        // const preferred = fallback.filter(r =>
-        //   (r.court || '').toLowerCase().includes((validated.court || '').toLowerCase())
-        // );
-       // ...existing code...
     
-    const preferred = fallback.filter(r => {
-      // must match court
-      if (!r.court || !(r.court || '').toLowerCase().includes((validated.court || '').toLowerCase())) {
-        return false;
-      }
-      // if city requested, require exact city match
-      if (validated.city && validated.city.trim() !== '') {
-        if (!r.city || (r.city || '').toLowerCase() !== validated.city.trim().toLowerCase()) {
-          return false;
-        }
-      }
-      // if bench requested, require exact bench match
-      if (validated.bench && validated.bench.trim() !== '') {
-        if (!r.bench || (r.bench || '').toLowerCase() !== validated.bench.trim().toLowerCase()) {
-          return false;
-        }
-      }
-      // if caseType requested, require it to be contained in stored case_type
-      if (validated.caseType && validated.caseType.trim() !== '') {
-        if (!r.case_type || !(r.case_type || '').toLowerCase().includes(validated.caseType.trim().toLowerCase())) {
-          return false;
-        }
-      }
-      return true;
-   });
-    if (validated.judgmentType && validated.judgmentType.toString().trim() !== "") {
+         console.log("Fallback DB match by diaryNumber found:", fallback.length);
+          
+          const preferred = fallback.filter(r => {
+            if (!r.court || !normalize(r.court).includes(normalize(validated.court))) {
+              return false;
+            }
+            if (validated.city && validated.city.trim() !== '') {
+              if (!flexibleMatch(r.city ?? undefined, validated.city)) return false;
+            }
+            if (validated.bench && validated.bench.trim() !== '') {
+              if (!flexibleMatch(r.bench ?? undefined, validated.bench)) return false;
+            }
+            if (validated.caseType && validated.caseType.trim() !== '') {
+              if (!flexibleMatch(r.case_type ?? undefined, validated.caseType)) return false;
+            }
+            return true;
+          });
+
+     // ...existing code...
+        if (validated.judgmentType && validated.judgmentType.toString().trim() !== "") {
           const parts = validated.judgmentType.toString()
             .split(',')
             .map(p => p.trim().toLowerCase())
@@ -388,30 +155,36 @@ if (caseData.length === 0 && fullDiaryNumber) {
             console.log("Returning preferred rows matching requested court + judgmentType:", preferredWithJudgment.length);
             caseData = preferredWithJudgment;
           } else {
-            // Requested judgmentType not present in DB for this diary -> do NOT scrape or return unrelated rows
-            console.log("Requested judgmentType not present in DB for diary; returning empty result (no scrape).");
-            await logSearchAttempt(validated, { caseData: [], scrapeResult: null });
-            return NextResponse.json({
-              success: false,
-              message: 'No case found with requested judgmentType',
-              data: []
-            }, { status: 404 });
+         // Requested judgmentType not present in DB for this diary -> do NOT scrape or return unrelated row          
+            // judgmentType provided but no matching rows - treat as optional and allow fallback/scraping
+            console.log("No DB rows matched requested judgmentType - treating as optional for High Court.");
+            if (preferred.length > 0) {
+              console.log("Returning available preferred rows (judgmentType not matched but treating as optional).");
+              caseData = preferred;
+            } else if (canScrape) {
+              console.log("No preferred rows and judgmentType not matched; will attempt High Court scrape.");
+              // leave caseData empty to trigger scraper
+            } else {
+             console.log("No preferred rows, judgmentType not matched, scraping not allowed - returning fallback.");
+            caseData = fallback;
+            }
           }
         } else {
-      console.log("DiaryNumber exists but no row matches requested court+judgmentType; available courts:", Array.from(new Set(fallback.map(r => r.court))));
-           // No judgmentType requested: accept preferred if any, otherwise decide whether to scrape or return fallback
+          console.log("DiaryNumber exists but no row matches requested court+judgmentType; available courts:", Array.from(new Set(fallback.map(r => r.court))));
+          // No judgmentType requested: accept preferred if any, otherwise decide whether to scrape or return fallback
           if (preferred.length > 0) {
             console.log("Returning preferred rows matching requested court:", preferred.length);
             caseData = preferred;
-          } else if (validated.court === "High Court" && canScrape) {
+
+          } else if (canScrape) {
             console.log("No preferred rows found; will attempt High Court scrape.");
             // leave caseData empty so scraper may run
           } else {
             console.log("Returning diary-only fallback rows (no scrape).");
             caseData = fallback;
           }
-
-      }
+        }
+// ...existing code...
   }
 }
 
@@ -456,67 +229,9 @@ if (caseData.length === 0 && fullDiaryNumber) {
     await logSearchAttempt(validated, response);
     return NextResponse.json(response, { status: 400 });
   }
-
-  // --- UPDATED: Use bench-specific mapping for Mumbai ---
-  // let caseTypeMapping;
-  // if ("caseTypeMapping" in highCourtConfig) {
-  //   caseTypeMapping = highCourtConfig.caseTypeMapping;
-  // } else if (validated.city === "Mumbai" && highCourtConfig.benchMappings && validated.bench) {
-  //   caseTypeMapping = highCourtConfig.benchMappings[validated.bench as keyof typeof highCourtConfig.benchMappings];
-  // } else if (validated.city === "Allahabad" && highCourtConfig.benchMappings && validated.bench) {
-  //   caseTypeMapping = highCourtConfig.benchMappings[validated.bench as keyof typeof highCourtConfig.benchMappings];
-  // }
-
-  // if (!validated.caseType || !caseTypeMapping) {
-  //   const response = { 
-  //     success: false,
-  //     message: `Invalid case type for ${validated.city} High Court`,
-  //     searchedParams: {
-  //       ...validated,
-  //       diaryNumber: fullDiaryNumber,
-  //       bench: validated.bench || highCourtConfig.defaultBench
-  //     }
-  //   };
-  //   await logSearchAttempt(validated, response);
-  //   return NextResponse.json(response, { status: 400 });
-  // }
-  
-  // const scrapeURL = `${process.env.SERVICE_URL}${highCourtConfig.endpoint}`;
-  // const payload = {
-  //   highCourt: highCourtConfig.highCourtName,
-  //   bench: validated.bench || highCourtConfig.defaultBench,
-  //   diaryNumber: fullDiaryNumber,
-  //   caseType: validated.caseType,
-  //   caseTypeValue: String(caseTypeMapping[validated.caseType as keyof typeof caseTypeMapping]),
-  //   judgmentType: validated.judgmentType,
-  //   city: validated.city
-  // };
-  
-  // console.log('Attempting to scrape with payload:', payload);
+ 
 
   // ...existing code...
-
-// helper: resolve numeric code from mapping by exact key or cleaned label
-function resolveCaseTypeValue(mapping: Record<string, number | null> | undefined, selectedLabel?: string): number | undefined {
-  if (!mapping || !selectedLabel) return undefined;
-  const label = selectedLabel.trim();
-  // exact key match first
-  if (Object.prototype.hasOwnProperty.call(mapping, label)) {
-    const v = (mapping as any)[label];
-    return v === null ? undefined : v;
-  }
-  // fallback: match cleaned label (strip trailing -digits)
-  for (const [k, v] of Object.entries(mapping)) {
-    const m = k.match(/^(.*?)-(\d+)\s*$/);
-    const clean = m ? m[1].trim() : k.trim();
-    if (clean === label) {
-      return typeof v === "number" ? v : (m ? Number(m[2]) : undefined);
-    }
-  }
-  return undefined;
-}
-
-// ...existing code...
 // inside GET(), replace the caseTypeMapping + payload block with this:
   // pick mapping: global or bench-specific mapping (if present)
   let caseTypeMapping: Record<string, number | null> | undefined = undefined;
@@ -639,7 +354,7 @@ if (scrapeResult.success && scrapeResult.result.length > 0) {
 
 // ...existing code...
   } catch (scrapeError:any) {
-    console.error('Scraping failed:', scrapeError);
+    console.error('Try Again for Scrape:', scrapeError);
     scrapeResult = {
       success: false,
       error:  scrapeError.message || 'Scraping Unknown error',
@@ -765,7 +480,7 @@ if (Array.isArray(scrapeResult.processedResults)) {
 await logSearchAttempt(validated, { caseData, scrapeResult });
 return NextResponse.json(response, { status });
 
-  } catch (error) {
+  }} catch (error) {
       console.error("Search error: End catch", error);
     return NextResponse.json(
       { 
