@@ -28,7 +28,8 @@ export function CaseManagement() {
     caseType: "",
     city: "",
     bench:"",
-    district: ""
+    district: "",
+    courtComplex: ""
   }
 
   const [searchParams, setSearchParams] = useState<SearchParams>(defaultSearchParams);
@@ -103,6 +104,26 @@ export function CaseManagement() {
     if(searchParams.court === "High Court") {
       if (!searchParams.city.trim()) {
         errors.city = "City is required";
+      }
+    }
+
+    if(searchParams.court === "Supreme Court") {
+      if (!searchParams.caseType.trim()) {
+        errors.caseType = "Case type is required";
+      }
+    }
+
+    if(searchParams.court === "District Court") {
+      if (!searchParams.district.trim()) {
+        errors.district = "District is required";
+      }
+
+      if (!searchParams.courtComplex.trim()) {
+        errors.courtComplex = "Court complex is required";
+      }
+
+      if (!searchParams.caseType.trim()) {
+        errors.caseType = "Case type is required";
       }
     }
 
@@ -232,11 +253,24 @@ export function CaseManagement() {
       setSelectAll(false);
 
       const searchUrl = new URL("/api/cases/search", window.location.origin);
+      const searchUrlSC = new URL("/api/cases/search/supremeCourt", window.location.origin);
+      const searchUrlDC = new URL("/api/cases/search/districtCourt", window.location.origin);
+
+      // High Court Search URL
       searchUrl.searchParams.append("diaryNumber", searchParams.number);
       searchUrl.searchParams.append("year", searchParams.year);
+
+      if(searchParams.number && searchParams.year){
+        searchUrlSC.searchParams.append("diaryNumber", searchParams.number);
+        searchUrlSC.searchParams.append("year", searchParams.year);
+        searchUrlDC.searchParams.append("diaryNumber", searchParams.number);
+        searchUrlDC.searchParams.append("year", searchParams.year);
+      }
       
       if (searchParams.court) {
         searchUrl.searchParams.append("court", searchParams.court);
+        searchUrlSC.searchParams.append("court", searchParams.court);
+        searchUrlDC.searchParams.append("court", searchParams.court);
       }
       
       if (searchParams.judgmentType) {
@@ -245,6 +279,8 @@ export function CaseManagement() {
       
       if (searchParams.caseType) {
         searchUrl.searchParams.append("caseType", searchParams.caseType);
+        searchUrlSC.searchParams.append("caseType", searchParams.caseType);
+        searchUrlDC.searchParams.append("caseType", searchParams.caseType);
       }
 
       if (searchParams.city) {
@@ -252,13 +288,25 @@ export function CaseManagement() {
       }
 
       if (searchParams.district) {
-        searchUrl.searchParams.append("district", searchParams.district);
+        searchUrlDC.searchParams.append("district", searchParams.district);
       }
 
       if (searchParams.bench) {
         searchUrl.searchParams.append("bench", searchParams.bench);
       }
-      const response = await fetch(searchUrl.toString());
+
+      if (searchParams.courtComplex) {
+        searchUrlDC.searchParams.append("courtComplex", searchParams.courtComplex);
+      }
+
+      let response;
+      if(searchParams.court === "Supreme Court"){
+        response = await fetch(searchUrlSC.toString());
+      }else if(searchParams.court === "District Court"){
+        response = await fetch(searchUrlDC.toString());
+      }else{
+        response = await fetch(searchUrl.toString());
+      }
       const responseData = await response.json();
 
       if (!response.ok || !responseData.success) {

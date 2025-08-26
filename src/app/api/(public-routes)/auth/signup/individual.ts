@@ -25,8 +25,8 @@ export default async function handler(
      console.log("Signup request received", { email, mobileNumber });
 
     // 1. Validate required fields
-    if (!email || !mobileNumber) {
-      throw new Error("Email and mobile number are required");
+    if (!mobileNumber) {
+      throw new Error("Mobile number is required");
     }
 
     // 2. Clean and validate mobile number
@@ -35,14 +35,27 @@ export default async function handler(
       throw new Error("Invalid Indian mobile number format");
     }
 
-    // 3. Check if email exists
-    const existingEmailUser = await db.user.findUnique({
-      where: { email },
-      select: { id: true },
-    });
+    // 1.5. Validate email if provided
+    let validatedEmail = null;
+    if (email && email.trim() !== '') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        throw new Error("Invalid email format");
+      }
+      validatedEmail = email.trim();
+    }
+    
 
-    if (existingEmailUser) {
-      throw new ErrorAlreadyExists("User with this email");
+    // 3. Check if email exists (only if email provided)
+    if (validatedEmail) {
+      const existingEmailUser = await db.user.findUnique({
+        where: { email: validatedEmail },
+        select: { id: true },
+      });
+
+      if (existingEmailUser) {
+        throw new ErrorAlreadyExists("User with this email");
+      }
     }
 
     // 4. Find mobile-verified user
@@ -66,7 +79,7 @@ export default async function handler(
       where: { id: mobileUser.id },
       data: {
         name,
-        email,
+        email ,
         verificationToken,
         verificationTokenExpiry: tokenExpiry,
         isVerified: false,

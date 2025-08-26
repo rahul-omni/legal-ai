@@ -19,11 +19,17 @@ export const individualSignupSchema = z.object({
     .string()
     .min(1, "Name is required")
     .transform((val) => val?.trim()),
-  email: z
-    .string()
-    .min(1, "Email is required")
-    .email("Invalid email address")
-    .transform((val) => val.toLowerCase()),
+    email: z
+    .union([
+      z.string().email("Invalid email address"),
+      z.literal(""),
+      z.undefined()
+    ])
+    .optional()
+    .transform((val) => {
+      if (!val || val === "") return undefined;
+      return val.toLowerCase().trim();
+    }),
   mobileNumber: z
     .string()
     .min(10, "Mobile number must be 10 digits")

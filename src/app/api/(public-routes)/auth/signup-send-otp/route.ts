@@ -16,8 +16,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const { mobileNumber } = requestBody;
-    logger.debug("Request received", { mobileNumber });
+    const { mobileNumber, email } = requestBody;
+    console.log("Request received", { mobileNumber, email });
 
     // 2. Validate mobile number presence
     if (!mobileNumber) {
@@ -55,6 +55,19 @@ export async function POST(request: Request) {
       );
     }
 
+    // 2.5. Validate email if provided
+    let validatedEmail = null;
+    if (email && email.trim() !== '') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        return NextResponse.json(
+          { success: false, message: 'Invalid email format' },
+          { status: 400 }
+        );
+      }
+      validatedEmail = email.trim();
+    }
+
     // 5. Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiry
@@ -65,8 +78,8 @@ export async function POST(request: Request) {
     const user = await db.user.create({
       data: {
         mobileNumber: cleanedMobile,
-        email:   `${cleanedMobile}@example.com`, // Placeholder email, update as needed
-           otp : otp,
+        email: validatedEmail, // use provided email or null
+        otp: otp,
         mobileOtpExpiry: otpExpiry,
         mobileOtpAttempts: 0,
         countryCode: "+91", // Default country code

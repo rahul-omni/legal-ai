@@ -2,7 +2,9 @@ import { Loader2, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 //import { HIGH_COURT_CASE_TYPES, HIGH_COURT_CITY, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
 import {  ALLAHABAD_HIGH_COURT_ALLAHABAD_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, ALLAHABAD_HIGH_COURT_ALLAHABAD_HIGH_COURT_LUCKNOW_BENCH_CASE_TYPES_VALUE_MAPPING, ALLAHABAD_HIGH_COURT_HIGH_COURT_BENCH, APPELLATE_BOMBAY_COURT_CASE_TYPES_VALUE_MAPPING,   AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, BOMBAY_HIGH_COURT_BENCH, CALCUTTA_HIGH_COURT_APPELLATE_SIDE_CASE_TYPES_VALUE_MAPPING, CALCUTTA_HIGH_COURT_CIRCUIT_BENCH_AT_JALPAIGURI_CASE_TYPES_VALUE_MAPPING, CALCUTTA_HIGH_COURT_CIRCUIT_BENCH_AT_PORT_BLAIR_CASE_TYPES_VALUE_MAPPING, CALCUTTA_HIGH_COURT_HIGH_COURT_BENCH, CALCUTTA_HIGH_COURT_ORIGINAL_SIDE_CASE_TYPES_VALUE_MAPPING, DELHI_COURT_CASE_TYPES_VALUE_MAPPING, GAUHATI_HIGH_COURT_AIZAWL_BENCH_CASE_TYPES_VALUE_MAPPING, GAUHATI_HIGH_COURT_HIGH_COURT_BENCH, GAUHATI_HIGH_COURT_ITANAGAR_BENCH_CASE_TYPES_VALUE_MAPPING, GAUHATI_HIGH_COURT_KOHIMA_BENCH_CASE_TYPES_VALUE_MAPPING, GAUHATI_HIGH_COURT_PRINCIPAL_SEAT_AT_GUWAHATI_CASE_TYPES_VALUE_MAPPING, GOA_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_CITY,  HIGH_COURT_FOR_STATE_OF_TELANGANA_HIGH_COURT_BENCH,  HIGH_COURT_FOR_STATE_OF_TELANGANA_PRINCIPAL_BENCH_AT_HYDERABAD_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_ANDHRA_PRADESH_HIGH_COURT_BENCH,  HIGH_COURT_OF_ANDHRA_PRADESH_PRINCIPAL_BENCH_AT_ANDHRA_PRADESH_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_CHHATTISGARH_HIGH_COURT_BENCH,  HIGH_COURT_OF_CHHATTISGARH_PRINCIPAL_BENCH_CHHATTISGARH_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_GUJARAT_GUJARAT_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_GUJARAT_HIGH_COURT_BENCH,  HIGH_COURT_OF_HIMACHAL_PRADESH_HIGH_COURT_BENCH,  HIGH_COURT_OF_HIMACHAL_PRADESH_HIGH_COURT_OF_HIMACHAL_PRADESH_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_JAMMU_AND_KASHMIR_HIGH_COURT_BENCH,  HIGH_COURT_OF_JAMMU_AND_KASHMIR_JAMMU_WING_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_JAMMU_AND_KASHMIR_SRINAGAR_WING_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_JHARKHAND_HIGH_COURT_BENCH,  HIGH_COURT_OF_JHARKHAND_PRINCIPAL_BENCH_JHARKHAND_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_KARNATAKA_BENCH_AT_DHARWAD_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_KARNATAKA_BENCH_AT_KALBURAGI_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_KARNATAKA_HIGH_COURT_BENCH,  HIGH_COURT_OF_KARNATAKA_PRINCIPAL_BENCH_AT_BENGALURU_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_KERALA_HIGH_COURT_BENCH,  HIGH_COURT_OF_KERALA_HIGH_COURT_OF_KERALA_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_MADHYA_PRADESH_HIGH_COURT_BENCH,  HIGH_COURT_OF_MADHYA_PRADESH_HIGH_COURT_OF_MADHYA_PRADESH_GWALIOR_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_MADHYA_PRADESH_HIGH_COURT_OF_MADHYA_PRADESH_INDORE_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_MADHYA_PRADESH_HIGH_COURT_OF_MADHYA_PRADESH_JABALPUR_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_MANIPUR_HIGH_COURT_BENCH,  HIGH_COURT_OF_MANIPUR_HIGH_COURT_OF_MANIPUR_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_MEGHALAYA_HIGH_COURT_BENCH,  HIGH_COURT_OF_MEGHALAYA_HIGH_COURT_OF_MEGHALAYA_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_ORISSA_HIGH_COURT_BENCH,  HIGH_COURT_OF_ORISSA_HIGH_COURT_OF_ORISSA_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_PUNJAB_AND_HARYANA_HIGH_COURT_BENCH,  HIGH_COURT_OF_PUNJAB_AND_HARYANA_HIGH_COURT_OF_PUNJAB_AND_HARYANA_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_RAJASTHAN_HIGH_COURT_BENCH,  HIGH_COURT_OF_RAJASTHAN_HIGH_COURT_BENCH_AT_JAIPUR_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_RAJASTHAN_RAJASTHAN_HIGH_COURT_PRINCIPAL_SEAT_JODHPUR_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_SIKKIM_HIGH_COURT_BENCH,  HIGH_COURT_OF_SIKKIM_HIGH_COURT_OF_SIKKIM_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_TRIPURA_HIGH_COURT_BENCH,  HIGH_COURT_OF_TRIPURA_HIGH_COURT_OF_TRIPURA_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_UTTARAKHAND_HIGH_COURT_BENCH,  HIGH_COURT_OF_UTTARAKHAND_HIGH_COURT_OF_UTTARAKHAND_CASE_TYPES_VALUE_MAPPING,  KOLHAPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,   MADRAS_HIGH_COURT_HIGH_COURT_BENCH,   MADRAS_HIGH_COURT_MADURAI_BENCH_OF_MADRAS_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,   MADRAS_HIGH_COURT_PRINCIPAL_BENCH_OF_MADRAS_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,   NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,  ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,  PATNA_HIGH_COURT_HIGH_COURT_BENCH,  PATNA_HIGH_COURT_PRINCIPAL_BENCH_PATNA_CASE_TYPES_VALUE_MAPPING,  SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
+ 
 import { SearchParams, ValidationErrors } from "./types";
+import { getAvailableDistricts, getCourtComplexesForDistrict, getDistrictCourtCaseTypes } from "@/helper/utils";
 
 interface SearchFormProps {
   searchParams: SearchParams;
@@ -256,6 +258,7 @@ const caseTypeOptions = useMemo(() => {
             <option value="">Select court type</option>
             <option value="Supreme Court">Supreme Court</option>
             <option value="High Court">High Court</option>
+            <option value="District Court">District Court</option>
           </select>
           {errors?.court && (
             <p className="mt-1 text-sm text-error">{errors.court}</p>
@@ -290,6 +293,93 @@ const caseTypeOptions = useMemo(() => {
             {errors?.city && (
               <p className="mt-1 text-sm text-error">{errors.city}</p>
             )}
+          </div>
+        )}
+
+        {/* District Selection (only for District Court) */}
+        {searchParams.court === "District Court" && (
+          <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-text-light mb-2">
+              District <span className="text-error">*</span>
+            </label>
+            <select
+              value={searchParams.district}
+              onChange={(e) =>
+                setSearchParams({ 
+                  ...searchParams, 
+                  district: e.target.value,
+                  courtComplex: "",
+                  caseType: ""
+                })
+              }
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light ${
+                errors?.district ? 'border-error' : 'border-border'
+              }`}
+            >
+              <option value="">Select District</option>
+              {getAvailableDistricts().map(district => (
+                <option key={district} value={district}>
+                  {district.charAt(0).toUpperCase() + district.slice(1)}
+                </option>
+              ))}
+            </select>
+            {errors?.district && (
+              <p className="mt-1 text-sm text-error">{errors.district}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-text-light mb-2">
+              Court Complex <span className="text-error">*</span>
+            </label>
+            <select
+              value={searchParams.courtComplex}
+              onChange={(e) =>
+                setSearchParams({ 
+                  ...searchParams, 
+                  courtComplex: e.target.value,
+                  caseType: ""
+                })
+              }
+              disabled={!searchParams.district}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light ${
+                errors?.courtComplex ? 'border-error' : 'border-border'
+              } ${!searchParams.district ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <option value="">Select Court Complex</option>
+              {searchParams.district && getCourtComplexesForDistrict(searchParams.district).map(complex => (
+                <option key={complex} value={complex}>{complex}</option>
+              ))}
+            </select>
+            {errors?.courtComplex && (
+              <p className="mt-1 text-sm text-error">{errors.courtComplex}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-text-light mb-2">
+              Case Type <span className="text-error">*</span>
+            </label>
+            <select
+              value={searchParams.caseType}
+              onChange={(e) =>
+                setSearchParams({ ...searchParams, caseType: e.target.value })
+              }
+              disabled={!searchParams.courtComplex}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light ${
+                errors?.caseType ? 'border-error' : 'border-border'
+              } ${!searchParams.courtComplex ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <option value="">Select Case Type</option>
+              {searchParams.district && searchParams.courtComplex && 
+                getDistrictCourtCaseTypes(searchParams.district, searchParams.courtComplex).map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))
+              }
+            </select>
+            {errors?.caseType && (
+              <p className="mt-1 text-sm text-error">{errors.caseType}</p>
+            )}
+            </div>
           </div>
         )}
 
@@ -360,11 +450,36 @@ const caseTypeOptions = useMemo(() => {
   </div>
 )}
 
+        {searchParams.court === "Supreme Court" && (
+          <div>
+            <label className="block text-sm font-medium text-text-light mb-2">
+              Case Type <span className="text-error">*</span>
+            </label>
+            <select
+              value={searchParams.caseType}
+              onChange={(e) =>
+                setSearchParams({ ...searchParams, caseType: e.target.value })
+              }
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-background-light ${errors?.caseType ? 'border-error' : 'border-border'
+              }`}
+            >
+              <option value="">Select Case Type</option>
+              {SUPREME_COURT_CASE_TYPES.map(type => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+            {errors?.caseType && (
+              <p className="mt-1 text-sm text-error">{errors.caseType}</p>
+            )}
+          </div>
+        )}
+      
+
         {/* Case Details */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-text-light mb-2">
-              Diary Number <span className="text-error">*</span>
+              Case Number <span className="text-error">*</span>
             </label>
             <input
               type="text"
@@ -372,9 +487,8 @@ const caseTypeOptions = useMemo(() => {
               onChange={(e) =>
                 setSearchParams({ ...searchParams, number: e.target.value })
               }
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ${
-                errors?.number ? 'border-error' : 'border-border'
-              }`}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ${errors?.number ? 'border-error' : 'border-border'
+                }`}
               placeholder="e.g. 72381"
             />
             {errors?.number && (
