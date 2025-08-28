@@ -253,6 +253,8 @@ model Causelist {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
  
   serialNumber  String  @default("")
+  dairy_number  String? @default("")
+  case_number   String? @default("")
   type          String? @default("")
   city         String?  @default("")
   court        String   @default("")

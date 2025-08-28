@@ -17,16 +17,16 @@ import VakeelAssistLogoIcon from "./svg/VakeelAssistLogoIcon";
 
 const navigationItems = [
   {
-    name: "Project Hub",
-    href: "/projects",
-    icon: FolderKanban,
-    id: 'projecthub'
-  },
-  {
     name: "Cases",
     href: "/cases",
     icon: Gavel,
     id: 'cases'
+  },
+  {
+    name: "Project Hub",
+    href: "/projects",
+    icon: FolderKanban,
+    id: 'projecthub'
   },
   {
     name: "Pending Reviews",
