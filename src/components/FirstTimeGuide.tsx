@@ -27,19 +27,19 @@ export default function FirstTimeGuide() {
             },
           },
           {
-            element: "#projecthub",
+            element: "#cases",
             popover: {
-              title: "📂 Project Hub",
-              description: "Your central hub for managing legal projects.",
+              title: "📑 Cases",
+              description: "Access and manage all your legal cases here.",
               side: "bottom",
               align: "start",
             },
           },
           {
-            element: "#cases",
+            element: "#projecthub",
             popover: {
-              title: "📑 Cases",
-              description: "Access and manage all your legal cases here.",
+              title: "📂 Project Hub",
+              description: "Your central hub for managing legal projects.",
               side: "bottom",
               align: "start",
             },

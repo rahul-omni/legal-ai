@@ -19,7 +19,7 @@ export default auth((req: NextAuthRequest) => {
   } else if (isPrivateRoute && !req.auth) {
     return redirectToURL(routeConfig.publicRoutes.login);
   } else if (isPublicRoute && req.auth) {
-    return redirectToURL(routeConfig.privateRoutes.projects);
+    return redirectToURL(routeConfig.privateRoutes.cases);
   }
 
   return NextResponse.next();
