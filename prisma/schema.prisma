@@ -269,31 +269,32 @@ model UserCase {
 }
 
 model Causelist {
-  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  city             String?  @default("")
-  court            String   @default("")
-  district         String?  @default("")
-  date             String   @default("")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
-  case_number      String?  @default("")
-  dairy_number     String?  @default("")
-  parties          String?  @default("")
-  advocates        String?  @default("")
-  aor_code         String?  @default("")
-  court_no         String?  @default("")
-  full_case_number String?  @default("")
-  judge_name       String?  @default("")
-  list_type        String   @default("")
-  main_and_supply  String   @default("")
-  party_name       String?  @default("")
-  search_by        String   @default("")
-  cause_list_type  String   @default("")
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   serial_number    String?  @default("")
-
+  dairy_number    String?  @default("")
+  case_number     String?  @default("")
+  full_case_number     String?  @default("")
+  parties         String?  @default("")
+  advocates       String?  @default("")
+  city            String?  @default("")
+  court           String   @default("")
+  district        String?  @default("")
+  date            String   @default("")
+  search_by       String   @default("")
+  list_type       String   @default("")
+  cause_list_type   String   @default("") 
+  main_and_supply String   @default("")
+  court_no        String?  @default("")
+  aor_code        String?  @default("")
+  judge_name      String?  @default("")
+  party_name      String?  @default("")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+          
   @@map("cause_list")
 }
 
+ 
 model client {
   name         String
   organization String
