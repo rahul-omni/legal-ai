@@ -129,6 +129,17 @@ export function CaseManagement() {
       }
     }
 
+    
+  // Add NCLT Court validation
+  if (searchParams.court === "Nclt Court") {
+    if (!searchParams.bench.trim()) {
+      errors.bench = "NCLT bench is required";
+    }
+    if (!searchParams.caseType.trim()) {
+      errors.caseType = "Case type is required";
+    }
+  }
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -188,7 +199,28 @@ export function CaseManagement() {
           }
 
           response = await fetch(searchUrlDC.toString());
-        } else {
+        }else if (caseItem.court === "NCLT" || caseItem.court === "Nclt Court") {
+          console.log("Full caseItem for NCLT:", JSON.stringify(caseItem, null, 2));
+  console.log("caseItem.bench value:", caseItem.bench);
+  
+        // Add NCLT Court support
+        const searchUrlNCLT = new URL("/api/cases/search/ncltCourt", window.location.origin);
+        searchUrlNCLT.searchParams.append("diaryNumber", diaryNumber);
+        searchUrlNCLT.searchParams.append("year", year);
+        searchUrlNCLT.searchParams.append("court", caseItem.court);
+
+        if (caseItem.caseType) {
+          searchUrlNCLT.searchParams.append("caseType", caseItem.caseType);
+        }
+        if (caseItem.bench) {
+          searchUrlNCLT.searchParams.append("bench", caseItem.bench);
+        }
+          if (caseItem.district) {
+            searchUrlNCLT.searchParams.append("district", caseItem.district);
+          }
+
+        response = await fetch(searchUrlNCLT.toString());
+      } else {
           const searchUrl = new URL("/api/cases/search", window.location.origin);
           searchUrl.searchParams.append("diaryNumber", diaryNumber);
           searchUrl.searchParams.append("year", year);
@@ -203,7 +235,7 @@ export function CaseManagement() {
           if (caseItem.bench) {
             searchUrl.searchParams.append("bench", caseItem.bench);
           }
-
+         
           response = await fetch(searchUrl.toString());
         }
 
@@ -270,133 +302,141 @@ export function CaseManagement() {
 
 
 
+  
   const handleSearchCase = async () => {
-    setValidationErrors({});
+  setValidationErrors({});
 
-    if (!validateSearchForm()) {
-      return;
+  if (!validateSearchForm()) {
+    return;
+  }
+
+  try {
+    setIsLoading(true);
+    setError("");
+    setFoundCases([]);
+    setSelectedCases([]);
+    setSelectAll(false);
+
+    const searchUrl = new URL("/api/cases/search", window.location.origin);
+    const searchUrlSC = new URL("/api/cases/search/supremeCourt", window.location.origin);
+    const searchUrlDC = new URL("/api/cases/search/districtCourt", window.location.origin);
+    const searchUrlNCLT = new URL("/api/cases/search/ncltCourt", window.location.origin);
+
+    // High Court Search URL
+    searchUrl.searchParams.append("diaryNumber", searchParams.number);
+    searchUrl.searchParams.append("year", searchParams.year);
+
+    if (searchParams.number && searchParams.year) {
+      searchUrlSC.searchParams.append("diaryNumber", searchParams.number);
+      searchUrlSC.searchParams.append("year", searchParams.year);
+      searchUrlDC.searchParams.append("diaryNumber", searchParams.number);
+      searchUrlDC.searchParams.append("year", searchParams.year);
+      searchUrlNCLT.searchParams.append("diaryNumber", searchParams.number);
+      searchUrlNCLT.searchParams.append("year", searchParams.year);
     }
 
-    try {
-      setIsLoading(true);
-      setError("");
-      setFoundCases([]);
-      setSelectedCases([]);
-      setSelectAll(false);
+    if (searchParams.court) {
+      searchUrl.searchParams.append("court", searchParams.court);
+      searchUrlSC.searchParams.append("court", searchParams.court);
+      searchUrlDC.searchParams.append("court", searchParams.court);
+      searchUrlNCLT.searchParams.append("court", searchParams.court);
+    }
 
-      const searchUrl = new URL("/api/cases/search", window.location.origin);
-      const searchUrlSC = new URL("/api/cases/search/supremeCourt", window.location.origin);
-      const searchUrlDC = new URL("/api/cases/search/districtCourt", window.location.origin);
+    if (searchParams.judgmentType) {
+      searchUrl.searchParams.append("judgmentType", searchParams.judgmentType);
+    }
 
-      // High Court Search URL
-      searchUrl.searchParams.append("diaryNumber", searchParams.number);
-      searchUrl.searchParams.append("year", searchParams.year);
+    if (searchParams.caseType) {
+      searchUrl.searchParams.append("caseType", searchParams.caseType);
+      searchUrlSC.searchParams.append("caseType", searchParams.caseType);
+      searchUrlDC.searchParams.append("caseType", searchParams.caseType);
+      searchUrlNCLT.searchParams.append("caseType", searchParams.caseType);
+    }
 
-      if (searchParams.number && searchParams.year) {
-        searchUrlSC.searchParams.append("diaryNumber", searchParams.number);
-        searchUrlSC.searchParams.append("year", searchParams.year);
-        searchUrlDC.searchParams.append("diaryNumber", searchParams.number);
-        searchUrlDC.searchParams.append("year", searchParams.year);
-      }
+    if (searchParams.city) {
+      searchUrl.searchParams.append("city", searchParams.city);
+    }
 
-      if (searchParams.court) {
-        searchUrl.searchParams.append("court", searchParams.court);
-        searchUrlSC.searchParams.append("court", searchParams.court);
-        searchUrlDC.searchParams.append("court", searchParams.court);
-      }
+    if (searchParams.district) {
+      searchUrlDC.searchParams.append("district", searchParams.district);
+    }
 
-      if (searchParams.judgmentType) {
-        searchUrl.searchParams.append("judgmentType", searchParams.judgmentType);
-      }
+    if (searchParams.bench) {
+      searchUrl.searchParams.append("bench", searchParams.bench);
+      searchUrlNCLT.searchParams.append("bench", searchParams.bench);
+    }
 
-      if (searchParams.caseType) {
-        searchUrl.searchParams.append("caseType", searchParams.caseType);
-        searchUrlSC.searchParams.append("caseType", searchParams.caseType);
-        searchUrlDC.searchParams.append("caseType", searchParams.caseType);
-      }
+    if (searchParams.courtComplex) {
+      searchUrlDC.searchParams.append("courtComplex", searchParams.courtComplex);
+    }
 
-      if (searchParams.city) {
-        searchUrl.searchParams.append("city", searchParams.city);
-      }
+    let response;
+    if (searchParams.court === "Supreme Court") {
+      response = await fetch(searchUrlSC.toString());
+    } else if (searchParams.court === "District Court") {
+      response = await fetch(searchUrlDC.toString());
+    } else if (searchParams.court === "Nclt Court") {
+      response = await fetch(searchUrlNCLT.toString());
+    } else {
+      response = await fetch(searchUrl.toString());
+    }
+    
+    const responseData = await response.json();
 
-      if (searchParams.district) {
-        searchUrlDC.searchParams.append("district", searchParams.district);
-      }
+    if (!response.ok || !responseData.success) {
+      throw new Error(responseData.message || "Search failed");
+    }
 
-      if (searchParams.bench) {
-        searchUrl.searchParams.append("bench", searchParams.bench);
-      }
+    if (responseData.data && responseData.data.length > 0) {
+      let flatCases: any[] = [];
 
-      if (searchParams.courtComplex) {
-        searchUrlDC.searchParams.append("courtComplex", searchParams.courtComplex);
-      }
-
-      let response;
-      if (searchParams.court === "Supreme Court") {
-        response = await fetch(searchUrlSC.toString());
-      } else if (searchParams.court === "District Court") {
-        response = await fetch(searchUrlDC.toString());
+      // Check if data is DB result (array of cases) or scraped (array of objects with processedResults)
+      if (responseData.data[0]?.diaryNumber) {
+        // DB result: use directly
+        flatCases = responseData.data;
       } else {
-        response = await fetch(searchUrl.toString());
-      }
-      const responseData = await response.json();
-
-      if (!response.ok || !responseData.success) {
-        throw new Error(responseData.message || "Search failed");
+        // Scraped result: flatten processedResults
+        flatCases = responseData.data.flatMap((d: any) => d.processedResults || []);
       }
 
-      if (responseData.data && responseData.data.length > 0) {
-        // Flatten nested processedResults arrays
-        // const flatCases = responseData.data.flatMap((d: any) => d.processedResults || []);
-        let flatCases: any[] = [];
+      // Normalize all cases
+      const normalizedCases = flatCases.map((rawCase: CaseData, i: number) =>
+        normalizeCaseData(rawCase, i)
+      );
+      const sortedCases = normalizedCases.sort((a: CaseData, b: CaseData) => {
+        if (!a.judgmentDate && !b.judgmentDate) return 0;
+        if (!a.judgmentDate) return 1;
+        if (!b.judgmentDate) return -1;
 
-        // Check if data is DB result (array of cases) or scraped (array of objects with processedResults)
-        if (responseData.data[0]?.diaryNumber) {
-          // DB result: use directly
-          flatCases = responseData.data;
-        } else {
-          // Scraped result: flatten processedResults
-          flatCases = responseData.data.flatMap((d: any) => d.processedResults || []);
-        }
+        const parseDate = (dateStr: string) => {
+          const parts = dateStr.split('-');
+          if (parts.length === 3) {
+            return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+          }
+          return new Date(dateStr);
+        };
 
-        // Normalize all cases
-        const normalizedCases = flatCases.map((rawCase: CaseData, i: number) =>
-          normalizeCaseData(rawCase, i)
-        );
-        const sortedCases = normalizedCases.sort((a: CaseData, b: CaseData) => {
-          if (!a.judgmentDate && !b.judgmentDate) return 0;
-          if (!a.judgmentDate) return 1;
-          if (!b.judgmentDate) return -1;
+        const dateA = parseDate(a.judgmentDate);
+        const dateB = parseDate(b.judgmentDate);
 
-          const parseDate = (dateStr: string) => {
-            const parts = dateStr.split('-');
-            if (parts.length === 3) {
-              return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-            }
-            return new Date(dateStr);
-          };
+        if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+        if (isNaN(dateA.getTime())) return 1;
+        if (isNaN(dateB.getTime())) return -1;
 
-          const dateA = parseDate(a.judgmentDate);
-          const dateB = parseDate(b.judgmentDate);
+        return dateB.getTime() - dateA.getTime();
+      });
 
-          if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
-          if (isNaN(dateA.getTime())) return 1;
-          if (isNaN(dateB.getTime())) return -1;
-
-          return dateB.getTime() - dateA.getTime();
-        });
-
-        setFoundCases(sortedCases);
-        toast.success(`Found ${sortedCases.length} cases (sorted by newest first)`);
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
-      setValidationErrors({ general: errorMessage });
-      toast.error(errorMessage || "Failed to search case");
-    } finally {
-      setIsLoading(false);
+      setFoundCases(sortedCases);
+      toast.success(`Found ${sortedCases.length} cases (sorted by newest first)`);
     }
-  };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+    setValidationErrors({ general: errorMessage });
+    toast.error(errorMessage || "Failed to search case");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
 
 

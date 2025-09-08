@@ -185,7 +185,8 @@ model FileReviewComment {
   @@map("review_comments")
 }
 
-model CaseManagement {
+
+  model CaseManagement {
   id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   serialNumber       String               @map("serial_number")
   diaryNumber        String               @map("diary_number")
@@ -208,10 +209,28 @@ model CaseManagement {
   judgment_type      String?              @default("")
   courtComplex       String?
   courtType          String?
+
+   // NEW FIELDS FOR NCLT DATA:
+  filingNumber       String?              @map("filing_number")        // "071010200002022"
+  filingDate         String?              @map("filing_date")          // "01-01-2022"
+  partyName          String?              @map("party_name")           // "Bank of Baroda VS Mrs. Anju Bansal"
+  petitionerAdvocate String?              @map("petitioner_advocate")  // "Rajiv kumar"
+  respondentAdvocate String?              @map("respondent_advocate")  // From case details
+  registeredOn       String?              @map("registered_on")        // "20-01-2022"
+  lastListed         String?              @map("last_listed")          // "01-08-2025"
+  nextListingDate    String?              @map("next_listing_date")    // "08-09-2025"
+  caseStatus         String?              @map("case_status")          // "Pending"
+  
+  // JSON FIELDS FOR STRUCTURED DATA:
+  orderDetails       Json[]               @map("order_details")        // Array of order history
+  allParties         Json[]               @map("all_parties")          // Complete party information
+  listingHistory     Json[]               @map("listing_history")      // History of listings
+  
   extractedJudgments ExtractedJudgments[] @relation("case_extracted_judgments")
 
   @@map("case_management")
 }
+
 
 model ExtractedJudgments {
   id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -250,24 +269,31 @@ model UserCase {
 }
 
 model Causelist {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
- 
-  serialNumber  String  @default("")
-  dairy_number  String? @default("")
-  case_number   String? @default("")
-  type          String? @default("")
-  city         String?  @default("")
-  court        String   @default("")
-  district     String?  @default("")
-  url          String?  @default("")
-  date         String?  @default("")
-  causeListType String?  @default("")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-   
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  city             String?  @default("")
+  court            String   @default("")
+  district         String?  @default("")
+  date             String   @default("")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  case_number      String?  @default("")
+  dairy_number     String?  @default("")
+  parties          String?  @default("")
+  advocates        String?  @default("")
+  aor_code         String?  @default("")
+  court_no         String?  @default("")
+  full_case_number String?  @default("")
+  judge_name       String?  @default("")
+  list_type        String   @default("")
+  main_and_supply  String   @default("")
+  party_name       String?  @default("")
+  search_by        String   @default("")
+  cause_list_type  String   @default("")
+  serial_number    String?  @default("")
+
   @@map("cause_list")
 }
- 
+
 model client {
   name         String
   organization String
@@ -318,7 +344,21 @@ model website_feedback {
   @@index([rating])
 }
 
-
+model cause_list_files {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  serial_number   String?  @default("")
+  city            String?  @default("")
+  court           String   @default("")
+  district        String?  @default("")
+  date            String   @default("")
+  search_by       String   @default("")
+  list_type       String   @default("")
+  cause_list_type String   @default("")
+  main_and_supply String   @default("")
+  created_at      DateTime @default(now())
+  updated_at      DateTime
+  link            String   @default("")
+}
 
 enum OtpStatus {
   PENDING
