@@ -323,11 +323,11 @@ export function CaseManagement() {
     const searchUrlNCLT = new URL("/api/cases/search/ncltCourt", window.location.origin);
 
     // High Court Search URL
-    searchUrl.searchParams.append("diaryNumber", searchParams.number);
+    searchUrl.searchParams.append("diaryNumber", `${searchParams.number}/${searchParams.year}`);
     searchUrl.searchParams.append("year", searchParams.year);
 
     if (searchParams.number && searchParams.year) {
-      searchUrlSC.searchParams.append("diaryNumber", searchParams.number);
+      searchUrlSC.searchParams.append("diaryNumber", `${searchParams.number}/${searchParams.year}`);
       searchUrlSC.searchParams.append("year", searchParams.year);
       searchUrlDC.searchParams.append("diaryNumber", searchParams.number);
       searchUrlDC.searchParams.append("year", searchParams.year);

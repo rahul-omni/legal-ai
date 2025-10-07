@@ -102,7 +102,7 @@ export function SearchResults({
                         </div>
                         <div>
                           <h5 className="font-bold text-gray-900 text-lg">
-                            {caseData.diaryNumber}
+                            {caseData.diaryNumber?.split("/")[0] + "/" + caseData.diaryNumber?.split("/")[1]}
                           </h5>
                           <p className="text-sm text-gray-600 font-medium">
                             {caseData?.parties?.split("/")[0]}
