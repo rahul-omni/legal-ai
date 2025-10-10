@@ -54,7 +54,7 @@ export function Navigation() {
 
   return (
     <nav
-      className={`h-full bg-white border-r flex flex-col transition-all duration-300 ${
+      className={`h-full bg-white border-r flex-col transition-all duration-300 hidden md:flex ${
         isExpanded ? "w-64" : "w-16"
       }`}
     >

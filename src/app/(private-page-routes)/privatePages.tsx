@@ -1,9 +1,11 @@
 "use client";
 import { Spinner } from "@/components/Loader";
 import { Navigation } from "@/components/Navigation";
+import { MobileNavigation } from "@/components/MobileNavigation";
 import { TopNavbar } from "@/components/ui/TopNavbar";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import { useBreadcrumbs } from "@/hooks/useBreadcrumbs";
+import { useMobile } from "@/hooks/useMobile";
 import { useRoleContext } from "@/context/roleContext";
 import { useUserContext } from "@/context/userContext";
 import useRoles from "@/hooks/api/useRoles";
@@ -17,6 +19,7 @@ const PrivatePages: FC<{
   const { roles: roleList } = useRoles();
   const { dispatchUser } = useUserContext();
   const breadcrumbs = useBreadcrumbs();
+  const { isMobile } = useMobile();
 
   const session = useSession();
 
@@ -41,16 +44,23 @@ const PrivatePages: FC<{
   }
 
   return (
-    <div className="h-screen flex flex-row">
-      <Navigation />
+    <div className={`${isMobile ? 'min-h-screen' : 'h-screen'} flex flex-col md:flex-row`}>
+      {/* Desktop Navigation - only show on desktop */}
+      {!isMobile && <Navigation />}
+      
       <div className="flex flex-1 flex-col">
         <TopNavbar />
         {/* Breadcrumb Navigation */}
         <div className="px-6 py-2 bg-background">
           <Breadcrumb items={breadcrumbs} />
         </div>
-        <div className="flex-1 overflow-auto bg-background h-full min-h-0">{children}</div>
+        <div className={`flex-1 bg-background ${isMobile ? 'pb-20 min-h-screen' : 'overflow-auto h-full min-h-0'}`}>
+          {children}
+        </div>
       </div>
+      
+      {/* Mobile Navigation - only show on mobile */}
+      {isMobile && <MobileNavigation />}
     </div>
   );
 };

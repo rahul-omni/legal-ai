@@ -4,7 +4,7 @@ import React from 'react';
 import { Bell } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
+import { useMobile } from '@/hooks/useMobile';
 export interface TopNavbarProps {
   user?: {
     name?: string;
@@ -21,6 +21,7 @@ export function TopNavbar({
   className = '' 
 }: TopNavbarProps) {
   const router = useRouter();
+  const { isDesktop } = useMobile();
   return (
     <nav className={`bg-white border-b border-border  z-20${className}`}>
       <div className="px-6 py-2 flex justify-end">
@@ -51,7 +52,9 @@ export function TopNavbar({
                     {user?.name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                 )}
-                <span className="font-medium">My Account</span>
+                {isDesktop && (
+                  <span className="font-medium">My Account</span>
+                )}
               </div>
             </Link>
           </div>

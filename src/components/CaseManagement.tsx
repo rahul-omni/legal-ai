@@ -201,7 +201,7 @@ export function CaseManagement() {
           response = await fetch(searchUrlDC.toString());
         }else if (caseItem.court === "NCLT" || caseItem.court === "Nclt Court") {
           console.log("Full caseItem for NCLT:", JSON.stringify(caseItem, null, 2));
-  console.log("caseItem.bench value:", caseItem.bench);
+          console.log("caseItem.bench value:", caseItem.bench);
   
         // Add NCLT Court support
         const searchUrlNCLT = new URL("/api/cases/search/ncltCourt", window.location.origin);
@@ -604,6 +604,11 @@ export function CaseManagement() {
     setSearchParams(defaultSearchParams);
   };
 
+  console.log("cases", cases);
+  console.log("expandedCases", expandedCases);
+  console.log("caseDetails", caseDetails);
+  console.log("loadingDetails", loadingDetails);
+
   return (
     <div className="flex flex-col bg-background">
       {/* Header */}
@@ -639,11 +644,6 @@ export function CaseManagement() {
           {/* Cases List */}
           <CaseList
             cases={cases}
-            expandedCases={expandedCases}
-            caseDetails={caseDetails}
-            loadingDetails={loadingDetails}
-            onCaseExpand={handleCaseExpand}
-            handlePdfClick={handlePdfClick}
           />
         </>
       ) : (
