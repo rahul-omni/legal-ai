@@ -23,18 +23,18 @@ const navigationItems = [
     icon: FolderKanban,
     id: 'projecthub'
   },
-  {
-    name: "Reviews",
-    href: "/pending-reviews",
-    icon: Clock,
-    id: 'pendingreviews'
-  },
-  {
-    name: "Clients",
-    href: "/clients",
-    icon: Users,
-    id: 'clients'
-  },
+  // {
+  //   name: "Reviews",
+  //   href: "/pending-reviews",
+  //   icon: Clock,
+  //   id: 'pendingreviews'
+  // },
+  // {
+  //   name: "Clients",
+  //   href: "/clients",
+  //   icon: Users,
+  //   id: 'clients'
+  // },
   {
     name: "Settings",
     href: "/settings",

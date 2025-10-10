@@ -272,7 +272,7 @@ export function CaseDetails({ id }: { id: string }) {
                 </h2>
                 <div className="flex items-center gap-2">
                   <span className="px-3 py-1 bg-success-light text-success-dark text-xs font-medium rounded-full">
-                    {caseDetails.length} judgment{caseDetails.length !== 1 ? 's' : ''}
+                    {caseDetails.length} Orders{caseDetails.length !== 1 ? 's' : ''}
                   </span>
                 </div>
               </div>
