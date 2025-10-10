@@ -1,5 +1,6 @@
 import { LoadingProvider } from "@/context/loadingContext";
 import { UserProvider } from "@/context/userContext";
+import { MobileProvider } from "@/context/mobileContext";
 import { Toaster } from "react-hot-toast";
 import type { Metadata } from "next";
 import { Nunito_Sans } from "next/font/google";
@@ -31,7 +32,9 @@ export default function RootLayout({
         />
         <LoadingProvider>
           <UserProvider>
-            <main>{children}</main>
+            <MobileProvider>
+              <main>{children}</main>
+            </MobileProvider>
           </UserProvider>
         </LoadingProvider>
       </body>

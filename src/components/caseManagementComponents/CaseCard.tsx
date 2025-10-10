@@ -1,39 +1,30 @@
-import { Calendar, ChevronDown, Loader2 } from "lucide-react";
+import { Calendar, ArrowRight } from "lucide-react";
 import { CaseData } from "./types";
-import { CaseDetails } from "./CaseDetails";
+import { useRouter } from "next/navigation";
 
 interface CaseCardProps {
   caseItem: CaseData;
   index: number;
-  isExpanded: boolean;
-  caseDetails?: CaseData[];
-  isLoadingDetails: boolean;
-  onExpandToggle: (caseItem: CaseData) => void;
-  handlePdfClick: (caseData: CaseData, event: React.MouseEvent) => void;
 }
 
 export function CaseCard({
   caseItem,
-  index,
-  isExpanded,
-  caseDetails,
-  isLoadingDetails,
-  onExpandToggle,
-  handlePdfClick
+  index
 }: CaseCardProps) {
   if (!caseItem.id) {
     console.error('Rendering case with no ID:', caseItem);
     return null;
   }
 
+  const router = useRouter();
   return (
     <div className="bg-background-light border border-border rounded-lg hover:shadow-md transition-all duration-200 text-sm">
       {/* Case header - clickable */}
       <div
         className="flex justify-between items-center p-4 cursor-pointer hover:bg-background-dark transition-colors"
-        onClick={() => onExpandToggle(caseItem)}
+        onClick={() => router.push(`/case-details/${caseItem.id}`)}
       >
-        <div className="flex items-center gap-6 flex-1">
+        <div className="flex items-center gap-2 flex-1">
           {/* Court Badge */}
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-info-light rounded-lg flex items-center justify-center">
@@ -96,31 +87,11 @@ export function CaseCard({
           </div>
         </div>
 
-        {/* Expand/Collapse Indicator */}
+        {/* Navigation Indicator */}
         <div className="flex items-center gap-3 ml-4">
-          {isLoadingDetails ? (
-            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-          ) : (
-            <ChevronDown
-              className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${
-                isExpanded ? 'rotate-180' : ''
-              }`}
-            />
-          )}
+          <ArrowRight className="w-5 h-5 text-gray-400" />
         </div>
       </div>
-
-      {/* Expanded content */}
-      {isExpanded && (
-        <div className="bg-gray-50 border-t border-gray-200">
-          <CaseDetails
-            caseItem={caseItem}
-            caseDetails={caseDetails || []}
-            isLoading={isLoadingDetails}
-            handlePdfClick={handlePdfClick}
-          />
-        </div>
-      )}
     </div>
   );
 } 

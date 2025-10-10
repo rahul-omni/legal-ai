@@ -13,6 +13,17 @@
     height: 100vh;
     overflow: hidden;
   }
+  
+  /* Allow scrolling on mobile devices */
+  @media (max-width: 768px) {
+    html, body {
+      overflow: auto;
+    }
+    
+    #__next {
+      overflow: auto;
+    }
+  }
 }
 
 @layer components {
@@ -103,12 +114,17 @@
   margin-bottom: 0.5em;
 }
 
-/* Force scrolling in editor
+/* Force scrolling in editor */
 .tiptap {
   overflow-y: visible !important;
   height: auto !important;
   min-height: 200px;
-} */
+}
+
+/* Mobile safe area support */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom);
+}
 
 .ProseMirror {
   min-height: 200px;
