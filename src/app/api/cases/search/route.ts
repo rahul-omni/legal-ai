@@ -446,7 +446,7 @@ if (Array.isArray(scrapeResult.processedResults)) {
     // Case 2b: Scraping succeeded but found nothing
     response = {
       success: false,
-      message: 'High Court Website that CaseNumber No updated for Scrape yet',
+      message:  'We are currently unable to fetch this case numbers from the High Court website. Some new cases might be temporarily unavailable',
       searchedParams: {
         ...validated,
         diaryNumber: fullDiaryNumber,

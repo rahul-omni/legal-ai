@@ -7,32 +7,32 @@
 // ] as const; 
 
 
-export const HIGH_COURT_CITY = [
+ export const HIGH_COURT_CITY = [
   "Allahabad",
-  "Mumbai",
   "Calcutta",
-  "Guwahati",
-  //"Hyderabad",
-  //"Andhra Pradesh",
   "Chhattisgarh",
   "Delhi",
   "Gujarat",
-//  "Himachal Pradesh",
-//  "Jammu Kashmir",
+  "Guwahati",
   "Jharkhand",
   "Karnataka",
   "Kerala",
   "Madhya Pradesh",
+  "Madras",
   "Manipur",
   "Meghalaya",
+  "Mumbai",
   "Orissa",
-//  "Punjab and Haryana",
+  "Patna",
   "Rajasthan",
   "Sikkim",
   "Tripura",
   "Uttarakhand",
-  "Madras",
-  "Patna"
+  //"Andhra Pradesh",
+  //"Himachal Pradesh", 
+  //"Hyderabad",
+  //"Jammu Kashmir",
+  //"Punjab and Haryana"
 ] as const;
 
 export const BOMBAY_HIGH_COURT_BENCH = [
