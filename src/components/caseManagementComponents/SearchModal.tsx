@@ -45,10 +45,10 @@ export function SearchModal({
   if (!showModal) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl h-[70vh] sm:h-auto sm:max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b">
+        <div className="flex justify-between items-center p-4 border-b flex-shrink-0">
           <h3 className="text-lg font-semibold text-gray-900">
             {foundCases.length > 0 ? "Select Case(s) to Create" : "Search Case"}
           </h3>
@@ -61,7 +61,7 @@ export function SearchModal({
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-auto max-h-[80vh]">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0">
           {foundCases.length === 0 ? (
             <SearchForm
               searchParams={searchParams}

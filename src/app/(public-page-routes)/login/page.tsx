@@ -54,7 +54,7 @@ export default function LoginPage() {
       startLoading("LOGGING_IN");
       const loggedIn = await login({ email, password });
       if (!loggedIn.success) return;
-      router.push(routeConfig.privateRoutes.projects);
+      router.push(routeConfig.privateRoutes.cases);
     } else {
       if (!otpSent) {
         startLoading("SENDING_OTP");

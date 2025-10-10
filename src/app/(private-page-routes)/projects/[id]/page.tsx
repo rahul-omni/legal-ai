@@ -126,7 +126,7 @@ const ProjectFolderTable: React.FC = () => {
       </div>
     ) : (
     <div className="w-full h-full min-h-0 flex flex-col">
-      <div className="px-6 pt-6 flex items-start justify-between">
+      <div className="px-6 pt-6 flex items-start justify-between md:flex-row space-y-2 flex-col">
         <Header headerTitle={projectName} subTitle="Manage your legal project" />
         <div className="flex items-start gap-2">
           <Button disabled={isUploading} onClick={() => fileInputRef.current?.click()} icon={<Upload className="w-4 h-4" />} loading={isUploading}>

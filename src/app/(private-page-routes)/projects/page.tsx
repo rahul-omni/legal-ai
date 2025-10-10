@@ -150,7 +150,7 @@ const ProjectHub = () => {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="px-6 py-6 flex items-start justify-between">
+      <div className="px-6 py-6 flex items-start justify-between md:flex-row space-y-2 flex-col">
         <Header headerTitle="Project Hub" subTitle="Manage your legal projects" />
         <div className="flex items-start gap-2">
           <input type="file" ref={fileInputRef} className="hidden" accept=".txt,.doc,.docx,.pdf,.png,.jpg,.jpeg" onChange={(e) => handleFileUpload(e, false)} />
