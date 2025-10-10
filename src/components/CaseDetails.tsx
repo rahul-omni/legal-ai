@@ -307,11 +307,8 @@ export function CaseDetails({ id }: { id: string }) {
                           </span>
                         </div>
                         <h4 className="font-semibold text-text-dark">
-                          {detail.judgmentType ? 
-                            (detail.judgmentType === 'JUDGEMENT' ? 'Judgement' : 
-                             detail.judgmentType === 'ORDER' ? 'Order' : 
-                             detail.judgmentType) : 
-                            `Judgment ${idx + 1}`}
+                          {
+                            `Order`}
                         </h4>
                       </div>
 
