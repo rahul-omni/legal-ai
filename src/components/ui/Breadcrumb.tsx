@@ -23,7 +23,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
   className 
 }) => {
   const allItems = showHome 
-    ? [{ label: '', href: '/dashboard', icon: <Home className="w-3 h-3" /> }, ...items]
+    ? [{ label: '', href: '/cases', icon: <Home className="w-3 h-3" /> }, ...items]
     : items;
 
   return (

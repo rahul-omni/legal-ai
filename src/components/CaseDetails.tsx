@@ -11,16 +11,22 @@ export function CaseDetails({ id }: { id: string }) {
     const [caseItem, setCaseItem] = useState<CaseData | null>(null);
     const [caseDetails, setCaseDetails] = useState<CaseData[]>([]);
     const [loadingDetails, setLoadingDetails] = useState<boolean>(false);
+    const [loadingCaseItem, setLoadingCaseItem] = useState<boolean>(true);
 
     const getCaseDetailsFromUserCase = async (id: string): Promise<CaseData> => {
         console.log("Fetching case data for ID:", id);
-        const response = await fetch(`/api/cases/get-user-cases-by-id?id=${id}`);
-        console.log("API response status:", response.status);
-        const data = await response.json();
-        console.log("API response data:", data);
-        console.log("Setting caseItem to:", data);
-        setCaseItem(data);
-        return data;
+        setLoadingCaseItem(true);
+        try {
+            const response = await fetch(`/api/cases/get-user-cases-by-id?id=${id}`);
+            console.log("API response status:", response.status);
+            const data = await response.json();
+            console.log("API response data:", data);
+            console.log("Setting caseItem to:", data);
+            setCaseItem(data);
+            return data;
+        } finally {
+            setLoadingCaseItem(false);
+        }
     }
 
     const fetchCaseDetails = async (caseDetailData: CaseData) => {
@@ -167,24 +173,6 @@ export function CaseDetails({ id }: { id: string }) {
     }, [id]);
 
   
-  if (loadingDetails) {
-    return (
-      <div className="p-6 text-center">
-        <div className="w-12 h-12 bg-background-light rounded-full flex items-center justify-center mx-auto mb-4">
-          <Loader2 className="w-6 h-6 text-muted animate-spin" />
-        </div>
-        <p className="text-muted text-sm">Loading case details...</p>
-      </div>
-    );
-  }
-
-  if (!caseItem) {
-    return (
-      <div className="p-6 text-center">
-        <p className="text-muted text-sm">Case not found</p>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-background min-h-screen">
@@ -201,7 +189,7 @@ export function CaseDetails({ id }: { id: string }) {
                 Case Details
               </h1>
               <p className="text-sm text-text-light">
-                Diary Number: {caseItem.diaryNumber}
+                Diary Number: {caseItem?.diaryNumber || (loadingCaseItem ? 'Loading...' : 'N/A')}
               </p>
             </div>
           </div>
@@ -210,11 +198,29 @@ export function CaseDetails({ id }: { id: string }) {
 
       {/* Case Details Content */}
       <div className="p-6">
-        {caseDetails.length > 0 ? (
+        {loadingCaseItem ? (
+          <div className="text-center py-12">
+            <div className="w-12 h-12 bg-background-light rounded-full flex items-center justify-center mx-auto mb-4">
+              <Loader2 className="w-6 h-6 text-muted animate-spin" />
+            </div>
+            <p className="text-muted text-sm">Loading case details...</p>
+          </div>
+        ) : !caseItem ? (
+          <div className="text-center py-12">
+            <p className="text-muted text-sm">Case not found</p>
+          </div>
+        ) : loadingDetails ? (
+          <div className="text-center py-12">
+            <div className="w-12 h-12 bg-background-light rounded-full flex items-center justify-center mx-auto mb-4">
+              <Loader2 className="w-6 h-6 text-muted animate-spin" />
+            </div>
+            <p className="text-muted text-sm">Loading judgment details...</p>
+          </div>
+        ) : caseDetails.length > 0 ? (
           <div className="space-y-6">
             {/* Case Information Card - Show once */}
             <div className="bg-background-light rounded-lg border border-border shadow-sm">
-              <div className="px-6 py-4 border-b border-border bg-background">
+              <div className="px-6 py-4 border-b border-border bg-background-light">
                 <h3 className="text-lg font-semibold text-text-dark">Case Information</h3>
               </div>
               <div className="p-6">
@@ -299,7 +305,7 @@ export function CaseDetails({ id }: { id: string }) {
                     </div>
 
                     {/* Desktop: Inline layout */}
-                    <div className="hidden md:flex flex-row items-center justify-between px-6 py-4 border-b border-border bg-background">
+                    <div className="hidden md:flex flex-row items-center justify-between px-6 py-4 border-b border-border bg-background-light">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-info-light rounded-full flex items-center justify-center">
                           <span className="text-info font-semibold text-sm">
