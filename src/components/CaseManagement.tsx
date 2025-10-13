@@ -639,7 +639,16 @@ export function CaseManagement() {
         </div>
       </div>
 
-      {cases.length > 0 ? (
+      {isLoading ? (
+        <div className="bg-background pt-6">
+          <div className="flex flex-col items-center justify-center text-center py-12">
+            <div className="w-12 h-12 bg-background-light rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+            </div>
+            <p className="text-muted text-sm">Loading cases...</p>
+          </div>
+        </div>
+      ) : cases.length > 0 ? (
         <>
           {/* Cases List */}
           <CaseList
@@ -647,7 +656,7 @@ export function CaseManagement() {
           />
         </>
       ) : (
-        <div className=" bg-background pt-6">
+        <div className="bg-background pt-6">
           <div className="flex flex-col items-center justify-center text-center py-12">
             {/* Icon */}
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-2">

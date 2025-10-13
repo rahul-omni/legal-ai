@@ -9,6 +9,7 @@ const routeConfig: Record<string, { label: string; icon?: React.ReactNode }> = {
   '/': { label: 'Dashboard' },
   '/projects': { label: 'Projects' },
   '/cases': { label: 'Case Management' },
+  '/case-details': { label: 'Case Management' },
   '/editor': { label: 'Legal Editor' },
   '/team': { label: 'Team Management' },
   '/settings': { label: 'Settings' },
@@ -76,7 +77,9 @@ export const useBreadcrumbs = (
           // Handle static routes
           const config = routeConfig[currentPath];
           if (config) {
-            items.push({ label: config.label, href: currentPath, icon: config.icon });
+            // Special handling for case-details route - link to /cases instead
+            const href = currentPath === '/case-details' ? '/cases' : currentPath;
+            items.push({ label: config.label, href: href, icon: config.icon });
           } else {
             // Fallback for unknown routes
             items.push({ label: segment.charAt(0).toUpperCase() + segment.slice(1), href: currentPath });
