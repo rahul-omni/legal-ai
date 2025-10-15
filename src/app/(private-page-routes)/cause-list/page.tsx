@@ -1,11 +1,11 @@
 "use client";
 
-import { ContractAnalytics } from "@/components/ContractAnalytics";
+import CauseList from "@/components/CauseList";
 
 export default function AnalyticsPage() {
   return (
     <main className="flex-1">
-      <ContractAnalytics />
+      <CauseList />
     </main>
   );
 } 
