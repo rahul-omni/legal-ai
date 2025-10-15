@@ -7,6 +7,7 @@ import {
   Clock,
   Users,
   Bell,
+  ListChecks,
   Menu,
 } from "lucide-react";
 import Link from "next/link";
@@ -21,6 +22,12 @@ const navigationItems = [
     href: "/cases",
     icon: Gavel,
     id: 'cases'
+  },
+  {
+    name: "Cause List",
+    href: "/cause-list",
+    icon: ListChecks,
+    id: 'cause-list'
   },
   {
     name: "Project Hub",

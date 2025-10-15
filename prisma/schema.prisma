@@ -24,6 +24,7 @@ model User {
   mobileOtpAttempts       Int?                @default(0) @map("mobile_otp_attempts")
   mobileOtpExpiry         DateTime?           @map("mobile_otp_expiry")
   otp                     String?             @map("otp")
+  causeLists              Causelist[]
   client                  client[]
   filesReviewRequests     FileReview[]        @relation("requester_reviews")
   filesToReview           FileReview[]        @relation("reviewer_reviews")
@@ -185,8 +186,7 @@ model FileReviewComment {
   @@map("review_comments")
 }
 
-
-  model CaseManagement {
+model CaseManagement {
   id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   serialNumber       String               @map("serial_number")
   diaryNumber        String               @map("diary_number")
@@ -209,28 +209,22 @@ model FileReviewComment {
   judgment_type      String?              @default("")
   courtComplex       String?
   courtType          String?
-
-   // NEW FIELDS FOR NCLT DATA:
-  filingNumber       String?              @map("filing_number")        // "071010200002022"
-  filingDate         String?              @map("filing_date")          // "01-01-2022"
-  partyName          String?              @map("party_name")           // "Bank of Baroda VS Mrs. Anju Bansal"
-  petitionerAdvocate String?              @map("petitioner_advocate")  // "Rajiv kumar"
-  respondentAdvocate String?              @map("respondent_advocate")  // From case details
-  registeredOn       String?              @map("registered_on")        // "20-01-2022"
-  lastListed         String?              @map("last_listed")          // "01-08-2025"
-  nextListingDate    String?              @map("next_listing_date")    // "08-09-2025"
-  caseStatus         String?              @map("case_status")          // "Pending"
-  
-  // JSON FIELDS FOR STRUCTURED DATA:
-  orderDetails       Json[]               @map("order_details")        // Array of order history
-  allParties         Json[]               @map("all_parties")          // Complete party information
-  listingHistory     Json[]               @map("listing_history")      // History of listings
-  
+  allParties         Json[]               @map("all_parties")
+  caseStatus         String?              @map("case_status")
+  filingDate         String?              @map("filing_date")
+  filingNumber       String?              @map("filing_number")
+  lastListed         String?              @map("last_listed")
+  listingHistory     Json[]               @map("listing_history")
+  nextListingDate    String?              @map("next_listing_date")
+  orderDetails       Json[]               @map("order_details")
+  partyName          String?              @map("party_name")
+  petitionerAdvocate String?              @map("petitioner_advocate")
+  registeredOn       String?              @map("registered_on")
+  respondentAdvocate String?              @map("respondent_advocate")
   extractedJudgments ExtractedJudgments[] @relation("case_extracted_judgments")
 
   @@map("case_management")
 }
-
 
 model ExtractedJudgments {
   id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -249,52 +243,39 @@ model ExtractedJudgments {
 }
 
 model UserCase {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-  status       String   @default("PENDING")
-  userId       String   @map("user_id") @db.Uuid
-  diaryNumber  String   @map("diary_number")
-  caseType     String?  @default("") @map("case_type")
-  city         String?  @default("")
-  court        String   @default("")
-  district     String?  @default("")
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+  status       String      @default("PENDING")
+  userId       String      @map("user_id") @db.Uuid
+  diaryNumber  String      @map("diary_number")
+  caseType     String?     @default("") @map("case_type")
+  city         String?     @default("")
+  court        String      @default("")
+  district     String?     @default("")
   bench        String?
   courtComplex String?
   courtType    String?
-  case_number  String?  @default("")
-  user         User     @relation("user_usercases", fields: [userId], references: [id])
+  case_number  String?     @default("")
+  last_synced  DateTime?   @map("last_synced")
+  causeLists   Causelist[] @relation("cause_list")
+  user         User        @relation("user_usercases", fields: [userId], references: [id])
+  tentative_date  DateTime?   @map("tentative_date")
 
   @@map("user_cases")
 }
 
 model Causelist {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  serial_number    String?  @default("")
-  dairy_number    String?  @default("")
-  case_number     String?  @default("")
-  full_case_number     String?  @default("")
-  parties         String?  @default("")
-  advocates       String?  @default("")
-  city            String?  @default("")
-  court           String   @default("")
-  district        String?  @default("")
-  date            String   @default("")
-  search_by       String   @default("")
-  list_type       String   @default("")
-  cause_list_type   String   @default("") 
-  main_and_supply String   @default("")
-  court_no        String?  @default("")
-  aor_code        String?  @default("")
-  judge_name      String?  @default("")
-  party_name      String?  @default("")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-          
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  caseId     String   @map("case_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  created_at DateTime @default(now())
+  case       UserCase @relation("cause_list", fields: [caseId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
   @@map("cause_list")
 }
 
- 
 model client {
   name         String
   organization String

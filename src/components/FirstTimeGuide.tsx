@@ -36,6 +36,15 @@ export default function FirstTimeGuide() {
             },
           },
           {
+            element: "#cause-list",
+            popover: {
+              title: "📂 Cause List",
+              description: "Your central hub for viewing cause lists.",
+              side: "bottom",
+              align: "start",
+            },
+          },
+          {
             element: "#projecthub",
             popover: {
               title: "📂 Project Hub",

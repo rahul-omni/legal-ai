@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Search } from "lucide-react";
+import { Loader2, Plus, Search } from "lucide-react";
 import toast from "react-hot-toast";
 import { CaseData, SearchParams, ValidationErrors } from "./caseManagementComponents/types";
 import { CaseList } from "./caseManagementComponents/CaseList";
@@ -327,7 +327,7 @@ export function CaseManagement() {
     searchUrl.searchParams.append("year", searchParams.year);
 
     if (searchParams.number && searchParams.year) {
-      searchUrlSC.searchParams.append("diaryNumber", `${searchParams.number}/${searchParams.year}`);
+      searchUrlSC.searchParams.append("diaryNumber", searchParams.number);
       searchUrlSC.searchParams.append("year", searchParams.year);
       searchUrlDC.searchParams.append("diaryNumber", searchParams.number);
       searchUrlDC.searchParams.append("year", searchParams.year);
