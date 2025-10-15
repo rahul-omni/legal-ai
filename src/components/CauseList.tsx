@@ -69,7 +69,7 @@ const CauseList: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-3">
+    <div className="flex items-center justify-center bg-gray-50 p-3">
       <div className="bg-white shadow-xl rounded-2xl p-8 w-full max-w-5xl">
         {/* Legend */}
         <div className="flex justify-center gap-4 mt-6 text-sm text-gray-600">

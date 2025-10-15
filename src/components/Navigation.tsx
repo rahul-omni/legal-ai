@@ -24,10 +24,10 @@ const navigationItems = [
     id: 'cases'
   },
   {
-    name: "Cause List",
-    href: "/cause-list",
+    name: "Calendar",
+    href: "/calendar",
     icon: ListChecks,
-    id: 'cause-list'
+    id: 'calendar'
   },
   {
     name: "Project Hub",

@@ -36,10 +36,10 @@ export default function FirstTimeGuide() {
             },
           },
           {
-            element: "#cause-list",
+            element: "#calendar",
             popover: {
-              title: "📂 Cause List",
-              description: "Your central hub for viewing cause lists.",
+              title: "📅 Calendar",
+              description: "Your central hub for managing legal calendars.",
               side: "bottom",
               align: "start",
             },
