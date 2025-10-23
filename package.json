@@ -81,7 +81,7 @@
     "@types/lodash": "^4.17.17",
     "@types/node": "^22",
     "@types/node-cron": "^3.0.11",
-    "@types/react": "^19",
+    "@types/react": "19.2.2",
     "@types/react-dom": "^19",
     "@types/turndown": "^5.0.5",
     "@types/twilio": "^3.19.2",
@@ -95,6 +95,6 @@
     "prisma": "^6.7.0",
     "tailwindcss": "^3.3.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "5.9.3"
   }
 }

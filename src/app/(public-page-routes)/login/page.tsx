@@ -131,118 +131,66 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left side - Graphic (same as before) */}
-              <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary/90 to-primaryDark relative overflow-hidden">
-      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
-         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
-           <div className="py-16">
-             <h2 className="text-4xl font-bold mb-6">Welcome Back</h2>
-             <p className="text-lg text-white/80">
-               Streamline your legal workflow with AI-powered insights
-             </p>
-             <div className="mt-12 relative h-64">
-               <div className="absolute inset-0 flex items-center justify-center">
-                 {/* Modern geometric SVG pattern */}
-                 <svg
-                   width="320"
-                   height="200"
-                   viewBox="0 0 320 200"
-                   fill="none"
-                   xmlns="http://www.w3.org/2000/svg"
-                   className="opacity-90"
-                 >
-                   <rect
-                     x="30"
-                     y="30"
-                     width="60"
-                     height="60"
-                     rx="16"
-                     fill="url(#rectGrad)"
-                     opacity="0.18"
-                   />
-                   <circle
-                     cx="220"
-                     cy="60"
-                     r="36"
-                     fill="url(#circleGrad)"
-                     opacity="0.13"
-                   />
-                   <polygon
-                     points="160,160 200,190 120,190"
-                     fill="url(#polyGrad)"
-                     opacity="0.16"
-                   />
-                   <line
-                     x1="40"
-                     y1="170"
-                     x2="280"
-                     y2="170"
-                     stroke="#fff"
-                     strokeWidth="2"
-                     opacity="0.08"
-                   />
-                   <ellipse
-                     cx="80"
-                     cy="140"
-                     rx="28"
-                     ry="12"
-                     fill="#fff"
-                     opacity="0.07"
-                   />
-                   <ellipse
-                     cx="260"
-                     cy="140"
-                     rx="18"
-                     ry="8"
-                     fill="#fff"
-                     opacity="0.09"
-                   />
-                   <rect
-                     x="250"
-                     y="30"
-                     width="18"
-                     height="18"
-                     rx="4"
-                     fill="#fff"
-                     opacity="0.10"
-                   />
-                   <defs>
-                     <linearGradient
-                       id="rectGrad"
-                       x1="30"
-                       y1="30"
-                       x2="90"
-                       y2="90"
-                       gradientUnits="userSpaceOnUse"
-                     >
-                       <stop stopColor="#fff" stopOpacity="0.5" />
-                       <stop offset="1" stopColor="#fff" stopOpacity="0.1" />
-                     </linearGradient>
-                     <radialGradient
-                       id="circleGrad"
-                       cx="0"
-                       cy="0"
-                       r="1"
-                       gradientTransform="translate(220 60) scale(36)"
-                       gradientUnits="userSpaceOnUse"
-                     >
-                       <stop stopColor="#fff" stopOpacity="0.4" />
-                       <stop offset="1" stopColor="#fff" stopOpacity="0.08" />
-                     </radialGradient>
-                     <linearGradient
-                       id="polyGrad"
-                       x1="120"
-                       y1="190"
-                       x2="200"
-                       y2="190"
-                       gradientUnits="userSpaceOnUse"
-                     >
-                       <stop stopColor="#fff" stopOpacity="0.3" />
-                       <stop offset="1" stopColor="#fff" stopOpacity="0.08" />
-                     </linearGradient>
-                   </defs>
+      {/* Left side - Branding & Message */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gray-50 p-8">
+        <div className="w-full max-w-lg mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
+          {/* Background Pattern */}
+          <div className="relative bg-gradient-to-br from-indigo-100 via-purple-50 to-cyan-100 h-full">
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute inset-0" style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236366f1' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+              }}></div>
+            </div>
+            
+            {/* Abstract Graphics */}
+            <div className="absolute bottom-0 right-0 opacity-20">
+              <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="150" cy="150" r="40" fill="#6366f1" opacity="0.3"/>
+                <circle cx="100" cy="120" r="20" fill="#8b5cf6" opacity="0.2"/>
+                <circle cx="170" cy="100" r="15" fill="#06b6d4" opacity="0.2"/>
                  </svg>
+            </div>
+            
+            {/* Content */}
+            <div className="relative z-10 flex flex-col justify-center px-12 py-16 text-gray-800 h-full">
+              {/* Main Title */}
+              <div className="mb-8">
+                <h1 className="text-4xl font-light mb-6 leading-tight">
+                  <span className="font-normal text-gray-600">FUTURE OF</span><br/>
+                  <span className="font-bold text-indigo-700">LEGAL PRACTICE</span><br/>
+                  <span className="font-normal text-gray-600">MANAGEMENT</span>
+                </h1>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-base text-gray-600">Intelligent case alerts</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-base text-gray-600">Real-time case updates</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-base text-gray-600">AI-powered translations</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-base text-gray-600">Automated document drafting</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Text */}
+              <div className="mt-auto">
+                <p className="text-sm text-gray-500">Advanced AI-powered legal infrastructure</p>
                </div>
              </div>
            </div>
@@ -250,32 +198,41 @@ export default function LoginPage() {
        </div>
 
       {/* Right side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-info-light">
-        <div className="w-full max-w-md space-y-8 bg-background-light rounded-2xl shadow-xl p-8 border border-border-light">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="w-full max-w-md space-y-6">
+          {/* Logo */}
+          <div className="flex justify-center mb-16">
+            <img 
+              src="/logo.png" 
+              alt="Vakeel Assist Logo" 
+              className="h-14 w-auto object-contain"
+            />
+          </div>
+          
           <div>
-            <h1 className="text-3xl font-bold text-text">Sign in</h1>
-            <p className="mt-2 text-sm text-text-light">
-              Access your legal workspace
+            <h1 className="text-2xl font-semibold text-gray-900 mb-2">Sign in</h1>
+            <p className="text-gray-600">
+              Welcome back! Please sign in to access your legal workspace.
             </p>
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-border">
+          <div className="flex border-b border-gray-200">
             <button
-              className={`flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm ${
+              className={`flex-1 py-3 px-1 text-center border-b-2 font-medium text-sm ${
                 activeTab === "individual"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted hover:text-text-light hover:border-border-dark"
+                  ? "border-indigo-600 text-indigo-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
               onClick={() => handleTabChange("individual")}
             >
               Individual
             </button>
             <button
-              className={`flex-1 py-4 px-1 text-center border-b-2 font-medium text-sm ${
+              className={`flex-1 py-3 px-1 text-center border-b-2 font-medium text-sm ${
                 activeTab === "organization"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted hover:text-text-light hover:border-border-dark"
+                  ? "border-indigo-600 text-indigo-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
               onClick={() => handleTabChange("organization")}
             >
@@ -288,27 +245,27 @@ export default function LoginPage() {
               {activeTab === "organization" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-text-light">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Email Address
                     </label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="mt-1 block w-full px-4 py-3 border border-border rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
-                      placeholder="Enter your email(optional)"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                      placeholder="Enter your email address"
                       disabled={isLoading("LOGGING_IN")}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-text-light">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Password
                     </label>
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="mt-1 block w-full px-4 py-3 border border-border rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                       placeholder="Enter your password"
                       required
                       disabled={isLoading("LOGGING_IN")}
@@ -320,14 +277,14 @@ export default function LoginPage() {
               {activeTab === "individual" && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-text-light">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Mobile Number
                     </label>
                     <input
                       type="tel"
                       value={mobileNumber}
                       onChange={(e) => setMobileNumber(e.target.value)}
-                      className="mt-1 block w-full px-4 py-3 border border-border rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                       placeholder="Enter your mobile number"
                       required
                       disabled={isLoading("SENDING_OTP") || isLoading("VERIFYING_OTP")}
@@ -336,7 +293,7 @@ export default function LoginPage() {
 
                   {otpSent && (
                     <div>
-                      <label className="block text-sm font-medium text-text-light">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         OTP (Sent to your mobile)
                       </label>
                       <div className="flex gap-2">
@@ -344,7 +301,7 @@ export default function LoginPage() {
                           type="text"
                           value={otp}
                           onChange={(e) => setOtp(e.target.value)}
-                          className="mt-1 block w-full px-4 py-3 border border-border rounded-lg shadow-sm focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                           placeholder="Enter 6-digit OTP"
                           required
                           maxLength={6}
@@ -356,7 +313,7 @@ export default function LoginPage() {
                           type="button"
                           onClick={handleResendOtp}
                           disabled={resendDisabled || isLoading("SENDING_OTP")}
-                          className="text-xs text-primary hover:text-primaryDark font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="text-sm text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {resendDisabled
                             ? `Resend OTP in ${resendTimer}s`
@@ -365,7 +322,7 @@ export default function LoginPage() {
                             : "Resend OTP"}
                         </button>
                         {otp.length > 0 && (
-                          <span className="text-xs text-muted">
+                          <span className="text-xs text-gray-500">
                             {otp.length}/6 digits
                           </span>
                         )}
@@ -391,7 +348,7 @@ export default function LoginPage() {
                   ? isLoading("VERIFYING_OTP") || !otp || otp.length !== 6
                   : isLoading("SENDING_OTP") || !mobileNumber
               }
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-primaryDark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {activeTab === "organization" ? (
                 isLoading("LOGGING_IN") ? (
@@ -481,27 +438,25 @@ export default function LoginPage() {
 
           <div className="mt-6 text-center space-y-4">
             {activeTab === "organization" && (
-              <p className="text-sm text-text-light">
+              <p className="text-sm text-gray-600">
                 <button 
                   type="button"
-                  className="text-primary hover:text-primaryDark font-medium"
+                  className="text-indigo-600 hover:text-indigo-700 font-medium"
                   // onClick={() => router.push(routeConfig.publicRoutes.forgotPassword)}
                 >
                   Forgot your password?
                 </button>
               </p>
             )}
-            <p className="text-sm text-text-light">
+            <p className="text-sm text-gray-600">
               {"Don't have an account?"}{" "}
               <button
                 type="button"
                 onClick={() => router.push(routeConfig.publicRoutes.signup)}
-                className="text-primary hover:text-primaryDark font-medium"
+                className="text-indigo-600 hover:text-indigo-700 font-medium"
               >
                 Sign up
               </button>
-
-
             </p>
           </div>
         </div>
