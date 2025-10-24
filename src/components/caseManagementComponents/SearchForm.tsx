@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import {  ALLAHABAD_HIGH_COURT_ALLAHABAD_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, ALLAHABAD_HIGH_COURT_ALLAHABAD_HIGH_COURT_LUCKNOW_BENCH_CASE_TYPES_VALUE_MAPPING, ALLAHABAD_HIGH_COURT_HIGH_COURT_BENCH, APPELLATE_BOMBAY_COURT_CASE_TYPES_VALUE_MAPPING,   AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, BOMBAY_HIGH_COURT_BENCH, CALCUTTA_HIGH_COURT_APPELLATE_SIDE_CASE_TYPES_VALUE_MAPPING, CALCUTTA_HIGH_COURT_CIRCUIT_BENCH_AT_JALPAIGURI_CASE_TYPES_VALUE_MAPPING, CALCUTTA_HIGH_COURT_CIRCUIT_BENCH_AT_PORT_BLAIR_CASE_TYPES_VALUE_MAPPING, CALCUTTA_HIGH_COURT_HIGH_COURT_BENCH, CALCUTTA_HIGH_COURT_ORIGINAL_SIDE_CASE_TYPES_VALUE_MAPPING, DELHI_COURT_CASE_TYPES_VALUE_MAPPING, GAUHATI_HIGH_COURT_AIZAWL_BENCH_CASE_TYPES_VALUE_MAPPING, GAUHATI_HIGH_COURT_HIGH_COURT_BENCH, GAUHATI_HIGH_COURT_ITANAGAR_BENCH_CASE_TYPES_VALUE_MAPPING, GAUHATI_HIGH_COURT_KOHIMA_BENCH_CASE_TYPES_VALUE_MAPPING, GAUHATI_HIGH_COURT_PRINCIPAL_SEAT_AT_GUWAHATI_CASE_TYPES_VALUE_MAPPING, GOA_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_CITY,  HIGH_COURT_FOR_STATE_OF_TELANGANA_HIGH_COURT_BENCH,  HIGH_COURT_FOR_STATE_OF_TELANGANA_PRINCIPAL_BENCH_AT_HYDERABAD_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_ANDHRA_PRADESH_HIGH_COURT_BENCH,  HIGH_COURT_OF_ANDHRA_PRADESH_PRINCIPAL_BENCH_AT_ANDHRA_PRADESH_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_CHHATTISGARH_HIGH_COURT_BENCH,  HIGH_COURT_OF_CHHATTISGARH_PRINCIPAL_BENCH_CHHATTISGARH_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_DELHI_HIGH_COURT_BENCH,  HIGH_COURT_OF_GUJARAT_GUJARAT_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_GUJARAT_HIGH_COURT_BENCH,  HIGH_COURT_OF_HIMACHAL_PRADESH_HIGH_COURT_BENCH,  HIGH_COURT_OF_HIMACHAL_PRADESH_HIGH_COURT_OF_HIMACHAL_PRADESH_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_JAMMU_AND_KASHMIR_HIGH_COURT_BENCH,  HIGH_COURT_OF_JAMMU_AND_KASHMIR_JAMMU_WING_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_JAMMU_AND_KASHMIR_SRINAGAR_WING_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_JHARKHAND_HIGH_COURT_BENCH,  HIGH_COURT_OF_JHARKHAND_PRINCIPAL_BENCH_JHARKHAND_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_KARNATAKA_BENCH_AT_DHARWAD_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_KARNATAKA_BENCH_AT_KALBURAGI_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_KARNATAKA_HIGH_COURT_BENCH,  HIGH_COURT_OF_KARNATAKA_PRINCIPAL_BENCH_AT_BENGALURU_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_KERALA_HIGH_COURT_BENCH,  HIGH_COURT_OF_KERALA_HIGH_COURT_OF_KERALA_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_MADHYA_PRADESH_HIGH_COURT_BENCH,  HIGH_COURT_OF_MADHYA_PRADESH_HIGH_COURT_OF_MADHYA_PRADESH_GWALIOR_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_MADHYA_PRADESH_HIGH_COURT_OF_MADHYA_PRADESH_INDORE_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_MADHYA_PRADESH_HIGH_COURT_OF_MADHYA_PRADESH_JABALPUR_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_MANIPUR_HIGH_COURT_BENCH,  HIGH_COURT_OF_MANIPUR_HIGH_COURT_OF_MANIPUR_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_MEGHALAYA_HIGH_COURT_BENCH,  HIGH_COURT_OF_MEGHALAYA_HIGH_COURT_OF_MEGHALAYA_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_ORISSA_HIGH_COURT_BENCH,  HIGH_COURT_OF_ORISSA_HIGH_COURT_OF_ORISSA_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_PUNJAB_AND_HARYANA_HIGH_COURT_BENCH,  HIGH_COURT_OF_PUNJAB_AND_HARYANA_HIGH_COURT_OF_PUNJAB_AND_HARYANA_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_RAJASTHAN_HIGH_COURT_BENCH,  HIGH_COURT_OF_RAJASTHAN_HIGH_COURT_BENCH_AT_JAIPUR_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_RAJASTHAN_RAJASTHAN_HIGH_COURT_PRINCIPAL_SEAT_JODHPUR_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_SIKKIM_HIGH_COURT_BENCH,  HIGH_COURT_OF_SIKKIM_HIGH_COURT_OF_SIKKIM_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_TRIPURA_HIGH_COURT_BENCH,  HIGH_COURT_OF_TRIPURA_HIGH_COURT_OF_TRIPURA_CASE_TYPES_VALUE_MAPPING,  HIGH_COURT_OF_UTTARAKHAND_HIGH_COURT_BENCH,  HIGH_COURT_OF_UTTARAKHAND_HIGH_COURT_OF_UTTARAKHAND_CASE_TYPES_VALUE_MAPPING,  KOLHAPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,   MADRAS_HIGH_COURT_HIGH_COURT_BENCH,   MADRAS_HIGH_COURT_MADURAI_BENCH_OF_MADRAS_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,   MADRAS_HIGH_COURT_PRINCIPAL_BENCH_OF_MADRAS_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,   NAGPUR_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,  NCLT_BENCH,  NCLT_CASE_TYPE_MAPPINGS,  ORIGINAL_SIDE_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,  PATNA_HIGH_COURT_HIGH_COURT_BENCH,  PATNA_HIGH_COURT_PRINCIPAL_BENCH_PATNA_CASE_TYPES_VALUE_MAPPING,  SPECIAL_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING, SUPREME_COURT_CASE_TYPES } from "@/lib/constants";
 import { SearchParams, ValidationErrors } from "./types";
 import { getAvailableDistricts, getCourtComplexesForDistrict, getDistrictCourtCaseTypes } from "@/helper/utils";
+import toast from "react-hot-toast";
 
 interface SearchFormProps {
   searchParams: SearchParams;
@@ -27,7 +28,9 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
     []
   );
   const [messageIndex, setMessageIndex] = useState(0);
-   
+    const [showCustomToast, setShowCustomToast] = useState(false);
+  const [customToastMessage, setCustomToastMessage] = useState("");
+
   useEffect(() => {
     if (!isLoading) {
       setMessageIndex(0);
@@ -203,7 +206,71 @@ const caseTypeOptions = useMemo(() => {
 }, [searchParams.city, searchParams.bench]);
 
  
- 
+ // Add this validation function after the existing useMemo hooks
+const isFormValid = useMemo(() => {
+  // Basic required fields for all court types
+  if (!searchParams.court || !searchParams.number || !searchParams.year) {
+    return false;
+  }
+
+  // Court-specific validations
+  switch (searchParams.court) {
+    case "Supreme Court":
+      return !!(searchParams.caseType);
+      
+    case "High Court":
+      return !!(
+        searchParams.city && 
+        searchParams.caseType &&
+        // Only require bench if bench options are available for the selected city
+        (benchOptions.length === 0 || searchParams.bench)
+      );
+      
+    case "District Court":
+      return !!(
+        searchParams.district && 
+        searchParams.courtComplex && 
+        searchParams.caseType
+      );
+      
+    case "Nclt Court":
+      return !!(
+        searchParams.bench && 
+        searchParams.caseType
+      );
+      
+    default:
+      return false;
+  }
+}, [
+  searchParams.court, 
+  searchParams.number, 
+  searchParams.year, 
+  searchParams.caseType,
+  searchParams.city,
+  searchParams.bench,
+  searchParams.district,
+  searchParams.courtComplex,
+  benchOptions.length
+]);
+const handleSearchClick = () => {
+  // Don't proceed if form is not valid
+  if (!isFormValid) {
+    return;
+  }
+
+  // Show custom toast above the search button
+  setCustomToastMessage("Searching a case for the first time might take around a minute");
+  setShowCustomToast(true);
+  
+  // Hide the custom toast after 8 seconds
+  setTimeout(() => {
+    setShowCustomToast(false);
+  }, 8000);
+  
+  // Call the actual search function
+  onSearch();
+};
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Form Header */}
@@ -597,11 +664,27 @@ const caseTypeOptions = useMemo(() => {
             </select>
           </div>
         )}
-
+        {/* Custom Toast positioned above search button */}
+      {showCustomToast && (
+  <div className="relative">
+    <div className="absolute -top-4 left-0 right-0 z-50 flex justify-center">
+      <div 
+        className="px-4 py-2 rounded-lg max-w-md text-center text-sm font-medium animate-fade-in"
+        style={{
+          color: '#10B981', // Green text color
+          backgroundColor: 'transparent', // No background
+          animation: 'fadeIn 0.3s ease-in-out'
+        }}
+      >
+        {customToastMessage}
+      </div>
+    </div>
+  </div>
+)}
         {/* Search Button */}
-        <div className="pt-4">
+        {/* <div className="pt-4">
           <button
-            onClick={onSearch}
+            onClick={ handleSearchClick}
             className="w-full px-4 py-2 bg-primary text-white rounded-md font-medium hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             disabled={isLoading}
           >
@@ -617,7 +700,36 @@ const caseTypeOptions = useMemo(() => {
               </>
             )}
           </button>
-        </div>
+        </div> */}
+        
+ {/* Search Button */}
+<div className="pt-4">
+  <button
+    onClick={handleSearchClick}
+    className={`w-full px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-2 ${
+      isFormValid && !isLoading
+        ? 'bg-primary text-white hover:bg-primary-dark cursor-pointer'
+        : 'bg-blue-500 text-white cursor-not-allowed opacity-75'
+    }`}
+    disabled={!isFormValid || isLoading}
+  >
+    {isLoading ? (
+      <>
+        <Loader2 className="w-4 h-4 animate-spin" />
+        <span className="text-white">
+          {loadingMessages[messageIndex]}
+        </span>
+      </>
+    ) : (
+      <>
+        <Search className="w-4 h-4" />
+        <span className="text-white">
+          {isFormValid ? 'Search Cases' : 'Fill All Required Fields'}
+        </span>
+      </>
+    )}
+  </button>
+</div>
       </div>
     </div>
   );
