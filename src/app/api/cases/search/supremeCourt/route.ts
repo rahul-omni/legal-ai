@@ -33,7 +33,7 @@ export async function GET(request: NextAuthRequest) {
         let caseData: any[] = [];
         const { searchParams } = new URL(request.url);
 
-        let queryParams = {
+        const queryParams = {
             diaryNumber: searchParams.get('diaryNumber')?.trim(),
             year: searchParams.get('year')?.trim(),
             court: searchParams.get('court')?.trim() || "",
@@ -53,7 +53,7 @@ export async function GET(request: NextAuthRequest) {
 
             const caseNumbersArray = getCaseNumber(validated.diaryNumber!, validated.year!, validated.caseType!);
             console.log("Case numbers array:", caseNumbersArray);
-            
+
             // Create OR conditions for all case number variations
             const caseNumberConditions = caseNumbersArray.map(caseNumber => ({
                 caseNumber: {
@@ -61,7 +61,7 @@ export async function GET(request: NextAuthRequest) {
                     mode: Prisma.QueryMode.insensitive
                 }
             }));
-            
+
             caseData = await prisma.caseManagement.findMany({
                 where: {
                     OR: caseNumberConditions,
@@ -103,7 +103,7 @@ export async function GET(request: NextAuthRequest) {
             }, { status: 400 });
         }
 
-        if(caseData.length > 0){
+        if (caseData.length > 0) {
             return NextResponse.json({
                 success: true,
                 message: "Cases found",
@@ -112,7 +112,7 @@ export async function GET(request: NextAuthRequest) {
         }
 
         const scrapperURL = process.env.SERVICE_URL + "supremeCourtOTF";
-        
+
         let payload = {}
 
         if (hasDiaryNumberSearch && hasCaseType && validated.caseType !== "Diary Number") {
@@ -143,8 +143,8 @@ export async function GET(request: NextAuthRequest) {
         if (scrapperResponse.success && scrapperResponse.data && Array.isArray(scrapperResponse.data) && scrapperResponse.data.length > 0) {
             caseNumberResponse = scrapperResponse.data[0]['case_number'] || null;
         }
-         
-        if(caseNumberResponse){
+
+        if (caseNumberResponse) {
             caseData = await prisma.caseManagement.findMany({
                 where: {
                     caseNumber: {

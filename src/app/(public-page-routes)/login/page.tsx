@@ -156,6 +156,7 @@ export default function LoginPage() {
               {/* Main Title */}
               <div className="mb-8">
                 <h1 className="text-4xl font-light mb-6 leading-tight">
+                  <span className="font-normal text-gray-600">“THE”</span><br/>
                   <span className="font-normal text-gray-600">FUTURE OF</span><br/>
                   <span className="font-bold text-indigo-700">LEGAL PRACTICE</span><br/>
                   <span className="font-normal text-gray-600">MANAGEMENT</span>
