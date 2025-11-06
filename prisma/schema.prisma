@@ -191,7 +191,6 @@ model CaseManagement {
   serialNumber       String?              @map("serial_number")
   diaryNumber        String?              @map("diary_number")
   caseNumber         String?              @map("case_number")
-  cnrNumber         String?              @map("cnr_number")
   parties            String?
   advocates          String?
   bench              String?
@@ -343,6 +342,43 @@ model cause_list_files {
   created_at      DateTime @default(now())
   updated_at      DateTime
   link            String   @default("")
+}
+
+model case_details {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  serial_number       String
+  diary_number        String
+  case_number         String?
+  parties             String?
+  advocates           String?
+  bench               String?
+  judgment_by         String?
+  judgment_date       String?
+  court               String
+  date                DateTime @default(now())
+  created_at          DateTime @default(now())
+  updated_at          DateTime
+  judgment_url        Json
+  file_path           String?  @default("")
+  judgment_text       String[]
+  case_type           String?  @default("")
+  city                String?  @default("")
+  district            String?  @default("")
+  judgment_type       String?  @default("")
+  courtComplex        String?
+  courtType           String?
+  all_parties         Json[]
+  case_status         String?
+  filing_date         String?
+  filing_number       String?
+  last_listed         String?
+  listing_history     Json[]
+  next_listing_date   String?
+  order_details       Json[]
+  party_name          String?
+  petitioner_advocate String?
+  registered_on       String?
+  respondent_advocate String?
 }
 
 enum OtpStatus {
