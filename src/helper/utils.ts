@@ -1,4 +1,4 @@
-import {SUPREME_COURT_CASE_TYPES_VALUE_MAPPING, DISTRICT_COURT_CASE_TYPES_1, DISTRICT_COURT_CASE_TYPES_2, DISTRICT_COURT_CASE_TYPES_3} from "@/lib/constants";
+import {SUPREME_COURT_CASE_TYPES_VALUE_MAPPING, DISTRICT_COURT_CASE_TYPES_1, DISTRICT_COURT_CASE_TYPES_2, DISTRICT_COURT_CASE_TYPES_3, EAST_DELHI_COURT_CASE_TYPES} from "@/lib/constants";
 
 export function trimName(name: string): string {
   if (typeof name !== "string") return "";
@@ -51,6 +51,15 @@ export const DISTRICT_COURT_CONFIGURATIONS = {
         caseTypes: DISTRICT_COURT_CASE_TYPES_3
       }
     }
+  },
+   "East District Court, Delhi": {
+    name: "East District Court, Delhi",
+    courtComplexes: {
+      "Karkardooma Court Complex": {
+        caseTypes: EAST_DELHI_COURT_CASE_TYPES
+      }
+       
+    }
   }
   // Future districts can be added here like:
   // "delhi": { ... },
@@ -58,12 +67,19 @@ export const DISTRICT_COURT_CONFIGURATIONS = {
 } as const;
 
 // Helper function to get case types for a specific district and court complex
-export function getDistrictCourtCaseTypes(district: string, courtComplex: string) {
+export function getDistrictCourtCaseTypes1(district: string, courtComplex: string) {
   const districtConfig = DISTRICT_COURT_CONFIGURATIONS[district as keyof typeof DISTRICT_COURT_CONFIGURATIONS];
   if (!districtConfig) return [];
   
   const complexConfig = districtConfig.courtComplexes[courtComplex as keyof typeof districtConfig.courtComplexes];
-  return complexConfig?.caseTypes || [];
+  // return complexConfig?.caseTypes || [];
+}
+export function getDistrictCourtCaseTypes(district: string, courtComplex: string) {
+  const districtConfig = DISTRICT_COURT_CONFIGURATIONS[district as keyof typeof DISTRICT_COURT_CONFIGURATIONS];
+  if (!districtConfig) return [];
+
+  const complexConfig = districtConfig.courtComplexes[courtComplex as keyof (typeof districtConfig.courtComplexes)];
+  return (complexConfig as { caseTypes: any[] } | undefined)?.caseTypes || [];
 }
 
 // Helper function to get available districts

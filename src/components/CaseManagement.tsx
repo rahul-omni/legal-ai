@@ -320,6 +320,7 @@ export function CaseManagement() {
     const searchUrl = new URL("/api/cases/search", window.location.origin);
     const searchUrlSC = new URL("/api/cases/search/supremeCourt", window.location.origin);
     const searchUrlDC = new URL("/api/cases/search/districtCourt", window.location.origin);
+    const searchUrlEastDelhi = new URL("/api/cases/search/districtEastDelhiCourt", window.location.origin);
     const searchUrlNCLT = new URL("/api/cases/search/ncltCourt", window.location.origin);
 
     // High Court Search URL
@@ -333,6 +334,8 @@ export function CaseManagement() {
       searchUrlDC.searchParams.append("year", searchParams.year);
       searchUrlNCLT.searchParams.append("diaryNumber", searchParams.number);
       searchUrlNCLT.searchParams.append("year", searchParams.year);
+      searchUrlEastDelhi.searchParams.append("diaryNumber", searchParams.number);
+      searchUrlEastDelhi.searchParams.append("year", searchParams.year);
     }
 
     if (searchParams.court) {
@@ -340,6 +343,7 @@ export function CaseManagement() {
       searchUrlSC.searchParams.append("court", searchParams.court);
       searchUrlDC.searchParams.append("court", searchParams.court);
       searchUrlNCLT.searchParams.append("court", searchParams.court);
+      searchUrlEastDelhi.searchParams.append("court", searchParams.court);
     }
 
     if (searchParams.judgmentType) {
@@ -351,6 +355,7 @@ export function CaseManagement() {
       searchUrlSC.searchParams.append("caseType", searchParams.caseType);
       searchUrlDC.searchParams.append("caseType", searchParams.caseType);
       searchUrlNCLT.searchParams.append("caseType", searchParams.caseType);
+      searchUrlEastDelhi.searchParams.append("caseType", searchParams.caseType);
     }
 
     if (searchParams.city) {
@@ -359,22 +364,30 @@ export function CaseManagement() {
 
     if (searchParams.district) {
       searchUrlDC.searchParams.append("district", searchParams.district);
+      searchUrlEastDelhi.searchParams.append("district", searchParams.district);
     }
 
     if (searchParams.bench) {
       searchUrl.searchParams.append("bench", searchParams.bench);
       searchUrlNCLT.searchParams.append("bench", searchParams.bench);
+
     }
 
     if (searchParams.courtComplex) {
       searchUrlDC.searchParams.append("courtComplex", searchParams.courtComplex);
+      searchUrlEastDelhi.searchParams.append("courtComplex", searchParams.courtComplex);
     }
 
     let response;
     if (searchParams.court === "Supreme Court") {
       response = await fetch(searchUrlSC.toString());
     } else if (searchParams.court === "District Court") {
+      if(searchParams.district === "East District Court, Delhi") {
+        response = await fetch(searchUrlEastDelhi.toString());
+      }else {
       response = await fetch(searchUrlDC.toString());
+      }
+
     } else if (searchParams.court === "Nclt Court") {
       response = await fetch(searchUrlNCLT.toString());
     } else {
