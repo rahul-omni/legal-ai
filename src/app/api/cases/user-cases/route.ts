@@ -6,6 +6,7 @@ import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "../../lib/auth/nextAuthConfig";
+import { ErrorAuth } from "@/app/api/lib/errors";
 
 const prisma = new PrismaClient();
  
@@ -54,7 +55,6 @@ export const POST = auth(async (request: NextAuthRequest) => {
 
     for (const caseData of selectedCases) {
       try {
-        console.log(`Processing case: ${caseData.diaryNumber}`);
 
         // Normalize values to handle null vs empty string mismatches
         const normalizeValue = (value: any) => value || "";
@@ -88,19 +88,6 @@ export const POST = auth(async (request: NextAuthRequest) => {
           continue;
         }
 
-        console.log(`Creating UserCase for: ${caseData.diaryNumber}`);
-        console.log(`Case data:`, {
-          diaryNumber: caseData.diaryNumber,
-          caseType: caseData.caseType,
-          court: caseData.court,
-          city: caseData.city,
-          district: caseData.district,
-          bench: caseData.bench,
-          courtComplex: caseData.courtComplex,
-          case_type: caseData.caseType,
-          case_number: caseData.caseNumber,
-          courtType: caseData.courtType,
-        });
 
         // Create new user case with normalized values
         const createdCase = await prisma.userCase.create({
@@ -119,7 +106,6 @@ export const POST = auth(async (request: NextAuthRequest) => {
           }
         });
 
-        console.log(`Successfully created case: ${createdCase.id}`);
         results.push(createdCase);
 
       } catch (error) {
@@ -374,6 +360,19 @@ export const GET = auth(async (request: NextAuthRequest) => {
 
   } catch (error) {
     console.error("Error in GET /api/cases/user-cases:", error);
+    
+    // Handle auth errors (401)
+    if (error instanceof ErrorAuth) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: error.message || "Unauthorized"
+        },
+        { status: 401 }
+      );
+    }
+    
+    // Handle other errors (500)
     return NextResponse.json(
       { 
         success: false, 
