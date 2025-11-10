@@ -106,7 +106,6 @@ export async function GET(request: NextAuthRequest) {
   
     console.log("High Court search - Where conditions:", whereConditions);
       caseData = await prisma.caseManagement.findMany({ where: whereConditions });
-      console.log("High Court initial DB result:", caseData.length);
       
       const canScrape = validated.city && validated.city.trim() !== ""
        && validated.caseType && validated.caseType.trim() !== "";
@@ -367,7 +366,6 @@ let status = 200;
 
 if (caseData.length > 0) {
   // Case 1: Found in database
-  console.log("Found cases in database:", caseData);
 
   
   response = {
