@@ -1,11 +1,35 @@
 import { OrgMembershipForAuth } from "@/app/api/(public-routes)/auth/types";
 import { User } from "next-auth";
 
+export interface UserSubscription {
+  id: string;
+  userId: string;
+  subscriptionPlanId: string;
+  paymentId: string;
+  status: "ACTIVE" | "EXPIRED" | "CANCELLED";
+  startDate: string;
+  endDate: string;
+  autoRenew: boolean;
+  createdAt: string;
+  updatedAt: string;
+  subscriptionPlan?: {
+    id: string;
+    title: string;
+    description: string | null;
+    features: string[];
+    discountedPrice: number;
+    price: number;
+    duration: number | null;
+  };
+}
+
 export interface UserStateProps {
   user?: User;
   hasAnyOrganization: boolean;
   orgMemberships?: OrgMembershipForAuth[];
   selectedOrdMembership?: OrgMembershipForAuth;
+  subscription?: UserSubscription | null;
+  hasActiveSubscription?: boolean;
 }
 
 export type UserActionType =
@@ -19,6 +43,14 @@ export type UserActionType =
     }
   | {
       type: "LOGOUT_USER";
+    }
+  | {
+      type: "FETCH_SUBSCRIPTION";
+      payload: { subscription: UserSubscription | null; hasActiveSubscription: boolean };
+    }
+  | {
+      type: "UPDATE_SUBSCRIPTION";
+      payload: { subscription: UserSubscription | null };
     };
 
 const initialState: UserStateProps = {
@@ -49,6 +81,22 @@ const reducer = (
       return {
         ...state,
         user: undefined,
+        subscription: undefined,
+        hasActiveSubscription: false,
+      };
+    }
+    case "FETCH_SUBSCRIPTION": {
+      return {
+        ...state,
+        subscription: action.payload.subscription,
+        hasActiveSubscription: action.payload.hasActiveSubscription,
+      };
+    }
+    case "UPDATE_SUBSCRIPTION": {
+      return {
+        ...state,
+        subscription: action.payload.subscription,
+        hasActiveSubscription: action.payload.subscription !== null && action.payload.subscription.status === "ACTIVE",
       };
     }
 

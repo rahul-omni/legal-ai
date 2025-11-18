@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { GeneralSettings } from "./GeneralSettings";
 import { TeamManagement } from "./TeamManagement";
+import { Subscriptions } from "../Subscriptions";
 
 export function Settings() {
-  const [activeTab, setActiveTab] = useState<"general" | "team">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "team" | "subscription">("general");
   const { dispatchUser } = useUserContext();
   const router = useRouter();
 
@@ -44,12 +45,23 @@ export function Settings() {
           >
             Team management
           </button>
+          <button
+            className={`px-4 py-2 rounded-md text-sm font-medium ${
+              activeTab === "subscription"
+                ? "bg-white text-gray-800 shadow-sm"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+            onClick={() => router.push(routeConfig.privateRoutes.subscriptions)}
+          >
+            Subscription
+          </button>
         </div>
       </div>
 
       <div className="flex-1 p-6">
         {activeTab === "general" && <GeneralSettings onLogout={handleLogout} />}
         {activeTab === "team" && <TeamManagement />}
+        
       </div>
     </div>
   );
