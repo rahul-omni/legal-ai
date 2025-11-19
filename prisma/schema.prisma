@@ -32,11 +32,15 @@ model User {
   nodesUpdated            FileSystemNode[]    @relation("file_system_nodes_updated_by_idx")
   nodes                   FileSystemNode[]    @relation("file_system_nodes_user_id_idx")
   individualOtpLogin      IndividualOtpLogin? @relation("user_otp_login")
+  leads                   Lead[]
   notifications           notifications[]
   orgMemberships          OrgMembership[]     @relation("org_memberships_user_id_idx")
   organizationsCreated    Organization[]      @relation("organization_createdByUser")
+  payments                Payment[]
   fileReviewComments      FileReviewComment[] @relation("reviewer_comment")
+  subscribed_cases        subscribed_cases[]
   userCases               UserCase[]          @relation("user_usercases")
+  subscriptions           UserSubscription[]  @relation("user_subscriptions")
 
   @@map("users")
 }
@@ -345,7 +349,7 @@ model cause_list_files {
 }
 
 model case_details {
-  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   serial_number       String
   diary_number        String
   case_number         String?
@@ -355,16 +359,16 @@ model case_details {
   judgment_by         String?
   judgment_date       String?
   court               String
-  date                DateTime @default(now())
-  created_at          DateTime @default(now())
+  date                DateTime           @default(now())
+  created_at          DateTime           @default(now())
   updated_at          DateTime
   judgment_url        Json
-  file_path           String?  @default("")
+  file_path           String?            @default("")
   judgment_text       String[]
-  case_type           String?  @default("")
-  city                String?  @default("")
-  district            String?  @default("")
-  judgment_type       String?  @default("")
+  case_type           String?            @default("")
+  city                String?            @default("")
+  district            String?            @default("")
+  judgment_type       String?            @default("")
   courtComplex        String?
   courtType           String?
   all_parties         Json[]
@@ -379,6 +383,113 @@ model case_details {
   petitioner_advocate String?
   registered_on       String?
   respondent_advocate String?
+  site_sync           Int?               @default(0)
+  last_synced         DateTime?
+  subscribed_cases    subscribed_cases[]
+}
+
+model subscribed_cases {
+  id                  String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at          DateTime     @default(now())
+  updated_at          DateTime
+  user_id             String       @db.Uuid
+  tentative_date      DateTime?
+  tentative_date_sync DateTime?
+  case_id             String       @db.Uuid
+  case_details        case_details @relation(fields: [case_id], references: [id], onDelete: Cascade)
+  users               User         @relation(fields: [user_id], references: [id])
+}
+
+model SubscriptionPlan {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title           String
+  description     String?
+  features        String[]
+  discountedPrice Float             @map("discountedPrice")
+  discounted      Float             @map("discounted")
+  price           Float             @map("price")
+  duration        Int?              @map("duration") // Duration in days (plan validity period)
+  isActive        Boolean           @default(true) @map("isActive")
+  createdAt       DateTime          @default(now()) @map("createdAt")
+  updatedAt       DateTime          @updatedAt @map("updatedAt")
+  leads           Lead[]
+  payments        Payment[]
+  subscriptions   UserSubscription[]
+
+  @@map("subscription_plans")
+}
+
+model Lead {
+  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fullName           String            @map("full_name")
+  email              String
+  mobile             String
+  status             LeadStatus        @default(PENDING)
+  subscriptionPlanId String?           @map("subscription_plan_id") @db.Uuid
+  bookingId          String?           @unique @map("booking_id")
+  eventDetails       Json?             @map("event_details")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+  userId             String?           @map("user_id") @db.Uuid
+  subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
+  user               User?             @relation(fields: [userId], references: [id])
+  payments           Payment[]
+
+  @@index([status])
+  @@index([bookingId])
+  @@index([email])
+  @@index([subscriptionPlanId])
+  @@index([userId])
+  @@map("leads")
+}
+
+model Payment {
+  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leadId             String            @map("lead_id") @db.Uuid
+  subscriptionPlanId String?           @map("subscription_plan_id") @db.Uuid
+  razorpayPaymentId String?           @map("razorpay_payment_id")
+  razorpayOrderId   String?           @map("razorpay_order_id")
+  status             PaymentStatus
+  request            Json?
+  response           Json?
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+  userId             String?          @map("user_id") @db.Uuid
+  lead               Lead              @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
+  user               User?             @relation(fields: [userId], references: [id])
+  subscriptions      UserSubscription[] @relation("payment_subscriptions")
+
+  @@index([leadId])
+  @@index([userId])
+  @@index([status])
+  @@index([razorpayPaymentId])
+  @@index([razorpayOrderId])
+  @@index([subscriptionPlanId])
+  @@map("payments")
+}
+
+model UserSubscription {
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String              @map("user_id") @db.Uuid
+  subscriptionPlanId String              @map("subscription_plan_id") @db.Uuid
+  paymentId          String              @map("payment_id") @db.Uuid
+  status             SubscriptionStatus  @default(ACTIVE)
+  startDate          DateTime            @default(now()) @map("start_date")
+  endDate            DateTime            @map("end_date")
+  autoRenew          Boolean            @default(false) @map("auto_renew")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  user               User                @relation("user_subscriptions", fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionPlan   SubscriptionPlan    @relation(fields: [subscriptionPlanId], references: [id])
+  payment            Payment             @relation("payment_subscriptions", fields: [paymentId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([endDate])
+  @@index([subscriptionPlanId])
+  @@index([paymentId])
+  @@map("user_subscriptions")
 }
 
 enum OtpStatus {
@@ -425,4 +536,23 @@ enum InvitationStatus {
   ACCEPTED
   EXPIRED
   ACTIVE
+}
+
+enum LeadStatus {
+  PENDING
+  CONFIRMED
+  SCHEDULED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  SUCCESS
+  FAILED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
 }

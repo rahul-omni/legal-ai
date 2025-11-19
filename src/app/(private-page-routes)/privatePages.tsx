@@ -9,6 +9,7 @@ import { useMobile } from "@/hooks/useMobile";
 import { useRoleContext } from "@/context/roleContext";
 import { useUserContext } from "@/context/userContext";
 import useRoles from "@/hooks/api/useRoles";
+import useSubscription from "@/hooks/api/useSubscription";
 import { useSession } from "next-auth/react";
 import { FC, ReactNode, useEffect } from "react";
 
@@ -18,6 +19,7 @@ const PrivatePages: FC<{
   const { setRole } = useRoleContext();
   const { roles: roleList } = useRoles();
   const { dispatchUser } = useUserContext();
+  const { fetchSubscription } = useSubscription();
   const breadcrumbs = useBreadcrumbs();
   const { isMobile } = useMobile();
 
@@ -34,6 +36,13 @@ const PrivatePages: FC<{
       },
     });
   }, [session]);
+
+  // Fetch subscription when user is authenticated
+  useEffect(() => {
+    if (session.data?.user) {
+      fetchSubscription();
+    }
+  }, [session.data?.user, fetchSubscription]);
 
   useEffect(() => {
     setRole(roleList || []);
