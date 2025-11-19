@@ -531,11 +531,6 @@ export function CaseManagement() {
     setSearchParams(defaultSearchParams);
   };
 
-  console.log("cases", cases);
-  console.log("expandedCases", expandedCases);
-  console.log("caseDetails", caseDetails);
-  console.log("loadingDetails", loadingDetails);
-
   return (
     <div className="flex flex-col bg-background">
       {/* Header */}

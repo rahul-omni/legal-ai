@@ -137,7 +137,8 @@ export const DELHI_COURT_CASE_TYPES_VALUE_MAPPING = {
 } as const;
 
 export const DISTRICT_COURT_CITY = [
-  "Gurugram"
+  "Gurugram",
+  "East District Court, Delhi"
 ] as const;
 
 export const DISTRICT_COURT_COURT_COMPLEX = [
@@ -341,7 +342,83 @@ export const DISTRICT_COURT_CASE_TYPES_3 = [
   "Wkf"
 ] as const;
 
-
+export const EAST_DELHI_COURT_COURT_COMPLEX = [
+   "Karkardooma Court Complex"
+] as const;
+export const EAST_DELHI_COURT_CASE_TYPES =[
+  "ARB. A (COMM.)",
+  "ARBTN",
+  "ARBTN CASES",
+  "BAIL MATTERS",
+  "CA",
+  "CBI",
+  "CC",
+  "CC NI ACT",
+  "Civ Suit",
+  "CLOR",
+  "CR Cases",
+  "Cr Rev",
+  "CS",
+  "CS (COMM)",
+  "CT Cases",
+  "DPT EQ",
+  "DPT EQ CR",
+  "DR",
+  "E P",
+  "ESIC",
+  "EX",
+  "Ex. - Award by Arb.",
+  "Ex. Comm - Award by Arb. Comm",
+  "Execution (Comm.)",
+  "GP",
+  "HINDU ADP",
+  "HMA",
+  "HMA(IPC)",
+  "HTA",
+  "IDA",
+  "INSV",
+  "LAC",
+  "LC",
+  "LCA",
+  "L I D",
+  "L I R",
+  "MACT",
+  "MACT CR",
+  "MC",
+  "MCA DJ",
+  "MCA SCJ",
+  "MCD APPL",
+  "MISC CRL",
+  "MISC DJ",
+  "Misc.DR",
+  "MISC RC ARC",
+  "MISC SCJ",
+  "MUSLIM LAW",
+  "OMP (COMM)",
+  "OMP (E) (COMM)",
+  "OMP (I)(COMM.)",
+  "OMP MISC (COMM)",
+  "OMP (T) (COMM)",
+  "OP",
+  "PC",
+  "POIT",
+  "PPA",
+  "PWA",
+  "RCA DJ",
+  "RC ARC",
+  "RCA SCJ",
+  "RCT ARCT",
+  "REC CASES",
+  "REVOCATION",
+  "SC",
+  "S C COURT",
+  "S.M.A",
+  "SMA",
+  "SUCCESSION COURT",
+  "TC",
+  "T. P. Civil",
+  "T. P. Crl."
+] as const;
 export const SUPREME_COURT_CASE_TYPES = [
   "Diary Number",
   "SPECIAL LEAVE PETITION (CIVIL)",
