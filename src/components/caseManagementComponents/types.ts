@@ -1,3 +1,4 @@
+import { CaseDetails } from "../CaseDetails";
 
 export interface CaseData {
   id: string;
@@ -5,6 +6,7 @@ export interface CaseData {
   diaryNumber: string;
   caseNumber: string;
   parties: string;
+  site_sync: number;
   advocates: string;
   bench: string;
   judgmentBy?: string;  // Made optional
@@ -22,6 +24,7 @@ export interface CaseData {
   district?: string;
   courtComplex?: string;
   courtType?: string;
+  caseDetails?: any;
 }
 
 export interface SearchParams {

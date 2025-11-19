@@ -11,7 +11,7 @@ export function CaseCard({
   caseItem,
   index
 }: CaseCardProps) {
-  if (!caseItem.id) {
+  if (!caseItem.caseDetails.id) {
     console.error('Rendering case with no ID:', caseItem);
     return null;
   }
@@ -22,7 +22,7 @@ export function CaseCard({
       {/* Case header - clickable */}
       <div
         className="flex justify-between items-center p-4 cursor-pointer hover:bg-background-dark transition-colors"
-        onClick={() => router.push(`/case-details/${caseItem.id}`)}
+        onClick={() => router.push(`/case-details/${caseItem.caseDetails.id}`)}
       >
         <div className="flex items-center gap-2 flex-1">
           {/* Court Badge */}
@@ -34,11 +34,11 @@ export function CaseCard({
             </div>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-text">
-                {caseItem.court}
+                {caseItem.caseDetails.court}
               </span>
               <span className="text-muted">•</span>
               <span className="text-text-light font-medium">
-                Diary: {caseItem.diaryNumber}
+                Diary: {caseItem.caseDetails.diaryNumber}
               </span>
             </div>
           </div>
@@ -46,9 +46,9 @@ export function CaseCard({
           {/* Court Information */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              {caseItem.caseType && (
+              {caseItem.caseDetails.caseType && (
                 <span className="px-2 py-1 bg-info-light text-info text-xs font-medium rounded">
-                  {caseItem.caseType}
+                  {caseItem.caseDetails.caseType}
                 </span>
               )}
             </div>
@@ -56,19 +56,19 @@ export function CaseCard({
 
           {/* Judgment Information */}
           <div className="flex items-center gap-4">
-            {caseItem.judgmentDate && (
+            {caseItem.caseDetails.judgmentDate && (
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-gray-400" />
                 <span className="text-gray-600 text-sm">
-                  {caseItem.judgmentDate}
+                  {caseItem.caseDetails.judgmentDate}
                 </span>
               </div>
             )}
-            {caseItem.judgmentBy && (
+            {caseItem.caseDetails.judgmentBy && (
               <div className="flex items-center gap-2">
                 <span className="text-gray-500 text-sm">By:</span>
                 <span className="text-gray-700 text-sm font-medium">
-                  {caseItem.judgmentBy}
+                  {caseItem.caseDetails.judgmentBy}
                 </span>
               </div>
             )}
@@ -76,15 +76,28 @@ export function CaseCard({
 
           {/* Parties Information */}
           <div className="flex-1 min-w-0">
-            {caseItem.parties && (
+            {caseItem.caseDetails.parties && (
               <div className="truncate">
                 <span className="text-gray-500 text-sm">Parties:</span>
                 <span className="text-gray-700 text-sm font-medium ml-1">
-                  {caseItem.parties}
+                  {caseItem.caseDetails.parties}
                 </span>
               </div>
             )}
           </div>
+        </div>
+
+        <div className="flex items-center gap-3 ml-4">
+          {caseItem.caseDetails.site_sync == 0 ? (
+            <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded">
+              Sync Pending </span>
+          ) : caseItem.caseDetails.site_sync == 1 ? (
+            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
+              Synced </span>
+          ) : (
+            <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded">
+              Error Syncing </span>
+          )}
         </div>
 
         {/* Navigation Indicator */}

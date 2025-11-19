@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { Loader2, Plus, Search } from "lucide-react";
+import { Plus, RefreshCcw, Search } from "lucide-react";
 import toast from "react-hot-toast";
 import { CaseData, SearchParams, ValidationErrors } from "./caseManagementComponents/types";
 import { CaseList } from "./caseManagementComponents/CaseList";
 import { SearchModal } from "./caseManagementComponents/SearchModal";
 import Header from "./ui/Header";
 import Button from "./ui/Button";
-import { uniq } from "lodash";
 
 export function CaseManagement() {
   const [showNewCaseModal, setShowNewCaseModal] = useState(false);
@@ -19,6 +18,7 @@ export function CaseManagement() {
   const [selectedCases, setSelectedCases] = useState<CaseData[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [spin, setSpin] = useState(false);
 
   const defaultSearchParams: SearchParams = {
     number: "",
@@ -76,7 +76,8 @@ export function CaseManagement() {
       city: getValue(['city', 'City']),
       district: getValue(['district', 'District']),
       courtComplex: getValue(['courtComplex', 'Court Complex']),
-      courtType: getValue(['courtType', 'Court Type'])
+      courtType: getValue(['courtType', 'Court Type']),
+      site_sync: getValue(['site_sync', 'site_sync'])
     };
   }
   // Validation function
@@ -129,16 +130,16 @@ export function CaseManagement() {
       }
     }
 
-    
-  // Add NCLT Court validation
-  if (searchParams.court === "Nclt Court") {
-    if (!searchParams.bench.trim()) {
-      errors.bench = "NCLT bench is required";
+
+    // Add NCLT Court validation
+    if (searchParams.court === "Nclt Court") {
+      if (!searchParams.bench.trim()) {
+        errors.bench = "NCLT bench is required";
+      }
+      if (!searchParams.caseType.trim()) {
+        errors.caseType = "Case type is required";
+      }
     }
-    if (!searchParams.caseType.trim()) {
-      errors.caseType = "Case type is required";
-    }
-  }
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -199,28 +200,28 @@ export function CaseManagement() {
           }
 
           response = await fetch(searchUrlDC.toString());
-        }else if (caseItem.court === "NCLT" || caseItem.court === "Nclt Court") {
+        } else if (caseItem.court === "NCLT" || caseItem.court === "Nclt Court") {
           console.log("Full caseItem for NCLT:", JSON.stringify(caseItem, null, 2));
           console.log("caseItem.bench value:", caseItem.bench);
-  
-        // Add NCLT Court support
-        const searchUrlNCLT = new URL("/api/cases/search/ncltCourt", window.location.origin);
-        searchUrlNCLT.searchParams.append("diaryNumber", diaryNumber);
-        searchUrlNCLT.searchParams.append("year", year);
-        searchUrlNCLT.searchParams.append("court", caseItem.court);
 
-        if (caseItem.caseType) {
-          searchUrlNCLT.searchParams.append("caseType", caseItem.caseType);
-        }
-        if (caseItem.bench) {
-          searchUrlNCLT.searchParams.append("bench", caseItem.bench);
-        }
+          // Add NCLT Court support
+          const searchUrlNCLT = new URL("/api/cases/search/ncltCourt", window.location.origin);
+          searchUrlNCLT.searchParams.append("diaryNumber", diaryNumber);
+          searchUrlNCLT.searchParams.append("year", year);
+          searchUrlNCLT.searchParams.append("court", caseItem.court);
+
+          if (caseItem.caseType) {
+            searchUrlNCLT.searchParams.append("caseType", caseItem.caseType);
+          }
+          if (caseItem.bench) {
+            searchUrlNCLT.searchParams.append("bench", caseItem.bench);
+          }
           if (caseItem.district) {
             searchUrlNCLT.searchParams.append("district", caseItem.district);
           }
 
-        response = await fetch(searchUrlNCLT.toString());
-      } else {
+          response = await fetch(searchUrlNCLT.toString());
+        } else {
           const searchUrl = new URL("/api/cases/search", window.location.origin);
           searchUrl.searchParams.append("diaryNumber", diaryNumber);
           searchUrl.searchParams.append("year", year);
@@ -235,7 +236,7 @@ export function CaseManagement() {
           if (caseItem.bench) {
             searchUrl.searchParams.append("bench", caseItem.bench);
           }
-         
+
           response = await fetch(searchUrl.toString());
         }
 
@@ -302,141 +303,67 @@ export function CaseManagement() {
 
 
 
-  
+
   const handleSearchCase = async () => {
-  setValidationErrors({});
+    setValidationErrors({});
 
-  if (!validateSearchForm()) {
-    return;
-  }
-
-  try {
-    setIsLoading(true);
-    setError("");
-    setFoundCases([]);
-    setSelectedCases([]);
-    setSelectAll(false);
-
-    const searchUrl = new URL("/api/cases/search", window.location.origin);
-    const searchUrlSC = new URL("/api/cases/search/supremeCourt", window.location.origin);
-    const searchUrlDC = new URL("/api/cases/search/districtCourt", window.location.origin);
-    const searchUrlNCLT = new URL("/api/cases/search/ncltCourt", window.location.origin);
-
-    // High Court Search URL
-    searchUrl.searchParams.append("diaryNumber", `${searchParams.number}`);
-    searchUrl.searchParams.append("year", searchParams.year);
-
-    if (searchParams.number && searchParams.year) {
-      searchUrlSC.searchParams.append("diaryNumber", searchParams.number);
-      searchUrlSC.searchParams.append("year", searchParams.year);
-      searchUrlDC.searchParams.append("diaryNumber", searchParams.number);
-      searchUrlDC.searchParams.append("year", searchParams.year);
-      searchUrlNCLT.searchParams.append("diaryNumber", searchParams.number);
-      searchUrlNCLT.searchParams.append("year", searchParams.year);
+    if (!validateSearchForm()) {
+      return;
     }
 
-    if (searchParams.court) {
-      searchUrl.searchParams.append("court", searchParams.court);
-      searchUrlSC.searchParams.append("court", searchParams.court);
-      searchUrlDC.searchParams.append("court", searchParams.court);
-      searchUrlNCLT.searchParams.append("court", searchParams.court);
-    }
+    try {
+      setIsLoading(true);
+      setError("");
+      setFoundCases([]);
+      setSelectedCases([]);
+      setSelectAll(false);
 
-    if (searchParams.judgmentType) {
-      searchUrl.searchParams.append("judgmentType", searchParams.judgmentType);
-    }
+      const searchUrl = new URL("/api/cases/search/allCourts", window.location.origin);
 
-    if (searchParams.caseType) {
-      searchUrl.searchParams.append("caseType", searchParams.caseType);
-      searchUrlSC.searchParams.append("caseType", searchParams.caseType);
-      searchUrlDC.searchParams.append("caseType", searchParams.caseType);
-      searchUrlNCLT.searchParams.append("caseType", searchParams.caseType);
-    }
+      // High Court Search URL
+      
+      searchUrl.searchParams.append("diaryNumber", `${searchParams.number}`);
+      searchUrl.searchParams.append("year", searchParams.year);
 
-    if (searchParams.city) {
-      searchUrl.searchParams.append("city", searchParams.city);
-    }
-
-    if (searchParams.district) {
-      searchUrlDC.searchParams.append("district", searchParams.district);
-    }
-
-    if (searchParams.bench) {
-      searchUrl.searchParams.append("bench", searchParams.bench);
-      searchUrlNCLT.searchParams.append("bench", searchParams.bench);
-    }
-
-    if (searchParams.courtComplex) {
-      searchUrlDC.searchParams.append("courtComplex", searchParams.courtComplex);
-    }
-
-    let response;
-    if (searchParams.court === "Supreme Court") {
-      response = await fetch(searchUrlSC.toString());
-    } else if (searchParams.court === "District Court") {
-      response = await fetch(searchUrlDC.toString());
-    } else if (searchParams.court === "Nclt Court") {
-      response = await fetch(searchUrlNCLT.toString());
-    } else {
-      response = await fetch(searchUrl.toString());
-    }
-    
-    const responseData = await response.json();
-
-    if (!response.ok || !responseData.success) {
-      throw new Error(responseData.message || "Search failed");
-    }
-
-    if (responseData.data && responseData.data.length > 0) {
-      let flatCases: any[] = [];
-
-      // Check if data is DB result (array of cases) or scraped (array of objects with processedResults)
-      if (responseData.data[0]?.diaryNumber) {
-        // DB result: use directly
-        flatCases = responseData.data;
-      } else {
-        // Scraped result: flatten processedResults
-        flatCases = responseData.data.flatMap((d: any) => d.processedResults || []);
+      if (searchParams.court) {
+        searchUrl.searchParams.append("court", searchParams.court);
       }
 
-      // Normalize all cases
-      const normalizedCases = flatCases.map((rawCase: CaseData, i: number) =>
-        normalizeCaseData(rawCase, i)
-      );
-      const sortedCases = normalizedCases.sort((a: CaseData, b: CaseData) => {
-        if (!a.judgmentDate && !b.judgmentDate) return 0;
-        if (!a.judgmentDate) return 1;
-        if (!b.judgmentDate) return -1;
+      if (searchParams.judgmentType) {
+        searchUrl.searchParams.append("judgmentType", searchParams.judgmentType);
+      }
 
-        const parseDate = (dateStr: string) => {
-          const parts = dateStr.split('-');
-          if (parts.length === 3) {
-            return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-          }
-          return new Date(dateStr);
-        };
+      if (searchParams.caseType) {
+        searchUrl.searchParams.append("caseType", searchParams.caseType);
+      }
 
-        const dateA = parseDate(a.judgmentDate);
-        const dateB = parseDate(b.judgmentDate);
+      if (searchParams.city) {
+        searchUrl.searchParams.append("city", searchParams.city);
+      }
 
-        if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
-        if (isNaN(dateA.getTime())) return 1;
-        if (isNaN(dateB.getTime())) return -1;
+      if (searchParams.bench) {
+        searchUrl.searchParams.append("bench", searchParams.bench);
+      }
 
-        return dateB.getTime() - dateA.getTime();
-      });
+      const response = await fetch(searchUrl.toString());
 
-      setFoundCases(sortedCases);
-      toast.success(`Found ${sortedCases.length} cases (sorted by newest first)`);
+      const responseData = await response.json();
+      
+      if (responseData.message == "Case exists.") {
+        toast.success("Case subscribed successfully.");
+      }else if (responseData.message == "Triggered external Cloud Function."){
+        toast.success("Case is subscribed will take 2-5 mins to sync the case details.");
+      }
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+      setValidationErrors({ general: errorMessage });
+      toast.error(errorMessage || "Failed to search case");
+    } finally {
+      setIsLoading(false);
+      fetchUserCases();
     }
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
-    setValidationErrors({ general: errorMessage });
-    toast.error(errorMessage || "Failed to search case");
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
 
 
@@ -635,6 +562,24 @@ export function CaseManagement() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-gray-700">
+              Last Refreshed:{" "}
+              <span className="font-medium">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+            <button
+              onClick={async () => {
+                setSpin(true);
+                await fetchUserCases()
+                setSpin(false);
+              }}
+              className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-700 font-medium
+           shadow-sm hover:bg-gray-100 active:scale-95 transition-all duration-200"
+            >
+              <span>Refresh</span>
+              <RefreshCcw className={`w-4 h-4 ${spin ? "animate-spin-once" : ""}`} />
+            </button>
           </div>
         </div>
       </div>

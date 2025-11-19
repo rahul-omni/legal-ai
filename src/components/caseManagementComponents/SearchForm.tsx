@@ -724,7 +724,7 @@ const handleSearchClick = () => {
       <>
         <Search className="w-4 h-4" />
         <span className="text-white">
-          {isFormValid ? 'Search Cases' : 'Fill All Required Fields'}
+          {isFormValid ? 'Subscribe Case' : 'Fill All Required Fields'}
         </span>
       </>
     )}

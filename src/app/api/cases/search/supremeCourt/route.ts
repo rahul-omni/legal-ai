@@ -145,7 +145,7 @@ export async function GET(request: NextAuthRequest) {
         }
 
         if (caseNumberResponse) {
-            caseData = await prisma.caseManagement.findMany({
+            caseData = await prisma.caseDetails.findMany({
                 where: {
                     caseNumber: {
                         equals: caseNumberResponse,

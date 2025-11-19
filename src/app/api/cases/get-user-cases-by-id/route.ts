@@ -24,7 +24,7 @@ export const GET = auth(async (request: NextAuthRequest) => {
         { status: 400 }
       );
     }
-    const userCase = await prisma.userCase.findUnique({
+    const userCase = await prisma.caseDetails.findUnique({
       where: {
         id: id
       }
