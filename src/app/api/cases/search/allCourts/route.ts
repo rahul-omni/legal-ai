@@ -72,7 +72,7 @@ export const GET = auth(async (request) => {
 
     const newCase = await prisma.caseDetails.create({
       data: {
-        diaryNumber: queryParams.caseType === 'Diary Number' ? `${queryParams.diaryNumber}/${queryParams.year}` : '',
+        diaryNumber: queryParams.caseType === 'Diary Number' || queryParams.court == "High Court" ? `${queryParams.diaryNumber}/${queryParams.year}` : '',
         caseNumber: queryParams.caseType !== 'Diary Number' ? `${queryParams.caseType}/${queryParams.diaryNumber}` : '',
         court: queryParams.court || '',
         case_type: queryParams.caseType,

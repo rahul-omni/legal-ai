@@ -316,7 +316,7 @@ const handleSearchClick = () => {
             <option value="Supreme Court">Supreme Court</option>
             <option value="High Court">High Court</option>
             <option value="District Court">District Court</option>
-            <option value="Nclt Court">NCLT Court</option>
+            {/* <option value="Nclt Court">NCLT Court</option> */}
           </select>
           {errors?.court && (
             <p className="mt-1 text-sm text-error">{errors.court}</p>

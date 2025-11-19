@@ -138,7 +138,7 @@ export function CaseDetails({ id }: { id: string }) {
                   <InfoRow
                     label="Sync status"
                     value={caseItem.site_sync == 0 ? "Pending" : caseItem.site_sync == 1 ?
-                       "Synced" : "Not synced"}
+                       "Synced" : "Error syncing"}
                   />
                 </div>
 
@@ -191,7 +191,7 @@ export function CaseDetails({ id }: { id: string }) {
                             size="md"
                             icon={<FileText className="w-5 h-5" />}
                             onClick={async () => {
-                              const signedUrl = await generateSignedUrlForCase(order.filename || '');
+                              const signedUrl = caseItem.court == 'High Court' ? await generateSignedUrlForCase(order.filename || '') : order.gcsPath;
 
                               window.open(signedUrl, '_blank', 'noopener,noreferrer');
                             }}
@@ -218,7 +218,10 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between py-2 border-b border-border">
       <span className="text-sm text-text-light">{label}</span>
-      <span className="text-sm font-semibold text-text-dark">{value}</span>
+      <span className={`text-sm font-semibold ${value == 'Pending' ? 'text-yellow-500' : value == 'Error syncing' ? 'text-red-500' : value == 'Synced' ? 'text-green-500' : 'text-dark'}`}>
+        {value}
+        {value == 'Error syncing' && <span className="text-xs">(Could not find this case)</span>}
+      </span>
     </div>
   );
 }
