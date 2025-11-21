@@ -382,7 +382,20 @@ export function CaseManagement() {
     if (searchParams.court === "Supreme Court") {
       response = await fetch(searchUrlSC.toString());
     } else if (searchParams.court === "District Court") {
-      if(searchParams.district === "East District Court, Delhi") {
+      if(searchParams.district === "East District Court, Delhi" ||
+         searchParams.district ===  "Central District Court, Delhi"||
+          searchParams.district ===  "New Delhi District Court, Delhi"||
+          searchParams.district ===  "North East District Court, Delhi"||
+          searchParams.district ===  "Shahdara District Court, Delhi" ||
+          searchParams.district ===  "South East District Court, Delhi"||
+          searchParams.district ===  "South District Court, Delhi" ||
+          searchParams.district ===    "District Court North West Delhi"||
+          searchParams.district ===  "District Court North Delhi" ||
+          searchParams.district ===   "Dwarka Court South West Delhi" ||
+          searchParams.district ===  "West District Court, Delhi"
+
+
+      ) {
         response = await fetch(searchUrlEastDelhi.toString());
       }else {
       response = await fetch(searchUrlDC.toString());

@@ -2,6 +2,7 @@ import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { PrismaClient, Prisma } from '@prisma/client';
+import { log } from "winston";
 
 const prisma = new PrismaClient();
 
@@ -34,7 +35,7 @@ export async function GET(request: NextAuthRequest) {
             district: searchParams.get('district')?.trim() || "",
             courtComplex: searchParams.get('courtComplex')?.trim() || "",
         };
-
+      
         const validated = searchSchema.parse(queryParams);
         const fullDiaryNumber = validated.diaryNumber + "/" + validated.year;
         
@@ -59,13 +60,13 @@ export async function GET(request: NextAuthRequest) {
         };
 
         // Add case_type filter only if provided
-        if (validated.caseType && validated.caseType.trim() !== "") {
-            whereClause.case_type = {
-                contains: validated.caseType,
-                mode: Prisma.QueryMode.insensitive
-            };
-        }
-
+        // if (validated.caseType && validated.caseType.trim() !== "") {
+        //     whereClause.case_type = {
+        //         contains: validated.caseType,
+        //         mode: Prisma.QueryMode.insensitive
+        //     };
+        // }
+        console.log("whereClause--",whereClause);
         // Check database first
         caseData = await prisma.caseManagement.findMany({
             where: whereClause
@@ -91,6 +92,9 @@ export async function GET(request: NextAuthRequest) {
             court: validated.court
         };
 
+        console.log("payload--",payload);
+        
+
         const response = await fetch(scrapperURL, {
             headers: {
                 "Content-Type": "application/json"
@@ -113,7 +117,7 @@ export async function GET(request: NextAuthRequest) {
         if (caseData.length === 0) {
             return NextResponse.json({
                 success: false,
-                message: `No cases found for diary number ${fullDiaryNumber} in East District Court, Delhi`,
+                message: `No cases found for diary number ${fullDiaryNumber} in  ${validated.district}. Please try again later.`,
                 data: [],
                 source: "none"
             }, { status: 404 });

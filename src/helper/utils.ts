@@ -1,4 +1,4 @@
-import {SUPREME_COURT_CASE_TYPES_VALUE_MAPPING, DISTRICT_COURT_CASE_TYPES_1, DISTRICT_COURT_CASE_TYPES_2, DISTRICT_COURT_CASE_TYPES_3, EAST_DELHI_COURT_CASE_TYPES} from "@/lib/constants";
+import {SUPREME_COURT_CASE_TYPES_VALUE_MAPPING, DISTRICT_COURT_CASE_TYPES_1, DISTRICT_COURT_CASE_TYPES_2, DISTRICT_COURT_CASE_TYPES_3, EAST_DELHI_COURT_CASE_TYPES, CENTRAL_DELHI_ROUSE_AVENUE_COURT_CASE_TYPES, CENTRAL_DELHI_TIS_HAZARI_COURT_CASE_TYPES, NEW_DELHI_COURT_CASE_TYPES, NORTH_EAST_DISTRICT_COURT_CASE_TYPES, SHAHDARA_COURT_CASE_TYPES, SOUTH_EAST_DISTRICT_COURT_CASE_TYPES, SOUTH_DISTRICT_COURT_CASE_TYPES, NORTH_WEST_DISTRICT_COURT_CASE_TYPES, NORTH_DISTRICT_COURT_CASE_TYPES, DWARKA_COURT_SOUTH_WEST_DELHI_COURT_CASE_TYPES, WEST_DISTRICT_DELHI_COURT_COURT_COMPLEX, WEST_DISTRICT_DELHI_TIS_HAZARI_COURT_CASE_TYPES} from "@/lib/constants";
 
 export function trimName(name: string): string {
   if (typeof name !== "string") return "";
@@ -59,6 +59,89 @@ export const DISTRICT_COURT_CONFIGURATIONS = {
         caseTypes: EAST_DELHI_COURT_CASE_TYPES
       }
        
+    }
+  },
+   "Central District Court, Delhi": {
+    name: "Central District Court, Delhi",
+    courtComplexes: {
+      "Rouse Avenue Court Complex": {
+        caseTypes: CENTRAL_DELHI_ROUSE_AVENUE_COURT_CASE_TYPES
+      },
+      "Tis Hazari Court Complex": {
+        caseTypes: CENTRAL_DELHI_TIS_HAZARI_COURT_CASE_TYPES
+      }
+    }
+  },
+  "New Delhi District Court, Delhi": {
+    name: "New Delhi District Court, Delhi",
+    courtComplexes: {
+      "Patiala House Court Complex": {
+        caseTypes: NEW_DELHI_COURT_CASE_TYPES
+      }
+    }
+  },
+  "North East District Court, Delhi": {
+    name: "North East District Court, Delhi",
+    courtComplexes: {
+      "Karkardooma Court Complex": {
+        caseTypes: NORTH_EAST_DISTRICT_COURT_CASE_TYPES
+      }
+    }
+  },
+  "Shahdara District Court, Delhi": {
+    name: "Shahdara District Court, Delhi",
+    courtComplexes: {
+      "Karkardooma Court Complex": {
+        caseTypes: SHAHDARA_COURT_CASE_TYPES
+      }
+    }
+  },
+  "South East District Court, Delhi": {
+    name: "South East District Court, Delhi",
+    courtComplexes: {
+      "Saket Court Complex": {
+        caseTypes: SOUTH_EAST_DISTRICT_COURT_CASE_TYPES
+      }
+    }
+  },
+  "South District Court, Delhi": {
+    name: "South District Court, Delhi",
+    courtComplexes: {
+      "Saket Court Complex": {
+        caseTypes: SOUTH_DISTRICT_COURT_CASE_TYPES
+      }
+    }
+  },
+   "District Court North West Delhi": {
+    name: "District Court North West Delhi",
+    courtComplexes: {
+      "Rohini Court Complex": {
+        caseTypes: NORTH_WEST_DISTRICT_COURT_CASE_TYPES
+      }
+    }
+  },
+  "District Court North Delhi": {
+    name:"District Court North Delhi",
+    courtComplexes: {
+      "Rohini Court Complex": {
+        caseTypes: NORTH_DISTRICT_COURT_CASE_TYPES
+      }
+    }
+  },
+     "Dwarka Court South West Delhi": {
+    name: "Dwarka Court South West Delhi",
+    courtComplexes: {
+      "Dwarka Court Complex": {
+        caseTypes: DWARKA_COURT_SOUTH_WEST_DELHI_COURT_CASE_TYPES
+      }
+    }
+  },
+  "West District Court, Delhi" : {
+    name: "West District Court, Delhi",
+    courtComplexes: {
+      "Tis Hazari Court Complex": {
+        caseTypes: WEST_DISTRICT_DELHI_TIS_HAZARI_COURT_CASE_TYPES
+      }
     }
   }
   // Future districts can be added here like:
