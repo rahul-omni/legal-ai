@@ -1,5 +1,5 @@
- 
- 
+
+
 import { userFromSession } from "@/lib/auth";
 import { PrismaClient } from '@prisma/client';
 import { NextAuthRequest } from "next-auth";
@@ -9,7 +9,7 @@ import { auth } from "../../lib/auth/nextAuthConfig";
 import { ErrorAuth } from "@/app/api/lib/errors";
 
 const prisma = new PrismaClient();
- 
+
 const createUserCaseSchema = z.object({
   selectedCases: z.array(z.object({
     id: z.string(),
@@ -58,7 +58,7 @@ export const POST = auth(async (request: NextAuthRequest) => {
 
         // Normalize values to handle null vs empty string mismatches
         const normalizeValue = (value: any) => value || "";
-        
+
         // Check for duplicate based on combined condition: 
         // same court + bench + city + case type + (diary number OR case number)
         const existingCase = await prisma.userCase.findFirst({
@@ -74,7 +74,7 @@ export const POST = auth(async (request: NextAuthRequest) => {
             ]
           }
         });
-       
+
         if (existingCase) {
           let duplicateReason = "";
           if (existingCase.diaryNumber === caseData.diaryNumber) {
@@ -82,7 +82,7 @@ export const POST = auth(async (request: NextAuthRequest) => {
           } else if (caseData.caseNumber && existingCase.case_number === normalizeValue(caseData.caseNumber)) {
             duplicateReason = "same case number";
           }
-          
+
           console.log(`Duplicate case found: ${caseData.diaryNumber} (same court, bench, city, case type and ${duplicateReason})`);
           errors.push(`Case with court "${caseData.court}", bench "${caseData.bench}", city "${caseData.city}", case type "${caseData.caseType}" and ${duplicateReason} already exists in your cases`);
           continue;
@@ -151,10 +151,10 @@ export const POST = auth(async (request: NextAuthRequest) => {
   } catch (error) {
     console.error("Error in POST /api/cases/user-cases:", error);
     return NextResponse.json(
-      { 
-        success: false, 
-        message: "Internal server error", 
-        error: error instanceof Error ? error.message : "Unknown error" 
+      {
+        success: false,
+        message: "Internal server error",
+        error: error instanceof Error ? error.message : "Unknown error"
       },
       { status: 500 }
     );
@@ -163,7 +163,7 @@ export const POST = auth(async (request: NextAuthRequest) => {
   }
 });
 // export const POST = auth(async (request: NextAuthRequest) => {
-  
+
 
 //    try {
 //     // Authentication
@@ -209,7 +209,7 @@ export const POST = auth(async (request: NextAuthRequest) => {
 //             court: caseData.court,
 //           }
 //         });
-       
+
 //          if (existingCase) {
 //       console.log(`Duplicate case found: ${caseData.diaryNumber} (${caseData.city}, ${caseData.bench}, ${caseData.caseType})`);
 //       errors.push(
@@ -251,7 +251,7 @@ export const POST = auth(async (request: NextAuthRequest) => {
 
 //         console.log(`Successfully created case: ${createdCase.id}`);
 //         console.log("Created case data:",  results);
-      
+
 //         results.push(createdCase);
 
 //       } catch (error) {
@@ -285,7 +285,7 @@ export const POST = auth(async (request: NextAuthRequest) => {
 //       }, { status: 201 });
 //     }
 
-    
+
 //     // If some cases were not created, show errors
 //     return NextResponse.json({
 //       success: true,
@@ -310,11 +310,11 @@ export const POST = auth(async (request: NextAuthRequest) => {
 //   }
 // });
 
- 
 
- 
 
-    // If all cases were created (no errors), do
+
+
+// If all cases were created (no errors), do
 
 
 export const GET = auth(async (request: NextAuthRequest) => {
@@ -329,34 +329,38 @@ export const GET = auth(async (request: NextAuthRequest) => {
     }
 
     // Fetch all diary numbers for this user
-    const userCases = await prisma.userCase.findMany({
+    const userCases = await prisma.subscribedCases.findMany({
       where: {
-        userId: sessionUser.id
+        userId: sessionUser.id,
       },
-      select: {
-        id:true,
-        diaryNumber: true,
-        createdAt: true,
-        status: true,
-        caseType: true,
-        court: true,
-        city: true,
-        district: true,
-        courtComplex: true,
-        courtType: true,
+      include: {
+        caseDetails: {
+          select: {
+            id: true,
+            diaryNumber: true,
+            createdAt: true,
+            case_type: true,
+            court: true,
+            city: true,
+            district: true,
+            courtComplex: true,
+            courtType: true,
+            site_sync: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'asc' // Optional: order by creation date
-      }
+        createdAt: "desc",
+      },
     });
 
     return NextResponse.json({
-  success: true,
-  message: userCases.length === 0 
-    ? "No cases found for this user" 
-    : "Successfully retrieved diary numbers",
-  data: userCases
-});
+      success: true,
+      message: userCases.length === 0
+        ? "No cases found for this user"
+        : "Successfully retrieved diary numbers",
+      data: userCases
+    });
 
   } catch (error) {
     console.error("Error in GET /api/cases/user-cases:", error);
@@ -374,10 +378,10 @@ export const GET = auth(async (request: NextAuthRequest) => {
     
     // Handle other errors (500)
     return NextResponse.json(
-      { 
-        success: false, 
-        message: "Internal server error", 
-        error: error instanceof Error ? error.message : "Unknown error" 
+      {
+        success: false,
+        message: "Internal server error",
+        error: error instanceof Error ? error.message : "Unknown error"
       },
       { status: 500 }
     );

@@ -32,11 +32,15 @@ model User {
   nodesUpdated            FileSystemNode[]    @relation("file_system_nodes_updated_by_idx")
   nodes                   FileSystemNode[]    @relation("file_system_nodes_user_id_idx")
   individualOtpLogin      IndividualOtpLogin? @relation("user_otp_login")
+  leads                   Lead[]
   notifications           notifications[]
   orgMemberships          OrgMembership[]     @relation("org_memberships_user_id_idx")
   organizationsCreated    Organization[]      @relation("organization_createdByUser")
+  payments                Payment[]
   fileReviewComments      FileReviewComment[] @relation("reviewer_comment")
+  subscribedCases         SubscribedCases[]   @relation("user_subscribed_cases")
   userCases               UserCase[]          @relation("user_usercases")
+  subscriptions           UserSubscription[]  @relation("user_subscriptions")
 
   @@map("users")
 }
@@ -344,41 +348,152 @@ model cause_list_files {
   link            String   @default("")
 }
 
-model case_details {
-  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  serial_number       String
-  diary_number        String
-  case_number         String?
+model CaseDetails {
+  id                  String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  serialNumber        String            @map("serial_number")
+  diaryNumber         String            @map("diary_number")
+  caseNumber          String?           @map("case_number")
   parties             String?
   advocates           String?
   bench               String?
-  judgment_by         String?
-  judgment_date       String?
+  judgmentBy          String?           @map("judgment_by")
+  judgmentDate        String?           @map("judgment_date")
   court               String
-  date                DateTime @default(now())
-  created_at          DateTime @default(now())
-  updated_at          DateTime
-  judgment_url        Json
-  file_path           String?  @default("")
-  judgment_text       String[]
-  case_type           String?  @default("")
-  city                String?  @default("")
-  district            String?  @default("")
-  judgment_type       String?  @default("")
+  date                DateTime          @default(now()) @map("date")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+  judgmentUrl         Json              @map("judgment_url")
+  file_path           String?           @default("")
+  judgmentText        String[]          @map("judgment_text")
+  case_type           String?           @default("")
+  city                String?           @default("")
+  district            String?           @default("")
+  judgment_type       String?           @default("")
   courtComplex        String?
   courtType           String?
-  all_parties         Json[]
-  case_status         String?
-  filing_date         String?
-  filing_number       String?
-  last_listed         String?
-  listing_history     Json[]
-  next_listing_date   String?
-  order_details       Json[]
-  party_name          String?
-  petitioner_advocate String?
-  registered_on       String?
-  respondent_advocate String?
+  allParties          Json[]            @map("all_parties")
+  caseStatus          String?           @map("case_status")
+  filingDate          String?           @map("filing_date")
+  filingNumber        String?           @map("filing_number")
+  lastListed          String?           @map("last_listed")
+  listingHistory      Json[]            @map("listing_history")
+  nextListingDate     String?           @map("next_listing_date")
+  orderDetails        Json[]            @map("order_details")
+  partyName           String?           @map("party_name")
+  petitionerAdvocate  String?           @map("petitioner_advocate")
+  registeredOn        String?           @map("registered_on")
+  respondentAdvocate  String?           @map("respondent_advocate")
+  site_sync           Int?              @default(0)
+  last_synced         DateTime?         @map("last_synced")
+  tentative_date      DateTime?         @map("tentative_date")
+  tentative_date_sync DateTime?         @map("tentative_date_sync")
+  subscribed_Cases    SubscribedCases[]
+
+  @@map("case_details")
+}
+
+model SubscribedCases {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  userId      String      @map("user_id") @db.Uuid
+  case_id     String      @db.Uuid
+  caseDetails CaseDetails @relation(fields: [case_id], references: [id], onDelete: Cascade)
+  user        User        @relation("user_subscribed_cases", fields: [userId], references: [id])
+
+  @@map("subscribed_cases")
+}
+
+model SubscriptionPlan {
+  id              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title           String
+  description     String?
+  features        String[]
+  discountedPrice Float              @map("discountedPrice")
+  discounted      Float              @map("discounted")
+  price           Float              @map("price")
+  duration        Int?               @map("duration")
+  isActive        Boolean            @default(true) @map("isActive")
+  createdAt       DateTime           @default(now()) @map("createdAt")
+  updatedAt       DateTime           @updatedAt @map("updatedAt")
+  leads           Lead[]
+  payments        Payment[]
+  subscriptions   UserSubscription[]
+
+  @@map("subscription_plans")
+}
+
+model Lead {
+  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fullName           String            @map("full_name")
+  email              String
+  mobile             String
+  status             LeadStatus        @default(PENDING)
+  subscriptionPlanId String?           @map("subscription_plan_id") @db.Uuid
+  bookingId          String?           @unique @map("booking_id")
+  eventDetails       Json?             @map("event_details")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+  userId             String?           @map("user_id") @db.Uuid
+  subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
+  user               User?             @relation(fields: [userId], references: [id])
+  payments           Payment[]
+
+  @@index([status])
+  @@index([bookingId])
+  @@index([email])
+  @@index([subscriptionPlanId])
+  @@index([userId])
+  @@map("leads")
+}
+
+model Payment {
+  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leadId             String             @map("lead_id") @db.Uuid
+  subscriptionPlanId String?            @map("subscription_plan_id") @db.Uuid
+  razorpayPaymentId  String?            @map("razorpay_payment_id")
+  razorpayOrderId    String?            @map("razorpay_order_id")
+  status             PaymentStatus
+  request            Json?
+  response           Json?
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  userId             String?            @map("user_id") @db.Uuid
+  lead               Lead               @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  subscriptionPlan   SubscriptionPlan?  @relation(fields: [subscriptionPlanId], references: [id])
+  user               User?              @relation(fields: [userId], references: [id])
+  subscriptions      UserSubscription[] @relation("payment_subscriptions")
+
+  @@index([leadId])
+  @@index([userId])
+  @@index([status])
+  @@index([razorpayPaymentId])
+  @@index([razorpayOrderId])
+  @@index([subscriptionPlanId])
+  @@map("payments")
+}
+
+model UserSubscription {
+  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String             @map("user_id") @db.Uuid
+  subscriptionPlanId String             @map("subscription_plan_id") @db.Uuid
+  paymentId          String             @map("payment_id") @db.Uuid
+  status             SubscriptionStatus @default(ACTIVE)
+  startDate          DateTime           @default(now()) @map("start_date")
+  endDate            DateTime           @map("end_date")
+  autoRenew          Boolean            @default(false) @map("auto_renew")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  payment            Payment            @relation("payment_subscriptions", fields: [paymentId], references: [id])
+  subscriptionPlan   SubscriptionPlan   @relation(fields: [subscriptionPlanId], references: [id])
+  user               User               @relation("user_subscriptions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([endDate])
+  @@index([subscriptionPlanId])
+  @@index([paymentId])
+  @@map("user_subscriptions")
 }
 
 enum OtpStatus {
@@ -425,4 +540,23 @@ enum InvitationStatus {
   ACCEPTED
   EXPIRED
   ACTIVE
+}
+
+enum LeadStatus {
+  PENDING
+  CONFIRMED
+  SCHEDULED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  SUCCESS
+  FAILED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
 }

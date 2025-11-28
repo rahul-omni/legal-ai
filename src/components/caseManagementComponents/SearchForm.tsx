@@ -316,7 +316,7 @@ const handleSearchClick = () => {
             <option value="Supreme Court">Supreme Court</option>
             <option value="High Court">High Court</option>
             <option value="District Court">District Court</option>
-            <option value="Nclt Court">NCLT Court</option>
+            {/* <option value="Nclt Court">NCLT Court</option> */}
           </select>
           {errors?.court && (
             <p className="mt-1 text-sm text-error">{errors.court}</p>
@@ -724,7 +724,7 @@ const handleSearchClick = () => {
       <>
         <Search className="w-4 h-4" />
         <span className="text-white">
-          {isFormValid ? 'Search Cases' : 'Fill All Required Fields'}
+          {isFormValid ? 'Subscribe Case' : 'Fill All Required Fields'}
         </span>
       </>
     )}
