@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { userFromSession } from "@/lib/auth";
 import { auth } from '@/app/api/lib/auth/nextAuthConfig';
+import { is } from 'date-fns/locale';
 
 const prisma = new PrismaClient();
 
@@ -37,18 +38,52 @@ export const GET = auth(async (request) => {
       courtComplex: searchParams.get('courtComplex') ? decodeURIComponent(searchParams.get('courtComplex')!) : undefined,
     };
 
-    const existingCase = await prisma.caseDetails.findFirst({
-      where: {
-        diaryNumber: `${queryParams.diaryNumber}/${queryParams.year}`,
-        case_type: queryParams.caseType
+    let existingCase;
+
+    if (queryParams.court == 'High Court'){
+      existingCase = await prisma.caseDetails.findFirst({
+          where: {
+            diaryNumber: `${queryParams.diaryNumber}/${queryParams.year}`,
+            case_type: queryParams.caseType
+          }
+        });
+    } else if(queryParams.court == 'Supreme Court') {
+      if (queryParams.caseType == 'Diary Number') {
+        existingCase = await prisma.caseDetails.findFirst({
+          where: {
+            diaryNumber: `${queryParams.diaryNumber}/${queryParams.year}`,
+          }
+        });
+      } else {
+
+        existingCase = await prisma.caseDetails.findFirst({
+          where: {
+            caseNumber: {
+              contains: `${queryParams.diaryNumber}`
+            },
+            case_type: {
+              equals: queryParams.caseType,
+              mode: 'insensitive'
+            }
+          }
+        });
       }
-    });
+    }
 
     const endpoint = getEndpoint(court!);
 
     const externalApi = `${process.env.SERVICE_URL}/${endpoint}`;
 
     if (existingCase) {
+      const isSubscribedCase = await prisma.subscribedCases.findFirst({
+        where: {
+          userId: user.id,
+          case_id: existingCase.id,
+        }
+      });
+      if (isSubscribedCase) {
+        return new Response(JSON.stringify({ message: "Case already subscribed." }), { status: 200 });
+      }
       const subscribedCase = await prisma.subscribedCases.create({
         data: {
           userId: user.id,
@@ -95,7 +130,7 @@ export const GET = auth(async (request) => {
         id: newCase.id,
         caseYear: queryParams.year,
         caseNumber: queryParams.diaryNumber, 
-        diary_number: queryParams.diaryNumber,
+        diaryNumber: `${queryParams.diaryNumber}/${queryParams.year}`,
         caseType: queryParams.caseType,
       })
     })
