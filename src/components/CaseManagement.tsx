@@ -362,6 +362,8 @@ export function CaseManagement() {
         toast.success("Case subscribed successfully.");
       }else if (responseData.message == "Triggered external Cloud Function."){
         toast.success("Case is subscribed will take 2-5 mins to sync the case details.");
+      }else if(responseData.message == "Case already subscribed."){
+        toast.error("Case already subscribed.");
       }
 
     } catch (err) {

@@ -1,6 +1,7 @@
  import { PrismaClient } from '@prisma/client';
 import { userFromSession } from "@/lib/auth";
 import { auth } from '@/app/api/lib/auth/nextAuthConfig';
+import { is } from 'date-fns/locale';
 
 const prisma = new PrismaClient();
 
@@ -79,16 +80,37 @@ export const GET = auth(async (request) => {
       courtComplex: searchParams.get('courtComplex') ? decodeURIComponent(searchParams.get('courtComplex')!) : undefined,
     };
 
-    console.log('=== All Courts Search ===');
-    console.log('Query Params:', JSON.stringify(queryParams, null, 2));
+    let existingCase;
 
-    // Check if case already exists
-    let existingCase = await prisma.caseDetails.findFirst({
-      where: {
-        diaryNumber: `${queryParams.diaryNumber}/${queryParams.year}`,
-        case_type: queryParams.caseType
+    if (queryParams.court == 'High Court'){
+      existingCase = await prisma.caseDetails.findFirst({
+          where: {
+            diaryNumber: `${queryParams.diaryNumber}/${queryParams.year}`,
+            case_type: queryParams.caseType
+          }
+        });
+    } else if(queryParams.court == 'Supreme Court') {
+      if (queryParams.caseType == 'Diary Number') {
+        existingCase = await prisma.caseDetails.findFirst({
+          where: {
+            diaryNumber: `${queryParams.diaryNumber}/${queryParams.year}`,
+          }
+        });
+      } else {
+
+        existingCase = await prisma.caseDetails.findFirst({
+          where: {
+            caseNumber: {
+              contains: `${queryParams.diaryNumber}`
+            },
+            case_type: {
+              equals: queryParams.caseType,
+              mode: 'insensitive'
+            }
+          }
+        });
       }
-    });
+    }
 
     console.log('Existing case found:', existingCase ? existingCase.id : 'No');
 
@@ -103,25 +125,15 @@ export const GET = auth(async (request) => {
 
     // If case exists, just subscribe user and trigger update
     if (existingCase) {
-      console.log('✓ Case exists, subscribing user');
-      
-      // Check if already subscribed
-      const alreadySubscribed = await prisma.subscribedCases.findFirst({
+      const isSubscribedCase = await prisma.subscribedCases.findFirst({
         where: {
           userId: user.id,
-          case_id: existingCase.id
+          case_id: existingCase.id,
         }
       });
-
-      if (alreadySubscribed) {
-        console.log('User already subscribed to this case');
-        return new Response(JSON.stringify({ 
-          subscribedCase: alreadySubscribed, 
-          message: "Already subscribed to this case." 
-        }), { status: 200 });
+      if (isSubscribedCase) {
+        return new Response(JSON.stringify({ message: "Case already subscribed." }), { status: 200 });
       }
-
-      // Subscribe user to existing case
       const subscribedCase = await prisma.subscribedCases.create({
         data: {
           userId: user.id,
