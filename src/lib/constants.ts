@@ -1071,7 +1071,7 @@ export const NORTH_DISTRICT_COURT_COURT_COMPLEX = [
   "CORRUPTION CASES",
   "CourtComplaint",
   "CR",
-  "Cr. Cases",
+  "Cr. Case",
   "Cr Rev",
   "CS (COMM)",
   "CS DJ",
