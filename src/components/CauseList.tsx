@@ -18,7 +18,6 @@ type CaseDetails = {
   court: string;
   district: string;
   bench: string;
-  courtComplex: string;
   courtType: string;
   caseNumber: string;
 }
