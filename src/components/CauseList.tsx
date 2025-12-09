@@ -7,6 +7,11 @@ import { CalendarDay } from 'react-day-picker';
 
 type CaseType = {
   id: string;
+  case_id: string;
+  caseDetails: CaseDetails;
+};
+
+type CaseDetails = {
   diaryNumber: string;
   caseType: string;
   city: string;
@@ -15,8 +20,8 @@ type CaseType = {
   bench: string;
   courtComplex: string;
   courtType: string;
-  case_number: string;
-};
+  caseNumber: string;
+}
 
 const CauseList: React.FC = () => {
 
@@ -164,11 +169,11 @@ const CauseList: React.FC = () => {
                   <tbody>
                     {causes.map((cause) => (
                       <tr key={cause.id} className="hover:bg-gray-50">
-                        <td className="border p-2 text-center">{cause.diaryNumber}</td>
-                        <td className="border p-2 text-center">{cause.case_number}</td>
-                        <td className="border p-2 text-center">{cause.court}</td>
-                        <td className="border p-2 text-center">{cause.district || "-"}</td>
-                        <td className="border p-2 text-center">{cause.courtType || "-"}</td>
+                        <td className="border p-2 text-center">{cause.caseDetails.diaryNumber}</td>
+                        <td className="border p-2 text-center">{cause.caseDetails.caseNumber}</td>
+                        <td className="border p-2 text-center">{cause.caseDetails.court}</td>
+                        <td className="border p-2 text-center">{cause.caseDetails.district || "-"}</td>
+                        <td className="border p-2 text-center">{cause.caseDetails.courtType || "-"}</td>
                       </tr>
                     ))}
                   </tbody>
