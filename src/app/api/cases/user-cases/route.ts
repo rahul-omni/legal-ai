@@ -346,6 +346,7 @@ export const GET = auth(async (request: NextAuthRequest) => {
             courtComplex: true,
             courtType: true,
             site_sync: true,
+            caseNumber: true,
           },
         },
       },

@@ -321,9 +321,9 @@ useEffect(() => {
                     }}>
                       <Edit className="w-3.5 h-3.5" />
                     </button>
-                    <button className="p-1 text-gray-500 hover:bg-gray-100 rounded">
+                    {/* <button className="p-1 text-gray-500 hover:bg-gray-100 rounded">
                       <MoreHorizontal className="w-3.5 h-3.5" />
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               ))}

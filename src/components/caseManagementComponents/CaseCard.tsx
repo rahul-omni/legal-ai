@@ -38,7 +38,7 @@ export function CaseCard({
               </span>
               <span className="text-muted">•</span>
               <span className="text-text-light font-medium">
-                Diary: {caseItem.caseDetails.diaryNumber}
+                {`${caseItem.caseDetails.diaryNumber ? "Diary" : "Case"} Number`}: {caseItem.caseDetails.diaryNumber || caseItem.caseDetails.caseNumber || ''}
               </span>
             </div>
           </div>
