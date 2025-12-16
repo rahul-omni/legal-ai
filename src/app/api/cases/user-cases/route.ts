@@ -328,15 +328,41 @@ export const GET = auth(async (request: NextAuthRequest) => {
       );
     }
 
-    // Fetch all diary numbers for this user
+    const searchParams = request.nextUrl.searchParams;
+    const parties = searchParams.get("parties") || "";
+    
+    // Pagination parameters
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "20", 10);
+    const pageSize = Math.min(Math.max(limit, 1), 100); 
+    const currentPage = Math.max(page, 1); 
+    const skip = (currentPage - 1) * pageSize;
+
+    const whereClause: any = {
+      userId: sessionUser.id,
+      ...(parties ? { 
+        caseDetails: {
+          parties: { 
+            contains: parties,
+            mode: 'insensitive'
+          } 
+        }
+      } : {}),
+    };
+    
+    // Get total count for pagination metadata
+    const totalCount = await prisma.subscribedCases.count({
+      where: whereClause,
+    });
+    
+    // Fetch paginated diary numbers for this user
     const userCases = await prisma.subscribedCases.findMany({
-      where: {
-        userId: sessionUser.id,
-      },
+      where: whereClause,
       include: {
         caseDetails: {
           select: {
             id: true,
+            parties: true,
             diaryNumber: true,
             createdAt: true,
             case_type: true,
@@ -353,6 +379,31 @@ export const GET = auth(async (request: NextAuthRequest) => {
       orderBy: {
         createdAt: "desc",
       },
+      skip: skip,
+      take: pageSize,
+    });
+
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    const transformedCases = userCases.map((item: any) => {
+      const { caseDetails, ...rest } = item;
+      return {
+        ...rest,
+        caseDetails: caseDetails ? {
+          id: caseDetails.id,
+          parties: caseDetails.parties,
+          diaryNumber: caseDetails.diaryNumber,
+          createdAt: caseDetails.createdAt,
+          caseType: caseDetails.case_type, 
+          court: caseDetails.court,
+          city: caseDetails.city,
+          district: caseDetails.district,
+          courtComplex: caseDetails.courtComplex,
+          courtType: caseDetails.courtType,
+          site_sync: caseDetails.site_sync,
+          caseNumber: caseDetails.caseNumber,
+        } : null
+      };
     });
 
     return NextResponse.json({
@@ -360,7 +411,15 @@ export const GET = auth(async (request: NextAuthRequest) => {
       message: userCases.length === 0
         ? "No cases found for this user"
         : "Successfully retrieved diary numbers",
-      data: userCases
+      data: transformedCases,
+      pagination: {
+        currentPage: currentPage,
+        pageSize: pageSize,
+        totalItems: totalCount,
+        totalPages: totalPages,
+        hasNextPage: currentPage < totalPages,
+        hasPreviousPage: currentPage > 1,
+      }
     });
 
   } catch (error) {
