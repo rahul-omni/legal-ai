@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Plus, RefreshCcw, Search } from "lucide-react";
 import toast from "react-hot-toast";
 import { CaseData, SearchParams, ValidationErrors } from "./caseManagementComponents/types";
@@ -15,10 +15,14 @@ export function CaseManagement() {
   const [cases, setCases] = useState<CaseData[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [selectedCases, setSelectedCases] = useState<CaseData[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [spin, setSpin] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const isFetchingRef = useRef(false);
 
   const defaultSearchParams: SearchParams = {
     number: "",
@@ -41,45 +45,6 @@ export function CaseManagement() {
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [loadingUrls, setLoadingUrls] = useState<Record<string, boolean>>({});
 
-  function normalizeCaseData(rawCase: any, index: number): CaseData {
-    // Handle both snake_case and camelCase property names
-    const getValue = (keys: string[], defaultValue = '') => {
-      for (const key of keys) {
-        if (rawCase[key] !== undefined) return rawCase[key];
-      }
-      return defaultValue;
-    };
-
-    return {
-      id: rawCase.id || `${getValue(['diaryNumber', 'Diary Number'], 'case')}-${index}`,
-      serialNumber: getValue(['serialNumber', 'Serial Number']),
-      diaryNumber: getValue(['diaryNumber', 'Diary Number']),
-      caseNumber: getValue(['caseNumber', 'Case Number']),
-      court: getValue(['court', 'Court'], 'High Court'),
-      bench: getValue(['bench', 'Bench']),
-      judgmentBy: getValue(['judgmentBy', 'Judgment By']),
-      judgmentDate: getValue(['judgmentDate', 'judgment_date']),
-      judgmentText: Array.isArray(rawCase.judgmentText)
-        ? rawCase.judgmentText.join('\n')
-        : getValue(['judgmentText', 'Judgment']),
-      judgmentUrl: Array.isArray(rawCase.judgmentUrl)
-        ? rawCase.judgmentUrl[0]
-        : (rawCase.judgmentLinks?.[0]?.url || ''),
-      parties: getValue(['parties', 'Petitioner / Respondent']),
-      advocates: getValue(['advocates', 'Petitioner/Respondent Advocate']),
-      date: rawCase.date || '',
-      createdAt: rawCase.createdAt || rawCase.created_at || new Date().toISOString(),
-      updatedAt: rawCase.updatedAt || rawCase.updated_at || new Date().toISOString(),
-      file_path: rawCase.file_path || '',
-      judgmentType: getValue(['judgmentType', 'Judgment', 'judgment_type']),
-      caseType: getValue(['caseType', 'case_type']),
-      city: getValue(['city', 'City']),
-      district: getValue(['district', 'District']),
-      courtComplex: getValue(['courtComplex', 'Court Complex']),
-      courtType: getValue(['courtType', 'Court Type']),
-      site_sync: getValue(['site_sync', 'site_sync'])
-    };
-  }
   // Validation function
   const validateSearchForm = (): boolean => {
     const errors: ValidationErrors = {};
@@ -271,35 +236,105 @@ export function CaseManagement() {
     }
   };
 
-  const fetchUserCases = async () => {
+  const fetchUserCases = useCallback(async (page: number = 1, append: boolean = false, searchTerm: string = "") => {
+    // Prevent multiple simultaneous calls
+    if (isFetchingRef.current) {
+      return;
+    }
+
     try {
-      setIsLoading(true);
+      isFetchingRef.current = true;
+      
+      if (append) {
+        setIsLoadingMore(true);
+      } else {
+        setIsLoading(true);
+      }
       setError("");
-      const response = await fetch('/api/cases/user-cases', {
+      
+      const url = new URL('/api/cases/user-cases', window.location.origin);
+      url.searchParams.append('page', page.toString());
+      url.searchParams.append('limit', '20');
+      
+      // Only add parties search if search term length > 4
+      if (searchTerm && searchTerm.length > 4) {
+        url.searchParams.append('parties', searchTerm);
+      }
+      
+      const response = await fetch(url.toString(), {
         method: 'GET'
       });
       const data = await response.json();
 
       if (data.success && data.data) {
-        setCases(data.data);
+        if (append) {
+          // Append new cases to existing ones - keep all previous pages
+          setCases(prev => {
+            // Avoid duplicates by checking IDs
+            const existingIds = new Set(prev.map(c => c.id));
+            const newCases = data.data.filter((c: CaseData) => !existingIds.has(c.id));
+            return [...prev, ...newCases];
+          });
+        } else {
+          setCases(data.data);
+        }
+        
+        // Update pagination state
+        if (data.pagination) {
+          setCurrentPage(data.pagination.currentPage);
+          setHasMore(data.pagination.hasNextPage);
+        }
       } else {
         setError(data.message || 'Failed to fetch cases');
-        toast.error(data.message || 'Failed to fetch cases');
+        if (!append) {
+          toast.error(data.message || 'Failed to fetch cases');
+        }
       }
     } catch (error) {
       console.error('Error fetching cases:', error);
       setError('Failed to load cases');
-      toast.error('Failed to load cases');
+      if (!append) {
+        toast.error('Failed to load cases');
+      }
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
+      isFetchingRef.current = false;
+    }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    setCurrentPage(1);
+    setHasMore(true);
+    fetchUserCases(1, false, "");
+  }, [fetchUserCases]);
+
+  // Debounced search effect - only search when length > 4
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.length > 3) {
+        setCurrentPage(1);
+        setHasMore(true);
+        fetchUserCases(1, false, searchQuery);
+      } else if (searchQuery.length === 0) {
+        // Reset to initial load when search is cleared
+        setCurrentPage(1);
+        setHasMore(true);
+        fetchUserCases(1, false, "");
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, fetchUserCases]);
+
+  // Handle Load More button click
+  const handleLoadMore = () => {
+    if (hasMore && !isLoadingMore && !isLoading && !isFetchingRef.current) {
+      const nextPage = currentPage + 1;
+      fetchUserCases(nextPage, true, searchQuery.length > 3 ? searchQuery : "");
     }
   };
-
-  useEffect(() => {
-
-
-    fetchUserCases();
-  }, []);
 
 
 
@@ -372,7 +407,9 @@ export function CaseManagement() {
       toast.error(errorMessage || "Failed to search case");
     } finally {
       setIsLoading(false);
-      fetchUserCases();
+      setCurrentPage(1);
+      setHasMore(true);
+      fetchUserCases(1, false, "");
     }
   };
 
@@ -463,7 +500,9 @@ export function CaseManagement() {
           });
         }
       }
-      await fetchUserCases();
+      setCurrentPage(1);
+      setHasMore(true);
+      await fetchUserCases(1, false, "");
       setShowNewCaseModal(false);
       setFoundCases([]);
       setSelectedCases([]);
@@ -558,32 +597,35 @@ export function CaseManagement() {
           </Button>
         </div>
 
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 relative w-full">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
             <input
               type="text"
-              placeholder="Search cases..."
-              className=" pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="Search cases by parties (min 5 characters)..."
+              className="w-full md:w-1/3 pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-sm text-gray-700">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <div className="text-xs sm:text-sm text-gray-700 whitespace-nowrap block">
               Last Refreshed:{" "}
               <span className="font-medium">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
             <button
               onClick={async () => {
                 setSpin(true);
-                await fetchUserCases()
+                setSearchQuery(""); // Clear search on refresh
+                setCurrentPage(1);
+                setHasMore(true);
+                await fetchUserCases(1, false, "");
                 setSpin(false);
               }}
-              className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-700 font-medium
-           shadow-sm hover:bg-gray-100 active:scale-95 transition-all duration-200"
+              className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 sm:px-4 py-2 text-gray-700 font-medium
+           shadow-sm hover:bg-gray-100 active:scale-95 transition-all duration-200 whitespace-nowrap"
             >
-              <span>Refresh</span>
+              <span className="inline">Refresh</span>
               <RefreshCcw className={`w-4 h-4 ${spin ? "animate-spin-once" : ""}`} />
             </button>
           </div>
@@ -605,6 +647,26 @@ export function CaseManagement() {
           <CaseList
             cases={cases}
           />
+          
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="flex justify-center items-center py-6 px-6">
+              <button
+                onClick={handleLoadMore}
+                disabled={isLoadingMore || isLoading}
+                className="flex items-center gap-2 px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md"
+              >
+                {isLoadingMore ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                    <span>Loading...</span>
+                  </>
+                ) : (
+                  <span>Load More</span>
+                )}
+              </button>
+            </div>
+          )}
         </>
       ) : (
         <div className="bg-background pt-6">
