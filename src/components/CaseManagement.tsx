@@ -517,9 +517,7 @@ export function CaseManagement() {
     }
   };
 
-  useEffect(() => {
-    console.log("Found cases updated:", foundCases);
-  }, [foundCases]);
+  
   const generateSignedUrlForCase = async (filePath: string) => {
     try {
       const response = await fetch('/api/signed-url', {
@@ -602,7 +600,7 @@ export function CaseManagement() {
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
             <input
               type="text"
-              placeholder="Search cases by parties (min 5 characters)..."
+              placeholder="Search cases by parties"
               className="w-full md:w-1/3 pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
