@@ -89,6 +89,7 @@ export function CaseDetails({ id }: { id: string }) {
       const response = await fetch(`/api/cases/get-user-cases-by-id?id=${id}`);
       if (!response.ok) throw new Error("Failed to fetch case details");
       const data = await response.json();
+      console.log(data);
       setCaseItem(data);
     } catch (error) {
       console.error("Error fetching case details:", error);
@@ -227,7 +228,41 @@ export function CaseDetails({ id }: { id: string }) {
 
               <div className="flex flex-col items-center space-y-4 max-w-2xl mx-auto">
                 {orders.length > 0 ? (
-                  orders.map((order, idx) => (
+                  [...orders].sort((a, b) => {
+                    // Helper function to parse dd-mm-yyyy format
+                    const parseDate = (dateStr: string | undefined): number => {
+                      if (!dateStr) return 0;
+                      
+                      // Try to parse dd-mm-yyyy format
+                      const parts = dateStr.split('-');
+                      if (parts.length === 3) {
+                        const day = parseInt(parts[0], 10);
+                        const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+                        const year = parseInt(parts[2], 10);
+                        
+                        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+                          const date = new Date(year, month, day);
+                          return date.getTime();
+                        }
+                      }
+                      
+                      // Fallback to standard Date parsing
+                      const parsed = new Date(dateStr).getTime();
+                      return isNaN(parsed) ? 0 : parsed;
+                    };
+                    
+                    // Sort by date in descending order (most recent first)
+                    const dateA = parseDate(a.date);
+                    const dateB = parseDate(b.date);
+                    
+                    // Handle invalid dates - put them at the bottom
+                    if (dateA === 0 && dateB === 0) return 0;
+                    if (dateA === 0) return 1; // a goes to bottom
+                    if (dateB === 0) return -1; // b goes to bottom
+                    
+                    // Most recent first (descending)
+                    return dateB - dateA;
+                  }).map((order, idx) => (
                     <div
                       key={`${order.url}-${idx}`}
                       className="bg-background-light rounded-lg border border-border shadow-sm overflow-hidden w-full"
