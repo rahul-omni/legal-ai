@@ -46,7 +46,14 @@ const buildPayload = (court: string, queryParams: any, caseId: string) => {
       courtComplex: queryParams.courtComplex,
       caseTypeValue: queryParams.caseType,
       court: queryParams.court
-    };
+    }
+  } else if (queryParams.caseType == 'Diary Number' && (court === "Supreme Court")) {
+      return {
+        id: caseId, // ⭐ This is critical - cloud function will UPDATE this case
+        caseYear: queryParams.year,
+        diaryNumber: `${queryParams.diaryNumber}/${queryParams.year}`,
+        caseType: queryParams.caseType,
+      };
   } else {
     // Supreme Court / High Court / NCLT payload
     return {
@@ -86,7 +93,8 @@ export const GET = auth(async (request) => {
       existingCase = await prisma.caseDetails.findFirst({
           where: {
             diaryNumber: `${queryParams.diaryNumber}/${queryParams.year}`,
-            case_type: queryParams.caseType
+            case_type: queryParams.caseType,
+            court: 'High Court'
           }
         });
     } else if(queryParams.court == 'Supreme Court') {
@@ -94,6 +102,7 @@ export const GET = auth(async (request) => {
         existingCase = await prisma.caseDetails.findFirst({
           where: {
             diaryNumber: `${queryParams.diaryNumber}/${queryParams.year}`,
+            court: 'Supreme Court'
           }
         });
       } else {
@@ -106,7 +115,8 @@ export const GET = auth(async (request) => {
             case_type: {
               equals: queryParams.caseType,
               mode: 'insensitive'
-            }
+            },
+            court: 'Supreme Court'
           }
         });
       }
