@@ -3,6 +3,131 @@ import { userFromSession } from "@/lib/auth";
 import { auth } from '@/app/api/lib/auth/nextAuthConfig';
 import { is } from 'date-fns/locale';
 
+const CASE_TYPES_REVERSED = {
+  "Criminal Appeal": "Crl.A.",
+  "Criminal Miscellaneous Case": "Crl.M.C.",
+  "Criminal Revision Petition": "Crl.R.P.",
+  "Criminal Original Petition": "Crl.O.P.",
+  "Criminal Petition": "Crl.P.",
+  "Criminal Miscellaneous Petition": "Crl.M.P.",
+  "Criminal Revision Case": "Crl.R.C.",
+  "Criminal Original Suit": "Crl.O.S.",
+  "Criminal Case / Calendar Case": "C.C.",
+  "Sessions Case": "S.C.",
+  "Preliminary Register Case": "P.R.C.",
+  "First Information Report": "F.I.R.",
+  "Criminal Contempt Appeal": "C.Crl.A.",
+
+  "Civil Suit": "C.S.",
+  "Original Suit": "O.S.",
+  "Civil Appeal": "C.A.",
+  "First Appeal": "F.A.",
+  "Regular First Appeal": "R.F.A.",
+  "Regular Second Appeal": "R.S.A.",
+  "Second Appeal": "S.A.",
+  "Appeal Suit": "A.S.",
+  "Civil Miscellaneous Appeal": "C.M.A.",
+  "Civil Miscellaneous Petition": "C.M.P.",
+  "Civil Revision Petition": "C.R.P.",
+  "Civil Revision": "C.R.",
+  "Interlocutory Application": "I.A.",
+  "Insolvency Petition": "I.P.",
+  "Execution Petition": "E.P.",
+  "Execution Application": "E.A.",
+  "Original Petition": "O.P.",
+  "Transfer Original Petition": "Tr.O.P.",
+  "Transfer Civil Misc Petition": "Tr.C.M.P.",
+  "Transfer Civil Misc Appeal": "Tr.C.M.A.",
+  "Appeal Against Orders": "A.A.O.",
+  "Arbitration Request": "A.R.",
+  "Review Application": "R.A.",
+
+  "Writ Petition": "W.P.",
+  "Writ Appeal": "W.A.",
+  "Writ Petition (Civil)": "W.P.(C)",
+  "Writ Petition (Criminal)": "W.P.(Crl)",
+  "Writ Petition (Madurai Bench)": "W.P.(MD)",
+  "Writ Appeal (Madurai Bench)": "W.A.(MD)",
+  "Habeas Corpus Petition": "H.C.P.",
+  "Public Interest Litigation": "PIL",
+
+  "Special Leave Petition": "S.L.P.",
+  "Special Leave Petition (Civil)": "SLP(C)",
+  "Special Leave Petition (Criminal)": "SLP(Crl)",
+  "Curative Petition": "Cur.P.",
+  "Review Petition": "R.P.",
+  "Transfer Petition (Civil)": "T.P.(C)",
+  "Transfer Petition (Criminal)": "T.P.(Crl)",
+
+  "Family Court Original Petition": "F.C.O.P.",
+  "Guardianship Petition": "G.W.O.P.",
+  "Hindu Marriage Original Petition": "H.M.O.P.",
+  "Maintenance Case": "M.C.",
+  "Family Court Petition": "O.P.(Family)",
+  "Domestic Violence Case": "D.V.C.",
+  "Matrimonial Original Petition": "M.O.P.",
+  "Family Court Miscellaneous": "C.Misc.",
+
+  "Arbitration Original Petition": "Arb.O.P.",
+  "Arbitration Appeal": "Arb.A.",
+  "Arbitration Petition": "Arb.P.",
+  "Commercial Appeal Suit": "Com.A.S.",
+  "Commercial Original Suit": "Com.O.S.",
+  "Commercial Appeal Petition": "Com.A.P.",
+  "Commercial Misc Petition": "Com.M.P.",
+
+  "Industrial Dispute": "I.D.",
+  "Letters Patent Appeal": "L.P.A.",
+  "Labour Court Case": "L.C.",
+  "Workmen Compensation": "W.C.",
+  "Industrial Appellate Tribunal Case": "I.A.T.",
+
+  "Tax Appeal": "T.A.",
+  "Tax Case": "T.C.",
+  "Income Tax Appeal": "ITA",
+  "Income Tax Case": "ITC",
+  "Central Excise Appeal": "C.E.A.",
+  "Central Excise Revision": "C.E.R.",
+  "Service Tax Appeal": "S.T.A.",
+  "GST Appeal": "G.S.T.A.",
+  "Civil Miscellaneous Appeal (Tax)": "CMA(Tax)",
+
+  "Civil Contempt Petition": "Cont.P.(C)",
+  "Criminal Contempt Petition": "Cont.P.(Crl)",
+  "Contempt Case": "Cont.Case",
+  "Suo Motu Contempt": "Suo Motu Cont.",
+
+  "Motor Accident Claims Appeal": "M.A.C.M.A.",
+  "Motor Vehicle Original Petition": "M.V.O.P.",
+  "Motor Accident Claim Petition": "M.A.C.P.",
+
+  "Rent Control Case": "R.C.",
+  "Rent Control Appeal": "R.C.A.",
+  "Land Acquisition Original Petition": "L.A.O.P.",
+  "Election Original Petition": "E.O.P.",
+
+  "Miscellaneous Petition": "M.P.",
+  "Miscellaneous Appeal": "M.A.",
+  "Miscellaneous Criminal Revision": "M.C.R.",
+  "Special Revision": "S.R.",
+  "Special Misc Petition": "S.M.P.",
+  "Registration Appeal": "Reg.Appeal",
+  "Registration Original Petition": "Reg.O.P.",
+
+  "Original Application (Tribunal)": "OA",
+  "Review Application (Tribunal)": "RA",
+  "Misc Application (Tribunal)": "MA",
+
+  "Suo Motu Writ (Civil)": "SMW(C)",
+  "Suo Motu Writ (Criminal)": "SMW(Crl)",
+  "Suo Motu Criminal Case": "SMC(Crl)",
+  "Suo Motu Civil Case": "SMC(C)",
+
+  "Curative Petition (Review)": "CURATIVE PET(R)",
+  "Curative Petition (Civil)": "CURATIVE PET(C)",
+};
+
+
 const prisma = new PrismaClient();
 
 // List of districts that fall under East Delhi jurisdiction
@@ -106,17 +231,31 @@ export const GET = auth(async (request) => {
           }
         });
       } else {
+        const caseType = queryParams.caseType; // string
 
+        let shortCaseType: string | undefined;
+
+        if (caseType in CASE_TYPES_REVERSED) {
+          shortCaseType = CASE_TYPES_REVERSED[caseType as keyof typeof CASE_TYPES_REVERSED];
+        }
         existingCase = await prisma.caseDetails.findFirst({
           where: {
-            caseNumber: {
-              contains: `${queryParams.diaryNumber}`
-            },
-            case_type: {
-              equals: queryParams.caseType,
-              mode: 'insensitive'
-            },
-            court: 'Supreme Court'
+            AND: [
+              {
+                caseNumber: {
+                  contains: queryParams.diaryNumber
+                }
+              },
+              {
+                caseNumber: {
+                  contains: shortCaseType,
+                  mode: 'insensitive'
+                }
+              },
+              {
+                court: 'Supreme Court'
+              }
+            ]
           }
         });
       }
