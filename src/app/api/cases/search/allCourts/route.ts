@@ -238,12 +238,14 @@ export const GET = auth(async (request) => {
         if (caseType in CASE_TYPES_REVERSED) {
           shortCaseType = CASE_TYPES_REVERSED[caseType as keyof typeof CASE_TYPES_REVERSED];
         }
+
+        const formattedDiaryNumber = String(queryParams.diaryNumber).padStart(6, '0');
         existingCase = await prisma.caseDetails.findFirst({
           where: {
             AND: [
               {
                 caseNumber: {
-                  contains: queryParams.diaryNumber
+                  contains: formattedDiaryNumber
                 }
               },
               {
