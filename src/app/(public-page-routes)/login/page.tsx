@@ -83,7 +83,7 @@ export default function LoginPage() {
         }
 
         toast.success("Mobile number verified successfully!");
-         router.push(routeConfig.privateRoutes.projects);
+         router.push(routeConfig.privateRoutes.cases);
       }
     }
   } catch (err) {
