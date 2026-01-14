@@ -145,8 +145,13 @@ const EAST_DELHI_DISTRICTS = [
   "District Court North West Delhi",
 ];
 
-const getEndpoint = (court: string, district?: string) => {
+const getEndpoint = (court: string, district?: string, city?: string) => {
   if (court === "High Court") {
+    if (city === "Delhi") {
+      return "highCourtCasesUpsert";
+    }else if (city === "Punjab and Haryana") {
+      return "phhcUpsert";
+    }
     return "highCourtCasesUpsert";
   } else if (court === "Supreme Court") {
     return "supremeCourtOTF";
@@ -219,7 +224,8 @@ export const GET = auth(async (request) => {
           where: {
             diaryNumber: `${queryParams.diaryNumber}/${queryParams.year}`,
             case_type: queryParams.caseType,
-            court: 'High Court'
+            court: 'High Court',
+            city: queryParams.city
           }
         });
     } else if(queryParams.court == 'Supreme Court') {
@@ -265,7 +271,7 @@ export const GET = auth(async (request) => {
 
     console.log('Existing case found:', existingCase ? existingCase.id : 'No');
 
-    const endpoint = getEndpoint(court!, queryParams.district);
+    const endpoint = getEndpoint(court!, queryParams.district, queryParams.city);
     const externalApi = `${process.env.SERVICE_URL}${endpoint}`;
 
     console.log('=== Cloud Function Details ===');
@@ -326,8 +332,10 @@ export const GET = auth(async (request) => {
         caseNumber: queryParams.caseType !== 'Diary Number' ? `${queryParams.caseType}/${queryParams.diaryNumber}` : '',
         court: queryParams.court || '',
         case_type: queryParams.caseType,
+        bench: queryParams.bench || '',
         judgmentUrl: { orders: [] }, // ⭐ Empty initially - cloud function will populate
         serialNumber: '',
+        city: queryParams.city || '',
       }
     });
 

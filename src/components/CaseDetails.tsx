@@ -128,7 +128,7 @@ export function CaseDetails({ id }: { id: string }) {
 
   const handleViewPDF = async (order: UnifiedOrder) => {
     try {
-      if (caseItem?.court === 'High Court' && order.filename) {
+      if (caseItem?.court === 'High Court' && caseItem?.city === 'Delhi' && order.filename) {
         // High Court: Generate signed URL
         const signedUrl = await generateSignedUrlForCase(order.filename);
         window.open(signedUrl, '_blank', 'noopener,noreferrer');

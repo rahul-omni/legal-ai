@@ -47,7 +47,7 @@ export function SearchForm({ searchParams, setSearchParams, isLoading, onSearch,
 
  
 // allow null values from the imported mappings
-const BENCH_CASE_TYPE_MAP: Record<string, Record<string, number | null>> = {
+const BENCH_CASE_TYPE_MAP: Record<string, Record<string, number | string | null>> = {
   // Bombay benches
   "Appellate Side,Bombay": APPELLATE_BOMBAY_COURT_CASE_TYPES_VALUE_MAPPING,
   "Bench at Aurangabad": AURANGABAD_BOMBAY_HIGH_COURT_CASE_TYPES_VALUE_MAPPING,
@@ -90,7 +90,7 @@ const BENCH_CASE_TYPE_MAP: Record<string, Record<string, number | null>> = {
   "High Court of Manipur":HIGH_COURT_OF_MANIPUR_HIGH_COURT_OF_MANIPUR_CASE_TYPES_VALUE_MAPPING,
   "High Court of Meghalaya":HIGH_COURT_OF_MEGHALAYA_HIGH_COURT_OF_MEGHALAYA_CASE_TYPES_VALUE_MAPPING,
    "High Court of Orissa":HIGH_COURT_OF_ORISSA_HIGH_COURT_OF_ORISSA_CASE_TYPES_VALUE_MAPPING,
-   "High Court of Punjab and Haryana":HIGH_COURT_OF_PUNJAB_AND_HARYANA_HIGH_COURT_OF_PUNJAB_AND_HARYANA_CASE_TYPES_VALUE_MAPPING,
+   "Bench of High Court of Punjab and Haryana":HIGH_COURT_OF_PUNJAB_AND_HARYANA_HIGH_COURT_OF_PUNJAB_AND_HARYANA_CASE_TYPES_VALUE_MAPPING,
     "High Court Bench at Jaipur":HIGH_COURT_OF_RAJASTHAN_HIGH_COURT_BENCH_AT_JAIPUR_CASE_TYPES_VALUE_MAPPING,
      "Rajasthan High Court Principal Seat Jodhpur": HIGH_COURT_OF_RAJASTHAN_RAJASTHAN_HIGH_COURT_PRINCIPAL_SEAT_JODHPUR_CASE_TYPES_VALUE_MAPPING ,
      "High Court of Sikkim":HIGH_COURT_OF_SIKKIM_HIGH_COURT_OF_SIKKIM_CASE_TYPES_VALUE_MAPPING,
@@ -175,7 +175,7 @@ const ncltBenchOptions = useMemo(() => {
 const caseTypeOptions = useMemo(() => {
   const bench = (searchParams.bench || "").trim();
   // helper to clean key like "A227(...)-90" -> label "A227(...)" and code 90
-  const buildOptionsFromMapping = (mapping?: Record<string, number | null>) => {
+  const buildOptionsFromMapping = (mapping?: Record<string, number | string | null>) => {
     if (!mapping) return [] as { label: string; code?: number }[];
     return Object.entries(mapping).map(([k, v]) => {
       // extract trailing -digits if present
@@ -470,7 +470,6 @@ const handleSearchClick = () => {
           </div>
         )}
 
-        {/* Bench Selection (only for Mumbai High Court) */}
         {searchParams.court === "High Court" && searchParams.city && benchOptions.length>0 &&  (
           <div>
             <label className="block text-sm font-medium text-text-light mb-2">
