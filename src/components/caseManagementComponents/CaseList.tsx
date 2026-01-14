@@ -12,15 +12,15 @@ export function CaseList({
 }: CaseListProps) {
   return (
     <>
-      <div className="grid grid-cols-1 gap-2 px-6 mb-6">
-        {cases.map((caseItem, index) => (
-          <CaseCard
-            key={caseItem.id}
-            caseItem={caseItem}
-            index={index}
-          />
-        ))}
-      </div>
+    <div className="grid grid-cols-1 gap-2 px-6 mb-6">
+      {cases.map((caseItem, index) => (
+        <CaseCard
+          key={caseItem.id}
+          caseItem={caseItem}
+          index={index}
+        />
+      ))}
+    </div>
       {isLoadingMore && (
         <div className="flex justify-center items-center py-8">
           <div className="w-8 h-8 bg-background-light rounded-full flex items-center justify-center">
