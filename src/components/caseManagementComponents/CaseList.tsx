@@ -4,11 +4,13 @@ import { CaseCard } from "./CaseCard";
 interface CaseListProps {
   cases: CaseData[];
   isLoadingMore?: boolean;
+  onDelete?: (subscriptionId: string) => void;
 }
 
 export function CaseList({
   cases,
-  isLoadingMore = false
+  isLoadingMore = false,
+  onDelete
 }: CaseListProps) {
   return (
     <>
@@ -18,6 +20,7 @@ export function CaseList({
           key={caseItem.id}
           caseItem={caseItem}
           index={index}
+          onDelete={onDelete}
         />
       ))}
     </div>
