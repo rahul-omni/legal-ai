@@ -340,6 +340,7 @@ export const GET = auth(async (request: NextAuthRequest) => {
 
     const whereClause: any = {
       userId: sessionUser.id,
+      status: 'ACTIVE', // Only show active subscriptions
       ...(parties ? { 
         caseDetails: {
           parties: { 

@@ -393,13 +393,14 @@ model CaseDetails {
 }
 
 model SubscribedCases {
-  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
-  userId      String      @map("user_id") @db.Uuid
-  case_id     String      @db.Uuid
-  caseDetails CaseDetails @relation(fields: [case_id], references: [id], onDelete: Cascade)
-  user        User        @relation("user_subscribed_cases", fields: [userId], references: [id])
+  id          String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+  userId      String               @map("user_id") @db.Uuid
+  case_id     String               @db.Uuid
+  status      SubscribedCaseStatus @default(ACTIVE)
+  caseDetails CaseDetails          @relation(fields: [case_id], references: [id], onDelete: Cascade)
+  user        User                 @relation("user_subscribed_cases", fields: [userId], references: [id])
 
   @@map("subscribed_cases")
 }
@@ -694,4 +695,9 @@ enum SubscriptionStatus {
   ACTIVE
   EXPIRED
   CANCELLED
+}
+
+enum SubscribedCaseStatus {
+  ACTIVE
+  DELETED
 }

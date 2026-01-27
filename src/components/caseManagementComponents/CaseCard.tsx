@@ -1,29 +1,57 @@
-import { Calendar, ArrowRight } from "lucide-react";
+import { Calendar, ArrowRight, Trash2 } from "lucide-react";
 import { CaseData } from "./types";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import ConfirmationModal from "../ui/ConfirmationModal";
 
 interface CaseCardProps {
   caseItem: CaseData;
   index: number;
+  onDelete?: (subscriptionId: string) => void;
 }
 
 export function CaseCard({
   caseItem,
-  index
+  index,
+  onDelete
 }: CaseCardProps) {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   if (!caseItem.caseDetails.id) {
     console.error('Rendering case with no ID:', caseItem);
     return null;
   }
 
   const router = useRouter();
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation when clicking delete
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!onDelete || !caseItem.id) return;
+    
+    setIsDeleting(true);
+    try {
+      await onDelete(caseItem.id);
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error('Error deleting subscription:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
-    <div className="bg-background-light border border-border rounded-lg hover:shadow-md transition-all duration-200 text-sm">
-      {/* Case header - clickable */}
-      <div
-        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 p-4 cursor-pointer hover:bg-background-dark transition-colors"
-        onClick={() => router.push(`/case-details/${caseItem.caseDetails.id}`)}
-      >
+    <>
+      <div className="bg-background-light border border-border rounded-lg hover:shadow-md transition-all duration-200 text-sm">
+        {/* Case header - clickable */}
+        <div
+          className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 p-4 cursor-pointer hover:bg-background-dark transition-colors"
+          onClick={() => router.push(`/case-details/${caseItem.caseDetails.id}`)}
+        >
         {/* Left side - Main content */}
         <div className="flex-1 min-w-0 w-full sm:w-auto">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap">
@@ -112,9 +140,32 @@ export function CaseCard({
             <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded whitespace-nowrap">
               Error Syncing </span>
           )}
+          {onDelete && (
+            <button
+              onClick={handleDeleteClick}
+              className="p-2 text-error hover:bg-error/10 rounded-lg transition-colors"
+              title="Delete subscription"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
           <ArrowRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
         </div>
       </div>
     </div>
+
+    {/* Delete Confirmation Modal */}
+    <ConfirmationModal
+      isOpen={showDeleteModal}
+      onClose={() => setShowDeleteModal(false)}
+      onConfirm={handleConfirmDelete}
+      title="Delete Subscription"
+      message={`Are you sure you want to delete this subscription? This action cannot be undone.`}
+      confirmText="Delete"
+      cancelText="Cancel"
+      variant="danger"
+      isLoading={isDeleting}
+    />
+    </>
   );
 } 

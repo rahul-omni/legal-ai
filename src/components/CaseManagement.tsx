@@ -336,6 +336,30 @@ export function CaseManagement() {
     }
   };
 
+  // Handle delete subscription
+  const handleDeleteSubscription = async (subscriptionId: string) => {
+    try {
+      const response = await fetch(`/api/cases/user-cases/${subscriptionId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success("Subscription deleted successfully");
+        // Refresh the list
+        setCurrentPage(1);
+        setHasMore(true);
+        await fetchUserCases(1, false, searchQuery.length > 3 ? searchQuery : "");
+      } else {
+        toast.error(data.message || "Failed to delete subscription");
+      }
+    } catch (error) {
+      console.error('Error deleting subscription:', error);
+      toast.error("Failed to delete subscription");
+    }
+  };
+
 
 
 
@@ -644,6 +668,7 @@ export function CaseManagement() {
           {/* Cases List */}
           <CaseList
             cases={cases}
+            onDelete={handleDeleteSubscription}
           />
           
           {/* Load More Button */}
