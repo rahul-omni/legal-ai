@@ -120,8 +120,10 @@ await db.fileSystemNode.create({
   },
 });
 
-    // 7. Send verification email
-    await sendVerificationEmail(email, verificationToken);
+    // 7. Send verification email (only if user provided email)
+    if (validatedEmail) {
+      await sendVerificationEmail(validatedEmail, verificationToken);
+    }
 
     // 8. Prepare response
     // Exclude password, but include all other required fields for IndividualSignupResponse

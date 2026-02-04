@@ -11,7 +11,7 @@ export const userFromSession = async (request: NextAuthRequest) => {
       const token = authHeader.split(' ')[1];
       const decoded = verifyAccessToken(token);
       
-      console.log('JWT decoded:', { userId: decoded.userId, email: decoded.email });
+      // console.log('JWT decoded:', { userId: decoded.userId, email: decoded.email });
       
       // Return user in NextAuth format
       return {

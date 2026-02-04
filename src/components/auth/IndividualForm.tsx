@@ -2,7 +2,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
  
 import { routeConfig } from "@/lib/routeConfig";
@@ -28,15 +28,19 @@ type FormData = z.infer<typeof schema>;
 export default function IndividualForm({
   onSubmit,
   isLoading,
+  initialMobileNumber,
 }: {
   onSubmit: (_data: FormData) => Promise<{ success: boolean; message?: string }>;
   isLoading: boolean;
+  initialMobileNumber?: string;
 }) {
   const [otpSent, setOtpSent] = useState(false);
   const [mobileVerified, setMobileVerified] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [hasAutoSubmitted, setHasAutoSubmitted] = useState(false);
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
 
   const {
     register,
@@ -44,11 +48,26 @@ export default function IndividualForm({
     formState: { errors },
     watch,
     setError,
+    trigger,
+    getValues,
+    setValue,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
+    defaultValues: {
+      mobileNumber: initialMobileNumber || "",
+    },
   });
 
+  // Set mobile number if provided via query param
+  useEffect(() => {
+    if (initialMobileNumber) {
+      setValue("mobileNumber", initialMobileNumber);
+      toast("Please complete your signup to continue", { icon: "ℹ️" });
+    }
+  }, [initialMobileNumber, setValue]);
+
   const mobileNumber = watch("mobileNumber");
+  const name = watch("name");
 
   const handleSendOtp = async () => {
     if (!mobileNumber || mobileNumber.length !== 10) {
@@ -127,8 +146,31 @@ export default function IndividualForm({
     }
   };
 
+  // Auto-submit form after OTP verification if name is provided
+  useEffect(() => {
+    if (mobileVerified && !hasAutoSubmitted && name && name.trim().length > 0) {
+      // Small delay to ensure state is updated
+      const timer = setTimeout(async () => {
+        const isValid = await trigger("name");
+        if (isValid) {
+          const formData = getValues();
+          setHasAutoSubmitted(true);
+          // Auto-submit the form by calling onFormSubmit directly
+          await onFormSubmit(formData);
+        }
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mobileVerified, name, hasAutoSubmitted]);
+
   return (
-    <form className="mt-8 space-y-6" onSubmit={handleSubmit(onFormSubmit)}>
+    <form 
+      ref={formRef}
+      className="mt-8 space-y-6" 
+      onSubmit={handleSubmit(onFormSubmit)}
+    >
       <div className="rounded-md shadow-sm space-y-4">
         <div>
           <label htmlFor="name" className="sr-only">

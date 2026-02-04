@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import SignupForm from "@/components/auth/SignupForm";
 import FormWrapper from "@/components/auth/FormWrapper";
 
@@ -7,6 +8,8 @@ export default function SignupPage() {
   const [signupType, setSignupType] = useState<"individual" | "organization">(
     "individual"
   );
+  const searchParams = useSearchParams();
+  const mobileParam = searchParams.get("mobile") || "";
 
   return (
     <FormWrapper title="Create your account">
@@ -32,7 +35,7 @@ export default function SignupPage() {
           Organization
         </button>
       </div>
-      <SignupForm signupType={signupType} />
+      <SignupForm signupType={signupType} initialMobileNumber={mobileParam} />
     </FormWrapper>
   );
 }
