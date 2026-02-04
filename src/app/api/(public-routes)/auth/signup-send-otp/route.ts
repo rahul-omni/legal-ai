@@ -39,23 +39,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 4. Check if user already exists
-    const existingUser = await db.user.findFirst({
-      where: { mobileNumber: cleanedMobile },
-    });
-
-    if (existingUser) {
-      logger.warn("Duplicate registration attempt", { mobileNumber: cleanedMobile });
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: 'Mobile number already registered. Please sign in instead.' 
-        },
-        { status: 409 } // 409 Conflict is more appropriate for duplicate resources
-      );
-    }
-
-    // 2.5. Validate email if provided
+    // 3.5. Validate email if provided (needed before checking existing user)
     let validatedEmail = null;
     if (email && email.trim() !== '') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -68,7 +52,98 @@ export async function POST(request: Request) {
       validatedEmail = email.trim();
     }
 
-    // 5. Generate OTP
+    // 4. Check if user already exists
+    const existingUser = await db.user.findFirst({
+      where: { mobileNumber: cleanedMobile },
+    });
+
+    if (existingUser) {
+      // Check if account is incomplete (name is null means signup wasn't completed)
+      const isIncompleteAccount = !existingUser.name;
+      
+      if (isIncompleteAccount) {
+        // Allow re-signup for incomplete accounts - update existing user with new OTP
+        logger.info("Resuming incomplete signup", { 
+          userId: existingUser.id, 
+          mobileNumber: cleanedMobile 
+        });
+        
+        // Generate new OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiry
+        
+        // Update existing user with new OTP and reset verification status
+        await db.user.update({
+          where: { id: existingUser.id },
+          data: {
+            otp: otp,
+            mobileOtpExpiry: otpExpiry,
+            mobileOtpAttempts: 0,
+            isMobileVerified: false, // Reset verification status
+            email: validatedEmail || existingUser.email, // Update email if provided
+          },
+        });
+        
+        logger.debug("Generated OTP for incomplete account", { otp, otpExpiry });
+        
+        // Send OTP via MSG91
+        if (process.env.NODE_ENV === 'production' || process.env.USE_MSG91_IN_DEV === 'true' || process.env.NODE_ENV === 'development') {
+          const msg91Response = await fetch("https://control.msg91.com/api/v5/flow?authkey=446930Atbcmx9iY0FG67fe0a32P1&accept=application%2Fjson&content-type=application%2Fjson", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Cookie": "HELLO_APP_HASH=M1pwd3dmUVpKZGd2ZDNLcG1SQnQ1NU0raklPdEhEVXZSSFBuVjNpNDM4WT0%3D; PHPSESSID=8tvt13jd4etkaqc63s8ec4bol0"
+            },
+            body: JSON.stringify({
+              template_id: "685becc9d6fc052a811ab2b3",
+              CRQID: `91${cleanedMobile}`,
+              recipients: [
+                {
+                  mobiles: `91${cleanedMobile}`,
+                  var1: otp
+                }
+              ]
+            })
+          });
+
+          if (!msg91Response.ok) {
+            const errorData = await msg91Response.json();
+            console.error('MSG91 Error:', errorData);
+            throw new Error(`MSG91 Error: ${errorData.message || 'Failed to send OTP'}`);
+          }
+
+          const result = await msg91Response.json();
+          console.log('MSG91 Response:', result);
+          
+          if (result.type !== "success") {
+            throw new Error(`MSG91 Error: ${result.message}`);
+          }
+        } else {
+          console.log(`[DEV] OTP for ${cleanedMobile}: ${otp}`);
+        }
+        
+        return NextResponse.json({
+          success: true,
+          message: 'OTP sent successfully',
+          data: {
+            mobileNumber: cleanedMobile,
+            otpExpiry: otpExpiry.toISOString()
+          }
+        });
+      } else {
+        // Account is complete - user should sign in instead
+        logger.warn("Duplicate registration attempt for complete account", { mobileNumber: cleanedMobile });
+        return NextResponse.json(
+          { 
+            success: false, 
+            message: 'Mobile number already registered. Please sign in instead.' 
+          },
+          { status: 409 }
+        );
+      }
+    }
+
+    // 5. Generate OTP (for new users)
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiry
 

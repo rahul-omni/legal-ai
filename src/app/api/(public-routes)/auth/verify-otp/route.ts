@@ -29,6 +29,18 @@ export async function POST(request: Request) {
       );
     }
 
+    // Incomplete signup: allow user to sign up again (redirect to signup)
+    if (!otpRecord.user.name || !otpRecord.user.isMobileVerified) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Please complete your signup. You can sign up again with this number.',
+          requiresSignup: true,
+        },
+        { status: 200 }
+      );
+    }
+
     if (otpRecord.attempts >= 3) {
       return NextResponse.json(
         { success: false, message: 'Too many attempts. Please request a new OTP.' },

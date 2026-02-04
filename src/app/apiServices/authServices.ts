@@ -10,6 +10,7 @@ export interface OtpResponse {
   retryAfter?: number;
   token?: string;
   user?: any;
+  requiresSignup?: boolean;
 }
 
 export const login = async (credentials: {
@@ -58,7 +59,8 @@ export const sendOtp = async (mobileNumber: string): Promise<OtpResponse> => {
     if (!response.data.success) {
       return {
         success: false,
-        message: response.data.message || "Failed to send OTP"
+        message: response.data.message || "Failed to send OTP",
+        requiresSignup: response.data.requiresSignup
       };
     }
 
@@ -70,6 +72,15 @@ export const sendOtp = async (mobileNumber: string): Promise<OtpResponse> => {
     console.error("Send OTP error:", error);
     
     // Handle specific error cases
+    if (error.response?.status === 428) {
+      // 428 Precondition Required - incomplete signup
+      return {
+        success: false,
+        message: error.response.data?.message || "Please complete your signup first",
+        requiresSignup: true
+      };
+    }
+    
     if (error.response?.status === 429) {
       return {
         success: false,
@@ -81,6 +92,7 @@ export const sendOtp = async (mobileNumber: string): Promise<OtpResponse> => {
     return {
       success: false,
       message: error.response?.data?.message || "Failed to send OTP",
+      requiresSignup: error.response?.data?.requiresSignup,
       ...error.response?.data
     };
   }
@@ -113,7 +125,8 @@ export const verifyOtp = async (mobileNumber: string, otp: string): Promise<OtpR
     if (!response.data.success) {
       return {
         success: false,
-        message: response.data.message || "OTP verification failed"
+        message: response.data.message || "OTP verification failed",
+        requiresSignup: response.data.requiresSignup
       };
     }
 
@@ -142,6 +155,15 @@ export const verifyOtp = async (mobileNumber: string, otp: string): Promise<OtpR
     console.error('Verify OTP error:', error);
     
     // Handle specific error cases
+    if (error.response?.status === 428) {
+      // 428 Precondition Required - incomplete signup
+      return {
+        success: false,
+        message: error.response.data?.message || "Please complete your signup first",
+        requiresSignup: true
+      };
+    }
+    
     if (error.response?.status === 429) {
       return {
         success: false,
@@ -153,6 +175,7 @@ export const verifyOtp = async (mobileNumber: string, otp: string): Promise<OtpR
     return {
       success: false,
       message: error.response?.data?.message || "OTP verification failed",
+      requiresSignup: error.response?.data?.requiresSignup,
       ...error.response?.data
     };
   }

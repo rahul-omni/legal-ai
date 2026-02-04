@@ -61,13 +61,18 @@ export default function LoginPage() {
         const otpResponse = await sendOtp(mobileNumber);
         console.log("OTP response:", otpResponse);
         
-        //Add this check for mobile number not registered
         if (!otpResponse.success) {
-         
-            toast.error("Your number is not registered. Please sign up first.");
+          // Check if account is incomplete and needs signup
+          if (otpResponse.requiresSignup) {
+            toast.error("Please complete your signup first. Redirecting to signup page...");
+            setTimeout(() => {
+              router.push(`${routeConfig.publicRoutes.signup}?mobile=${mobileNumber}`);
+            }, 2000);
             return;
+          }
           
-           
+          toast.error(otpResponse.message || "Your number is not registered. Please sign up first.");
+          return;
         }
        
         setOtpSent(true);
@@ -78,6 +83,15 @@ export default function LoginPage() {
         const verified = await verifyOtp(mobileNumber, otp);
         
         if (!verified.success) {
+          // Check if account is incomplete and needs signup
+          if (verified.requiresSignup) {
+            toast.error("Please complete your signup first. Redirecting to signup page...");
+            setTimeout(() => {
+              router.push(`${routeConfig.publicRoutes.signup}?mobile=${mobileNumber}`);
+            }, 2000);
+            return;
+          }
+          
           toast.error(verified.message || "OTP verification failed");
           return;
         }

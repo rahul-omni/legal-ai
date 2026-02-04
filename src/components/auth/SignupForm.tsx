@@ -5,8 +5,10 @@ import { log } from "winston";
 
 export default function SignupForm({
   signupType,
+  initialMobileNumber,
 }: {
   signupType: "individual" | "organization";
+  initialMobileNumber?: string;
 }) {
   const { isLoading, error, signup } = useSignup();
 
@@ -25,7 +27,11 @@ export default function SignupForm({
   return (
     <>
       {signupType === "individual" ? (
-        <IndividualForm onSubmit={handleSubmit} isLoading={isLoading} />
+        <IndividualForm 
+          onSubmit={handleSubmit} 
+          isLoading={isLoading} 
+          initialMobileNumber={initialMobileNumber}
+        />
       ) : (
         <OrganizationForm onSubmit={handleSubmit} isLoading={isLoading} />
       )}

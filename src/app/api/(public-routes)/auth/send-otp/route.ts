@@ -33,7 +33,18 @@ export async function POST(request: Request) {
         { success: false, message: 'Mobile number not registered' },
         { status: 404 }
       );
-      
+    }
+
+    // 2.5. Incomplete signup: allow user to sign up again (don't block with 428)
+    if (!user.name || !user.isMobileVerified) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Please complete your signup. You can sign up again with this number.',
+          requiresSignup: true,
+        },
+        { status: 200 }
+      );
     }
 
     // 3. Generate and store OTP
