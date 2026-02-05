@@ -47,6 +47,33 @@ export async function POST(request: Request) {
       );
     }
 
+    // 2.6. Test account (Option A): fixed OTP, no SMS — only when ALLOW_TEST_OTP is set
+    const testMobile = process.env.TEST_MOBILE_NUMBER?.trim().replace(/\D/g, "").slice(-10);
+    const allowTestOtp = process.env.ALLOW_TEST_OTP === "true" || process.env.ALLOW_TEST_OTP === "1";
+    const fixedTestOtp = (process.env.TEST_OTP || "123456").trim().slice(0, 6);
+
+    if (allowTestOtp && testMobile && cleanedMobile === testMobile && /^\d{4,6}$/.test(fixedTestOtp)) {
+      const otpExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 min for test
+      const otpRecord = await prisma.individualOtpLogin.upsert({
+        where: { mobileNumber: cleanedMobile },
+        update: { otp: fixedTestOtp, otpExpiry, attempts: 0, status: "PENDING" },
+        create: {
+          mobileNumber: cleanedMobile,
+          otp: fixedTestOtp,
+          otpExpiry,
+          attempts: 0,
+          status: "PENDING",
+          userId: user.id,
+        },
+      });
+      console.log(`[TEST] OTP for ${cleanedMobile}: ${fixedTestOtp}`);
+      return NextResponse.json({
+        success: true,
+        data: { id: otpRecord.id, mobileNumber: cleanedMobile, status: "PENDING" },
+        message: "OTP sent successfully (test account – use configured TEST_OTP)",
+      });
+    }
+
     // 3. Generate and store OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiry

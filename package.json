@@ -6,8 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "seed": "node -r esbuild-register prisma/seed.ts",
-    "clean-tokens": "node -r esbuild-register prisma/scripts/cleanExpiredTokens.ts",
+    "seed": "npx ts-node prisma/seed.ts",
+    "seed:test-user": "npx ts-node prisma/seed-test-user.ts",
+    "clean-tokens": "npx ts-node prisma/scripts/cleanExpiredTokens.ts",
     "lint": "next lint",
     "ts-lint": "npx tsc --noEmit --project tsconfig.json --pretty",
     "es-lint": "npx eslint ./src/app/ --ext .js,.jsx,.ts,.tsx --format table"

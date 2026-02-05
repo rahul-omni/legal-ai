@@ -17,6 +17,17 @@ export async function POST(request: Request) {
       );
     }
 
+    // Test account (9999999991) is for mobile app only; web must not sign in with it
+    const cleanedMobile = String(mobileNumber).replace(/\D/g, '').slice(-10);
+    const testMobile = process.env.TEST_MOBILE_NUMBER?.trim().replace(/\D/g, '').slice(-10);
+    const allowTestOtp = process.env.ALLOW_TEST_OTP === 'true' || process.env.ALLOW_TEST_OTP === '1';
+    if (allowTestOtp && testMobile && cleanedMobile === testMobile) {
+      return NextResponse.json(
+        { success: false, message: 'This account can only be used to sign in from the mobile app.' },
+        { status: 400 }
+      );
+    }
+
     const otpRecord = await prisma.individualOtpLogin.findFirst({
       where: { mobileNumber },
       include: { user: true }
