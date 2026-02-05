@@ -59,7 +59,16 @@ export async function POST(request: Request) {
       );
     }
 
-    if (otpRecord.otp !== otp) {
+    // Test account (app only): accept fixed OTP when ALLOW_TEST_OTP is set (even if DB had random OTP)
+    const cleanedMobile = String(mobileNumber).replace(/\D/g, '').slice(-10);
+    const testMobile = process.env.TEST_MOBILE_NUMBER?.trim().replace(/\D/g, '').slice(-10);
+    const fixedTestOtp = (process.env.TEST_OTP || '123456').trim().slice(0, 6);
+    const isTestAccount = process.env.ALLOW_TEST_OTP === 'true' || process.env.ALLOW_TEST_OTP === '1';
+    const otpMatches = isTestAccount && testMobile && cleanedMobile === testMobile && String(otp ?? '').trim() === fixedTestOtp;
+
+    if (otpMatches) {
+      // Accept test OTP; continue to issue tokens below
+    } else if (otpRecord.otp !== otp) {
       await prisma.individualOtpLogin.update({
         where: { id: otpRecord.id },
         data: { attempts: { increment: 1 } }

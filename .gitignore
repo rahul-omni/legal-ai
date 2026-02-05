@@ -47,3 +47,6 @@ src/components/rough
 package-lock.json
 *.sql
 backups/
+
+
+/docs
