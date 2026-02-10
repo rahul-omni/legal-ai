@@ -72,6 +72,9 @@ export default function LoginPage() {
           }
           
           toast.error(otpResponse.message || "Your number is not registered. Please sign up first.");
+          setTimeout(() => { 
+            window.location.href = routeConfig.publicRoutes.signup; // Redirect to signup page
+          }, 500);
           return;
         }
        
@@ -116,6 +119,9 @@ export default function LoginPage() {
         if (!otpSent.success) {
      
         toast.error("Your number is not registered. Please sign up first.");
+        setTimeout(() => { 
+          window.location.href = routeConfig.publicRoutes.signup; // Redirect to signup page
+        }, 500);
         return;
       
     }
