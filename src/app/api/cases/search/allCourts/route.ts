@@ -180,17 +180,18 @@ const buildPayload = (court: string, queryParams: any, caseId: string) => {
   } else if (queryParams.caseType == 'Diary Number' && (court === "Supreme Court")) {
       return {
         id: caseId, // ⭐ This is critical - cloud function will UPDATE this case
-        caseYear: queryParams.year,
+        caseYear: String(queryParams.year ?? ''),
         diaryNumber: `${queryParams.diaryNumber}/${queryParams.year}`,
         caseType: queryParams.caseType,
       };
   } else {
-    // Supreme Court / High Court / NCLT payload
+    // Supreme Court / High Court / NCLT payload (supremeCourtOTF expects diaryNumber and/or caseNumber, caseYear, caseType)
     return {
       id: caseId, // ⭐ This is critical - cloud function will UPDATE this case
-      caseYear: queryParams.year,
-      caseNumber: queryParams.diaryNumber,
+      caseYear: String(queryParams.year ?? ''),
+      caseNumber: String(queryParams.diaryNumber ?? ''),
       diary_number: queryParams.diaryNumber,
+      diaryNumber: queryParams.diaryNumber ?? '', // cloud function reads body.diaryNumber
       caseType: queryParams.caseType,
     };
   }
@@ -272,7 +273,19 @@ export const GET = auth(async (request) => {
     console.log('Existing case found:', existingCase ? existingCase.id : 'No');
 
     const endpoint = getEndpoint(court!, queryParams.district, queryParams.city);
-    const externalApi = `${process.env.SERVICE_URL}${endpoint}`;
+    const serviceUrl = process.env.SERVICE_URL?.trim() || '';
+    if (endpoint !== 'supremeCourtOTF' && !serviceUrl) {
+      console.error('SERVICE_URL is not set - cloud function will not be called');
+      return new Response(JSON.stringify({
+        error: "Server misconfiguration",
+        message: "Backend service URL not configured. Please set SERVICE_URL.",
+      }), { status: 500 });
+    }
+    // supremeCourtOTF uses a different (hardcoded) base URL; other endpoints use SERVICE_URL
+    const externalApi =
+      endpoint === 'supremeCourtOTF'
+        ? 'https://asia-south1-robotic-land-465306-j7.cloudfunctions.net/supremeCourtOTF'
+        : `${serviceUrl.replace(/\/$/, '')}/${endpoint}`;
 
     console.log('=== Cloud Function Details ===');
     console.log('Court:', court);

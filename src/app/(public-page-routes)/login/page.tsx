@@ -53,7 +53,12 @@ export default function LoginPage() {
     if (activeTab === "organization") {
       startLoading("LOGGING_IN");
       const loggedIn = await login({ email, password });
-      if (!loggedIn.success) return;
+      if (!loggedIn.success) {
+        const message = loggedIn.message || "Login failed. Please try again.";
+        setError(message);
+        toast.error(message);
+        return;
+      }
       router.push(routeConfig.privateRoutes.cases);
     } else {
       if (!otpSent) {
