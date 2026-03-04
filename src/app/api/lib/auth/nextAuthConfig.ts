@@ -3,8 +3,6 @@ import bcrypt from "bcryptjs";
 import type { NextAuthConfig } from "next-auth";
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import z from "zod";
-// import Credentials from "next-auth/providers/credentials";
 import { logInSchema } from "../validation/authValidation";
 
 const authOptions: NextAuthConfig = {
@@ -21,18 +19,11 @@ const authOptions: NextAuthConfig = {
         console.log("Received credentials:", credentials);
 
         try {
-          console.log("Parsing credentials with logInSchema", credentials);
-
-          // const { email, password,  } = await emailPasswordSchema.parseAsync(credentials);
-
-          //onst { email, password, mobileNumber, otp } = credentials || {};
           const parsed = logInSchema.parse(credentials);
-
           const { email, password, mobileNumber, otp } = parsed;
 
-          // 1. Handle email/password login
+          // 1. Handle email/password login (organization only) — return null on failure so client gets CredentialsSignin, not "Configuration"
           if (email && password) {
-            //onst parsed = emailPasswordSchema.parse({ email, password });
             const user = await db.user.findUnique({
               where: { email: email },
               include: { orgMemberships: { include: { org: true } } },
@@ -56,9 +47,8 @@ const authOptions: NextAuthConfig = {
             };
           }
 
-          // 2. Handle OTP-based login
+          // 2. Handle OTP-based login (individual)
           if (mobileNumber && otp) {
-            //onst parsed = otpSchema.parse({ mobileNumber, otp });
             const otpRecord = await db.individualOtpLogin.findUnique({
               where: { mobileNumber },
               include: { user: true },
@@ -79,13 +69,11 @@ const authOptions: NextAuthConfig = {
               email: user.email,
               name: user.name,
               mobileNumber: user.mobileNumber,
-
-              
             };
           }
 
           return null;
-        } catch (error) {
+        } catch (error: unknown) {
           console.error("Authorize error:", error);
           return null;
         }

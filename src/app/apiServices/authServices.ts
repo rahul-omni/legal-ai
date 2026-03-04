@@ -18,26 +18,43 @@ export const login = async (credentials: {
   password: string;
 }): Promise<{ success: boolean; message?: string }> => {
   try {
+    // Validate credentials first so we can return a specific error message (NextAuth returns "Configuration" or "CredentialsSignin" otherwise)
+    const validateRes = await apiClient.post<{ success: boolean; message?: string }>(
+      "/auth/validate-credentials",
+      credentials
+    );
+    if (!validateRes.data.success) {
+      return {
+        success: false,
+        message: validateRes.data.message || "Invalid email or password.",
+      };
+    }
+
     const result = await nextAuthSignIn("credentials", {
       ...credentials,
       redirect: false,
     });
 
     if (result?.error) {
-      console.error("Login error:", result.error);
-      return { 
-        success: false, 
-        message: result.error 
+      // NextAuth can return "Configuration" or "CredentialsSignin" instead of our message
+      const friendlyMessage =
+        result.error === "Configuration" || result.error === "CredentialsSignin"
+          ? "Sign in failed. Please check your email and password."
+          : result.error;
+      return {
+        success: false,
+        message: friendlyMessage,
       };
     }
 
     return { success: result?.ok ?? false };
   } catch (error: any) {
     console.error("Login error:", error);
-    return {
-      success: false,
-      message: error.message || "Login failed"
-    };
+    const message =
+      error.response?.data?.message ||
+      error.message ||
+      "Login failed";
+    return { success: false, message };
   }
 };
 
