@@ -185,13 +185,14 @@ const buildPayload = (court: string, queryParams: any, caseId: string) => {
         caseType: queryParams.caseType,
       };
   } else {
-    // Supreme Court / High Court / NCLT payload (supremeCourtOTF expects diaryNumber and/or caseNumber, caseYear, caseType)
+    // Supreme Court by case type (e.g. TRANSFER PETITION (CIVIL)): use case-no flow, not diary-no.
+    // Send diaryNumber as empty so supremeCourtOTF uses setCaseTypeAndSetValue(page, caseType, caseNumber, caseYear)
+    // instead of enterDiaryNumber(page, diaryNumber) which expects format "1234/2025".
     return {
       id: caseId, // ⭐ This is critical - cloud function will UPDATE this case
       caseYear: String(queryParams.year ?? ''),
       caseNumber: String(queryParams.diaryNumber ?? ''),
-      diary_number: queryParams.diaryNumber,
-      diaryNumber: queryParams.diaryNumber ?? '', // cloud function reads body.diaryNumber
+      // diaryNumber: '', // empty = use case-no flow; only "Diary Number" type uses diary-no with "number/year"
       caseType: queryParams.caseType,
     };
   }
@@ -238,6 +239,7 @@ export const GET = auth(async (request) => {
           }
         });
       } else {
+        // Supreme Court by case type (e.g. SLP(C)): match diary + year so we don't reuse an old year's case
         const caseType = queryParams.caseType; // string
 
         let shortCaseType: string | undefined;
@@ -247,6 +249,8 @@ export const GET = auth(async (request) => {
         }
 
         const formattedDiaryNumber = String(queryParams.diaryNumber).padStart(6, '0');
+        const diaryWithYear = `${queryParams.diaryNumber}/${queryParams.year}`;
+
         existingCase = await prisma.caseDetails.findFirst({
           where: {
             AND: [
@@ -263,6 +267,10 @@ export const GET = auth(async (request) => {
               },
               {
                 court: 'Supreme Court'
+              },
+              // Match year so we don't subscribe to an old case (e.g. 1351/2023 when user entered 1351/2026)
+              {
+                diaryNumber: diaryWithYear
               }
             ]
           }
@@ -337,11 +345,15 @@ export const GET = auth(async (request) => {
     console.log('✗ Case not found, creating placeholder case');
 
     // Create PLACEHOLDER case in CaseDetails with empty judgment_url
+    // For Supreme Court always store diary+year so lookup and display are correct (e.g. 1351/2026)
+    const diaryNumberForCreate =
+      queryParams.court === 'Supreme Court' || queryParams.caseType === 'Diary Number' || queryParams.court === 'High Court' || queryParams.court === 'District Court'
+        ? `${queryParams.diaryNumber}/${queryParams.year}`
+        : '';
+
     const newCase = await prisma.caseDetails.create({
       data: {
-        diaryNumber: queryParams.caseType === 'Diary Number' || queryParams.court == "High Court" || queryParams.court == "District Court" 
-          ? `${queryParams.diaryNumber}/${queryParams.year}` 
-          : '',
+        diaryNumber: diaryNumberForCreate,
         caseNumber: queryParams.caseType !== 'Diary Number' ? `${queryParams.caseType}/${queryParams.diaryNumber}` : '',
         court: queryParams.court || '',
         case_type: queryParams.caseType,
