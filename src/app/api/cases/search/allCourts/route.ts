@@ -135,12 +135,12 @@ const prisma = new PrismaClient();
  * Add or update the URL here for each endpoint you migrate; others keep using SERVICE_URL.
  */
 const CLOUD_FUNCTION_URL_OVERRIDES: Partial<Record<string, string>> = {
-  supremeCourtOTF: 'https://asia-south1-robotic-land-465306-j7.cloudfunctions.net/supremeCourtOTF',
+  // supremeCourtOTF: 'https://asia-south1-robotic-land-465306-j7.cloudfunctions.net/supremeCourtOTF',
   // Add more as you deploy to new Firebase, e.g.:
-  highCourtCasesUpsert: 'https://asia-south1-robotic-land-465306-j7.cloudfunctions.net/highCourtCasesUpsert',
-  phhcUpsert: 'https://asia-south1-robotic-land-465306-j7.cloudfunctions.net/phhcUpsert',
+  // highCourtCasesUpsert: 'https://asia-south1-robotic-land-465306-j7.cloudfunctions.net/highCourtCasesUpsert',
+  // phhcUpsert: 'https://asia-south1-robotic-land-465306-j7.cloudfunctions.net/phhcUpsert',
   // districtCourtCasesUpsert: 'https://NEW_PROJECT.cloudfunctions.net/districtCourtCasesUpsert',
-  delhiDistrictCourtUpsert: 'https://asia-south1-robotic-land-465306-j7.cloudfunctions.net/delhiDistrictCourtUpsert',
+  // delhiDistrictCourtUpsert: 'https://asia-south1-robotic-land-465306-j7.cloudfunctions.net/delhiDistrictCourtUpsert',
   // ncltCourtCasesUpsert: 'https://NEW_PROJECT.cloudfunctions.net/ncltCourtCasesUpsert',
 };
 
@@ -173,6 +173,10 @@ const getEndpoint = (court: string, district?: string, city?: string) => {
     // Check if it's East Delhi District Court
     if (district && EAST_DELHI_DISTRICTS.some(d => district.includes(d))) {
       return "delhiDistrictCourtUpsert";
+    }
+
+    if (district === "Gurugram") {
+      return "gurugramDistrictCourtUpsert";
     }
     return "districtCourtCasesUpsert";
   } else if (court === "Nclt Court") {
