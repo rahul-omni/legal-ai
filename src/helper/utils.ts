@@ -38,20 +38,20 @@ export function getCaseNumber(caseNumber: string, caseYear: string, caseType: st
 
 // New scalable structure for district court configurations
 export const DISTRICT_COURT_CONFIGURATIONS = {
-  "gurugram": {
-    name: "Gurugram",
-    courtComplexes: {
-      "District Court, Gurugram": {
-        caseTypes: DISTRICT_COURT_CASE_TYPES_1
-      },
-      "Judicial Complex, Sohna": {
-        caseTypes: DISTRICT_COURT_CASE_TYPES_2
-      },
-      "Judicial Complex, Pataudi": {
-        caseTypes: DISTRICT_COURT_CASE_TYPES_3
-      }
-    }
-  },
+  // "gurugram": {
+  //   name: "Gurugram",
+  //   courtComplexes: {
+  //     "District Court, Gurugram": {
+  //       caseTypes: DISTRICT_COURT_CASE_TYPES_1
+  //     },
+  //     "Judicial Complex, Sohna": {
+  //       caseTypes: DISTRICT_COURT_CASE_TYPES_2
+  //     },
+  //     "Judicial Complex, Pataudi": {
+  //       caseTypes: DISTRICT_COURT_CASE_TYPES_3
+  //     }
+  //   }
+  // },
    "East District Court, Delhi": {
     name: "East District Court, Delhi",
     courtComplexes: {

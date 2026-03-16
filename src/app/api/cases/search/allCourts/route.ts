@@ -130,6 +130,20 @@ const CASE_TYPES_REVERSED = {
 
 const prisma = new PrismaClient();
 
+/**
+ * Cloud function URL overrides – use when an endpoint is deployed to the new Firebase project.
+ * Add or update the URL here for each endpoint you migrate; others keep using SERVICE_URL.
+ */
+const CLOUD_FUNCTION_URL_OVERRIDES: Partial<Record<string, string>> = {
+  // supremeCourtOTF: 'https://asia-south1-robotic-land-465306-j7.cloudfunctions.net/supremeCourtOTF',
+  // Add more as you deploy to new Firebase, e.g.:
+  // highCourtCasesUpsert: 'https://asia-south1-robotic-land-465306-j7.cloudfunctions.net/highCourtCasesUpsert',
+  // phhcUpsert: 'https://asia-south1-robotic-land-465306-j7.cloudfunctions.net/phhcUpsert',
+  // districtCourtCasesUpsert: 'https://NEW_PROJECT.cloudfunctions.net/districtCourtCasesUpsert',
+  // delhiDistrictCourtUpsert: 'https://asia-south1-robotic-land-465306-j7.cloudfunctions.net/delhiDistrictCourtUpsert',
+  // ncltCourtCasesUpsert: 'https://NEW_PROJECT.cloudfunctions.net/ncltCourtCasesUpsert',
+};
+
 // List of districts that fall under East Delhi jurisdiction
 const EAST_DELHI_DISTRICTS = [
   "East District Court, Delhi",
@@ -158,7 +172,11 @@ const getEndpoint = (court: string, district?: string, city?: string) => {
   } else if (court === "District Court") {
     // Check if it's East Delhi District Court
     if (district && EAST_DELHI_DISTRICTS.some(d => district.includes(d))) {
-      return "fetchEastDelhiDistrictJudgments";
+      return "delhiDistrictCourtUpsert";
+    }
+
+    if (district === "Gurugram") {
+      return "gurugramDistrictCourtUpsert";
     }
     return "districtCourtCasesUpsert";
   } else if (court === "Nclt Court") {
@@ -282,18 +300,16 @@ export const GET = auth(async (request) => {
 
     const endpoint = getEndpoint(court!, queryParams.district, queryParams.city);
     const serviceUrl = process.env.SERVICE_URL?.trim() || '';
-    if (endpoint !== 'supremeCourtOTF' && !serviceUrl) {
-      console.error('SERVICE_URL is not set - cloud function will not be called');
+    const overrideUrl = endpoint ? CLOUD_FUNCTION_URL_OVERRIDES[endpoint] : undefined;
+    if (!overrideUrl && !serviceUrl) {
+      console.error('SERVICE_URL is not set and no URL override for endpoint - cloud function will not be called');
       return new Response(JSON.stringify({
         error: "Server misconfiguration",
-        message: "Backend service URL not configured. Please set SERVICE_URL.",
+        message: "Backend service URL not configured. Please set SERVICE_URL or add a URL override for this endpoint.",
       }), { status: 500 });
     }
-    // supremeCourtOTF uses a different (hardcoded) base URL; other endpoints use SERVICE_URL
-    const externalApi =
-      endpoint === 'supremeCourtOTF'
-        ? 'https://asia-south1-robotic-land-465306-j7.cloudfunctions.net/supremeCourtOTF'
-        : `${serviceUrl.replace(/\/$/, '')}/${endpoint}`;
+    // Use override URL if set (e.g. new Firebase); otherwise SERVICE_URL + endpoint
+    const externalApi = overrideUrl ?? `${serviceUrl.replace(/\/$/, '')}/${endpoint}`;
 
     console.log('=== Cloud Function Details ===');
     console.log('Court:', court);
@@ -307,6 +323,7 @@ export const GET = auth(async (request) => {
         where: {
           userId: user.id,
           case_id: existingCase.id,
+          status: 'ACTIVE'
         }
       });
       if (isSubscribedCase) {

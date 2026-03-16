@@ -136,8 +136,10 @@ export const DELHI_COURT_CASE_TYPES_VALUE_MAPPING = {
   "W.P.(CRL)": 27,
 } as const;
 
+// Only districts with working cloud functions (delhiDistrictCourtUpsert) are enabled.
+// Gurugram: commented out - fetchDistrictCourtJudgments not deployed
 export const DISTRICT_COURT_CITY = [
-  "Gurugram",
+  // "Gurugram",
   "East District Court, Delhi",
   "Central District Court, Delhi",
   "New Delhi District Court, Delhi",
@@ -152,10 +154,11 @@ export const DISTRICT_COURT_CITY = [
  
 ] as const;
 
+// Gurugram court complexes - commented out (fetchDistrictCourtJudgments not deployed)
 export const DISTRICT_COURT_COURT_COMPLEX = [
-  "District Court, Gurugram",
-  "Judicial Complex, Sohna",
-  "Judicial Complex, Pataudi"
+  // "District Court, Gurugram",
+  // "Judicial Complex, Sohna",
+  // "Judicial Complex, Pataudi"
 ] as const;
 
 export const DISTRICT_COURT_CASE_TYPES_1 = [
