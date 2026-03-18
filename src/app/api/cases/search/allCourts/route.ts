@@ -175,7 +175,7 @@ const getEndpoint = (court: string, district?: string, city?: string) => {
       return "delhiDistrictCourtUpsert";
     }
 
-    if (district === "Gurugram") {
+    if (district?.toLowerCase() === "gurugram") {
       return "gurugramDistrictCourtUpsert";
     }
     return "districtCourtCasesUpsert";

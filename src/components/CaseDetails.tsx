@@ -10,6 +10,7 @@ type HighCourtOrder = {
   gcsPath: string;
   filename: string;
   judgmentDate: string;
+  courtType?: string;
 };
 
 // District Court Order type
@@ -29,6 +30,7 @@ type UnifiedOrder = {
   isFinal?: boolean;
   details?: string;
   filename?: string;
+  courtType?: string;
 };
 
 type CaseData = {
@@ -109,10 +111,11 @@ export function CaseDetails({ id }: { id: string }) {
         date: order.judgmentDate,
         filename: order.filename,
         isFinal: false,
+        courtType: order.courtType ? order.courtType : '',
       }));
     }
 
-    // District Court format: array of orders directly
+    // Delhi District Court format: array of orders directly
     if (Array.isArray(caseData.judgmentUrl)) {
       return (caseData.judgmentUrl as DistrictCourtOrder[]).map((order) => ({
         url: order.order_url,
@@ -285,6 +288,14 @@ export function CaseDetails({ id }: { id: string }) {
                             )}
                           </div>
                         </div>
+
+                        {order.courtType && order.courtType !== '' && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-text-light">
+                              {order.courtType}
+                            </span>
+                          </div>
+                        )}
 
                         <div className="flex items-center gap-6 w-full md:w-auto">
                           <div className="flex items-center gap-2">
