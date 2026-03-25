@@ -295,15 +295,19 @@ model client {
 }
 
 model notifications {
-  id           String   @id(map: "Notifications_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  created_at   DateTime @default(now()) @db.Timestamptz(6)
-  dairy_number String?
-  user_id      String?  @db.Uuid
+  id           String       @id(map: "Notifications_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at   DateTime     @default(now()) @db.Timestamptz(6)
+  case_id      String?      @map("case_id") @db.Uuid
+  day          DateTime?    @db.Date
+  user_id      String?      @db.Uuid
   method       String?
   contact      String?
   message      String?
-  status       String?  @default("'pending'::text")
-  users        User?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  status       String?      @default("'pending'::text")
+  users        User?        @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  caseDetails  CaseDetails? @relation(fields: [case_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, case_id, day, method], name: "notifications_user_case_day_method_key")
 }
 
 model api_analytics {
@@ -388,6 +392,7 @@ model CaseDetails {
   tentative_date      DateTime?         @map("tentative_date")
   tentative_date_sync DateTime?         @map("tentative_date_sync")
   subscribed_Cases    SubscribedCases[]
+  notifications       notifications[]
 
   @@map("case_details")
 }

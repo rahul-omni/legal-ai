@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Plus, RefreshCcw, Search } from "lucide-react";
+import { Plus, RefreshCcw, Search, SlidersHorizontal, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { CaseData, SearchParams, ValidationErrors } from "./caseManagementComponents/types";
 import { CaseList } from "./caseManagementComponents/CaseList";
@@ -7,9 +7,16 @@ import { SearchModal } from "./caseManagementComponents/SearchModal";
 import Header from "./ui/Header";
 import Button from "./ui/Button";
 
+type ListCaseFilters = { q: string; year: string; court: string };
+
+const EMPTY_LIST_FILTERS: ListCaseFilters = { q: "", year: "", court: "" };
+
 export function CaseManagement() {
   const [showNewCaseModal, setShowNewCaseModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [listSearchDraft, setListSearchDraft] = useState<ListCaseFilters>({ ...EMPTY_LIST_FILTERS });
+  const [listSearchActive, setListSearchActive] = useState<ListCaseFilters>({ ...EMPTY_LIST_FILTERS });
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filterPanelRef = useRef<HTMLDivElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [foundCases, setFoundCases] = useState<CaseData[]>([]);
   const [cases, setCases] = useState<CaseData[]>([]);
@@ -236,33 +243,44 @@ export function CaseManagement() {
     }
   };
 
-  const fetchUserCases = useCallback(async (page: number = 1, append: boolean = false, searchTerm: string = "") => {
-    // Prevent multiple simultaneous calls
+  const fetchUserCases = useCallback(async (
+    page: number = 1,
+    append: boolean = false,
+    filters: ListCaseFilters = EMPTY_LIST_FILTERS
+  ) => {
     if (isFetchingRef.current) {
       return;
     }
 
     try {
       isFetchingRef.current = true;
-      
+
       if (append) {
         setIsLoadingMore(true);
       } else {
         setIsLoading(true);
       }
       setError("");
-      
-      const url = new URL('/api/cases/user-cases', window.location.origin);
-      url.searchParams.append('page', page.toString());
-      url.searchParams.append('limit', '20');
-      
-      // Only add parties search if search term length > 4
-      if (searchTerm && searchTerm.length > 4) {
-        url.searchParams.append('parties', searchTerm);
+
+      const url = new URL("/api/cases/user-cases/v2", window.location.origin);
+      url.searchParams.append("page", page.toString());
+      url.searchParams.append("limit", "20");
+
+      const q = filters.q.trim();
+      if (q) {
+        url.searchParams.append("q", q);
       }
-      
+      const year = filters.year.trim();
+      if (/^\d{4}$/.test(year)) {
+        url.searchParams.append("year", year);
+      }
+      const court = filters.court.trim();
+      if (court) {
+        url.searchParams.append("court", court);
+      }
+
       const response = await fetch(url.toString(), {
-        method: 'GET'
+        method: "GET",
       });
       const data = await response.json();
 
@@ -303,36 +321,63 @@ export function CaseManagement() {
     }
   }, []);
 
-  // Initial load
   useEffect(() => {
     setCurrentPage(1);
     setHasMore(true);
-    fetchUserCases(1, false, "");
+    fetchUserCases(1, false, EMPTY_LIST_FILTERS);
   }, [fetchUserCases]);
 
-  // Debounced search effect - only search when length > 4
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (searchQuery.length > 3) {
-        setCurrentPage(1);
-        setHasMore(true);
-        fetchUserCases(1, false, searchQuery);
-      } else if (searchQuery.length === 0) {
-        // Reset to initial load when search is cleared
-        setCurrentPage(1);
-        setHasMore(true);
-        fetchUserCases(1, false, "");
+    if (!filtersOpen) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (filterPanelRef.current && !filterPanelRef.current.contains(e.target as Node)) {
+        setFiltersOpen(false);
       }
-    }, 500); // 500ms debounce
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [filtersOpen]);
 
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery, fetchUserCases]);
+  const handleListSearch = () => {
+    const next: ListCaseFilters = {
+      q: listSearchDraft.q.trim(),
+      year: listSearchDraft.year.trim(),
+      court: listSearchDraft.court.trim(),
+    };
+    setListSearchActive(next);
+    setCurrentPage(1);
+    setHasMore(true);
+    setFiltersOpen(false);
+    fetchUserCases(1, false, next);
+  };
 
-  // Handle Load More button click
+  const removeActiveFilter = (key: keyof ListCaseFilters) => {
+    const nextDraft = { ...listSearchDraft, [key]: "" };
+    const nextActive = { ...listSearchActive, [key]: "" };
+    setListSearchDraft(nextDraft);
+    setListSearchActive(nextActive);
+    setCurrentPage(1);
+    setHasMore(true);
+    fetchUserCases(1, false, nextActive);
+  };
+
+  const clearAllListFilters = async () => {
+    setListSearchDraft({ ...EMPTY_LIST_FILTERS });
+    setListSearchActive({ ...EMPTY_LIST_FILTERS });
+    setCurrentPage(1);
+    setHasMore(true);
+    await fetchUserCases(1, false, EMPTY_LIST_FILTERS);
+  };
+
+  const hasActiveListFilters =
+    listSearchActive.q.trim() !== "" ||
+    /^\d{4}$/.test(listSearchActive.year.trim()) ||
+    listSearchActive.court.trim() !== "";
+
   const handleLoadMore = () => {
     if (hasMore && !isLoadingMore && !isLoading && !isFetchingRef.current) {
       const nextPage = currentPage + 1;
-      fetchUserCases(nextPage, true, searchQuery.length > 3 ? searchQuery : "");
+      fetchUserCases(nextPage, true, listSearchActive);
     }
   };
 
@@ -350,7 +395,7 @@ export function CaseManagement() {
         // Refresh the list
         setCurrentPage(1);
         setHasMore(true);
-        await fetchUserCases(1, false, searchQuery.length > 3 ? searchQuery : "");
+        await fetchUserCases(1, false, listSearchActive);
       } else {
         toast.error(data.message || "Failed to delete subscription");
       }
@@ -433,7 +478,9 @@ export function CaseManagement() {
       setIsLoading(false);
       setCurrentPage(1);
       setHasMore(true);
-      fetchUserCases(1, false, "");
+      setListSearchDraft({ ...EMPTY_LIST_FILTERS });
+      setListSearchActive({ ...EMPTY_LIST_FILTERS });
+      void fetchUserCases(1, false, EMPTY_LIST_FILTERS);
     }
   };
 
@@ -526,7 +573,9 @@ export function CaseManagement() {
       }
       setCurrentPage(1);
       setHasMore(true);
-      await fetchUserCases(1, false, "");
+      setListSearchDraft({ ...EMPTY_LIST_FILTERS });
+      setListSearchActive({ ...EMPTY_LIST_FILTERS });
+      await fetchUserCases(1, false, EMPTY_LIST_FILTERS);
       setShowNewCaseModal(false);
       setFoundCases([]);
       setSelectedCases([]);
@@ -619,38 +668,139 @@ export function CaseManagement() {
           </Button>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative w-full">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-            <input
-              type="text"
-              placeholder="Search cases by parties"
-              className="w-full md:w-1/3 pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            <div className="text-xs sm:text-sm text-gray-700 whitespace-nowrap block">
-              Last Refreshed:{" "}
-              <span className="font-medium">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+            <div className="flex flex-1 flex-col sm:flex-row gap-2 sm:items-center min-w-0">
+              <div className="relative flex-1 min-w-0 max-w-xl">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Diary no., case no., parties, bench, or judge"
+                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  value={listSearchDraft.q}
+                  onChange={(e) => setListSearchDraft((d) => ({ ...d, q: e.target.value }))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleListSearch();
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-2" ref={filterPanelRef}>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setFiltersOpen((o) => !o)}
+                    className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                  >
+                    <SlidersHorizontal className="w-4 h-4" />
+                    Filters
+                  </button>
+                  {filtersOpen && (
+                    <div className="absolute left-0 top-full z-20 mt-1 w-72 rounded-lg border border-border bg-white p-4 shadow-lg">
+                      <p className="text-xs font-medium text-muted mb-3">Refine by year or court (optional)</p>
+                      <label className="block text-xs text-gray-600 mb-1">Year (4 digits)</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={4}
+                        placeholder="e.g. 2024"
+                        className="w-full mb-3 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        value={listSearchDraft.year}
+                        onChange={(e) =>
+                          setListSearchDraft((d) => ({ ...d, year: e.target.value.replace(/\D/g, "").slice(0, 4) }))
+                        }
+                      />
+                      <label className="block text-xs text-gray-600 mb-1">Court contains</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Delhi"
+                        className="w-full mb-3 px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        value={listSearchDraft.court}
+                        onChange={(e) => setListSearchDraft((d) => ({ ...d, court: e.target.value }))}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleListSearch();
+                        }}
+                        className="w-full rounded-md bg-primary py-2 text-sm font-medium text-white hover:opacity-90"
+                      >
+                        Apply & search
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <Button type="button" variant="primary" onClick={handleListSearch} className="shrink-0">
+                  <Search className="w-4 h-4" />
+                  Search
+                </Button>
+              </div>
             </div>
-            <button
-              onClick={async () => {
-                setSpin(true);
-                setSearchQuery(""); // Clear search on refresh
-                setCurrentPage(1);
-                setHasMore(true);
-                await fetchUserCases(1, false, "");
-                setSpin(false);
-              }}
-              className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 sm:px-4 py-2 text-gray-700 font-medium
-           shadow-sm hover:bg-gray-100 active:scale-95 transition-all duration-200 whitespace-nowrap"
-            >
-              <span className="inline">Refresh</span>
-              <RefreshCcw className={`w-4 h-4 ${spin ? "animate-spin-once" : ""}`} />
-            </button>
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 lg:ml-auto">
+              <div className="text-xs sm:text-sm text-gray-700 whitespace-nowrap block">
+                Last Refreshed:{" "}
+                <span className="font-medium">{new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  setSpin(true);
+                  setFiltersOpen(false);
+                  await clearAllListFilters();
+                  setSpin(false);
+                }}
+                className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 sm:px-4 py-2 text-gray-700 font-medium shadow-sm hover:bg-gray-100 active:scale-95 transition-all duration-200 whitespace-nowrap"
+              >
+                <span className="inline">Refresh</span>
+                <RefreshCcw className={`w-4 h-4 ${spin ? "animate-spin-once" : ""}`} />
+              </button>
+            </div>
           </div>
+
+          {hasActiveListFilters && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted">Active:</span>
+              {listSearchActive.q.trim() !== "" && (
+                <button
+                  type="button"
+                  onClick={() => removeActiveFilter("q")}
+                  className="inline-flex items-center gap-1 rounded-full bg-info-light px-2.5 py-1 text-xs font-medium text-info"
+                >
+                  Text: &quot;{listSearchActive.q.trim().length > 28 ? `${listSearchActive.q.trim().slice(0, 28)}…` : listSearchActive.q.trim()}&quot;
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              {/^\d{4}$/.test(listSearchActive.year.trim()) && (
+                <button
+                  type="button"
+                  onClick={() => removeActiveFilter("year")}
+                  className="inline-flex items-center gap-1 rounded-full bg-info-light px-2.5 py-1 text-xs font-medium text-info"
+                >
+                  Year: {listSearchActive.year.trim()}
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              {listSearchActive.court.trim() !== "" && (
+                <button
+                  type="button"
+                  onClick={() => removeActiveFilter("court")}
+                  className="inline-flex items-center gap-1 rounded-full bg-info-light px-2.5 py-1 text-xs font-medium text-info"
+                >
+                  Court: {listSearchActive.court.trim().length > 24 ? `${listSearchActive.court.trim().slice(0, 24)}…` : listSearchActive.court.trim()}
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => void clearAllListFilters()}
+                className="text-xs font-medium text-primary hover:underline"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -711,9 +861,10 @@ export function CaseManagement() {
             <h3 className="text-xl font-semibold text-gray-700">
               No cases found
             </h3>
-            {/* Guidance Text */}
             <p className="text-gray-500 max-w-md">
-              Add new case to subscribe and get started.
+              {hasActiveListFilters
+                ? "Nothing matched your search or filters. Try different terms or clear filters."
+                : "Add new case to subscribe and get started."}
             </p>
           </div>
         </div>

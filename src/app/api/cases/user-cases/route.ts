@@ -330,25 +330,28 @@ export const GET = auth(async (request: NextAuthRequest) => {
 
     const searchParams = request.nextUrl.searchParams;
     const parties = searchParams.get("parties") || "";
-    
+
     // Pagination parameters
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "20", 10);
-    const pageSize = Math.min(Math.max(limit, 1), 100); 
-    const currentPage = Math.max(page, 1); 
+    const pageSize = Math.min(Math.max(limit, 1), 100);
+    const currentPage = Math.max(page, 1);
     const skip = (currentPage - 1) * pageSize;
 
+    // v1: parties-only filter (legacy clients). Use GET /api/cases/user-cases/v2 for q/year/court search.
     const whereClause: any = {
       userId: sessionUser.id,
-      status: 'ACTIVE', // Only show active subscriptions
-      ...(parties ? { 
-        caseDetails: {
-          parties: { 
-            contains: parties,
-            mode: 'insensitive'
-          } 
-        }
-      } : {}),
+      status: "ACTIVE",
+      ...(parties
+        ? {
+            caseDetails: {
+              parties: {
+                contains: parties,
+                mode: "insensitive",
+              },
+            },
+          }
+        : {}),
     };
     
     // Get total count for pagination metadata
@@ -395,7 +398,7 @@ export const GET = auth(async (request: NextAuthRequest) => {
           parties: caseDetails.parties,
           diaryNumber: caseDetails.diaryNumber,
           createdAt: caseDetails.createdAt,
-          caseType: caseDetails.case_type, 
+          caseType: caseDetails.case_type,
           court: caseDetails.court,
           city: caseDetails.city,
           district: caseDetails.district,
