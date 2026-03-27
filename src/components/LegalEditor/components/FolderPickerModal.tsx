@@ -1,4 +1,5 @@
 import { createNewFile } from "@/app/apiServices/nodeServices";
+import { handleApiError } from "@/helper/handleApiError";
 import { FileType } from "@prisma/client";
 import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 import { useFolderPicker } from "../reducersContexts/folderPickerReducerContext";
@@ -36,6 +37,7 @@ export function FolderPickerModal() {
       folderPickerDispatch({ type: "HIDE_PICKER" });
     } catch (error) {
       console.error("Error saving file:", error);
+      handleApiError(error);
     }
   };
 

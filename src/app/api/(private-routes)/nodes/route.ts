@@ -88,7 +88,10 @@ async function createNodeController(request: NextAuthRequest) {
     if (existingNode) {
       logger.warn("createNodeController: Duplicate node detected");
       return NextResponse.json(
-        { error: "Duplicate file is present" },
+        {
+          error:
+            "A file or folder with this name already exists here. Use a different name or choose another location.",
+        },
         { status: 409 }
       );
     }

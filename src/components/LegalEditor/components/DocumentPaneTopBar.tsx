@@ -1,5 +1,6 @@
 import { updateNodeContent } from "@/app/apiServices/nodeServices";
 import { useLoadingContext } from "@/context/loadingContext";
+import { exportHtmlToPdf } from "@/utils/exportHtmlToPdf";
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { $generateHtmlFromNodes } from "@lexical/html";
 import { LexicalEditor } from "lexical";
@@ -128,6 +129,30 @@ export function DocumentPaneTopBar({
   /**
    * Handles "Save As" functionality
    */
+  const safeDownloadBasename = (name: string) => {
+    const base = name.replace(/\.[^/.]+$/, "").trim() || "document";
+    return base.replace(/[/\\?%*:|"<>]/g, "-").slice(0, 180);
+  };
+
+  const handleDownload = async () => {
+    if (!lexicalEditorRef.current || !activeTab) {
+      toast.error("Nothing to download");
+      return;
+    }
+    const innerHtml = generateEditorHtml(lexicalEditorRef.current);
+    const title = safeDownloadBasename(activeTab.name);
+    const t = toast.loading("Generating PDF…");
+    try {
+      await exportHtmlToPdf(innerHtml, title);
+      toast.dismiss(t);
+      toast.success("PDF downloaded");
+    } catch (e) {
+      console.error(e);
+      toast.dismiss(t);
+      toast.error("Could not create PDF. Try again.");
+    }
+  };
+
   const handleSaveAs = async (name?: string) => {
     if (!activeTabId || !activeTab) return;
 
@@ -193,6 +218,7 @@ export function DocumentPaneTopBar({
           <SaveDropdown
             onSave={handleSave}
             onSaveAs={handleSaveAs}
+            onDownload={handleDownload}
             isSaving={isSaving}
           />
         </div>

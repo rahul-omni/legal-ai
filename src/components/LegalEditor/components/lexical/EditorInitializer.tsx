@@ -1,7 +1,32 @@
 import { $generateNodesFromDOM } from "@lexical/html";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $getRoot, LexicalEditor } from "lexical";
+import {
+  $createParagraphNode,
+  $getRoot,
+  $isDecoratorNode,
+  $isElementNode,
+  LexicalEditor,
+  type LexicalNode,
+} from "lexical";
 import { useEffect } from "react";
+
+/** Root may only contain element or decorator nodes; HTML/plain translation streams can yield top-level text nodes. */
+function normalizeNodesForRoot(nodes: LexicalNode[]): LexicalNode[] {
+  if (nodes.length === 0) {
+    return [$createParagraphNode()];
+  }
+  const out: LexicalNode[] = [];
+  for (const node of nodes) {
+    if ($isElementNode(node) || $isDecoratorNode(node)) {
+      out.push(node);
+    } else {
+      const p = $createParagraphNode();
+      p.append(node);
+      out.push(p);
+    }
+  }
+  return out;
+}
 
 export function EditorInitializer({
   localContent,
@@ -22,7 +47,7 @@ export function EditorInitializer({
       const nodes = $generateNodesFromDOM(editor, dom);
       const root = $getRoot();
       root.clear();
-      root.append(...nodes);
+      root.append(...normalizeNodesForRoot(nodes));
     });
   }, [editor, localContent]);
 

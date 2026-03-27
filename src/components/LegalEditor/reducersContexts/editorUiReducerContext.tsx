@@ -4,12 +4,14 @@ import { createContext, useContext, useReducer, ReactNode } from "react";
 export interface UIState {
   showLeftPanel: boolean;
   showSmartPrompts: boolean;
+  showAIPanel: boolean;
 }
 
 // Define action types - renamed to match handler functions
 type UIAction =
   | { type: "TOGGLE_LEFT_PANEL", payload?: boolean }
   | { type: "TOGGLE_SMART_PROMPTS" }
+  | { type: "TOGGLE_AI_PANEL" }
 
 // Define reducer
 function uiReducer(state: UIState, action: UIAction): UIState {
@@ -18,6 +20,8 @@ function uiReducer(state: UIState, action: UIAction): UIState {
       return { ...state, showLeftPanel: !state.showLeftPanel, showSmartPrompts: false };
     case "TOGGLE_SMART_PROMPTS":
       return { ...state, showSmartPrompts: !state.showSmartPrompts, showLeftPanel: false };
+    case "TOGGLE_AI_PANEL":
+      return { ...state, showAIPanel: !state.showAIPanel };
     default:
       return state;
   }
@@ -36,6 +40,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(uiReducer, {
     showLeftPanel: true,
     showSmartPrompts: false,
+    showAIPanel: true,
   });
 
   return (

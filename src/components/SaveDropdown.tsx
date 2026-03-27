@@ -1,15 +1,18 @@
-import { Save, ChevronDown, Loader2, ChevronUp } from 'lucide-react';
+import { Download, Save, ChevronDown, Loader2, ChevronUp } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 
 interface SaveDropdownProps {
   onSave: () => void;
   onSaveAs: () => void;
+  /** Export current editor content as a PDF */
+  onDownload?: () => void;
   isSaving?: boolean;
 }
 
 export function SaveDropdown({ 
   onSave, 
-  onSaveAs, 
+  onSaveAs,
+  onDownload,
   isSaving = false 
 }: SaveDropdownProps) {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -68,6 +71,11 @@ export function SaveDropdown({
     }
   };
 
+  const handleDownload = () => {
+    onDownload?.();
+    setShowDropdown(false);
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <div className="inline-flex border bg-primary hover:bg-primary-dark border-border rounded-lg">
@@ -124,6 +132,23 @@ export function SaveDropdown({
                 <span className="text-xs text-muted">Save as a new file</span>
               </div>
             </button>
+
+            {onDownload && (
+              <>
+                <div className="my-1 border-t border-border" role="separator" />
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  className="group flex w-full items-center px-4 py-2.5 text-sm text-text hover:bg-background-dark transition-colors"
+                >
+                  <Download className="w-4 h-4 mr-3 text-muted group-hover:text-text shrink-0" />
+                  <div className="flex flex-col items-start text-left">
+                    <span>Download</span>
+                    <span className="text-xs text-muted">Export as PDF</span>
+                  </div>
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

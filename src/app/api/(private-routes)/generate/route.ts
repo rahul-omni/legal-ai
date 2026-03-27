@@ -6,6 +6,52 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+const OFF_TOPIC_MESSAGE =
+  "I didn’t understand that, or it isn’t related to legal work or your document. Nothing was added to the document. Please ask something about this document, drafting, contracts, notices, procedure, or Indian law.";
+
+async function classifyLegalRelevance(prompt: string, hasDocumentContext: boolean): Promise<boolean> {
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: `You classify user messages for "Vakeel Assist", a legal document editor.
+
+Return a JSON object ONLY: {"relevant": true} or {"relevant": false}.
+
+Set relevant to TRUE when the user is clearly asking for something related to:
+- The open document, editing, drafting, reviewing, or summarizing legal text
+- Contracts, agreements, notices, pleadings, affidavits, compliance, corporate/legal business
+- Indian law, courts, procedure, citations, legal research, or definitions in a legal context
+- Short but meaningful legal questions (even one sentence)
+
+Set relevant to FALSE for:
+- Random keyboard mashing, gibberish, or meaningless character strings
+- Clearly off-topic chit-chat (recipes, sports, coding tutorials, general trivia) with no legal angle
+- Empty or nonsense input
+
+If unsure but the message could plausibly be legal/document work, prefer TRUE.
+If the message is obvious noise or clearly not legal/document-related, use FALSE.`,
+      },
+      {
+        role: "user",
+        content: `User message:\n"""${prompt.slice(0, 8000)}"""\n\nDocument or excerpt included in request: ${hasDocumentContext ? "yes" : "no"}`,
+      },
+    ],
+    temperature: 0,
+    response_format: { type: "json_object" },
+  });
+
+  const raw = completion.choices[0]?.message?.content;
+  if (!raw) return true;
+  try {
+    const parsed = JSON.parse(raw) as { relevant?: boolean };
+    return Boolean(parsed.relevant);
+  } catch {
+    return true;
+  }
+}
+
 export async function POST(request: Request) {
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(
@@ -16,10 +62,51 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { text, prompt, files } = body;
-    const newText = await fileSystemNodeService.getConcatenatedContentByIds(files);
+    const { text, prompt, files: filesRaw, mode: modeRaw } = body as {
+      text?: string;
+      prompt?: string;
+      files?: string[];
+      /** "chat" = Q&A only; "document" = output intended for Apply / editor insertion */
+      mode?: string;
+    };
+    const files = Array.isArray(filesRaw) ? filesRaw : [];
+    const promptText = typeof prompt === "string" ? prompt : "";
+    const assistantMode = modeRaw === "document" ? "document" : "chat";
 
-    const userContent = files.length ? `${prompt}:\n\n${newText}` : text ? `${prompt}:\n\n${text}` : prompt;
+    if (!promptText.trim()) {
+      return NextResponse.json(
+        { relevant: false, message: OFF_TOPIC_MESSAGE },
+        { status: 200 }
+      );
+    }
+
+    const newText = files.length ? await fileSystemNodeService.getConcatenatedContentByIds(files) : "";
+    const textStr = typeof text === "string" ? text : "";
+    const userContent = files.length
+      ? `${promptText}:\n\n${newText}`
+      : textStr.trim()
+        ? `${promptText}\n\n--- Current open document (HTML from the editor). Use this as the basis when the user asks to draft, revise, summarize, or edit "this document". ---\n${textStr}`
+        : promptText;
+
+    const hasDocumentContext = Boolean(textStr.trim().length > 0 || files.length > 0);
+
+    const relevant = await classifyLegalRelevance(promptText, hasDocumentContext);
+    if (!relevant) {
+      return NextResponse.json(
+        { relevant: false, message: OFF_TOPIC_MESSAGE },
+        { status: 200 }
+      );
+    }
+
+    const systemChat = `You are a legal assistant in Vakeel Assist. The user is in **Chat mode**: they want answers and explanations about their open document, not a full replacement draft in the editor.
+
+When the user message includes "Current open document (HTML from the editor)", that HTML is the file they have open—use it to answer questions (e.g. who are the parties, what does clause X mean, summarize risks). Be concise. Use light HTML (<p>, <ul>, <strong>) only when it helps readability.
+
+Do NOT tell the user to "apply changes", "paste into the document", or imply they must insert your reply into the file. Do NOT output a full rewritten contract or lengthy replacement document unless they clearly ask to rewrite or replace the whole document.`;
+
+    const systemDocument = `You are a legal document assistant for Vakeel Assist. The user is in **Document mode**: output may be applied to the end of their editor.
+
+When the user message includes "Current open document (HTML from the editor)", that HTML is the file they have open—use it to draft, rewrite, expand, or produce insertable text. Do not ask them to paste the document again unless it is clearly empty. When producing document text, use HTML (e.g. <p>, <h2>, <ul>) suitable for a rich-text editor.`;
 
     // Create streaming response
     const stream = await openai.chat.completions.create({
@@ -27,7 +114,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "system",
-          content: `You are a legal document assistant. Respond in legal language and be a little elaborate in your answers.`
+          content: assistantMode === "document" ? systemDocument : systemChat,
         },
         {
           role: "user",
@@ -54,9 +141,10 @@ export async function POST(request: Request) {
 
     return new Response(readable, {
       headers: {
-        "Content-Type": "text/event-stream",
+        "Content-Type": "text/plain; charset=utf-8",
         "Cache-Control": "no-cache",
         Connection: "keep-alive",
+        "X-Assistant-Relevant": "true",
       },
     });
   } catch (error: any) {

@@ -1,12 +1,26 @@
 import { FileSystemNodeProps } from "@/types/fileSystem";
 import { FileType } from "@prisma/client";
 import { apiClient } from ".";
-import { AxiosResponse } from "axios";
+import axios, { AxiosResponse } from "axios";
 import { apiRouteConfig } from "../api/lib/apiRouteConfig";
 import toast from "react-hot-toast";
 import { extractTextFromPDF, fileToBase64 } from "@/utils/pdfUtils";
 import { FileService } from "@/lib/fileService";
 import { handleApiError } from "@/helper/handleApiError";
+
+function messageFromAxiosError(error: unknown, fallback: string): string {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data as { error?: string; message?: string } | undefined;
+    if (typeof data?.error === "string" && data.error.trim()) return data.error;
+    if (typeof data?.message === "string" && data.message.trim()) return data.message;
+    if (error.response?.status === 409) {
+      return "A file with this name already exists in this folder. Use a different name or pick another folder.";
+    }
+  }
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
 export interface CreateNodePayload {
   name: string;
   type: FileType;
@@ -46,7 +60,7 @@ export const createNode = async (
     return response.data;
   } catch (error) {
     console.error("Error uploading file:", error);
-    throw new Error("Failed to upload file");
+    throw new Error(messageFromAxiosError(error, "Failed to create file or folder"));
   }
 };
 
@@ -131,7 +145,7 @@ export const createNewFile = async (
     return response.data;
   } catch (error) {
     console.error("Error creating new file:", error);
-    throw new Error("Failed to create new file");
+    throw new Error(messageFromAxiosError(error, "Failed to create new file"));
   }
 };
 
