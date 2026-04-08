@@ -32,7 +32,7 @@
   //"Himachal Pradesh", 
   //"Hyderabad",
   //"Jammu Kashmir",
-  "Punjab and Haryana"
+  // "Punjab and Haryana"
 ] as const;
 
 export const BOMBAY_HIGH_COURT_BENCH = [
