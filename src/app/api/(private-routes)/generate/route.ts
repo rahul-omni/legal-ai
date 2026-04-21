@@ -9,6 +9,39 @@ const openai = new OpenAI({
 const OFF_TOPIC_MESSAGE =
   "I didn’t understand that, or it isn’t related to legal work or your document. Nothing was added to the document. Please ask something about this document, drafting, contracts, notices, procedure, or Indian law.";
 
+function isDraftLikeRequest(prompt: string): boolean {
+  const p = prompt.toLowerCase();
+  // "Draft" can also mean contract drafts; keep the heuristic broad but still intent-focused.
+  // We treat these as "drafting requests" that should return a properly formatted legal draft.
+  return (
+    /\bdraft\b/.test(p) ||
+    /\b(drafting|prepare|prepare a|make a|create a)\b/.test(p) &&
+      /\b(application|petition|affidavit|complaint|bail|anticipatory|quash|discharge|revision|appeal)\b/.test(p)
+  );
+}
+
+function bnssDraftingInstruction(): string {
+  return `BNSS drafting standard (India) — when the user asks for a "draft":
+
+- Produce a court-ready draft in a conventional Indian pleading format aligned with the Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS) terminology.
+- Use structured headings and numbering. Prefer clear, formal language.
+- Always include (use placeholders if missing): Court/Forum, Case/FIR/Crime No., Police Station, Sections/Offences, Parties (Applicant/Accused, State/Complainant), Jurisdiction/Place.
+- Suggested structure (use <h2>/<h3>/<p>/<ol>/<ul>):
+  1) Cause Title (IN THE COURT OF …; case number; parties)
+  2) Application/Petition Title (e.g., "Application for Bail under BNSS …")
+  3) Most Respectfully Showeth / Brief Facts
+  4) Grounds (numbered)
+  5) Prayer/Reliefs (clearly enumerated)
+  6) Interim Prayer (if requested/appropriate)
+  7) Verification
+  8) Place/Date; Advocate details (placeholders)
+  9) List of Annexures (if any are referenced)
+
+- If the open document already contains facts/parties/sections, use them consistently and do not invent new ones.
+- If critical inputs are missing, keep the draft usable by inserting explicit placeholders like "[FIR No. ___]" and "[Police Station ___]" instead of guessing.
+- Output must be suitable to directly insert into a rich-text editor (HTML).`;
+}
+
 async function classifyLegalRelevance(prompt: string, hasDocumentContext: boolean): Promise<boolean> {
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -108,13 +141,17 @@ Do NOT tell the user to "apply changes", "paste into the document", or imply the
 
 When the user message includes "Current open document (HTML from the editor)", that HTML is the file they have open—use it to draft, rewrite, expand, or produce insertable text. Do not ask them to paste the document again unless it is clearly empty. When producing document text, use HTML (e.g. <p>, <h2>, <ul>) suitable for a rich-text editor.`;
 
+    const systemDocumentWithDrafting = isDraftLikeRequest(promptText)
+      ? `${systemDocument}\n\n${bnssDraftingInstruction()}`
+      : systemDocument;
+
     // Create streaming response
     const stream = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: assistantMode === "document" ? systemDocument : systemChat,
+          content: assistantMode === "document" ? systemDocumentWithDrafting : systemChat,
         },
         {
           role: "user",
