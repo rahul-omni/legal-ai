@@ -319,22 +319,28 @@ export const GET = auth(async (request) => {
 
     // If case exists, just subscribe user and trigger update
     if (existingCase) {
-      const isSubscribedCase = await prisma.subscribedCases.findFirst({
+      // If the user had subscribed earlier and then soft-deleted, revive the same row
+      const existingSubscription = await prisma.subscribedCases.findFirst({
         where: {
           userId: user.id,
           case_id: existingCase.id,
-          status: 'ACTIVE'
         }
       });
-      if (isSubscribedCase) {
+      if (existingSubscription?.status === 'ACTIVE') {
         return new Response(JSON.stringify({ message: "Case already subscribed." }), { status: 200 });
       }
-      const subscribedCase = await prisma.subscribedCases.create({
-        data: {
-          userId: user.id,
-          case_id: existingCase.id,
-        }
-      });
+      const subscribedCase =
+        existingSubscription?.status === 'DELETED'
+          ? await (prisma.subscribedCases.update as any)({
+              where: { id: existingSubscription.id },
+              data: { status: 'ACTIVE' },
+            })
+          : await prisma.subscribedCases.create({
+              data: {
+                userId: user.id,
+                case_id: existingCase.id,
+              },
+            });
 
       // Trigger Cloud Function to UPDATE the case (with ID)
       const payload = buildPayload(court!, queryParams, existingCase.id);

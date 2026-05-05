@@ -1,6 +1,8 @@
 export interface NotificationData {
   id: string;
   created_at: string;
+  case_id?: string;
+  caseId?: string;
   dairy_number?: string; // Note: keeping original column name from DB
   user_id?: string;
   method?: string;

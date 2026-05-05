@@ -41,6 +41,7 @@ model User {
   subscribedCases         SubscribedCases[]   @relation("user_subscribed_cases")
   userCases               UserCase[]          @relation("user_usercases")
   subscriptions           UserSubscription[]  @relation("user_subscriptions")
+  chatConversations       ChatConversation[]
 
   @@map("users")
 }
@@ -149,6 +150,7 @@ model FileSystemNode {
   children      FileSystemNode[] @relation("file_system_node_hierarchy")
   updatedByUser User?            @relation("file_system_nodes_updated_by_idx", fields: [updatedBy], references: [id])
   user          User?            @relation("file_system_nodes_user_id_idx", fields: [userId], references: [id])
+  chatConversationDocuments ChatConversationDocument[]
 
   @@index([createdBy])
   @@index([updatedBy])
@@ -705,4 +707,79 @@ enum SubscriptionStatus {
 enum SubscribedCaseStatus {
   ACTIVE
   DELETED
+}
+
+enum BlogPostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ChatMessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+model ChatConversation {
+  id         String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String                     @map("user_id") @db.Uuid
+  title      String                     @default("New conversation")
+  isArchived Boolean                    @default(false) @map("is_archived")
+  createdAt  DateTime                   @default(now()) @map("created_at")
+  updatedAt  DateTime                   @updatedAt @map("updated_at")
+  user       User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages   ChatMessage[]
+  documents  ChatConversationDocument[]
+
+  @@index([userId, updatedAt(sort: Desc)])
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String           @map("conversation_id") @db.Uuid
+  role           ChatMessageRole
+  content        String
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("chat_messages")
+}
+
+model ChatConversationDocument {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String           @map("conversation_id") @db.Uuid
+  nodeId         String           @map("node_id") @db.Uuid
+  fileName       String           @map("file_name")
+  isActive       Boolean          @default(true) @map("is_active")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  node           FileSystemNode   @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, nodeId], name: "chat_conversation_node_unique")
+  @@index([conversationId, createdAt])
+  @@index([conversationId, isActive, createdAt])
+  @@index([nodeId])
+  @@map("chat_conversation_documents")
+}
+
+model BlogPost {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug          String         @unique
+  title         String
+  excerpt       String?
+  coverImageUrl String?        @map("cover_image_url")
+  authorName    String         @default("Vakeel Assist Team") @map("author_name")
+  status        BlogPostStatus @default(DRAFT)
+  publishedAt   DateTime?      @map("published_at")
+  contentHtml   String         @map("content_html")
+  canonicalUrl  String?        @map("canonical_url")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  @@index([status, publishedAt(sort: Desc)])
+  @@map("blog_posts")
 }

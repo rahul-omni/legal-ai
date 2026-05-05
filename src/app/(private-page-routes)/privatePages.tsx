@@ -11,17 +11,25 @@ import { useUserContext } from "@/context/userContext";
 import useRoles from "@/hooks/api/useRoles";
 import useSubscription from "@/hooks/api/useSubscription";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { FC, ReactNode, useEffect } from "react";
+
+const BREADCRUMB_HIDDEN_PREFIXES = ["/ai-assistant", "/document-drafting"];
 
 const PrivatePages: FC<{
   children: ReactNode;
 }> = ({ children }) => {
+  const pathname = usePathname();
   const { setRole } = useRoleContext();
   const { roles: roleList } = useRoles();
   const { dispatchUser } = useUserContext();
   const { fetchSubscription } = useSubscription();
   const breadcrumbs = useBreadcrumbs();
   const { isMobile } = useMobile();
+
+  const showBreadcrumb = !BREADCRUMB_HIDDEN_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
 
   const session = useSession();
 
@@ -59,10 +67,11 @@ const PrivatePages: FC<{
       
       <div className="flex flex-1 flex-col">
         <TopNavbar />
-        {/* Breadcrumb Navigation */}
-        <div className="px-6 py-2 bg-background">
-          <Breadcrumb items={breadcrumbs} />
-        </div>
+        {showBreadcrumb && (
+          <div className="px-6 py-2 bg-background">
+            <Breadcrumb items={breadcrumbs} />
+          </div>
+        )}
         <div className={`flex-1 bg-background ${isMobile ? 'pb-20 min-h-screen' : 'overflow-auto h-full min-h-0'}`}>
           {children}
         </div>

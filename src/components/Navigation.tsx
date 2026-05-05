@@ -6,9 +6,10 @@ import {
   Settings,
   Clock,
   Users,
-  Bell,
   ListChecks,
   Menu,
+  MessageSquare,
+  FilePenLine,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -22,6 +23,18 @@ const navigationItems = [
     href: "/cases",
     icon: Gavel,
     id: 'cases'
+  },
+  {
+    name: "AI Assistant",
+    href: "/ai-assistant",
+    icon: MessageSquare,
+    id: 'aiassistant'
+  },
+  {
+    name: "Document drafting",
+    href: "/document-drafting",
+    icon: FilePenLine,
+    id: 'documentdrafting'
   },
   {
     name: "Calendar",

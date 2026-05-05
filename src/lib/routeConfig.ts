@@ -13,6 +13,8 @@ interface PrivatePageRoute {
   analytics: string;
   assembly: string;
   cases: string;
+  aiAssistant: string;
+  documentDrafting: string;
   dueDiligence: string;
   marketplace: string;
   templates: string;
@@ -29,6 +31,8 @@ export const routeConfig: {
     analytics: "/analytics",
     assembly: "/assembly",
     cases: "/cases",
+    aiAssistant: "/ai-assistant",
+    documentDrafting: "/document-drafting",
     dueDiligence: "/due-diligence",
     marketplace: "/marketplace",
     templates: "/templates",

@@ -5,7 +5,8 @@ import {
   Gavel,
   Settings,
   Clock,
-  Users,
+  MessageSquare,
+  FilePenLine,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -16,6 +17,18 @@ const navigationItems = [
     href: "/cases",
     icon: Gavel,
     id: 'cases'
+  },
+  {
+    name: "Assistant",
+    href: "/ai-assistant",
+    icon: MessageSquare,
+    id: 'aiassistant'
+  },
+  {
+    name: "Drafting",
+    href: "/document-drafting",
+    icon: FilePenLine,
+    id: 'documentdrafting'
   },
   {
     name: "Projects",
