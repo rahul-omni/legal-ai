@@ -9,6 +9,7 @@ import { PrismaClient } from '@prisma/client';
 import { ca } from "zod/v4/locales";
 import { HIGH_COURT_SCRAPERS, resolveCaseTypeValue } from "@/lib/highCourtScrapers";
 import { scraperCircuitBreaker } from "@/lib/scraper";
+import { normalizePartiesDisplay } from "@/lib/parties";
 const prisma = new PrismaClient();
 
  
@@ -309,7 +310,7 @@ if (scrapeResult.success && scrapeResult.result.length > 0) {
           casesToInsert.push({
             diaryNumber: fullDiaryNumber,
             caseNumber: caseItem["Case Number"] || caseItem.caseNumber || '',
-            parties: caseItem["Petitioner / Respondent"] || caseItem.parties || '',
+            parties: normalizePartiesDisplay(caseItem["Petitioner / Respondent"] || caseItem.parties || ''),
             advocates: caseItem["Petitioner/Respondent Advocate"] || caseItem.advocates || '',
             bench: caseItem["Bench"] || caseItem.bench || payload.bench,
             judgmentBy: caseItem["Judgment By"] || caseItem.judgmentBy || '',
@@ -418,7 +419,7 @@ if (Array.isArray(scrapeResult.processedResults)) {
       caseType: item.case_type || item.caseType || item["case_type"] || "",
       city: item.city || validated.city || "",
       district: item.district || item.District || validated.district || "",
-      parties: item["Petitioner / Respondent"] || item.parties || "",
+      parties: normalizePartiesDisplay(item["Petitioner / Respondent"] || item.parties || ""),
       advocates: item["Petitioner/Respondent Advocate"] || item.advocates || "",
       bench: item["Bench"] || item.bench ||  validated.bench || "",
       judgmentBy: item["Judgment By"] || item.judgmentBy || "",

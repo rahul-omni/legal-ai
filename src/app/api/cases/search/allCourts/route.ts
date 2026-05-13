@@ -130,6 +130,15 @@ const CASE_TYPES_REVERSED = {
 
 const prisma = new PrismaClient();
 
+async function ensureWorkspaceForSubscription(subscribedCaseId: string, userId: string) {
+  await prisma.$executeRaw`
+    INSERT INTO "workspaces" ("user_id", "subscribed_case_id", "status", "created_at", "updated_at")
+    VALUES (${userId}::uuid, ${subscribedCaseId}::uuid, 'PENDING', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ON CONFLICT ("subscribed_case_id")
+    DO NOTHING;
+  `;
+}
+
 /**
  * Cloud function URL overrides – use when an endpoint is deployed to the new Firebase project.
  * Add or update the URL here for each endpoint you migrate; others keep using SERVICE_URL.
@@ -327,6 +336,7 @@ export const GET = auth(async (request) => {
         }
       });
       if (existingSubscription?.status === 'ACTIVE') {
+        await ensureWorkspaceForSubscription(existingSubscription.id, user.id);
         return new Response(JSON.stringify({ message: "Case already subscribed." }), { status: 200 });
       }
       const subscribedCase =
@@ -341,6 +351,7 @@ export const GET = auth(async (request) => {
                 case_id: existingCase.id,
               },
             });
+      await ensureWorkspaceForSubscription(subscribedCase.id, user.id);
 
       // Trigger Cloud Function to UPDATE the case (with ID)
       const payload = buildPayload(court!, queryParams, existingCase.id);
@@ -390,12 +401,13 @@ export const GET = auth(async (request) => {
     console.log('✓ Placeholder case created:', newCase.id);
 
     // Subscribe user to the new case
-    await prisma.subscribedCases.create({
+    const subscribedCase = await prisma.subscribedCases.create({
       data: {
         userId: user.id,
         case_id: newCase.id
       }
     });
+    await ensureWorkspaceForSubscription(subscribedCase.id, user.id);
 
     console.log('✓ User subscribed to case');
 

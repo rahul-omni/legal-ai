@@ -1,20 +1,10 @@
 import { NextResponse } from 'next/server';
+import pdf2md from '@opendocsg/pdf2md';
 
 // Configure the runtime
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-
-// Dynamic import for pdf-parse
-async function parsePDF(buffer: Buffer) {
-  try {
-    const pdfParse = (await import('pdf-parse')).default;
-    return await pdfParse(buffer);
-  } catch (error) {
-    console.error('[PDF Parse Error]:', error);
-    throw error;
-  }
-}
 
 // Simple GET handler to test the route
 export async function GET() {
@@ -33,21 +23,19 @@ export async function POST(request: Request) {
     }
 
     console.log('[API] Converting base64 to buffer...');
-    const dataBuffer = Buffer.from(body.base64PDF, 'base64');
+    const base64PDF =
+      typeof body.base64PDF === 'string'
+        ? body.base64PDF.replace(/^data:application\/pdf;base64,/, '')
+        : '';
+    const dataBuffer = Buffer.from(base64PDF, 'base64');
     console.log('[API] Buffer size:', dataBuffer.length);
     
     console.log('[API] Starting PDF parsing...');
-    // Import and use pdf-parse in one step
-    const data = await (await import('pdf-parse')).default(dataBuffer);
-    console.log('[API] PDF parsed successfully');
+    const markdown = await pdf2md(dataBuffer, {});
+    console.log('[API] PDF converted to markdown successfully');
     
     return NextResponse.json({
-      text: data.text,
-      metadata: {
-        pages: data.numpages,
-        info: data.info,
-        metadata: data.metadata
-      }
+      text: markdown,
     });
 
   } catch (error) {

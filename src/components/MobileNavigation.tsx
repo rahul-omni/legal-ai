@@ -7,11 +7,18 @@ import {
   Clock,
   MessageSquare,
   FilePenLine,
+  LayoutDashboard,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navigationItems = [
+  {
+    name: "Workspace",
+    href: "/workspace",
+    icon: LayoutDashboard,
+    id: 'workspace'
+  },
   {
     name: "Cases",
     href: "/cases",

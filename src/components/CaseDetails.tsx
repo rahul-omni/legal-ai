@@ -54,6 +54,50 @@ type CaseData = {
   site_sync?: number;
 };
 
+function parseOrderDate(dateStr: string | undefined): number {
+  if (!dateStr) return 0;
+
+  const raw = dateStr.trim();
+  const isoMatch = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s].*)?$/);
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
+  }
+
+  const dayFirstMatch = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (dayFirstMatch) {
+    const [, day, month, year] = dayFirstMatch;
+    return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
+  }
+
+  const parsed = new Date(raw).getTime();
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function formatOrderDate(dateStr: string | undefined) {
+  if (!dateStr) return "N/A";
+
+  const raw = dateStr.trim();
+  const isoMatch = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s].*)?$/);
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+
+  const dayFirstMatch = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (dayFirstMatch) {
+    const [, day, month, year] = dayFirstMatch;
+    return `${day.padStart(2, "0")}-${month.padStart(2, "0")}-${year}`;
+  }
+
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toISOString().slice(0, 10);
+  }
+
+  return raw;
+}
+
 export function CaseDetails({ id }: { id: string }) {
   const router = useRouter();
   const [caseItem, setCaseItem] = useState<CaseData | null>(null);
@@ -232,31 +276,9 @@ export function CaseDetails({ id }: { id: string }) {
               <div className="flex flex-col items-center space-y-4 max-w-2xl mx-auto">
                 {orders.length > 0 ? (
                   [...orders].sort((a, b) => {
-                    // Helper function to parse dd-mm-yyyy format
-                    const parseDate = (dateStr: string | undefined): number => {
-                      if (!dateStr) return 0;
-                      
-                      // Try to parse dd-mm-yyyy format
-                      const parts = dateStr.split('-');
-                      if (parts.length === 3) {
-                        const day = parseInt(parts[0], 10);
-                        const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
-                        const year = parseInt(parts[2], 10);
-                        
-                        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
-                          const date = new Date(year, month, day);
-                          return date.getTime();
-                        }
-                      }
-                      
-                      // Fallback to standard Date parsing
-                      const parsed = new Date(dateStr).getTime();
-                      return isNaN(parsed) ? 0 : parsed;
-                    };
-                    
                     // Sort by date in descending order (most recent first)
-                    const dateA = parseDate(a.date);
-                    const dateB = parseDate(b.date);
+                    const dateA = parseOrderDate(a.date);
+                    const dateB = parseOrderDate(b.date);
                     
                     // Handle invalid dates - put them at the bottom
                     if (dateA === 0 && dateB === 0) return 0;
@@ -301,7 +323,7 @@ export function CaseDetails({ id }: { id: string }) {
                           <div className="flex items-center gap-2">
                             <Calendar className="w-5 h-5 text-muted" />
                             <span className="text-base text-text-light font-medium">
-                              {order.date}
+                              {formatOrderDate(order.date)}
                             </span>
                           </div>
 

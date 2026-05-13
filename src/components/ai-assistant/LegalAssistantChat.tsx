@@ -5,6 +5,7 @@ import type { LucideIcon } from "lucide-react";
 import DOMPurify from "dompurify";
 import { marked } from "marked";
 import toast from "react-hot-toast";
+import { FileService } from "@/lib/fileService";
 import {
   BookOpen,
   ChevronRight,
@@ -17,6 +18,7 @@ import {
   Send,
   Sparkles,
   Trash2,
+  X,
 } from "lucide-react";
 
 type Role = "user" | "assistant";
@@ -27,15 +29,19 @@ type ChatMessage = {
   role: Role;
   content: string;
   createdAt?: string;
+  attachments?: { nodeId: string; fileName: string; createdAt?: string }[];
 };
 
 type ChatSession = {
   id: string;
   title: string;
   messages: ChatMessage[];
-  attachmentNames: string[];
-  uploadedDocNodeIds: string[];
   updatedAt: string;
+};
+
+type PendingAttachment = {
+  id: string;
+  file: File;
 };
 
 const SUGGESTIONS: {
@@ -94,6 +100,19 @@ function formatHistorySubtitle(ts: string): string {
   if (diffDays === 1) return "Yesterday";
   if (diffDays < 7) return `${diffDays} days ago`;
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(kb >= 100 ? 0 : 1)} KB`;
+  const mb = kb / 1024;
+  return `${mb.toFixed(mb >= 100 ? 0 : 1)} MB`;
+}
+
+function fileExtension(name: string): string {
+  const ext = name.split(".").pop();
+  return ext && ext !== name ? ext.toUpperCase().slice(0, 5) : "FILE";
 }
 
 async function ensureChatDocumentsFolder(): Promise<string> {
@@ -162,6 +181,18 @@ async function uploadParsedDocToProjectHub(fileName: string, text: string): Prom
   return created.id;
 }
 
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result ?? "");
+      resolve(result.includes(",") ? result.split(",")[1] : result);
+    };
+    reader.onerror = () => reject(new Error("Could not read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
 async function fileToText(file: File): Promise<string> {
   const lower = file.name.toLowerCase();
   if (lower.endsWith(".txt") || file.type === "text/plain") {
@@ -194,7 +225,33 @@ async function fileToText(file: File): Promise<string> {
     return data.text ?? "";
   }
 
-  throw new Error("Unsupported file type. Use PDF or TXT.");
+  if (
+    lower.endsWith(".png") ||
+    lower.endsWith(".jpg") ||
+    lower.endsWith(".jpeg") ||
+    file.type.startsWith("image/")
+  ) {
+    const base64Image = await fileToBase64(file);
+    const res = await fetch("/api/parse-image", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        base64Image,
+        mimeType: file.type || "image/png",
+      }),
+    });
+    const data = (await res.json()) as { html?: string; error?: string };
+    if (!res.ok) {
+      throw new Error(data.error || "Image parse failed");
+    }
+    return data.html ?? `Image attachment: ${file.name}`;
+  }
+
+  if (lower.endsWith(".docx") || lower.endsWith(".doc")) {
+    return await FileService.parseFile(file);
+  }
+
+  throw new Error("Unsupported file type. Use PDF, TXT, DOCX, PNG, JPG, or JPEG.");
 }
 
 export function LegalAssistantChat() {
@@ -203,6 +260,9 @@ export function LegalAssistantChat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [bootstrapping, setBootstrapping] = useState(true);
+  const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
+  const [conversationToDelete, setConversationToDelete] = useState<ChatSession | null>(null);
+  const [deletingConversationId, setDeletingConversationId] = useState<string | null>(null);
   /** Set while GET /messages is in flight for a conversation (avoids empty vs wrong-history flicker). */
   const [chatHistoryLoadingId, setChatHistoryLoadingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -213,7 +273,6 @@ export function LegalAssistantChat() {
 
   const active = sessions.find((s) => s.id === activeId) ?? null;
   const messages = active?.messages ?? [];
-  const attachmentNames = active?.attachmentNames ?? [];
   const isChatHistoryLoading = useMemo(
     () => Boolean(activeId && chatHistoryLoadingId === activeId),
     [activeId, chatHistoryLoadingId]
@@ -233,6 +292,7 @@ export function LegalAssistantChat() {
 
   useEffect(() => {
     setInput("");
+    setPendingAttachments([]);
   }, [activeId]);
 
   const patchSession = useCallback((sessionId: string, updater: (s: ChatSession) => ChatSession) => {
@@ -262,9 +322,14 @@ export function LegalAssistantChat() {
           role: message.role,
           content: message.content,
           createdAt: message.createdAt,
+          attachments: Array.isArray(message.attachments)
+            ? message.attachments.map((a) => ({
+                nodeId: a.nodeId,
+                fileName: a.fileName,
+                createdAt: a.createdAt,
+              }))
+            : [],
         })),
-        uploadedDocNodeIds: data.attachments.map((attachment) => attachment.nodeId),
-        attachmentNames: data.attachments.map((attachment) => attachment.fileName),
       }));
       loadedSessionsRef.current.add(sessionId);
     } finally {
@@ -308,8 +373,6 @@ export function LegalAssistantChat() {
             title: createdData.conversation.title,
             updatedAt: createdData.conversation.updatedAt,
             messages: [],
-            attachmentNames: [],
-            uploadedDocNodeIds: [],
           };
           setSessions([initialSession]);
           setActiveId(initialSession.id);
@@ -322,8 +385,6 @@ export function LegalAssistantChat() {
           title: conversation.title,
           updatedAt: conversation.updatedAt,
           messages: [],
-          attachmentNames: [],
-          uploadedDocNodeIds: [],
         }));
         setSessions(nextSessions);
         setActiveId(nextSessions[0]?.id ?? null);
@@ -371,46 +432,50 @@ export function LegalAssistantChat() {
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length || !activeId) return;
-    const parts: string[] = [];
-    const names: string[] = [];
-    for (const file of Array.from(files)) {
-      try {
-        const text = await fileToText(file);
-        if (text.trim()) {
-          parts.push(`### ${file.name}\n${text.trim()}`);
-          names.push(file.name);
-        }
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Could not read file");
-      }
-    }
-    if (parts.length) {
-      const uploadedNodeIds: string[] = [];
-      for (let i = 0; i < parts.length; i++) {
-        try {
-          const nodeId = await uploadParsedDocToProjectHub(
-            names[i] || `chat-document-${i + 1}`,
-            parts[i]
-          );
-          uploadedNodeIds.push(nodeId);
-        } catch (err) {
-          toast.error(
-            err instanceof Error
-              ? err.message
-              : "Failed to save document in Project Hub/Chat Documents"
-          );
-        }
+    const next = Array.from(files).map((file) => ({
+      id: crypto.randomUUID(),
+      file,
+    }));
+    setPendingAttachments((prev) => [...prev, ...next]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removePendingAttachment = useCallback((id: string) => {
+    setPendingAttachments((prev) => prev.filter((attachment) => attachment.id !== id));
+  }, []);
+
+  const confirmDeleteConversation = async () => {
+    if (!conversationToDelete || deletingConversationId) return;
+    const id = conversationToDelete.id;
+    setDeletingConversationId(id);
+    try {
+      const res = await fetch(`/api/assistant/conversations/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || "Failed to delete conversation");
       }
 
-      patchSession(activeId, (s) => ({
-        ...s,
-        attachmentNames: [...s.attachmentNames, ...names],
-        uploadedDocNodeIds: [...s.uploadedDocNodeIds, ...uploadedNodeIds],
-        updatedAt: new Date().toISOString(),
-      }));
-      toast.success(`Attached ${names.length} file(s)${uploadedNodeIds.length ? " and saved to Project Hub" : ""}`);
+      loadedSessionsRef.current.delete(id);
+      setSessions((prev) => {
+        const next = prev.filter((session) => session.id !== id);
+        if (activeId === id) {
+          setActiveId(next[0]?.id ?? null);
+        }
+        return next;
+      });
+      if (activeId === id) {
+        setInput("");
+        setPendingAttachments([]);
+      }
+      setConversationToDelete(null);
+      toast.success("Conversation deleted");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete conversation");
+    } finally {
+      setDeletingConversationId(null);
     }
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const clearContext = async () => {
@@ -430,8 +495,6 @@ export function LegalAssistantChat() {
 
     patchSession(activeId, (s) => ({
       ...s,
-      attachmentNames: [],
-      uploadedDocNodeIds: [],
       updatedAt: new Date().toISOString(),
     }));
     toast.success("Document context cleared for this chat");
@@ -454,8 +517,6 @@ export function LegalAssistantChat() {
         title: data.conversation.title,
         updatedAt: data.conversation.updatedAt,
         messages: [],
-        attachmentNames: [],
-        uploadedDocNodeIds: [],
       };
       setSessions((prev) => [session, ...prev]);
       setActiveId(session.id);
@@ -468,45 +529,82 @@ export function LegalAssistantChat() {
 
   const send = async (messageOverride?: string) => {
     const trimmed = (messageOverride ?? input).trim();
-    if (!trimmed || loading || isChatHistoryLoading || !activeId) return;
+    const filesToAttach = pendingAttachments;
+    if ((!trimmed && !filesToAttach.length) || loading || isChatHistoryLoading || !activeId) return;
 
     const sid = activeId;
-    const attachedNodeIds = active?.uploadedDocNodeIds ?? [];
-    const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: trimmed,
-    };
-
-    setSessions((prev) =>
-      prev.map((s) => {
-        if (s.id !== sid) return s;
-        const nextTitle =
-          s.messages.length === 0
-            ? trimmed.length > 52
-              ? `${trimmed.slice(0, 52)}…`
-              : trimmed
-            : s.title;
-        return {
-          ...s,
-          title: nextTitle,
-          messages: [...s.messages, userMessage],
-          updatedAt: new Date().toISOString(),
-        };
-      })
-    );
-
-    setInput("");
+    let didCreateUserMessage = false;
     setLoading(true);
 
     try {
+      const uploadedAttachments: NonNullable<ChatMessage["attachments"]> = [];
+      for (const attachment of filesToAttach) {
+        const text = await fileToText(attachment.file);
+        if (!text.trim()) continue;
+        const content = `### ${attachment.file.name}\n${text.trim()}`;
+        const nodeId = await uploadParsedDocToProjectHub(attachment.file.name, content);
+        uploadedAttachments.push({
+          nodeId,
+          fileName: attachment.file.name,
+        });
+      }
+
+      const messageText =
+        trimmed ||
+        (uploadedAttachments.length
+          ? "Please review the attached document(s)."
+          : "");
+      if (!messageText) {
+        throw new Error("Could not read the selected file(s).");
+      }
+
+      const attachedNodeIds = Array.from(
+        new Set([
+          ...(active?.messages ?? [])
+            .flatMap((m) => m.attachments ?? [])
+            .map((a) => a.nodeId)
+            .filter(Boolean),
+          ...uploadedAttachments.map((a) => a.nodeId),
+        ])
+      );
+
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: messageText,
+        attachments: uploadedAttachments,
+      };
+
+      setSessions((prev) =>
+        prev.map((s) => {
+          if (s.id !== sid) return s;
+          const nextTitle =
+            s.messages.length === 0
+              ? messageText.length > 52
+                ? `${messageText.slice(0, 52)}…`
+                : messageText
+              : s.title;
+          return {
+            ...s,
+            title: nextTitle,
+            messages: [...s.messages, userMessage],
+            updatedAt: new Date().toISOString(),
+          };
+        })
+      );
+      didCreateUserMessage = true;
+
+      setInput("");
+      setPendingAttachments([]);
+
       const res = await fetch("/api/assistant/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           conversationId: sid,
-          message: trimmed,
+          message: messageText,
           attachedNodeIds,
+          attachedDocuments: uploadedAttachments,
         }),
       });
 
@@ -560,6 +658,7 @@ export function LegalAssistantChat() {
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Something went wrong");
+      if (!didCreateUserMessage) return;
       setSessions((prev) =>
         prev.map((s) =>
           s.id === sid
@@ -695,25 +794,6 @@ export function LegalAssistantChat() {
             </div>
           ) : !showMainBlockingLoader ? (
             <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4">
-              {attachmentNames.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-indigo-200/60 bg-gradient-to-r from-white to-indigo-50/40 px-4 py-3 text-sm shadow-md shadow-indigo-950/5">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary/15 to-indigo-100">
-                    <Paperclip className="h-4 w-4 shrink-0 text-primary" />
-                  </span>
-                  <span className="text-gray-700 font-medium">
-                    {attachmentNames.length || 1} file(s) attached as context
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => void clearContext()}
-                    className="ml-auto inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Clear
-                  </button>
-                </div>
-              ) : null}
-
               {messages.map((m) => (
                 <div
                   key={m.id}
@@ -738,6 +818,44 @@ export function LegalAssistantChat() {
                     ) : (
                       <p className="whitespace-pre-wrap">{m.content}</p>
                     )}
+
+                    {Array.isArray(m.attachments) && m.attachments.length ? (
+                      <div
+                        className={`mt-3 rounded-xl border px-3 py-2 text-xs ${
+                          m.role === "user"
+                            ? "border-white/30 bg-white/10 text-white/95"
+                            : "border-indigo-100/80 bg-indigo-50/40 text-gray-800"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span
+                            className={`font-semibold ${
+                              m.role === "user" ? "text-white/90" : "text-gray-700"
+                            }`}
+                          >
+                            Attached document(s)
+                          </span>
+                        </div>
+
+                        <div className="mt-2 flex flex-col gap-1.5">
+                          {m.attachments.map((a) => (
+                            <div key={a.nodeId} className="flex items-center gap-2">
+                              <span className="truncate">{a.fileName}</span>
+                              <a
+                                href={`/projects/root/edit/${a.nodeId}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className={`ml-auto inline-flex items-center rounded-lg px-2 py-1 font-semibold underline-offset-2 hover:underline ${
+                                  m.role === "user" ? "text-white" : "text-primary"
+                                }`}
+                              >
+                                View in Project Hub
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               ))}
@@ -759,11 +877,52 @@ export function LegalAssistantChat() {
             {!showMainBlockingLoader ? (
               <div className="shrink-0 border-t border-indigo-100/60 bg-gradient-to-t from-white/90 via-indigo-50/30 to-transparent p-4 backdrop-blur-md md:p-5">
                 <div className="mx-auto max-w-3xl">
+                  {pendingAttachments.length ? (
+                    <div className="mb-3 rounded-2xl border border-indigo-100/80 bg-white/80 p-2.5 shadow-md shadow-indigo-950/5 backdrop-blur-sm">
+                      <div className="mb-2 flex items-center justify-between px-1">
+                        <span className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                          Ready to attach
+                        </span>
+                        <span className="text-xs font-semibold text-primary">
+                          {pendingAttachments.length} file{pendingAttachments.length === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                      {pendingAttachments.map((attachment) => (
+                        <div
+                          key={attachment.id}
+                          className="group/chip inline-flex max-w-full items-center gap-2 rounded-2xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50/60 py-2 pl-2 pr-2.5 text-xs font-medium text-gray-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md"
+                        >
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/12 to-indigo-100 text-[10px] font-black text-primary ring-1 ring-primary/10">
+                            {fileExtension(attachment.file.name)}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block max-w-[230px] truncate text-sm font-semibold leading-4 text-gray-800">
+                              {attachment.file.name}
+                            </span>
+                            <span className="mt-0.5 block text-[11px] font-medium text-gray-500">
+                              {formatFileSize(attachment.file.size)}
+                            </span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removePendingAttachment(attachment.id)}
+                            disabled={loading || isChatHistoryLoading}
+                            className="ml-1 rounded-full p-1 text-gray-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                            title="Remove attachment"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                      </div>
+                    </div>
+                  ) : null}
                   <div className="flex items-center gap-2 rounded-2xl border-2 border-indigo-100/80 bg-white/95 py-2 pl-2 pr-2 shadow-lg shadow-indigo-950/5 transition-all duration-300 focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-primary/15 md:gap-3 md:py-2.5 md:pl-3">
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept=".pdf,.txt,application/pdf,text/plain"
+                      accept=".pdf,.txt,.doc,.docx,.png,.jpg,.jpeg,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg"
                       multiple
                       className="hidden"
                       onChange={(e) => void handleFiles(e.target.files)}
@@ -773,7 +932,7 @@ export function LegalAssistantChat() {
                       onClick={() => fileInputRef.current?.click()}
                       disabled={loading || isChatHistoryLoading}
                       className="shrink-0 rounded-xl p-2.5 text-primary/80 transition-colors hover:bg-primary/10 hover:text-primary active:scale-95 disabled:opacity-50"
-                      title="Attach PDF or TXT"
+                      title="Attach document or image"
                     >
                       <Paperclip className="h-5 w-5" />
                     </button>
@@ -795,7 +954,7 @@ export function LegalAssistantChat() {
                     <button
                       type="button"
                       onClick={() => void send()}
-                      disabled={loading || isChatHistoryLoading || !input.trim()}
+                      disabled={loading || isChatHistoryLoading || (!input.trim() && !pendingAttachments.length)}
                       className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/30 transition-all duration-200 hover:brightness-110 hover:shadow-xl hover:shadow-primary/25 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none"
                     >
                       {loading ? (
@@ -844,29 +1003,88 @@ export function LegalAssistantChat() {
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {sortedHistory.map((s) => {
             const isActive = s.id === activeId;
+            const attachmentCount = s.messages.reduce(
+              (count, message) => count + (message.attachments?.length ?? 0),
+              0
+            );
             return (
-              <button
+              <div
                 key={s.id}
-                type="button"
                 onClick={() => setActiveId(s.id)}
-                className={`w-full text-left rounded-xl border px-3 py-3 transition-all duration-200 ${
+                className={`group relative w-full cursor-pointer overflow-hidden rounded-2xl border p-3 text-left transition-all duration-200 ${
                   isActive
-                    ? "border-primary/50 bg-white shadow-md shadow-primary/10 ring-2 ring-primary/15"
-                    : "border-transparent bg-white/50 hover:bg-white hover:border-indigo-100 hover:shadow-sm"
+                    ? "border-primary/35 bg-white shadow-lg shadow-primary/10 ring-2 ring-primary/10"
+                    : "border-white/70 bg-white/55 shadow-sm shadow-indigo-950/[0.03] hover:-translate-y-0.5 hover:border-indigo-100 hover:bg-white hover:shadow-md hover:shadow-indigo-950/[0.06]"
                 }`}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setActiveId(s.id);
+                  }
+                }}
               >
-                <p className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug flex items-start gap-2">
-                  {chatHistoryLoadingId === s.id ? (
-                    <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary mt-0.5" aria-hidden />
-                  ) : null}
-                  <span className="min-w-0 flex-1">{s.title}</span>
-                </p>
-                <p className={`text-xs mt-1.5 font-medium ${isActive ? "text-primary" : "text-gray-500"}`}>
-                  {formatHistorySubtitle(s.updatedAt)}
-                </p>
-              </button>
+                {isActive ? (
+                  <span className="absolute inset-y-3 left-0 w-1 rounded-r-full bg-gradient-to-b from-primary to-indigo-500" />
+                ) : null}
+                <div className="flex items-start gap-2 pl-1">
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-50 to-white text-primary ring-1 ring-indigo-100/80">
+                    {chatHistoryLoadingId === s.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    ) : (
+                      <Sparkles className="h-4 w-4" aria-hidden />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="line-clamp-2 text-sm font-bold leading-snug text-gray-900">
+                      {s.title}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                          isActive
+                            ? "bg-primary/10 text-primary"
+                            : "bg-slate-100 text-gray-500"
+                        }`}
+                      >
+                        {formatHistorySubtitle(s.updatedAt)}
+                      </span>
+                      {attachmentCount ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-bold text-indigo-600">
+                          <Paperclip className="h-3 w-3" />
+                          {attachmentCount}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConversationToDelete(s);
+                    }}
+                    disabled={deletingConversationId === s.id}
+                    className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-gray-400 opacity-0 transition-all hover:bg-rose-50 hover:text-rose-600 group-hover:opacity-100 focus:opacity-100 disabled:opacity-50"
+                    title="Delete conversation"
+                  >
+                    {deletingConversationId === s.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                </div>
+              </div>
             );
           })}
+          {!sortedHistory.length ? (
+            <div className="rounded-2xl border border-dashed border-indigo-200 bg-white/60 px-4 py-8 text-center">
+              <Sparkles className="mx-auto h-6 w-6 text-primary/70" />
+              <p className="mt-2 text-sm font-semibold text-gray-800">No chats yet</p>
+              <p className="mt-1 text-xs text-gray-500">Start a new chat to build your history.</p>
+            </div>
+          ) : null}
         </div>
         </aside>
 
@@ -883,6 +1101,53 @@ export function LegalAssistantChat() {
               strokeWidth={2.5}
               aria-hidden
             />
+          </div>
+        ) : null}
+
+        {conversationToDelete ? (
+          <div
+            className="absolute inset-0 z-[60] flex items-center justify-center bg-slate-950/35 px-4 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-conversation-title"
+          >
+            <div className="w-full max-w-md rounded-2xl border border-rose-100 bg-white p-5 shadow-2xl shadow-slate-950/20">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
+                  <Trash2 className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <h3 id="delete-conversation-title" className="text-base font-bold text-gray-900">
+                    Delete conversation?
+                  </h3>
+                  <p className="mt-1 text-sm leading-6 text-gray-600">
+                    This will remove “{conversationToDelete.title}” from your chat history.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setConversationToDelete(null)}
+                  disabled={Boolean(deletingConversationId)}
+                  className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void confirmDeleteConversation()}
+                  disabled={Boolean(deletingConversationId)}
+                  className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rose-700 disabled:opacity-50"
+                >
+                  {deletingConversationId ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : null}
+                  Delete
+                </button>
+              </div>
+            </div>
           </div>
         ) : null}
       </div>

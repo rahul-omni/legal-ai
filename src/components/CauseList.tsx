@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useUserContext } from "@/context/userContext";
+import { useRouter } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 import { DayPicker, UI } from "react-day-picker";
 import type { DayButtonProps, DayProps } from "react-day-picker";
 import "react-day-picker/dist/style.css";
@@ -47,7 +49,8 @@ function getCourtHolidayLabel(d: Date): string | null {
 }
 
 const CauseList: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const router = useRouter();
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => new Date());
   const [causes, setCauses] = useState<CaseType[]>([]);
   const [loading, setLoading] = useState(false);
   const [calendarLoading, setCalendarLoading] = useState(false);
@@ -224,6 +227,7 @@ const CauseList: React.FC = () => {
 
                   const base =
                     "mx-auto flex size-10 items-center justify-center rounded-full text-[0.875rem] font-medium transition-[color,background-color,box-shadow,transform] duration-200 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 active:scale-[0.96]";
+                  const clickableHint = count > 0 ? "cursor-pointer hover:shadow-sm" : "";
 
                   if (selected) {
                     return (
@@ -231,8 +235,9 @@ const CauseList: React.FC = () => {
                         {...btn}
                         type="button"
                         className={
-                          `${className ?? ""} ${base} border-0 bg-blue-600 text-white shadow-sm hover:bg-blue-700`.trim()
+                          `${className ?? ""} ${base} ${clickableHint} border-0 bg-blue-600 text-white shadow-sm hover:bg-blue-700`.trim()
                         }
+                        title={count > 0 ? `${count} case${count === 1 ? "" : "s"} on this date` : undefined}
                       />
                     );
                   }
@@ -242,8 +247,9 @@ const CauseList: React.FC = () => {
                       {...btn}
                       type="button"
                       className={
-                        `${className ?? ""} ${base} border-2 border-transparent bg-transparent ${labelColor} hover:bg-gray-100/90`.trim()
+                        `${className ?? ""} ${base} ${clickableHint} border-2 border-transparent bg-transparent ${labelColor} hover:bg-gray-100/90`.trim()
                       }
+                      title={count > 0 ? `${count} case${count === 1 ? "" : "s"} on this date` : undefined}
                     />
                   );
                 },
@@ -306,7 +312,7 @@ const CauseList: React.FC = () => {
                 </div>
               ) : (
                 <div className="min-h-0 flex-1 overflow-x-auto overflow-y-auto rounded-lg border border-gray-200 bg-white">
-                  <table className="w-full min-w-[640px] border-collapse text-sm">
+                  <table className="w-full min-w-[700px] border-collapse text-sm">
                     <thead className="sticky top-0 bg-gray-100">
                       <tr>
                         <th className="border-b border-gray-200 p-2 text-left font-semibold text-gray-700">Diary Number</th>
@@ -314,16 +320,45 @@ const CauseList: React.FC = () => {
                         <th className="border-b border-gray-200 p-2 text-left font-semibold text-gray-700">Court</th>
                         <th className="border-b border-gray-200 p-2 text-left font-semibold text-gray-700">District</th>
                         <th className="border-b border-gray-200 p-2 text-left font-semibold text-gray-700">Court Type</th>
+                        <th className="border-b border-gray-200 p-2 text-right font-semibold text-gray-700">Action</th>
                       </tr>
                     </thead>
                     <tbody>
                       {causes.map((cause) => (
-                        <tr key={cause.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="p-2 text-gray-900">{cause.caseDetails.diaryNumber}</td>
-                          <td className="p-2 text-gray-800">{cause.caseDetails.caseNumber}</td>
-                          <td className="p-2 text-gray-800">{cause.caseDetails.court}</td>
-                          <td className="p-2 text-gray-800">{cause.caseDetails.district || "—"}</td>
-                          <td className="p-2 text-gray-800">{cause.caseDetails.courtType || "—"}</td>
+                        <tr
+                          key={cause.id}
+                          role="button"
+                          tabIndex={0}
+                          className="group cursor-pointer border-b border-gray-100 transition-colors duration-150 hover:bg-blue-50/80 active:bg-blue-100/70 focus-visible:bg-blue-50 focus-visible:outline-none"
+                          onClick={() => router.push(`/case-details/${cause.case_id}`)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              router.push(`/case-details/${cause.case_id}`);
+                            }
+                          }}
+                        >
+                          <td className="p-2 font-medium text-gray-900 transition-colors group-hover:text-blue-700">
+                            {cause.caseDetails.diaryNumber}
+                          </td>
+                          <td className="p-2 text-gray-800 transition-colors group-hover:text-blue-700">
+                            {cause.caseDetails.caseNumber}
+                          </td>
+                          <td className="p-2 text-gray-800 transition-colors group-hover:text-blue-700">
+                            {cause.caseDetails.court}
+                          </td>
+                          <td className="p-2 text-gray-800 transition-colors group-hover:text-blue-700">
+                            {cause.caseDetails.district || "—"}
+                          </td>
+                          <td className="p-2 text-gray-800 transition-colors group-hover:text-blue-700">
+                            {cause.caseDetails.courtType || "—"}
+                          </td>
+                          <td className="p-2 text-right">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 opacity-80 transition-all group-hover:bg-blue-100 group-hover:opacity-100">
+                              Open
+                              <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                            </span>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

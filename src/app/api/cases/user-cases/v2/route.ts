@@ -4,6 +4,7 @@ import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
 import { auth } from "../../../lib/auth/nextAuthConfig";
 import { ErrorAuth } from "@/app/api/lib/errors";
+import { normalizePartiesDisplay } from "@/lib/parties";
 
 const prisma = new PrismaClient();
 
@@ -94,6 +95,8 @@ export const GET = auth(async (request: NextAuthRequest) => {
             bench: true,
             judgmentBy: true,
             judgmentDate: true,
+            tentative_date: true,
+            caseStatus: true,
           },
         },
       },
@@ -113,7 +116,7 @@ export const GET = auth(async (request: NextAuthRequest) => {
         caseDetails: caseDetails
           ? {
               id: caseDetails.id,
-              parties: caseDetails.parties,
+              parties: normalizePartiesDisplay(caseDetails.parties),
               diaryNumber: caseDetails.diaryNumber,
               createdAt: caseDetails.createdAt,
               caseType: caseDetails.case_type,
@@ -127,6 +130,8 @@ export const GET = auth(async (request: NextAuthRequest) => {
               bench: caseDetails.bench,
               judgmentBy: caseDetails.judgmentBy,
               judgmentDate: caseDetails.judgmentDate,
+              tentativeDate: caseDetails.tentative_date,
+              caseStatus: caseDetails.caseStatus,
             }
           : null,
       };

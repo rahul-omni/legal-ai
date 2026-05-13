@@ -49,6 +49,34 @@ async function getMessagesController(
       );
     }
 
+    const messageDocsRows = (await db.$queryRawUnsafe(
+      `SELECT md.message_id AS "messageId",
+              md.node_id AS "nodeId",
+              md.file_name AS "fileName",
+              md.created_at AS "createdAt"
+       FROM chat_message_documents md
+       INNER JOIN chat_messages m ON m.id = md.message_id
+       WHERE m.conversation_id = $1::uuid
+       ORDER BY md.created_at ASC`,
+      conversation.id
+    )) as Array<{
+      messageId: string;
+      nodeId: string;
+      fileName: string;
+      createdAt: string;
+    }>;
+
+    const attachmentsByMessageId = new Map<
+      string,
+      { nodeId: string; fileName: string; createdAt: string }[]
+    >();
+
+    for (const row of messageDocsRows) {
+      const list = attachmentsByMessageId.get(row.messageId) ?? [];
+      list.push({ nodeId: row.nodeId, fileName: row.fileName, createdAt: row.createdAt });
+      attachmentsByMessageId.set(row.messageId, list);
+    }
+
     return NextResponse.json({
       conversation: {
         id: conversation.id,
@@ -61,6 +89,7 @@ async function getMessagesController(
         role: String(message.role).toLowerCase(),
         content: message.content,
         createdAt: message.createdAt,
+        attachments: attachmentsByMessageId.get(message.id) ?? [],
       })),
       attachments: conversation.documents,
     });

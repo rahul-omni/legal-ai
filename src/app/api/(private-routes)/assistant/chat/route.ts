@@ -40,6 +40,7 @@ async function chatController(request: NextAuthRequest) {
       conversationId?: string;
       message?: string;
       attachedNodeIds?: string[];
+      attachedDocuments?: { nodeId?: string; fileName?: string }[];
       messages?: { role?: string; content?: string }[];
       documentContext?: string;
     };
@@ -102,6 +103,13 @@ async function chatController(request: NextAuthRequest) {
         )
       : [];
 
+    const requestedDocumentNames = new Map(
+      (Array.isArray(body.attachedDocuments) ? body.attachedDocuments : [])
+        .filter((doc) => typeof doc?.nodeId === "string" && typeof doc?.fileName === "string")
+        .map((doc) => [doc.nodeId as string, doc.fileName as string])
+    );
+    const messageAttachments: { nodeId: string; fileName: string }[] = [];
+
     if (attachedNodeIds.length) {
       const existingNodes = await db.fileSystemNode.findMany({
         where: {
@@ -115,6 +123,13 @@ async function chatController(request: NextAuthRequest) {
       });
 
       for (const node of existingNodes) {
+        const fileName = requestedDocumentNames.get(node.id) || node.name;
+        if (requestedDocumentNames.has(node.id)) {
+          messageAttachments.push({
+            nodeId: node.id,
+            fileName,
+          });
+        }
         await (db as any).chatConversationDocument.upsert({
           where: {
             chat_conversation_node_unique: {
@@ -123,12 +138,12 @@ async function chatController(request: NextAuthRequest) {
             },
           },
           update: {
-            fileName: node.name,
+            fileName,
           },
           create: {
             conversationId: conversation.id,
             nodeId: node.id,
-            fileName: node.name,
+            fileName,
           },
         });
       }
@@ -192,6 +207,16 @@ async function chatController(request: NextAuthRequest) {
         id: true,
       },
     });
+
+    for (const attachment of messageAttachments) {
+      await db.$executeRawUnsafe(
+        `INSERT INTO chat_message_documents (message_id, node_id, file_name)
+         VALUES ($1::uuid, $2::uuid, $3::text)`,
+        createdUserMessage.id,
+        attachment.nodeId,
+        attachment.fileName
+      );
+    }
 
     if (conversation.title === "New conversation") {
       await (db as any).chatConversation.update({

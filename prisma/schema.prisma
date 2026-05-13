@@ -42,6 +42,9 @@ model User {
   userCases               UserCase[]          @relation("user_usercases")
   subscriptions           UserSubscription[]  @relation("user_subscriptions")
   chatConversations       ChatConversation[]
+  workspaces              Workspace[]         @relation("user_workspaces")
+  workspaceTasksAssigned  WorkspaceTask[]     @relation("workspace_tasks_assigned_to")
+  workspaceTasksCreated   WorkspaceTask[]     @relation("workspace_tasks_assigned_by")
 
   @@map("users")
 }
@@ -151,6 +154,7 @@ model FileSystemNode {
   updatedByUser User?            @relation("file_system_nodes_updated_by_idx", fields: [updatedBy], references: [id])
   user          User?            @relation("file_system_nodes_user_id_idx", fields: [userId], references: [id])
   chatConversationDocuments ChatConversationDocument[]
+  chatMessageDocuments      ChatMessageDocument[]
 
   @@index([createdBy])
   @@index([updatedBy])
@@ -408,8 +412,46 @@ model SubscribedCases {
   status      SubscribedCaseStatus @default(ACTIVE)
   caseDetails CaseDetails          @relation(fields: [case_id], references: [id], onDelete: Cascade)
   user        User                 @relation("user_subscribed_cases", fields: [userId], references: [id])
+  workspace   Workspace?
 
   @@map("subscribed_cases")
+}
+
+model Workspace {
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String          @map("user_id") @db.Uuid
+  subscribedCaseId String          @unique @map("subscribed_case_id") @db.Uuid
+  status           String          @default("PENDING")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+  user             User            @relation("user_workspaces", fields: [userId], references: [id], onDelete: Cascade)
+  subscribedCase   SubscribedCases @relation(fields: [subscribedCaseId], references: [id], onDelete: Cascade)
+  tasks            WorkspaceTask[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("workspaces")
+}
+
+model WorkspaceTask {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspaceId      String    @map("workspace_id") @db.Uuid
+  title            String
+  status           String    @default("PENDING")
+  dueDate          DateTime? @map("due_date")
+  assignedToUserId String    @map("assigned_to_user_id") @db.Uuid
+  assignedByUserId String    @map("assigned_by_user_id") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  workspace        Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assignedTo       User      @relation("workspace_tasks_assigned_to", fields: [assignedToUserId], references: [id])
+  assignedBy       User      @relation("workspace_tasks_assigned_by", fields: [assignedByUserId], references: [id])
+
+  @@index([workspaceId, createdAt(sort: Desc)])
+  @@index([workspaceId, status])
+  @@index([assignedToUserId])
+  @@index([assignedByUserId])
+  @@map("workspace_tasks")
 }
 
 model SubscriptionPlan {
@@ -744,6 +786,7 @@ model ChatMessage {
   createdAt      DateTime         @default(now()) @map("created_at")
   updatedAt      DateTime         @updatedAt @map("updated_at")
   conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  documents      ChatMessageDocument[]
 
   @@index([conversationId, createdAt])
   @@map("chat_messages")
@@ -764,6 +807,20 @@ model ChatConversationDocument {
   @@index([conversationId, isActive, createdAt])
   @@index([nodeId])
   @@map("chat_conversation_documents")
+}
+
+model ChatMessageDocument {
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  messageId String         @map("message_id") @db.Uuid
+  nodeId    String         @map("node_id") @db.Uuid
+  fileName  String         @map("file_name")
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  message   ChatMessage    @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  node      FileSystemNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+
+  @@index([messageId, createdAt], map: "idx_chat_message_documents_message_created")
+  @@index([nodeId], map: "idx_chat_message_documents_node_id")
+  @@map("chat_message_documents")
 }
 
 model BlogPost {

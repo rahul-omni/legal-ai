@@ -10,6 +10,7 @@ import {
   Menu,
   MessageSquare,
   FilePenLine,
+  LayoutDashboard,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,6 +19,12 @@ import VakeelAssistLogo from "./svg/VakeelAssistLogo";
 import VakeelAssistLogoIcon from "./svg/VakeelAssistLogoIcon";
 
 const navigationItems = [
+  {
+    name: "Workspace",
+    href: "/workspace",
+    icon: LayoutDashboard,
+    id: 'workspace'
+  },
   {
     name: "Cases",
     href: "/cases",

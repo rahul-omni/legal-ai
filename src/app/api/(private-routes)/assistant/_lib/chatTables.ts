@@ -44,6 +44,16 @@ export async function ensureAssistantChatTables() {
   `);
 
   await safeExecute(`
+    CREATE TABLE IF NOT EXISTS chat_message_documents (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      message_id UUID NOT NULL REFERENCES chat_messages(id) ON DELETE CASCADE,
+      node_id UUID NOT NULL REFERENCES file_system_nodes(id) ON DELETE CASCADE,
+      file_name TEXT NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await safeExecute(`
     ALTER TABLE chat_conversation_documents
     ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
   `);
@@ -62,6 +72,12 @@ export async function ensureAssistantChatTables() {
   );
   await safeExecute(
     "CREATE INDEX IF NOT EXISTS idx_chat_conversation_documents_conversation_active_created ON chat_conversation_documents(conversation_id, is_active, created_at);"
+  );
+  await safeExecute(
+    "CREATE INDEX IF NOT EXISTS idx_chat_message_documents_message_created ON chat_message_documents(message_id, created_at);"
+  );
+  await safeExecute(
+    "CREATE INDEX IF NOT EXISTS idx_chat_message_documents_node_id ON chat_message_documents(node_id);"
   );
 
   ensured = true;
