@@ -8,11 +8,14 @@ interface PublicPageRoute {
 }
 
 interface PrivatePageRoute {
+  home: string;
   projects: string;
   editor: string;
   analytics: string;
   assembly: string;
   cases: string;
+  aiAssistant: string;
+  documentDrafting: string;
   dueDiligence: string;
   marketplace: string;
   templates: string;
@@ -24,11 +27,14 @@ export const routeConfig: {
   publicRoutes: PublicPageRoute;
 } = {
   privateRoutes: {
+    home: "/workspace",
     projects: "/projects",
     editor: "/editor",
     analytics: "/analytics",
     assembly: "/assembly",
     cases: "/cases",
+    aiAssistant: "/ai-assistant",
+    documentDrafting: "/document-drafting",
     dueDiligence: "/due-diligence",
     marketplace: "/marketplace",
     templates: "/templates",

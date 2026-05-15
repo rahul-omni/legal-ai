@@ -202,7 +202,7 @@ export function DocumentPaneTopBar({
 
           
 
-          {!explorerState.isNewFileMode && (
+          {/* {!explorerState.isNewFileMode && (
 
             <Button
               variant="secondary"
@@ -213,7 +213,7 @@ export function DocumentPaneTopBar({
             >
               Review
             </Button>
-          )}
+          )} */}
 
           <SaveDropdown
             onSave={handleSave}

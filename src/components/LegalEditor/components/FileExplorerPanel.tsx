@@ -4,7 +4,11 @@ import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 import { FileExplorer } from "./FileExplorer";
 import { fetchNodes } from "@/app/apiServices/nodeServices";
 
-export function FileExplorerPanel() {
+type FileExplorerPanelProps = {
+  rootFolderId?: string;
+};
+
+export function FileExplorerPanel({ rootFolderId }: FileExplorerPanelProps) {
   const { explorerState, explorerDispatch } = useExplorerContext();
   const { docEditorDispatch, docEditorState } = useDocumentEditor();
   const { state: uiState } = useUIState();
@@ -20,6 +24,7 @@ export function FileExplorerPanel() {
       >
         <FileExplorer
           key={`file-explorer-${explorerState.refreshKey}`}
+          rootFolderId={rootFolderId}
           selectedDocument={explorerState.selectedFile}
           onDocumentSelect={async (file) => {
             const fetched = docEditorState.openTabs.find(

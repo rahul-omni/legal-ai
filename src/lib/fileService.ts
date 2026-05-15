@@ -1,6 +1,3 @@
-import mammoth from "mammoth";
-// Add to FileService.ts
-import * as pdfjsLib from 'pdfjs-dist';
 export interface FileData {
   id: string;
   name: string;
@@ -37,6 +34,7 @@ export class FileService {
       try {
         const arrayBuffer = await file.arrayBuffer();
         //  const result = await mammoth.extractRawText({ arrayBuffer });
+        const { default: mammoth } = await import("mammoth");
         const result = await mammoth.convertToHtml({ arrayBuffer });
         return result.value;
       } catch (error) {
@@ -110,6 +108,8 @@ private static async arrayBufferToHash(buffer: ArrayBuffer): Promise<string> {
 // In FileService.ts
 static async parsePDFToQuillHTML(arrayBuffer: ArrayBuffer): Promise<string> {
   try {
+    const pdfjsLib = await import("pdfjs-dist");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
     const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
     let html = '<div class="ql-editor">';
     const LINE_HEIGHT_THRESHOLD = 5; // Adjust based on your PDFs

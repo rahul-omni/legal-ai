@@ -1,6 +1,10 @@
 import { db } from "@/app/api/lib/db";
+import { auth } from "@/app/api/lib/auth/nextAuthConfig";
 import { ErrorNotFound, handleError } from "@/app/api/lib/errors";
 import { logger } from "@/app/api/lib/logger";
+import { assertWorkspaceFolderFileLimitAllows } from "@/app/api/lib/subscriptionLimits";
+import { userFromSession } from "@/lib/auth";
+import { NextAuthRequest } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 //api/nodes/id
@@ -40,11 +44,12 @@ export async function GET(_: NextRequest, context: any) {
 }
 
 // PUT: Update a node (rename, move, etc.)
-export async function PUT(
-  request: NextRequest,
+async function putNodeController(
+  request: NextAuthRequest,
   context: any // Change here
 ) {
   try {
+    const sessionUser = await userFromSession(request);
     const { id } = await context.params;
 
     if (!id) {
@@ -54,6 +59,22 @@ export async function PUT(
       );
     }
     const { name, content, parentId, isExpanded } = await request.json();
+
+    if (parentId !== undefined && parentId !== null) {
+      const existingNode = await db.fileSystemNode.findFirst({
+        where: {
+          id,
+          userId: sessionUser.id,
+        },
+        select: {
+          type: true,
+        },
+      });
+
+      if (existingNode?.type === "FILE") {
+        await assertWorkspaceFolderFileLimitAllows(sessionUser.id, parentId);
+      }
+    }
 
     // Partial update - only modify provided fields
     const updatedNode = await db.fileSystemNode.update({
@@ -71,6 +92,8 @@ export async function PUT(
     return handleError(error);
   }
 }
+
+export const PUT = auth(putNodeController);
 
 // DELETE: Recursively delete a node and its children
 export async function DELETE(_: NextRequest, context: any) {

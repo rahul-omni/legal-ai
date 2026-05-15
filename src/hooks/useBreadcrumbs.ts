@@ -9,6 +9,8 @@ const routeConfig: Record<string, { label: string; icon?: React.ReactNode }> = {
   '/': { label: 'Dashboard' },
   '/projects': { label: 'Projects' },
   '/cases': { label: 'Case Management' },
+  '/ai-assistant': { label: 'AI Assistant' },
+  '/document-drafting': { label: 'Document drafting' },
   '/case-details': { label: 'Case Management' },
   '/editor': { label: 'Legal Editor' },
   '/team': { label: 'Team Management' },

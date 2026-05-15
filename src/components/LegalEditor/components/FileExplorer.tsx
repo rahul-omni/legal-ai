@@ -9,18 +9,17 @@ import { FC, useEffect, useRef, useState } from "react";
 import { useExplorerContext } from "../reducersContexts/explorerReducerContext";
 import { FileExplorerHeader } from "./FileHeader";
 import FileNode from "./FileNode";
-import { GlobalWorkerOptions, version } from 'pdfjs-dist/build/pdf';
 import useAxios from "@/hooks/api/useAxios";
 import { apiRouteConfig } from "@/app/api/lib/apiRouteConfig";
 
-GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.js`;
-
 interface FileExplorerProps {
+  rootFolderId?: string;
   selectedDocument?: FileSystemNodeProps;
   onDocumentSelect: (_file: FileSystemNodeProps) => void;
 }
 
 export const FileExplorer: FC<FileExplorerProps> = ({
+  rootFolderId,
   selectedDocument,
   onDocumentSelect,
 }) => {
@@ -36,13 +35,13 @@ export const FileExplorer: FC<FileExplorerProps> = ({
   const router = useRouter()
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const parentId = params.id as string;
+  const parentId = rootFolderId || (params.id as string);
   const fileIdParam = params.fileId as string;
   const { fetchData } = useAxios();
 
   useEffect(() => {
     fetchRootNodes();
-  }, []);
+  }, [rootFolderId]);
 
   const fetchRootNodes = async () => {
     try {
@@ -85,7 +84,7 @@ export const FileExplorer: FC<FileExplorerProps> = ({
     e.stopPropagation();
     await fetchData(apiRouteConfig.privateRoutes.node(fileId), "DELETE");
     if (fileIdParam){
-      router.push(`/projects`);
+      router.push(rootFolderId ? `/workspace/${params.id}` : "/projects");
     }else{
       await fetchRootNodes();
       setDeletingFile("");

@@ -102,7 +102,9 @@ export function BookingModal({
     }
   }, [isOpen]);
 
-  const createOrderId = async (amount: number): Promise<string | null> => {
+  const createOrder = async (
+    amount: number
+  ): Promise<{ orderId: string; keyId: string } | null> => {
     try {
       const response = await fetch("/api/order", {
         method: "POST",
@@ -121,7 +123,11 @@ export function BookingModal({
       }
 
       const data = await response.json();
-      return data.orderId;
+      if (!data.orderId || !data.keyId) {
+        throw new Error("Payment gateway is not configured on the server");
+      }
+
+      return { orderId: data.orderId, keyId: data.keyId };
     } catch (error) {
       console.error("Error creating order ID:", error);
       toast.error(error instanceof Error ? error.message : "Failed to create order");
@@ -161,6 +167,7 @@ export function BookingModal({
   const processPayment = async (
     leadId: string,
     orderId: string,
+    keyId: string,
     amount: number
   ) => {
     if (!window.Razorpay) {
@@ -168,8 +175,14 @@ export function BookingModal({
       return;
     }
 
+    if (!keyId) {
+      toast.error("Payment gateway is not configured");
+      setIsProcessing(false);
+      return;
+    }
+
     const options = {
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      key: keyId,
       amount: amount * 100, // Razorpay expects amount in paise
       currency: "INR",
       name: "Legal AI",
@@ -375,14 +388,14 @@ export function BookingModal({
       }
 
       // Step 3: Create Razorpay order
-      const orderId = await createOrderId(plan.discountedPrice);
-      if (!orderId) {
+      const order = await createOrder(plan.discountedPrice);
+      if (!order) {
         setIsProcessing(false);
         return;
       }
 
       // Step 4: Process payment
-      await processPayment(leadId, orderId, plan.discountedPrice);
+      await processPayment(leadId, order.orderId, order.keyId, plan.discountedPrice);
     } catch (error) {
       console.error("Booking error:", error);
       toast.error("An error occurred. Please try again.");

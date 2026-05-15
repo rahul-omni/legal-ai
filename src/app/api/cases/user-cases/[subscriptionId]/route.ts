@@ -7,6 +7,58 @@ import { ErrorAuth } from "@/app/api/lib/errors";
 
 const prisma = new PrismaClient();
 
+type TransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
+type WorkspaceCleanupRow = {
+  id: string;
+  projectFolderId: string | null;
+};
+
+async function deleteWorkspaceProjectFolder(tx: TransactionClient, rootId: string, userId: string) {
+  const nodes = await tx.$queryRaw<{ id: string }[]>`
+    WITH RECURSIVE descendants AS (
+      SELECT "id", "parent_id", 0 AS depth
+      FROM "file_system_nodes"
+      WHERE "id" = ${rootId}::uuid
+        AND "user_id" = ${userId}::uuid
+      UNION ALL
+      SELECT child."id", child."parent_id", descendants.depth + 1
+      FROM "file_system_nodes" child
+      INNER JOIN descendants ON child."parent_id" = descendants."id"
+      WHERE child."user_id" = ${userId}::uuid
+    )
+    SELECT "id"
+    FROM descendants
+    ORDER BY depth DESC;
+  `;
+
+  const nodeIds = nodes.map((node) => node.id);
+  if (!nodeIds.length) return;
+
+  await tx.$executeRaw`
+    DELETE FROM "review_comments" comments
+    USING "file_reviews" reviews
+    WHERE comments."review_id" = reviews."id"
+      AND reviews."file_id" = ANY(${nodeIds}::uuid[]);
+  `;
+  await tx.$executeRaw`
+    DELETE FROM "file_reviews"
+    WHERE "file_id" = ANY(${nodeIds}::uuid[]);
+  `;
+  await tx.$executeRaw`
+    DELETE FROM "chat_conversation_documents"
+    WHERE "node_id" = ANY(${nodeIds}::uuid[]);
+  `;
+  await tx.$executeRaw`
+    DELETE FROM "chat_message_documents"
+    WHERE "node_id" = ANY(${nodeIds}::uuid[]);
+  `;
+  await tx.$executeRaw`
+    DELETE FROM "file_system_nodes"
+    WHERE "id" = ANY(${nodeIds}::uuid[]);
+  `;
+}
+
 export const DELETE = auth(async (request: NextAuthRequest, context?: any) => {
   try {
     // Authentication
@@ -52,16 +104,56 @@ export const DELETE = auth(async (request: NextAuthRequest, context?: any) => {
       );
     }
 
-    // Soft delete: Update status to DELETED
-    // Note: Type assertion needed until TypeScript server picks up regenerated Prisma types
-    // The runtime will work correctly as the database column exists
-    const deletedSubscription = await (prisma.subscribedCases.update as any)({
-      where: {
-        id: subscriptionId,
-      },
-      data: {
-        status: 'DELETED',
-      },
+    const deletedSubscription = await prisma.$transaction(async (tx) => {
+      const workspaceRows = await tx.$queryRaw<WorkspaceCleanupRow[]>`
+        SELECT
+          "id",
+          "project_folder_id" AS "projectFolderId"
+        FROM "workspaces"
+        WHERE "subscribed_case_id" = ${subscriptionId}::uuid
+          AND "user_id" = ${sessionUser.id}::uuid
+        LIMIT 1;
+      `;
+      const workspace = workspaceRows[0];
+
+      if (workspace) {
+        await tx.$executeRaw`
+          DELETE FROM "chat_conversations"
+          WHERE "workspace_id" = ${workspace.id}::uuid
+            AND "user_id" = ${sessionUser.id}::uuid;
+        `;
+        await tx.$executeRaw`
+          DELETE FROM "workspace_tasks"
+          WHERE "workspace_id" = ${workspace.id}::uuid;
+        `;
+
+        if (workspace.projectFolderId) {
+          await tx.$executeRaw`
+            UPDATE "workspaces"
+            SET "project_folder_id" = NULL
+            WHERE "id" = ${workspace.id}::uuid
+              AND "user_id" = ${sessionUser.id}::uuid;
+          `;
+          await deleteWorkspaceProjectFolder(tx, workspace.projectFolderId, sessionUser.id);
+        }
+
+        await tx.$executeRaw`
+          DELETE FROM "workspaces"
+          WHERE "id" = ${workspace.id}::uuid
+            AND "user_id" = ${sessionUser.id}::uuid;
+        `;
+      }
+
+      // Soft delete: Update status to DELETED.
+      // Note: Type assertion needed until TypeScript server picks up regenerated Prisma types.
+      return (tx.subscribedCases.update as any)({
+        where: {
+          id: subscriptionId,
+        },
+        data: {
+          status: 'DELETED',
+        },
+      });
     });
 
     return NextResponse.json({

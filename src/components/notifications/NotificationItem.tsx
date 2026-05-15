@@ -4,9 +4,10 @@ import { Bell } from "lucide-react";
 interface NotificationItemProps {
   notification: NotificationData;
   formatDateTime: (dateString: string) => string;
+  onClick?: (notification: NotificationData) => void;
 }
 
-export function NotificationItem({ notification, formatDateTime }: NotificationItemProps) {
+export function NotificationItem({ notification, formatDateTime, onClick }: NotificationItemProps) {
   const getTitle = (message: string) => {
     const lines = message.split('\n');
     return lines[0] || 'Notification';
@@ -22,8 +23,24 @@ export function NotificationItem({ notification, formatDateTime }: NotificationI
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   };
 
+  const isClickable = Boolean(onClick);
+
   return (
-    <div className="bg-background-light border-b hover:bg-background-dark transition-colors">
+    <div
+      className={`bg-background-light border-b transition-colors ${
+        isClickable ? "hover:bg-background-dark cursor-pointer" : "hover:bg-background-dark"
+      }`}
+      onClick={() => onClick?.(notification)}
+      role={isClickable ? "button" : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onKeyDown={(e) => {
+        if (!isClickable) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.(notification);
+        }
+      }}
+    >
       <div className="px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-info-light rounded-lg flex items-center justify-center">

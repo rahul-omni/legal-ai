@@ -7,6 +7,7 @@ import { auth } from "../../lib/auth/nextAuthConfig";
 import { ErrorValidation, handleError } from "../../lib/errors";
 import { logger } from "../../lib/logger";
 import { fileSystemNodeService } from "../../services/fileSystemNodeService";
+import { assertWorkspaceFolderFileLimitAllows } from "../../lib/subscriptionLimits";
 
 const nodeInputSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -65,6 +66,9 @@ async function createNodeController(request: NextAuthRequest) {
     }
 
     const { name, type, parentId, content } = parsedInput;
+    if (type === "FILE") {
+      await assertWorkspaceFolderFileLimitAllows(sessionUser.id, parentId ?? null);
+    }
 
     logger.info("createNodeController: Validated input", {
       name,

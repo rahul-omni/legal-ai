@@ -5,7 +5,7 @@ export interface UserSubscription {
   id: string;
   userId: string;
   subscriptionPlanId: string;
-  paymentId: string;
+  paymentId: string | null;
   status: "ACTIVE" | "EXPIRED" | "CANCELLED";
   startDate: string;
   endDate: string;
@@ -20,6 +20,11 @@ export interface UserSubscription {
     discountedPrice: number;
     price: number;
     duration: number | null;
+    aiTokenDailyLimit?: number | null;
+    aiTokenMonthlyLimit?: number | null;
+    documentDraftingMonthlyLimit?: number | null;
+    workspaceFolderFileLimit?: number | null;
+    workspaceLimit?: number | null;
   };
 }
 

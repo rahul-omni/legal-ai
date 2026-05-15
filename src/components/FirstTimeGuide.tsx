@@ -11,11 +11,29 @@ export default function FirstTimeGuide() {
     if (!hasSeenGuide) {
       const driverObj = driver({
         showProgress: true,
-        allowClose: false,
+        allowClose: true,
         animate: true,
         overlayColor: "rgba(0, 0, 0, 0.6)",
         stagePadding: 6,
         popoverClass: "custom-driver-popover",
+        nextBtnText: "Next",
+        prevBtnText: "Back",
+        doneBtnText: "Finish",
+        onPopoverRender: (popover) => {
+          // Use the built-in close button as an explicit "Skip"
+          if (popover?.closeButton) {
+            popover.closeButton.textContent = "Skip";
+            popover.closeButton.classList.add("driver-skip-btn");
+          }
+        },
+        onCloseClick: () => {
+          localStorage.setItem("navTourCompleted", "true");
+          driverObj.destroy();
+        },
+        onDestroyed: () => {
+          // Mark as completed on finish as well.
+          localStorage.setItem("navTourCompleted", "true");
+        },
         steps: [
           {
             element: "#firststep",
@@ -93,7 +111,6 @@ export default function FirstTimeGuide() {
       });
 
       driverObj.drive();
-      localStorage.setItem("navTourCompleted", "true");
     }
   }, []);
 
@@ -147,6 +164,14 @@ export default function FirstTimeGuide() {
       .driver-popover-footer button.driver-prev-btn:hover,
       .driver-popover-footer button.driver-close-btn:hover {
         background-color: #cbd5e0;
+      }
+
+      .driver-popover-footer button.driver-close-btn.driver-skip-btn {
+        background: linear-gradient(90deg, rgba(239, 68, 68, 0.12), rgba(244, 63, 94, 0.12));
+        color: #b91c1c;
+      }
+      .driver-popover-footer button.driver-close-btn.driver-skip-btn:hover {
+        background: linear-gradient(90deg, rgba(239, 68, 68, 0.18), rgba(244, 63, 94, 0.18));
       }
     `}</style>
   );

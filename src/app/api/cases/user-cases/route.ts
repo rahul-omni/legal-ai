@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "../../lib/auth/nextAuthConfig";
 import { ErrorAuth } from "@/app/api/lib/errors";
+import { normalizePartiesDisplay } from "@/lib/parties";
 
 const prisma = new PrismaClient();
 
@@ -395,7 +396,7 @@ export const GET = auth(async (request: NextAuthRequest) => {
         ...rest,
         caseDetails: caseDetails ? {
           id: caseDetails.id,
-          parties: caseDetails.parties,
+          parties: normalizePartiesDisplay(caseDetails.parties),
           diaryNumber: caseDetails.diaryNumber,
           createdAt: caseDetails.createdAt,
           caseType: caseDetails.case_type,

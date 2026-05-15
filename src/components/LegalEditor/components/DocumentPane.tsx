@@ -16,6 +16,16 @@ import { TabBar } from "./TabBar";
 import { Toolbar } from "./Toolbar";
 import { useUIState } from "../reducersContexts/editorUiReducerContext";
 
+type LegalEditorConversation = {
+  id: string;
+  mode: "CHAT" | "DOCUMENT";
+  messages: ChatMessage[];
+};
+
+type DocumentPaneProps = {
+  workspaceId?: string;
+};
+
 /** Composer sends selection-only as `fullText`; empty string must not hide the open tab HTML (?? keeps ""). */
 function buildAssistantRequestText(
   tabContent: string | undefined,
@@ -30,14 +40,19 @@ function buildAssistantRequestText(
   return doc;
 }
 
-export function DocumentPane() {
+export function DocumentPane({ workspaceId }: DocumentPaneProps) {
   const { docEditorState, lexicalEditorRef, docEditorDispatch } = useDocumentEditor();
   const { state: uiState } = useUIState();
   const [selectedText, setSelectedText] = useState<string>();
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [conversationLoading, setConversationLoading] = useState(false);
   const [streamingPreview, setStreamingPreview] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [legalEditorConversations, setLegalEditorConversations] = useState<{
+    chat: LegalEditorConversation | null;
+    document: LegalEditorConversation | null;
+  }>({ chat: null, document: null });
   /** Chat = Q&A only. Document = green preview + Apply/Reject. */
   const [assistantMode, setAssistantMode] = useState<AssistantMode>("chat");
   /** Live preview in the editor column — not persisted until Apply */
@@ -46,6 +61,26 @@ export function DocumentPane() {
   const [initialContent, setInitialContent] = useState<string>("");
 
   const activeTab = docEditorState.openTabs.find((tab) => tab.id === docEditorState.activeTabId);
+  const activeConversation =
+    assistantMode === "document" ? legalEditorConversations.document : legalEditorConversations.chat;
+
+  const updateConversationMessages = (
+    mode: AssistantMode,
+    updater: (_messages: ChatMessage[]) => ChatMessage[]
+  ) => {
+    setLegalEditorConversations((current) => {
+      const key = mode === "document" ? "document" : "chat";
+      const existing = current[key];
+      if (!existing) return current;
+      return {
+        ...current,
+        [key]: {
+          ...existing,
+          messages: updater(existing.messages || []),
+        },
+      };
+    });
+  };
 
   useEffect(() => {
     setInitialContent(activeTab?.content || "");
@@ -65,10 +100,66 @@ export function DocumentPane() {
     if (assistantMode === "chat") {
       setPendingPreview(null);
     }
-  }, [assistantMode]);
+    const nextConversation =
+      assistantMode === "document" ? legalEditorConversations.document : legalEditorConversations.chat;
+    if (nextConversation) {
+      setMessages(nextConversation.messages || []);
+    }
+  }, [assistantMode, legalEditorConversations]);
+
+  useEffect(() => {
+    if (!workspaceId || !activeTab?.fileId) {
+      setLegalEditorConversations({ chat: null, document: null });
+      setMessages([]);
+      setPendingPreview(null);
+      return;
+    }
+
+    let cancelled = false;
+    const loadConversations = async () => {
+      try {
+        setConversationLoading(true);
+        const params = new URLSearchParams({
+          workspaceId,
+          fileId: activeTab.fileId!,
+        });
+        const response = await fetch(`/api/assistant/legal-editor/conversations?${params.toString()}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to load editor conversations");
+        }
+
+        if (cancelled) return;
+
+        const chat = data.conversations.chat as LegalEditorConversation;
+        const document = data.conversations.document as LegalEditorConversation;
+        setLegalEditorConversations({ chat, document });
+        setMessages(assistantMode === "document" ? document.messages || [] : chat.messages || []);
+        setPendingPreview(null);
+      } catch (err) {
+        if (!cancelled) {
+          toast.error(err instanceof Error ? err.message : "Failed to load editor conversations");
+          setLegalEditorConversations({ chat: null, document: null });
+          setMessages([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setConversationLoading(false);
+        }
+      }
+    };
+
+    loadConversations();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceId, activeTab?.fileId]);
 
   async function handlePromptSubmit(prompt: string, fullText?: string, files?: string[]) {
     if (!prompt.trim() || !lexicalEditorRef.current) return;
+    const shouldUsePersistedConversation = Boolean(workspaceId && activeTab?.fileId && activeConversation?.id);
     setLoading(true);
     setStreamingPreview("");
     setPendingPreview(null);
@@ -82,16 +173,21 @@ export function DocumentPane() {
       createdAt: Date.now(),
     };
     setMessages((prev) => [...prev, userMessage]);
+    if (shouldUsePersistedConversation) {
+      updateConversationMessages(mode, (current) => [...current, userMessage]);
+    }
 
     try {
-      const res = await fetch("/api/generate", {
+      const res = await fetch(shouldUsePersistedConversation ? "/api/assistant/legal-editor/chat" : "/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          workspaceId,
+          fileId: activeTab?.fileId,
           prompt,
           text: buildAssistantRequestText(activeTab?.content, fullText),
           files,
-          mode,
+          mode: shouldUsePersistedConversation ? mode.toUpperCase() : mode,
         }),
       });
 
@@ -102,16 +198,17 @@ export function DocumentPane() {
           toast.error(data?.error || "Request failed");
           return;
         }
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: crypto.randomUUID(),
-            role: "assistant",
-            content: data.message || "I couldn’t process that.",
-            createdAt: Date.now(),
-            canApplyToDocument: false,
-          },
-        ]);
+        const assistantMessage: ChatMessage = {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: data.message || "I couldn’t process that.",
+          createdAt: Date.now(),
+          canApplyToDocument: false,
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+        if (shouldUsePersistedConversation) {
+          updateConversationMessages(mode, (current) => [...current, assistantMessage]);
+        }
         return;
       }
 
@@ -164,6 +261,9 @@ export function DocumentPane() {
           canApplyToDocument: documentMode,
         };
         setMessages((prev) => [...prev, assistantMessage]);
+        if (workspaceId && activeTab?.fileId) {
+          updateConversationMessages(mode, (current) => [...current, assistantMessage]);
+        }
         if (documentMode) {
           setPendingPreview({ messageId: previewMessageId, html: fullHtml });
         }
@@ -255,9 +355,24 @@ export function DocumentPane() {
     return content;
   };
 
-  const handleClearChat = () => {
+  const handleClearChat = async () => {
+    if (workspaceId && activeTab?.fileId) {
+      const params = new URLSearchParams({
+        workspaceId,
+        fileId: activeTab.fileId,
+        mode: assistantMode.toUpperCase(),
+      });
+      const response = await fetch(`/api/assistant/legal-editor/conversations?${params.toString()}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        toast.error("Failed to clear conversation");
+        return;
+      }
+    }
     setMessages([]);
     setPendingPreview(null);
+    updateConversationMessages(assistantMode, () => []);
   };
 
   return (
@@ -295,6 +410,7 @@ export function DocumentPane() {
             messages={messages}
             streamingPreview={streamingPreview}
             isStreaming={loading}
+            isHistoryLoading={conversationLoading}
             assistantMode={assistantMode}
             onAssistantModeChange={setAssistantMode}
             onPromptSubmit={handlePromptSubmit}

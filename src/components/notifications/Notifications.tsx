@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Filter, Bell, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { NotificationData, NotificationFilters, PaginationData } from "./types";
 import { NotificationItem } from "./NotificationItem";
 import { FilterModal } from "./FilterModal";
@@ -7,6 +8,7 @@ import Header from "../ui/Header";
 import Button from "../ui/Button";
 
 export function Notifications() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -104,6 +106,13 @@ export function Notifications() {
     filters[key as keyof NotificationFilters] && filters[key as keyof NotificationFilters]?.trim() !== ''
   );
 
+  const handleNotificationClick = (notification: NotificationData) => {
+    const caseId = notification.case_id || notification.caseId;
+    if (caseId) {
+      router.push(`/case-details/${caseId}`);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen">
       <div className="p-6 bg-background">
@@ -145,6 +154,7 @@ export function Notifications() {
                 key={notification.id}
                 notification={notification}
                 formatDateTime={formatDateTime}
+                onClick={handleNotificationClick}
               />
             ))}
           </div>

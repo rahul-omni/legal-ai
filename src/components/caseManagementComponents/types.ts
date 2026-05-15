@@ -15,6 +15,8 @@ export interface CaseData {
   judgmentUrl: string;
   court: string;
   date?: string;  // Made optional
+  caseStatus?: string | null;
+  tentativeDate?: string | Date | null;
   createdAt?: string;  // Made optional
   updatedAt?: string;  // Made optional
   file_path?: string;
