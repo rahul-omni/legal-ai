@@ -13,6 +13,11 @@ interface SubscriptionPlan {
   title: string;
   description: string | null;
   features: string[];
+  aiTokenDailyLimit: number | null;
+  aiTokenMonthlyLimit: number | null;
+  documentDraftingMonthlyLimit: number | null;
+  workspaceFolderFileLimit: number | null;
+  workspaceLimit: number | null;
   discountedPrice: number;
   discounted: number;
   price: number;
@@ -90,6 +95,11 @@ export function Subscriptions() {
       return `${months} ${months === 1 ? "month" : "months"}`;
     }
     return `${months} months ${remainingDays} days`;
+  };
+
+  const formatLimit = (value: number | null | undefined, suffix: string, unlimited = "Unlimited") => {
+    if (!value) return unlimited;
+    return `${new Intl.NumberFormat("en-IN").format(value)} ${suffix}`;
   };
 
   if (isLoading) {
@@ -225,6 +235,28 @@ export function Subscriptions() {
 
                   {/* Features List */}
                   <div className="mb-4 flex-1">
+                    <div className="mb-4 grid gap-2 rounded-xl border border-border bg-background p-3 text-xs">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-muted-dark">AI / day</span>
+                        <span className="font-semibold text-text">{formatLimit(plan.aiTokenDailyLimit, "tokens", "No daily cap")}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-muted-dark">AI / month</span>
+                        <span className="font-semibold text-text">{formatLimit(plan.aiTokenMonthlyLimit, "tokens")}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-muted-dark">Drafts / month</span>
+                        <span className="font-semibold text-text">{formatLimit(plan.documentDraftingMonthlyLimit, "drafts")}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-muted-dark">Workspaces</span>
+                        <span className="font-semibold text-text">{formatLimit(plan.workspaceLimit, "active")}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-muted-dark">Files / workspace</span>
+                        <span className="font-semibold text-text">{formatLimit(plan.workspaceFolderFileLimit, "files")}</span>
+                      </div>
+                    </div>
                     <h4 className="text-xs font-semibold text-text mb-2">Features:</h4>
                     <ul className="space-y-1.5">
                       {plan.features.map((feature, idx) => (

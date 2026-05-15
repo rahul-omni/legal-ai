@@ -1,4 +1,4 @@
-import { getDocument, PDFPageProxy } from "pdfjs-dist";
+import type { PDFPageProxy } from "pdfjs-dist";
 import pdf2md from "@opendocsg/pdf2md";
 import { marked } from "marked";
 
@@ -165,6 +165,8 @@ interface TextContent {
 }
 
 export async function extractPDFWithFormatting(url: string) {
+  const { getDocument, GlobalWorkerOptions, version } = await import("pdfjs-dist");
+  GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
   const loadingTask = getDocument(url);
   const pdf = await loadingTask.promise;
 
@@ -287,6 +289,8 @@ function detectTables(pageData: any) {
 
 export async function extractPdfToHtml(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
+  const { getDocument, GlobalWorkerOptions, version } = await import("pdfjs-dist");
+  GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
 
   const pdf = await getDocument({ data: arrayBuffer }).promise;
 

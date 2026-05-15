@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/app/api/lib/auth/nextAuthConfig";
 import { fileSystemNodeService } from "@/app/api/services/fileSystemNodeService";
 import { ensureAssistantChatTables } from "../_lib/chatTables";
+import { assertAiUsageAllowed, estimateTokens, recordAiUsage } from "../_lib/aiUsage";
 
 const SYSTEM = `You are **Vakeel Assist**, an AI assistant for lawyers and legal professionals in India.
 
@@ -54,17 +55,18 @@ async function chatController(request: NextAuthRequest) {
       );
     }
 
-    const conversation = await (db as any).chatConversation.findFirst({
-      where: {
-        id: conversationId,
-        userId: user.id,
-        isArchived: false,
-      },
-      select: {
-        id: true,
-        title: true,
-      },
-    });
+    const conversationRows = await db.$queryRaw<{ id: string; title: string }[]>`
+      SELECT
+        "id",
+        "title"
+      FROM "chat_conversations"
+      WHERE "id" = ${conversationId}::uuid
+        AND "user_id" = ${user.id}::uuid
+        AND "source" = 'AI_ASSISTANT'
+        AND "is_archived" = false
+      LIMIT 1;
+    `;
+    const conversation = conversationRows[0];
 
     if (!conversation) {
       return NextResponse.json(
@@ -242,7 +244,11 @@ async function chatController(request: NextAuthRequest) {
       { role: "user", content: finalUserContent },
     ];
 
+    const estimatedInputTokens = estimateTokens(openaiMessages.map((message) => message.content).join("\n"));
+    const usageReservation = await assertAiUsageAllowed(user.id, estimatedInputTokens);
+
     let stream;
+    let modelUsed = PRIMARY_MODEL;
     try {
       stream = await openai.chat.completions.create({
         model: PRIMARY_MODEL,
@@ -252,6 +258,7 @@ async function chatController(request: NextAuthRequest) {
       });
     } catch {
       // Fallback in case the primary model is temporarily unavailable.
+      modelUsed = FALLBACK_MODEL;
       stream = await openai.chat.completions.create({
         model: FALLBACK_MODEL,
         messages: openaiMessages,
@@ -286,6 +293,15 @@ async function chatController(request: NextAuthRequest) {
             data: {
               updatedAt: new Date(),
             },
+          });
+          await recordAiUsage({
+            userId: user.id,
+            subscriptionId: usageReservation.subscriptionId,
+            feature: "AI_ASSISTANT_CHAT",
+            model: modelUsed,
+            inputTokens: estimatedInputTokens,
+            outputTokens: estimateTokens(assistantFull),
+            metadata: { conversationId: conversation.id },
           });
           controller.close();
         } catch (streamError) {
@@ -340,7 +356,8 @@ async function chatController(request: NextAuthRequest) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "An error occurred";
-    return new Response(message, { status: 500 });
+    const status = typeof (error as { status?: unknown })?.status === "number" ? (error as { status: number }).status : 500;
+    return new Response(message, { status });
   }
 }
 

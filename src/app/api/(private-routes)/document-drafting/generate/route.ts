@@ -2,10 +2,16 @@ import {
   getDraftTemplateById,
   renderDraftFromTemplate,
 } from "@/lib/document-drafting/templates";
+import { auth } from "@/app/api/lib/auth/nextAuthConfig";
+import { assertDocumentDraftingAllowed } from "@/app/api/lib/subscriptionLimits";
+import { userFromSession } from "@/lib/auth";
+import { ensureAiUsageTables, recordAiUsage } from "../../assistant/_lib/aiUsage";
+import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
 
-export async function POST(request: Request) {
+async function postController(request: NextAuthRequest) {
   try {
+    const user = await userFromSession(request);
     const body = (await request.json()) as {
       templateId?: string;
       fields?: Record<string, string>;
@@ -32,7 +38,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid template selected" }, { status: 400 });
     }
 
+    await ensureAiUsageTables();
+    const usageReservation = await assertDocumentDraftingAllowed(user.id);
     const { html } = renderDraftFromTemplate(template, fields);
+    await recordAiUsage({
+      userId: user.id,
+      subscriptionId: usageReservation.subscriptionId,
+      feature: "DOCUMENT_DRAFTING",
+      model: "template",
+      inputTokens: 0,
+      outputTokens: 0,
+      metadata: {
+        templateId,
+        fieldCount: Object.keys(fields).length,
+      },
+    });
 
     return new Response(html, {
       headers: {
@@ -43,6 +63,9 @@ export async function POST(request: Request) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "An error occurred";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const status = typeof (error as { status?: unknown })?.status === "number" ? (error as { status: number }).status : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }
+
+export const POST = auth(postController);

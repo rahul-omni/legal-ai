@@ -85,7 +85,10 @@ export function handleError(error: unknown) {
   }
 
   if (error instanceof Error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const status = typeof (error as Error & { status?: unknown }).status === "number"
+      ? (error as Error & { status: number }).status
+      : 500;
+    return NextResponse.json({ error: error.message }, { status });
   }
 
   return NextResponse.json({ error: "Internal server error" }, { status: 500 });

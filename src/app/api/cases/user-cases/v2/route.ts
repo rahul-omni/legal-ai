@@ -4,6 +4,7 @@ import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
 import { auth } from "../../../lib/auth/nextAuthConfig";
 import { ErrorAuth } from "@/app/api/lib/errors";
+import { getSubscriptionAccessByIds } from "@/app/api/lib/subscriptionLimits";
 import { normalizePartiesDisplay } from "@/lib/parties";
 
 const prisma = new PrismaClient();
@@ -108,11 +109,49 @@ export const GET = auth(async (request: NextAuthRequest) => {
     });
 
     const totalPages = Math.ceil(totalCount / pageSize);
+    const subscriptionIds = userCases.map((item) => item.id);
+    const workspaceRows = subscriptionIds.length > 0
+      ? await prisma.$queryRaw<{ id: string; status: string; subscribedCaseId: string }[]>`
+          SELECT
+            "id",
+            "status",
+            "subscribed_case_id" AS "subscribedCaseId"
+          FROM "workspaces"
+          WHERE "subscribed_case_id" = ANY(${subscriptionIds}::uuid[])
+        `
+      : [];
+    const workspaceBySubscriptionId = new Map(
+      workspaceRows.map((workspace) => [workspace.subscribedCaseId, workspace])
+    );
+    const accessBySubscriptionId = await getSubscriptionAccessByIds(sessionUser.id, subscriptionIds);
 
     const transformedCases = userCases.map((item: any) => {
       const { caseDetails, ...rest } = item;
+      const workspace = workspaceBySubscriptionId.get(item.id);
+      const access = accessBySubscriptionId.get(item.id);
       return {
         ...rest,
+        access: access
+          ? {
+              isLocked: access.isLocked,
+              lockReason: access.lockReason,
+              position: access.position,
+              limit: access.limit,
+            }
+          : {
+              isLocked: false,
+              lockReason: null,
+              position: null,
+              limit: null,
+            },
+        workspace: workspace
+          ? {
+              id: workspace.id,
+              status: workspace.status,
+              isLocked: Boolean(access?.isLocked),
+              lockReason: access?.lockReason ?? null,
+            }
+          : null,
         caseDetails: caseDetails
           ? {
               id: caseDetails.id,

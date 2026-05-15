@@ -1,6 +1,7 @@
 import { TranslationVendor } from "@/lib/translation/types";
 import { FileSystemNodeProps } from "@/types/fileSystem";
-import { LexicalEditor } from "lexical";
+import { $getRoot, $isDecoratorNode, $isElementNode, LexicalEditor, type LexicalNode } from "lexical";
+import { $generateNodesFromDOM } from "@lexical/html";
 import {
   createContext,
   Dispatch,
@@ -12,6 +13,10 @@ import {
   useRef,
 } from "react";
 import { useFolderPicker } from "./folderPickerReducerContext";
+
+function normalizeNodesForRoot(nodes: LexicalNode[]): LexicalNode[] {
+  return nodes.filter((node) => $isElementNode(node) || $isDecoratorNode(node));
+}
 
 // Interface for TabInfo
 export interface TabInfo {
@@ -294,6 +299,7 @@ export function DocumentEditorProvider({
     (tab) => tab.id === docEditorState.activeTabId
   );
   if (!activeTab) return;
+  const activeTabId = activeTab.id;
 
   docEditorDispatch({
     type: "IS_TRANSLATING",
@@ -312,6 +318,11 @@ export function DocumentEditorProvider({
       }),
     });
 
+    if (!response.ok) {
+      const message = await response.text().catch(() => "Translation failed");
+      throw new Error(message || "Translation failed");
+    }
+
     if (!response.body) throw new Error("Empty stream");
 
     const reader = response.body.getReader();
@@ -328,12 +339,21 @@ export function DocumentEditorProvider({
       docEditorDispatch({
         type: "UPDATE_TAB_CONTENT",
         payload: {
-          tabId: docEditorState.activeTabId,
+          tabId: activeTabId,
           content: fullContent,
           isAIEdit: true,
         },
       });
     }
+
+    lexicalEditorRef.current?.update(() => {
+      const parser = new DOMParser();
+      const dom = parser.parseFromString(fullContent, "text/html");
+      const nodes = normalizeNodesForRoot($generateNodesFromDOM(lexicalEditorRef.current!, dom));
+      const root = $getRoot();
+      root.clear();
+      root.append(...nodes);
+    });
 
     docEditorDispatch({
       type: "IS_TRANSLATING",

@@ -15,14 +15,16 @@ async function deleteConversationController(
     const user = await userFromSession(request);
     const { conversationId } = await context.params;
 
-    const conversation = await (db as any).chatConversation.findFirst({
-      where: {
-        id: conversationId,
-        userId: user.id,
-        isArchived: false,
-      },
-      select: { id: true },
-    });
+    const conversationRows = await db.$queryRaw<{ id: string }[]>`
+      SELECT "id"
+      FROM "chat_conversations"
+      WHERE "id" = ${conversationId}::uuid
+        AND "user_id" = ${user.id}::uuid
+        AND "source" = 'AI_ASSISTANT'
+        AND "is_archived" = false
+      LIMIT 1;
+    `;
+    const conversation = conversationRows[0];
 
     if (!conversation) {
       return NextResponse.json(
@@ -31,13 +33,12 @@ async function deleteConversationController(
       );
     }
 
-    await (db as any).chatConversation.update({
-      where: { id: conversation.id },
-      data: {
-        isArchived: true,
-        updatedAt: new Date(),
-      },
-    });
+    await db.$executeRaw`
+      UPDATE "chat_conversations"
+      SET "is_archived" = true,
+          "updated_at" = CURRENT_TIMESTAMP
+      WHERE "id" = ${conversation.id}::uuid;
+    `;
 
     return NextResponse.json({ success: true });
   } catch (error) {

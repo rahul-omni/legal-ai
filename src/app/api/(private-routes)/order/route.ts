@@ -15,6 +15,7 @@ interface OrderRequest {
 
 interface OrderResponse {
   orderId: string;
+  keyId: string;
 }
 
 export async function POST(
@@ -52,11 +53,22 @@ export async function POST(
     const order = await razorpay.orders.create(options);
 
     return NextResponse.json(
-      { orderId: order.id },
+      { orderId: order.id, keyId: process.env.RAZORPAY_KEY_ID },
       { status: 200 }
     );
   } catch (error) {
     console.error("Error creating Razorpay order:", error);
+
+    const razorpayError = error as { statusCode?: number; error?: { description?: string } };
+    if (razorpayError.statusCode === 401) {
+      return handleError(
+        new ErrorApp(
+          "Razorpay authentication failed. Verify RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are valid test keys.",
+          500
+        )
+      );
+    }
+
     return handleError(error);
   }
 }

@@ -1,4 +1,5 @@
 import { db } from "@/app/api/lib/db";
+import { getEffectiveSubscriptionPlan } from "@/app/api/lib/subscriptionLimits";
 import { UserSubscription, SubscriptionStatus } from "@prisma/client";
 import { ErrorNotFound } from "../lib/errors";
 import { Transaction } from "../types";
@@ -106,25 +107,89 @@ class UserSubscriptionService {
   /**
    * Get active subscription for a user
    */
-  async getActiveSubscription(userId: string): Promise<UserSubscription | null> {
+  async getActiveSubscription(userId: string): Promise<any | null> {
     try {
-      const now = new Date();
-      return await db.userSubscription.findFirst({
-        where: {
-          userId,
-          status: SubscriptionStatus.ACTIVE,
-          endDate: {
-            gt: now, // endDate is in the future
-          },
-        },
-        include: {
-          subscriptionPlan: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
-    } catch {
+      const rows = await db.$queryRaw<any[]>`
+        SELECT
+          us."id",
+          us."user_id" AS "userId",
+          us."subscription_plan_id" AS "subscriptionPlanId",
+          us."payment_id" AS "paymentId",
+          us."status"::text AS "status",
+          us."start_date" AS "startDate",
+          us."end_date" AS "endDate",
+          us."auto_renew" AS "autoRenew",
+          us."created_at" AS "createdAt",
+          us."updated_at" AS "updatedAt",
+          jsonb_build_object(
+            'id', sp."id",
+            'title', sp."title",
+            'description', sp."description",
+            'features', sp."features",
+            'discountedPrice', sp."discountedPrice",
+            'price', sp."price",
+            'duration', sp."duration",
+            'aiTokenDailyLimit', sp."ai_token_daily_limit",
+            'aiTokenMonthlyLimit', sp."ai_token_monthly_limit",
+            'documentDraftingMonthlyLimit', sp."document_drafting_monthly_limit",
+            'workspaceFolderFileLimit', sp."workspace_folder_file_limit",
+            'workspaceLimit', sp."workspace_limit"
+          ) AS "subscriptionPlan"
+        FROM "user_subscriptions" us
+        INNER JOIN "subscription_plans" sp ON sp."id" = us."subscription_plan_id"
+        WHERE us."user_id" = ${userId}::uuid
+          AND us."status" = 'ACTIVE'
+          AND us."start_date" <= CURRENT_TIMESTAMP
+          AND us."end_date" >= CURRENT_TIMESTAMP
+          AND sp."isActive" = true
+        ORDER BY us."created_at" DESC
+        LIMIT 1;
+      `;
+
+      if (rows[0]) return rows[0];
+
+      await getEffectiveSubscriptionPlan(userId);
+
+      const fallbackRows = await db.$queryRaw<any[]>`
+        SELECT
+          us."id",
+          us."user_id" AS "userId",
+          us."subscription_plan_id" AS "subscriptionPlanId",
+          us."payment_id" AS "paymentId",
+          us."status"::text AS "status",
+          us."start_date" AS "startDate",
+          us."end_date" AS "endDate",
+          us."auto_renew" AS "autoRenew",
+          us."created_at" AS "createdAt",
+          us."updated_at" AS "updatedAt",
+          jsonb_build_object(
+            'id', sp."id",
+            'title', sp."title",
+            'description', sp."description",
+            'features', sp."features",
+            'discountedPrice', sp."discountedPrice",
+            'price', sp."price",
+            'duration', sp."duration",
+            'aiTokenDailyLimit', sp."ai_token_daily_limit",
+            'aiTokenMonthlyLimit', sp."ai_token_monthly_limit",
+            'documentDraftingMonthlyLimit', sp."document_drafting_monthly_limit",
+            'workspaceFolderFileLimit', sp."workspace_folder_file_limit",
+            'workspaceLimit', sp."workspace_limit"
+          ) AS "subscriptionPlan"
+        FROM "user_subscriptions" us
+        INNER JOIN "subscription_plans" sp ON sp."id" = us."subscription_plan_id"
+        WHERE us."user_id" = ${userId}::uuid
+          AND us."status" = 'ACTIVE'
+          AND us."start_date" <= CURRENT_TIMESTAMP
+          AND us."end_date" >= CURRENT_TIMESTAMP
+          AND sp."isActive" = true
+        ORDER BY us."created_at" DESC
+        LIMIT 1;
+      `;
+
+      return fallbackRows[0] ?? null;
+    } catch (error) {
+      console.error("Error finding active subscription:", error);
       throw new Error("Failed to find active subscription");
     }
   }
@@ -132,19 +197,53 @@ class UserSubscriptionService {
   /**
    * Get all subscriptions for a user
    */
-  async getSubscriptionsByUserId(userId: string): Promise<UserSubscription[]> {
+  async getSubscriptionsByUserId(userId: string): Promise<any[]> {
     try {
-      return await db.userSubscription.findMany({
-        where: { userId },
-        include: {
-          subscriptionPlan: true,
-          payment: true,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
-    } catch {
+      return await db.$queryRaw<any[]>`
+        SELECT
+          us."id",
+          us."user_id" AS "userId",
+          us."subscription_plan_id" AS "subscriptionPlanId",
+          us."payment_id" AS "paymentId",
+          us."status"::text AS "status",
+          us."start_date" AS "startDate",
+          us."end_date" AS "endDate",
+          us."auto_renew" AS "autoRenew",
+          us."created_at" AS "createdAt",
+          us."updated_at" AS "updatedAt",
+          jsonb_build_object(
+            'id', sp."id",
+            'title', sp."title",
+            'description', sp."description",
+            'features', sp."features",
+            'discountedPrice', sp."discountedPrice",
+            'price', sp."price",
+            'duration', sp."duration",
+            'aiTokenDailyLimit', sp."ai_token_daily_limit",
+            'aiTokenMonthlyLimit', sp."ai_token_monthly_limit",
+            'documentDraftingMonthlyLimit', sp."document_drafting_monthly_limit",
+            'workspaceFolderFileLimit', sp."workspace_folder_file_limit",
+            'workspaceLimit', sp."workspace_limit"
+          ) AS "subscriptionPlan",
+          CASE
+            WHEN p."id" IS NULL THEN NULL
+            ELSE jsonb_build_object(
+              'id', p."id",
+              'status', p."status",
+              'razorpayPaymentId', p."razorpay_payment_id",
+              'razorpayOrderId', p."razorpay_order_id",
+              'createdAt', p."created_at",
+              'updatedAt', p."updated_at"
+            )
+          END AS "payment"
+        FROM "user_subscriptions" us
+        INNER JOIN "subscription_plans" sp ON sp."id" = us."subscription_plan_id"
+        LEFT JOIN "payments" p ON p."id" = us."payment_id"
+        WHERE us."user_id" = ${userId}::uuid
+        ORDER BY us."created_at" DESC;
+      `;
+    } catch (error) {
+      console.error("Error finding subscriptions by user ID:", error);
       throw new Error("Failed to find subscriptions by user ID");
     }
   }

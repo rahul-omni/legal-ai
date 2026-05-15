@@ -58,9 +58,39 @@ export async function ensureAssistantChatTables() {
     ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
   `);
 
+  await safeExecute(`
+    ALTER TABLE chat_conversations
+      ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'AI_ASSISTANT',
+      ADD COLUMN IF NOT EXISTS workspace_id UUID,
+      ADD COLUMN IF NOT EXISTS file_id UUID,
+      ADD COLUMN IF NOT EXISTS mode TEXT,
+      ADD COLUMN IF NOT EXISTS thread_kind TEXT NOT NULL DEFAULT 'CUSTOM';
+  `);
+
+  await safeExecute(`
+    UPDATE chat_conversations
+    SET source = 'AI_ASSISTANT'
+    WHERE source IS NULL OR source = '';
+  `);
+
   await safeExecute(
     "CREATE INDEX IF NOT EXISTS idx_chat_conversations_user_updated ON chat_conversations(user_id, updated_at DESC);"
   );
+  await safeExecute(
+    "CREATE INDEX IF NOT EXISTS chat_conversations_user_source_updated_idx ON chat_conversations(user_id, source, updated_at DESC);"
+  );
+  await safeExecute(
+    "CREATE INDEX IF NOT EXISTS chat_conversations_user_source_context_idx ON chat_conversations(user_id, source, workspace_id, file_id);"
+  );
+  await safeExecute(`
+    CREATE UNIQUE INDEX IF NOT EXISTS chat_conversations_legal_editor_default_key
+    ON chat_conversations(user_id, source, workspace_id, file_id, mode, thread_kind)
+    WHERE source = 'LEGAL_EDITOR'
+      AND thread_kind = 'DEFAULT'
+      AND workspace_id IS NOT NULL
+      AND file_id IS NOT NULL
+      AND mode IS NOT NULL;
+  `);
   await safeExecute(
     "CREATE INDEX IF NOT EXISTS idx_chat_messages_conversation_created ON chat_messages(conversation_id, created_at);"
   );

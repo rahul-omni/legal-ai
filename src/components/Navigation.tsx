@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  FolderKanban,
-  Gavel,
   Settings,
   Clock,
   Users,
@@ -11,6 +9,7 @@ import {
   MessageSquare,
   FilePenLine,
   LayoutDashboard,
+  CreditCard,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -25,12 +24,13 @@ const navigationItems = [
     icon: LayoutDashboard,
     id: 'workspace'
   },
-  {
-    name: "Cases",
-    href: "/cases",
-    icon: Gavel,
-    id: 'cases'
-  },
+  // Case Management is now handled through Workspace.
+  // {
+  //   name: "Cases",
+  //   href: "/cases",
+  //   icon: Gavel,
+  //   id: 'cases'
+  // },
   {
     name: "AI Assistant",
     href: "/ai-assistant",
@@ -49,24 +49,31 @@ const navigationItems = [
     icon: ListChecks,
     id: 'calendar'
   },
+  // Project Hub is temporarily hidden while workspace-linked folders are the primary flow.
+  // {
+  //   name: "Project Hub",
+  //   href: "/projects",
+  //   icon: FolderKanban,
+  //   id: 'projecthub'
+  // },
   {
-    name: "Project Hub",
-    href: "/projects",
-    icon: FolderKanban,
-    id: 'projecthub'
+    name: "Subscriptions",
+    href: "/subscriptions",
+    icon: CreditCard,
+    id: 'subscriptions'
   },
-  {
-    name: "Pending Reviews",
-    href: "/pending-reviews",
-    icon: Clock,
-    id: 'pendingreviews'
-  },
-  {
-    name: "Clients",
-    href: "/clients",
-    icon: Users,
-    id: 'clients'
-  },
+  // {
+  //   name: "Pending Reviews",
+  //   href: "/pending-reviews",
+  //   icon: Clock,
+  //   id: 'pendingreviews'
+  // },
+  // {
+  //   name: "Clients",
+  //   href: "/clients",
+  //   icon: Users,
+  //   id: 'clients'
+  // },
   {
     name: "Settings",
     href: "/settings",

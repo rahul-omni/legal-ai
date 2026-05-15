@@ -6,43 +6,41 @@ import { NextResponse } from "next/server";
 import { auth } from "@/app/api/lib/auth/nextAuthConfig";
 import { ensureAssistantChatTables } from "../_lib/chatTables";
 
-function toConversationSummary(conversation: any) {
-  const lastMessage = conversation.messages?.[0];
-  return {
-    id: conversation.id,
-    title: conversation.title,
-    updatedAt: conversation.updatedAt,
-    createdAt: conversation.createdAt,
-    preview:
-      typeof lastMessage?.content === "string"
-        ? lastMessage.content.slice(0, 140)
-        : "",
-  };
-}
-
 async function getConversationsController(request: NextAuthRequest) {
   try {
     await ensureAssistantChatTables();
     const user = await userFromSession(request);
-    const conversations = await (db as any).chatConversation.findMany({
-      where: {
-        userId: user.id,
-        isArchived: false,
-      },
-      orderBy: { updatedAt: "desc" },
-      include: {
-        messages: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: {
-            content: true,
-          },
-        },
-      },
-    });
+    const conversations = await db.$queryRaw<{
+      id: string;
+      title: string;
+      updatedAt: Date;
+      createdAt: Date;
+      preview: string | null;
+    }[]>`
+      SELECT
+        c."id",
+        c."title",
+        c."updated_at" AS "updatedAt",
+        c."created_at" AS "createdAt",
+        (
+          SELECT LEFT(m."content", 140)
+          FROM "chat_messages" m
+          WHERE m."conversation_id" = c."id"
+          ORDER BY m."created_at" DESC
+          LIMIT 1
+        ) AS "preview"
+      FROM "chat_conversations" c
+      WHERE c."user_id" = ${user.id}::uuid
+        AND c."is_archived" = false
+        AND c."source" = 'AI_ASSISTANT'
+      ORDER BY c."updated_at" DESC;
+    `;
 
     return NextResponse.json({
-      conversations: conversations.map(toConversationSummary),
+      conversations: conversations.map((conversation) => ({
+        ...conversation,
+        preview: conversation.preview || "",
+      })),
     });
   } catch (error) {
     return handleError(error);
@@ -63,12 +61,35 @@ async function createConversationController(
         ? body.title.trim().slice(0, 120)
         : "New conversation";
 
-    const conversation = await (db as any).chatConversation.create({
-      data: {
-        userId: user.id,
-        title,
-      },
-    });
+    const rows = await db.$queryRaw<{
+      id: string;
+      title: string;
+      createdAt: Date;
+      updatedAt: Date;
+    }[]>`
+      INSERT INTO "chat_conversations" (
+        "user_id",
+        "title",
+        "source",
+        "thread_kind",
+        "created_at",
+        "updated_at"
+      )
+      VALUES (
+        ${user.id}::uuid,
+        ${title},
+        'AI_ASSISTANT',
+        'CUSTOM',
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+      )
+      RETURNING
+        "id",
+        "title",
+        "created_at" AS "createdAt",
+        "updated_at" AS "updatedAt";
+    `;
+    const conversation = rows[0];
 
     return NextResponse.json(
       {

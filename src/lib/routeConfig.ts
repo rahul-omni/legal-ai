@@ -8,6 +8,7 @@ interface PublicPageRoute {
 }
 
 interface PrivatePageRoute {
+  home: string;
   projects: string;
   editor: string;
   analytics: string;
@@ -26,6 +27,7 @@ export const routeConfig: {
   publicRoutes: PublicPageRoute;
 } = {
   privateRoutes: {
+    home: "/workspace",
     projects: "/projects",
     editor: "/editor",
     analytics: "/analytics",

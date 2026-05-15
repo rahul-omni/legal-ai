@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Check, FileEdit, MessageCircle, MessageSquare, Trash2, User, XCircle } from "lucide-react";
+import { Bot, Check, FileEdit, History, Loader2, MessageCircle, MessageSquare, Trash2, User, XCircle } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { AssistantMode } from "../assistantTypes";
 import { assistantContentToSafeHtml } from "../utils/assistantContentHtml";
@@ -27,6 +27,7 @@ export interface AIAssistantPanelProps {
   streamingPreview: string;
   isStreaming: boolean;
   assistantMode: AssistantMode;
+  isHistoryLoading?: boolean;
   onAssistantModeChange: (mode: AssistantMode) => void;
   onPromptSubmit: (prompt: string, context: string, files?: string[]) => void;
   onClearChat: () => void;
@@ -41,6 +42,7 @@ export function AIAssistantPanel({
   streamingPreview,
   isStreaming,
   assistantMode,
+  isHistoryLoading = false,
   onAssistantModeChange,
   onPromptSubmit,
   onClearChat,
@@ -121,10 +123,39 @@ export function AIAssistantPanel({
             Editor
           </button>
         </div>
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-2.5 py-1.5">
+          <div className="flex min-w-0 items-center gap-1.5 text-[11px] text-muted">
+            {isHistoryLoading ? (
+              <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-primary" />
+            ) : (
+              <History className="h-3.5 w-3.5 shrink-0 text-primary" />
+            )}
+            <span className="truncate">
+              {isHistoryLoading
+                ? "Loading saved history..."
+                : messages.length > 0
+                  ? `${messages.length} saved message${messages.length === 1 ? "" : "s"} for this ${assistantMode === "chat" ? "chat" : "editor"} thread`
+                  : `No saved ${assistantMode === "chat" ? "chat" : "editor"} history yet`}
+            </span>
+          </div>
+          <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+            Saved
+          </span>
+        </div>
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto min-h-0 px-3 py-3 space-y-4">
-        {messages.length === 0 && !isStreaming && (
+        {isHistoryLoading && (
+          <div className="rounded-lg border border-dashed border-border bg-background p-4 text-center">
+            <Loader2 className="mx-auto mb-2 h-7 w-7 animate-spin text-primary/70" />
+            <p className="text-sm font-medium text-text">Loading conversation history</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted">
+              This file keeps separate saved history for Chat and Editor mode.
+            </p>
+          </div>
+        )}
+
+        {messages.length === 0 && !isStreaming && !isHistoryLoading && (
           <div className="rounded-lg border border-dashed border-border bg-background p-4 text-center">
             <Bot className="w-8 h-8 mx-auto text-primary/60 mb-2" />
             <p className="text-sm text-text font-medium">Chat about this document</p>

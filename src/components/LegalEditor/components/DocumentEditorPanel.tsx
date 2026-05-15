@@ -3,7 +3,11 @@ import { DocumentPane } from "./DocumentPane";
 import { TabBar } from "./TabBar";
 import { Spinner } from "@/components/Loader";
 
-export function DocumentEditorPanel() {
+type DocumentEditorPanelProps = {
+  workspaceId?: string;
+};
+
+export function DocumentEditorPanel({ workspaceId }: DocumentEditorPanelProps) {
   const { docEditorState } = useDocumentEditor();
 
   return (
@@ -11,7 +15,7 @@ export function DocumentEditorPanel() {
       
       <div className="flex-1 relative flex flex-col min-h-0">
         {docEditorState.isFileLoading ? <Spinner/> : docEditorState.activeTabId ? (
-          <DocumentPane key={docEditorState.activeTabId} />
+          <DocumentPane key={docEditorState.activeTabId} workspaceId={workspaceId} />
         ) : (
           <NoDocumentOpenMessage />
         )}

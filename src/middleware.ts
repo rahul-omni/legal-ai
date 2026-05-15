@@ -15,11 +15,11 @@ export default auth((req: NextAuthRequest) => {
   );
 
   if (pathname === "/") {
-    return redirectToURL(routeConfig.publicRoutes.login);
+    return redirectToURL(req.auth ? routeConfig.privateRoutes.home : routeConfig.publicRoutes.login);
   } else if (isPrivateRoute && !req.auth) {
     return redirectToURL(routeConfig.publicRoutes.login);
   } else if (isPublicRoute && req.auth) {
-    return redirectToURL(routeConfig.privateRoutes.cases);
+    return redirectToURL(routeConfig.privateRoutes.home);
   }
 
   return NextResponse.next();

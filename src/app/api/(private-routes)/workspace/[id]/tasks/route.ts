@@ -1,6 +1,7 @@
 import { db } from "@/app/api/lib/db";
 import { ErrorAuth } from "@/app/api/lib/errors";
 import { auth } from "@/app/api/lib/auth/nextAuthConfig";
+import { assertWorkspaceAccessAllowed } from "@/app/api/lib/subscriptionLimits";
 import { userFromSession } from "@/lib/auth";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
@@ -39,6 +40,8 @@ export const GET = auth(async (request: NextAuthRequest, context?: any) => {
       return NextResponse.json({ success: false, message: "Workspace ID is required" }, { status: 400 });
     }
 
+    await assertWorkspaceAccessAllowed(sessionUser.id, workspaceId);
+
     const tasks = await db.$queryRaw<WorkspaceTaskRow[]>`
       SELECT
         wt."id",
@@ -70,13 +73,15 @@ export const GET = auth(async (request: NextAuthRequest, context?: any) => {
       return NextResponse.json({ success: false, message: error.message || "Unauthorized" }, { status: 401 });
     }
 
+    const status = typeof (error as { status?: unknown })?.status === "number" ? (error as { status: number }).status : 500;
+
     return NextResponse.json(
       {
         success: false,
-        message: "Internal server error",
+        message: status === 500 ? "Internal server error" : error instanceof Error ? error.message : "Workspace is locked",
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status }
     );
   }
 });
@@ -92,6 +97,8 @@ export const POST = auth(async (request: NextAuthRequest, context?: any) => {
     if (!workspaceId) {
       return NextResponse.json({ success: false, message: "Workspace ID is required" }, { status: 400 });
     }
+
+    await assertWorkspaceAccessAllowed(sessionUser.id, workspaceId);
 
     const body = await request.json();
     const title = typeof body.title === "string" ? body.title.trim() : "";
@@ -173,13 +180,15 @@ export const POST = auth(async (request: NextAuthRequest, context?: any) => {
       return NextResponse.json({ success: false, message: error.message || "Unauthorized" }, { status: 401 });
     }
 
+    const status = typeof (error as { status?: unknown })?.status === "number" ? (error as { status: number }).status : 500;
+
     return NextResponse.json(
       {
         success: false,
-        message: "Internal server error",
+        message: status === 500 ? "Internal server error" : error instanceof Error ? error.message : "Workspace is locked",
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status }
     );
   }
 });

@@ -59,7 +59,7 @@ export default function LoginPage() {
         toast.error(message);
         return;
       }
-      router.push(routeConfig.privateRoutes.cases);
+      router.push(routeConfig.privateRoutes.home);
     } else {
       if (!otpSent) {
         startLoading("SENDING_OTP");
@@ -105,7 +105,7 @@ export default function LoginPage() {
         }
 
         toast.success("Mobile number verified successfully!");
-         router.push(routeConfig.privateRoutes.cases);
+         router.push(routeConfig.privateRoutes.home);
       }
     }
   } catch (err) {

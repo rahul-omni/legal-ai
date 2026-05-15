@@ -1,11 +1,9 @@
 import { FileSystemNodeProps } from "@/types/fileSystem";
-import { FileType } from "@prisma/client";
+import type { FileType } from "@prisma/client";
 import { apiClient } from ".";
 import axios, { AxiosResponse } from "axios";
 import { apiRouteConfig } from "../api/lib/apiRouteConfig";
 import toast from "react-hot-toast";
-import { extractTextFromPDF, fileToBase64 } from "@/utils/pdfUtils";
-import { FileService } from "@/lib/fileService";
 import { handleApiError } from "@/helper/handleApiError";
 
 function messageFromAxiosError(error: unknown, fallback: string): string {
@@ -149,6 +147,17 @@ export const createNewFile = async (
   }
 };
 
+const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const base64 = (reader.result as string).split(",")[1];
+      resolve(base64);
+    };
+    reader.onerror = (error) => reject(error);
+  });
+
 export const uploadFile = async (
     e: React.ChangeEvent<HTMLInputElement>,
     parentId?: string
@@ -159,11 +168,12 @@ export const uploadFile = async (
       let content: string;
 
       if (file.type === "application/pdf") {
+        const { extractTextFromPDF } = await import("@/utils/pdfUtils");
         const { html } = await extractTextFromPDF(file);
         content = html;
         toast.success("PDF Parsed Successfully");
       }else if (["image/png", "image/jpg", "image/jpeg"].includes(file.type)) {
-        const base64 = await fileToBase64(file); // 👈 Convert image to base64
+        const base64 = await fileToBase64(file);
         
         const res = await fetch("/api/parse-image", {
           method: "POST",
@@ -181,6 +191,7 @@ export const uploadFile = async (
         content = html;
         toast.success("Image Parsed Successfully");
       } else {
+        const { FileService } = await import("@/lib/fileService");
         content = await FileService.parseFile(file);
       }
 
@@ -193,7 +204,7 @@ export const uploadFile = async (
         content,
       };
 
-      const newnode = await createNode(newFile);
+      await createNode(newFile);
     } catch (error) {
       handleApiError(error);
     }

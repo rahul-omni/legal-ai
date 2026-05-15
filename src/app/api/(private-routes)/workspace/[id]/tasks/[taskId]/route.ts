@@ -1,6 +1,7 @@
 import { db } from "@/app/api/lib/db";
 import { ErrorAuth } from "@/app/api/lib/errors";
 import { auth } from "@/app/api/lib/auth/nextAuthConfig";
+import { assertWorkspaceAccessAllowed } from "@/app/api/lib/subscriptionLimits";
 import { userFromSession } from "@/lib/auth";
 import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
@@ -36,6 +37,8 @@ export const PATCH = auth(async (request: NextAuthRequest, context?: any) => {
     if (!workspaceId || !taskId) {
       return NextResponse.json({ success: false, message: "Workspace ID and task ID are required" }, { status: 400 });
     }
+
+    await assertWorkspaceAccessAllowed(sessionUser.id, workspaceId);
 
     const body = await request.json();
     const status = typeof body.status === "string" ? body.status : "";
@@ -87,13 +90,15 @@ export const PATCH = auth(async (request: NextAuthRequest, context?: any) => {
       return NextResponse.json({ success: false, message: error.message || "Unauthorized" }, { status: 401 });
     }
 
+    const status = typeof (error as { status?: unknown })?.status === "number" ? (error as { status: number }).status : 500;
+
     return NextResponse.json(
       {
         success: false,
-        message: "Internal server error",
+        message: status === 500 ? "Internal server error" : error instanceof Error ? error.message : "Workspace is locked",
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status }
     );
   }
 });

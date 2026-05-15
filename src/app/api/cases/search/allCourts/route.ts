@@ -2,6 +2,7 @@
 import { userFromSession } from "@/lib/auth";
 import { auth } from '@/app/api/lib/auth/nextAuthConfig';
 import { is } from 'date-fns/locale';
+import { assertWorkspaceLimitAllowsNew } from '@/app/api/lib/subscriptionLimits';
 
 const CASE_TYPES_REVERSED = {
   "Criminal Appeal": "Crl.A.",
@@ -132,10 +133,15 @@ const prisma = new PrismaClient();
 
 async function ensureWorkspaceForSubscription(subscribedCaseId: string, userId: string) {
   await prisma.$executeRaw`
-    INSERT INTO "workspaces" ("user_id", "subscribed_case_id", "status", "created_at", "updated_at")
-    VALUES (${userId}::uuid, ${subscribedCaseId}::uuid, 'PENDING', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    INSERT INTO "workspaces" ("user_id", "subscribed_case_id", "status", "assigned_to", "client_id", "created_at", "updated_at")
+    VALUES (${userId}::uuid, ${subscribedCaseId}::uuid, 'PENDING', ARRAY[${userId}::uuid]::uuid[], NULL::uuid, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     ON CONFLICT ("subscribed_case_id")
-    DO NOTHING;
+    DO UPDATE SET
+      "assigned_to" = CASE
+        WHEN "workspaces"."assigned_to" = ARRAY[]::uuid[] THEN ARRAY["workspaces"."user_id"]::uuid[]
+        ELSE "workspaces"."assigned_to"
+      END,
+      "updated_at" = CURRENT_TIMESTAMP;
   `;
 }
 
@@ -339,6 +345,7 @@ export const GET = auth(async (request) => {
         await ensureWorkspaceForSubscription(existingSubscription.id, user.id);
         return new Response(JSON.stringify({ message: "Case already subscribed." }), { status: 200 });
       }
+      await assertWorkspaceLimitAllowsNew(user.id);
       const subscribedCase =
         existingSubscription?.status === 'DELETED'
           ? await (prisma.subscribedCases.update as any)({
@@ -377,6 +384,7 @@ export const GET = auth(async (request) => {
     }
 
     console.log('✗ Case not found, creating placeholder case');
+    await assertWorkspaceLimitAllowsNew(user.id);
 
     // Create PLACEHOLDER case in CaseDetails with empty judgment_url
     // For Supreme Court always store diary+year so lookup and display are correct (e.g. 1351/2026)
@@ -437,10 +445,12 @@ export const GET = auth(async (request) => {
   } catch (error) {
     console.error("=== Error in court case search ===");
     console.error(error);
+    const status = typeof (error as { status?: unknown })?.status === "number" ? (error as { status: number }).status : 500;
     return new Response(JSON.stringify({ 
-      error: "Internal Server Error",
+      error: status === 500 ? "Internal Server Error" : "Subscription limit reached",
+      message: error instanceof Error ? error.message : "Request failed",
       details: error instanceof Error ? error.message : String(error)
-    }), { status: 500 });
+    }), { status });
   } finally {
     await prisma.$disconnect();
   }

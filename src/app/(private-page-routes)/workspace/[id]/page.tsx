@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import {
   ArrowLeft,
@@ -21,8 +21,12 @@ import {
   X,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import toast from "react-hot-toast";
+import { createNewFile, fetchNodes, uploadFile } from "@/app/apiServices/nodeServices";
 import { normalizePartiesDisplay } from "@/lib/parties";
+import { StatusDropdown } from "@/components/ui/StatusDropdown";
+import { FileSystemNodeProps } from "@/types/fileSystem";
 
 type WorkspaceDetails = {
   id: string;
@@ -32,6 +36,10 @@ type WorkspaceDetails = {
   subscribedCaseId: string;
   subscriptionStatus: string;
   subscriptionCreatedAt: string;
+  assignedTo: string[];
+  clientId: string | null;
+  projectFolderId: string | null;
+  projectFolderName: string | null;
   caseId: string;
   parties: string | null;
   diaryNumber: string | null;
@@ -94,10 +102,37 @@ type WorkspaceTask = {
 };
 
 const taskStatusOptions = [
-  { value: "PENDING", label: "Pending" },
-  { value: "DONE", label: "Done" },
-  { value: "OVERDUE", label: "Overdue" },
-  { value: "STALLED", label: "Stalled" },
+  { value: "PENDING", label: "Pending", className: "border-border bg-muted-light text-muted-dark" },
+  { value: "DONE", label: "Done", className: "border-success/30 bg-success-light text-success-dark" },
+  { value: "OVERDUE", label: "Overdue", className: "border-error/30 bg-error-light text-error-dark" },
+  { value: "STALLED", label: "Stalled", className: "border-warning/30 bg-warning-light text-warning-dark" },
+];
+
+const workspaceStatusOptions = [
+  {
+    value: "PENDING",
+    label: "Pending",
+    description: "Initial review or action is still pending.",
+    className: "border-sky-200 bg-sky-50 text-sky-700",
+  },
+  {
+    value: "IN_PROGRESS",
+    label: "In Progress",
+    description: "Work is currently active for this case.",
+    className: "border-primary/20 bg-primary/10 text-primary",
+  },
+  {
+    value: "DONE",
+    label: "Done",
+    description: "Workspace work is complete for now.",
+    className: "border-success/30 bg-success-light text-success-dark",
+  },
+  {
+    value: "STALLED",
+    label: "Stalled",
+    description: "Progress is blocked or waiting on input.",
+    className: "border-warning/30 bg-warning-light text-warning-dark",
+  },
 ];
 
 const toneClasses: Record<string, string> = {
@@ -105,6 +140,7 @@ const toneClasses: Record<string, string> = {
   success: "border-success/30 bg-success-light text-success-dark",
   warning: "border-warning/30 bg-warning-light text-warning-dark",
   error: "border-error/30 bg-error-light text-error-dark",
+  pending: "border-sky-200 bg-sky-50 text-sky-700",
   muted: "border-border bg-muted-light text-muted-dark",
 };
 
@@ -313,6 +349,17 @@ function formatPersonName(name?: string | null, email?: string | null) {
   return valueOrFallback(name || email);
 }
 
+function formatFileMeta(file: FileSystemNodeProps) {
+  const type = file.type === "FOLDER" ? "Folder" : "Document";
+  return `${type} - Updated ${formatDateTime(String(file.updatedAt))}`;
+}
+
+function ensureDocxName(name: string) {
+  const trimmed = name.trim();
+  if (!trimmed) return "Untitled.docx";
+  return /\.[a-z0-9]+$/i.test(trimmed) ? trimmed : `${trimmed}.docx`;
+}
+
 function getTaskVisual(status: string, dueDate?: string | null) {
   if (status === "DONE" || status === "COMPLETED") return { icon: CheckCircle, tone: "text-success", badgeTone: "success" };
   if (status === "OVERDUE") return { icon: Clock, tone: "text-error", badgeTone: "error" };
@@ -321,11 +368,15 @@ function getTaskVisual(status: string, dueDate?: string | null) {
   return { icon: Circle, tone: "text-muted-dark", badgeTone: "muted" };
 }
 
-function getTaskStatusSelectClass(status: string) {
-  if (status === "DONE") return "border-success/30 bg-success-light text-success-dark";
-  if (status === "OVERDUE") return "border-error/30 bg-error-light text-error-dark";
-  if (status === "STALLED") return "border-warning/30 bg-warning-light text-warning-dark";
-  return "border-border bg-muted-light text-muted-dark";
+function getWorkspaceStatusLabel(status?: string | null) {
+  return workspaceStatusOptions.find((option) => option.value === status)?.label ?? "Pending";
+}
+
+function getWorkspaceStatusTone(status?: string | null) {
+  if (status === "DONE") return "success";
+  if (status === "IN_PROGRESS") return "primary";
+  if (status === "STALLED") return "warning";
+  return "pending";
 }
 
 function WorkspaceDetailPage() {
@@ -333,16 +384,25 @@ function WorkspaceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [workspace, setWorkspace] = useState<WorkspaceDetails | null>(null);
   const [tasks, setTasks] = useState<WorkspaceTask[]>([]);
+  const [workspaceFiles, setWorkspaceFiles] = useState<FileSystemNodeProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isTasksLoading, setIsTasksLoading] = useState(false);
+  const [isFilesLoading, setIsFilesLoading] = useState(false);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [isCreatingDoc, setIsCreatingDoc] = useState(false);
   const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isUpdatingWorkspaceStatus, setIsUpdatingWorkspaceStatus] = useState(false);
   const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [taskError, setTaskError] = useState("");
+  const [statusError, setStatusError] = useState("");
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskDueDate, setNewTaskDueDate] = useState("");
   const [newTaskStatus, setNewTaskStatus] = useState("PENDING");
+  const [workspaceStatusDraft, setWorkspaceStatusDraft] = useState("PENDING");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const generateSignedUrlForCase = async (filePath: string) => {
     const response = await fetch("/api/signed-url", {
@@ -368,6 +428,24 @@ function WorkspaceDetailPage() {
   useEffect(() => {
     if (!id) return;
 
+    const loadWorkspaceFiles = async (projectFolderId?: string | null) => {
+      if (!projectFolderId) {
+        setWorkspaceFiles([]);
+        return;
+      }
+
+      try {
+        setIsFilesLoading(true);
+        const nodes = await fetchNodes(projectFolderId);
+        setWorkspaceFiles(nodes);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to load workspace files");
+        setWorkspaceFiles([]);
+      } finally {
+        setIsFilesLoading(false);
+      }
+    };
+
     const loadWorkspace = async () => {
       try {
         setIsLoading(true);
@@ -380,7 +458,10 @@ function WorkspaceDetailPage() {
           throw new Error(data.message || "Failed to load workspace");
         }
 
-        setWorkspace(data.data);
+        const nextWorkspace = data.data as WorkspaceDetails;
+        setWorkspace(nextWorkspace);
+        setWorkspaceStatusDraft(nextWorkspace.workspaceStatus || "PENDING");
+        await loadWorkspaceFiles(nextWorkspace.projectFolderId);
 
         setIsTasksLoading(true);
         const tasksResponse = await fetch(`/api/workspace/${id}/tasks`);
@@ -403,6 +484,72 @@ function WorkspaceDetailPage() {
 
     loadWorkspace();
   }, [id]);
+
+  const reloadWorkspaceFiles = async () => {
+    if (!workspace?.projectFolderId) return;
+    try {
+      setIsFilesLoading(true);
+      const nodes = await fetchNodes(workspace.projectFolderId);
+      setWorkspaceFiles(nodes);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load workspace files");
+    } finally {
+      setIsFilesLoading(false);
+    }
+  };
+
+  const handleWorkspaceFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!workspace?.projectFolderId) {
+      toast.error("Workspace folder is not ready yet");
+      return;
+    }
+
+    try {
+      setIsUploadingFile(true);
+      await uploadFile(event, workspace.projectFolderId);
+      await reloadWorkspaceFiles();
+    } finally {
+      setIsUploadingFile(false);
+      if (event.target) event.target.value = "";
+    }
+  };
+
+  const handleCreateWorkspaceDocument = async () => {
+    if (!workspace?.projectFolderId) {
+      toast.error("Workspace folder is not ready yet");
+      return;
+    }
+
+    const fileName = window.prompt("Enter document name:", "Untitled.docx");
+    if (!fileName?.trim()) return;
+
+    try {
+      setIsCreatingDoc(true);
+      const newFile = await createNewFile({
+        name: ensureDocxName(fileName),
+        type: "FILE",
+        parentId: workspace.projectFolderId,
+        content: "",
+      });
+      toast.success("Document created");
+      await reloadWorkspaceFiles();
+      router.push(`/editor/${workspace.id}/${newFile.id}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create document");
+    } finally {
+      setIsCreatingDoc(false);
+    }
+  };
+
+  const handleOpenWorkspaceNode = (file: FileSystemNodeProps) => {
+    if (file.type === "FOLDER") {
+      router.push(`/projects/${file.id}`);
+      return;
+    }
+
+    if (!workspace) return;
+    router.push(`/editor/${workspace.id}/${file.id}`);
+  };
 
   const handleCreateTask = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -473,6 +620,35 @@ function WorkspaceDetailPage() {
     }
   };
 
+  const handleUpdateWorkspaceStatus = async () => {
+    if (!id || !workspace) return;
+
+    try {
+      setIsUpdatingWorkspaceStatus(true);
+      setStatusError("");
+
+      const response = await fetch(`/api/workspace/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: workspaceStatusDraft }),
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to update workspace status");
+      }
+
+      setWorkspace((current) => current ? { ...current, workspaceStatus: data.data.status } : current);
+      setIsStatusModalOpen(false);
+    } catch (err) {
+      setStatusError(err instanceof Error ? err.message : "Failed to update workspace status");
+    } finally {
+      setIsUpdatingWorkspaceStatus(false);
+    }
+  };
+
   const handleOpenTimelineEvent = async (event: TimelineEvent) => {
     try {
       if (workspace?.court === "High Court" && workspace?.city === "Delhi" && event.filename) {
@@ -491,11 +667,11 @@ function WorkspaceDetailPage() {
 
   if (isLoading) {
     return (
-      <main className="flex-1 p-6 lg:p-8">
-        <div className="rounded-2xl border border-border bg-white p-10 text-center shadow-sm">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <p className="text-sm text-muted-dark">Loading workspace...</p>
-        </div>
+      <main className="flex min-h-[70vh] flex-1 items-center justify-center p-6 lg:p-8">
+        <div
+          className="h-16 w-16 animate-spin rounded-full border-4 border-primary/20 border-t-primary"
+          aria-label="Loading workspace"
+        />
       </main>
     );
   }
@@ -520,7 +696,7 @@ function WorkspaceDetailPage() {
 
   const syncBadge = getSyncBadge(workspace.siteSync);
   const caseTitle = valueOrFallback(normalizePartiesDisplay(workspace.parties) || workspace.caseNumber || workspace.diaryNumber);
-  const caseStatus = valueOrFallback(workspace.caseStatus || "Pending");
+  const workspaceStatusLabel = getWorkspaceStatusLabel(workspace.workspaceStatus);
   const hearingDate = formatDate(workspace.tentativeDate);
   const courtLabel = formatCourtLabel(workspace);
 
@@ -543,17 +719,34 @@ function WorkspaceDetailPage() {
   ];
 
   const documentOperations = [
-    { label: "Draft", icon: FileText },
-    { label: "Translate", icon: Languages },
-    { label: "OCR Extract", icon: ScanText },
-    { label: "Templates", icon: FileStack },
-  ];
-
-  const files = [
-    { name: "Petition_Final_v3.pdf", meta: "2.4 MB - 2h ago" },
-    { name: "Affidavit_Client.docx", meta: "184 KB - Yesterday" },
-    { name: "Evidence_Bundle/", meta: "12 files - 3 days ago" },
-    { name: "Draft_Rejoinder.docx", meta: "92 KB - 1 week ago" },
+    {
+      label: "Draft",
+      description: "Create a new draft and keep it in this workspace folder.",
+      icon: FileText,
+      href: workspace.projectFolderId ? `/projects/${workspace.projectFolderId}` : "/projects",
+      actionLabel: "Open Folder",
+    },
+    {
+      label: "Translate",
+      description: "Upload documents and translate them into multiple languages.",
+      icon: Languages,
+      href: workspace.projectFolderId ? `/projects/${workspace.projectFolderId}` : "/projects",
+      actionLabel: "Open Folder",
+    },
+    {
+      label: "OCR Extract",
+      description: "Extract text from scanned case documents.",
+      icon: ScanText,
+      comingSoon: true,
+      actionLabel: "Coming soon",
+    },
+    {
+      label: "Templates",
+      description: "Open reusable drafting templates for this workspace.",
+      icon: FileStack,
+      href: "/document-drafting",
+      actionLabel: "Open Drafting",
+    },
   ];
 
   const timeline = buildTimelineEvents(workspace, courtLabel, hearingDate);
@@ -573,8 +766,8 @@ function WorkspaceDetailPage() {
         <div>
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <span className="font-mono text-xs text-muted-dark">{workspace.diaryNumber || workspace.caseNumber || workspace.id}</span>
-            <Badge tone="primary" withDot>
-              {caseStatus}
+            <Badge tone={getWorkspaceStatusTone(workspace.workspaceStatus)}>
+              {workspaceStatusLabel}
             </Badge>
             <Badge tone={syncBadge.tone} withDot>
               {syncBadge.label}
@@ -588,7 +781,15 @@ function WorkspaceDetailPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           
-          <button className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-dark">
+          <button
+            type="button"
+            onClick={() => {
+              setWorkspaceStatusDraft(workspace.workspaceStatus || "PENDING");
+              setStatusError("");
+              setIsStatusModalOpen(true);
+            }}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-dark"
+          >
             <PenLine className="h-4 w-4" />
             Update Status
           </button>
@@ -627,17 +828,45 @@ function WorkspaceDetailPage() {
           </section> */}
 
           <section className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-            <h3 className="mb-4 text-lg font-semibold text-text">Document Operations</h3>
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-text">Document Operations</h3>
+              <p className="mt-1 text-xs text-muted-dark">
+                Drafting and translation open this workspace folder. OCR automation is being prepared.
+              </p>
+            </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {documentOperations.map((operation) => {
                 const Icon = operation.icon;
                 return (
                   <button
                     key={operation.label}
-                    className="rounded-xl border border-border bg-background p-4 text-left transition-all hover:border-primary/40 hover:bg-primary-light"
+                    type="button"
+                    onClick={() => {
+                      if (operation.href) {
+                        router.push(operation.href);
+                      }
+                    }}
+                    aria-disabled={operation.comingSoon ? "true" : undefined}
+                    className={`group relative min-h-32 overflow-hidden rounded-xl border border-border bg-background p-4 text-left transition-all ${
+                      operation.comingSoon
+                        ? "cursor-not-allowed hover:border-warning/40"
+                        : "hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary-light hover:shadow-sm"
+                    }`}
                   >
                     <Icon className="mb-2 h-5 w-5 text-primary" />
                     <div className="text-sm font-semibold text-text">{operation.label}</div>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-dark">{operation.description}</p>
+                    <span className="mt-3 inline-flex items-center rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-primary shadow-sm">
+                      {operation.actionLabel}
+                    </span>
+                    {operation.comingSoon ? (
+                      <div className="absolute inset-0 flex items-center justify-center bg-white/85 px-4 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+                        <div className="rounded-xl border border-warning/30 bg-warning-light px-4 py-3 text-center shadow-sm">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-warning-dark">Coming soon</p>
+                          <p className="mt-1 text-xs text-muted-dark">This document workflow will be enabled shortly.</p>
+                        </div>
+                      </div>
+                    ) : null}
                   </button>
                 );
               })}
@@ -646,37 +875,63 @@ function WorkspaceDetailPage() {
 
           <section className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
             <div className="flex flex-col gap-3 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between">
-              <h3 className="text-lg font-semibold text-text">Files & Documents</h3>
+              <div>
+                <h3 className="text-lg font-semibold text-text">Files & Documents</h3>
+                
+              </div>
               <div className="flex flex-wrap gap-2">
-                <button className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-white px-3 text-xs font-semibold text-text shadow-sm hover:bg-background-dark">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".txt,.doc,.docx,.pdf,.png,.jpg,.jpeg"
+                  onChange={handleWorkspaceFileUpload}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingFile}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-white px-3 text-xs font-semibold text-text shadow-sm hover:bg-background-dark disabled:cursor-not-allowed disabled:opacity-60"
+                >
                   <Upload className="h-3.5 w-3.5" />
-                  Upload File
+                  {isUploadingFile ? "Uploading" : "Upload File"}
                 </button>
-                <button className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-white px-3 text-xs font-semibold text-text shadow-sm hover:bg-background-dark">
-                  <FolderUp className="h-3.5 w-3.5" />
-                  Upload Folder
-                </button>
-                <button className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-white shadow-sm hover:bg-primary-dark">
+                <button
+                  type="button"
+                  onClick={handleCreateWorkspaceDocument}
+                  disabled={isCreatingDoc}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-white shadow-sm hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+                >
                   <FilePlus className="h-3.5 w-3.5" />
-                  New Doc
+                  {isCreatingDoc ? "Creating" : "New Doc"}
                 </button>
               </div>
             </div>
             <div className="divide-y divide-border">
-              {files.map((file) => (
-                <div key={file.name} className="flex items-center gap-3 p-4 hover:bg-primary-light/30">
-                  <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary-light text-primary">
-                    <FileText className="h-4 w-4" />
+              {isFilesLoading ? (
+                <div className="p-4 text-sm text-muted-dark">Loading files...</div>
+              ) : workspaceFiles.length === 0 ? (
+                <div className="p-4 text-sm text-muted-dark">No files uploaded yet.</div>
+              ) : (
+                workspaceFiles.map((file) => (
+                  <div key={file.id} className="flex items-center gap-3 p-4 hover:bg-primary-light/30">
+                    <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary-light text-primary">
+                      {file.type === "FOLDER" ? <FolderUp className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold text-text">{file.name}</div>
+                      <div className="text-xs text-muted-dark">{formatFileMeta(file)}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenWorkspaceNode(file)}
+                      className="inline-flex h-8 items-center rounded-lg px-3 text-xs font-semibold text-muted-dark hover:bg-background-dark hover:text-text"
+                    >
+                      Open
+                    </button>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold text-text">{file.name}</div>
-                    <div className="text-xs text-muted-dark">{file.meta}</div>
-                  </div>
-                  <button className="inline-flex h-8 items-center rounded-lg px-3 text-xs font-semibold text-muted-dark hover:bg-background-dark hover:text-text">
-                    Open
-                  </button>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </section>
         </div>
@@ -714,21 +969,15 @@ function WorkspaceDetailPage() {
                     <div key={task.id} className="flex items-start gap-3 p-4">
                       <Icon className={`mt-0.5 h-4 w-4 ${taskVisual.tone}`} />
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-start justify-between gap-1">
                           <div className="text-sm font-semibold text-text">{task.title}</div>
-                          <select
+                          <StatusDropdown
                             value={task.status}
                             disabled={updatingTaskId === task.id}
-                            onChange={(event) => handleTaskStatusChange(task.id, event.target.value)}
-                            className={`h-7 rounded-full border px-2 text-xs font-semibold outline-none transition focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60 ${getTaskStatusSelectClass(task.status)}`}
-                            aria-label={`Change status for ${task.title}`}
-                          >
-                            {taskStatusOptions.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
+                            options={taskStatusOptions}
+                            onChange={(nextStatus) => handleTaskStatusChange(task.id, nextStatus)}
+                            ariaLabel={`Change status for ${task.title}`}
+                          />
                         </div>
                         <div className="mt-1 space-y-0.5 text-xs text-muted-dark">
                           <div>{formatPersonName(task.assignedToName, task.assignedToEmail)} · Due {formatDate(task.dueDate)}</div>
@@ -808,6 +1057,83 @@ function WorkspaceDetailPage() {
           </section>
         </div>
       </div>
+
+      {isStatusModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-white shadow-xl">
+            <div className="flex items-start justify-between gap-3 border-b border-border p-5">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">Workspace Status</p>
+                <h3 className="mt-1 text-xl font-semibold text-text">Update Case Status</h3>
+                <p className="mt-1 text-sm text-muted-dark">Choose the current working state for this case workspace.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsStatusModalOpen(false)}
+                className="rounded-lg p-1.5 text-muted-dark hover:bg-background-dark hover:text-text"
+                aria-label="Close status modal"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-4 p-5">
+              <div className="grid gap-2">
+                {workspaceStatusOptions.map((option) => {
+                  const isSelected = workspaceStatusDraft === option.value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setWorkspaceStatusDraft(option.value)}
+                      className={`rounded-xl border p-3 text-left transition-all hover:border-primary/40 hover:bg-primary-light/30 ${
+                        isSelected ? "border-primary bg-primary-light/40 shadow-sm" : "border-border bg-background"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${option.className}`}>
+                              {option.label}
+                            </span>
+                            {isSelected ? <span className="text-xs font-semibold text-primary">Selected</span> : null}
+                          </div>
+                          <p className="mt-2 text-sm text-muted-dark">{option.description}</p>
+                        </div>
+                        <span
+                          className={`mt-1 grid h-5 w-5 place-items-center rounded-full border ${
+                            isSelected ? "border-primary bg-primary text-white" : "border-border bg-white"
+                          }`}
+                        >
+                          {isSelected ? <CheckCircle className="h-3.5 w-3.5" /> : null}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              {statusError ? <p className="text-xs font-medium text-error">{statusError}</p> : null}
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsStatusModalOpen(false)}
+                  className="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-white px-4 text-sm font-semibold text-text shadow-sm hover:bg-background-dark"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleUpdateWorkspaceStatus}
+                  disabled={isUpdatingWorkspaceStatus}
+                  className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-white shadow-sm hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isUpdatingWorkspaceStatus ? "Updating" : "Update"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {isTaskModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">

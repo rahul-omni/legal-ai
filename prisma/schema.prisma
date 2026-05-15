@@ -42,6 +42,7 @@ model User {
   userCases               UserCase[]          @relation("user_usercases")
   subscriptions           UserSubscription[]  @relation("user_subscriptions")
   chatConversations       ChatConversation[]
+  aiUsageEvents           AiUsageEvent[]
   workspaces              Workspace[]         @relation("user_workspaces")
   workspaceTasksAssigned  WorkspaceTask[]     @relation("workspace_tasks_assigned_to")
   workspaceTasksCreated   WorkspaceTask[]     @relation("workspace_tasks_assigned_by")
@@ -148,6 +149,7 @@ model FileSystemNode {
   userId        String?          @map("user_id") @db.Uuid
   isDefault     Boolean          @default(false) @map("is_default")
   FileReview    FileReview[]     @relation("file_review")
+  workspaceFolderFor Workspace?  @relation("workspace_project_folder")
   createdByUser User?            @relation("file_system_nodes_created_by_idx", fields: [createdBy], references: [id])
   parent        FileSystemNode?  @relation("file_system_node_hierarchy", fields: [parentId], references: [id])
   children      FileSystemNode[] @relation("file_system_node_hierarchy")
@@ -298,6 +300,7 @@ model client {
   user_id      String   @db.Uuid
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   users        User     @relation(fields: [user_id], references: [id])
+  workspaces   Workspace[]
 }
 
 model notifications {
@@ -422,13 +425,20 @@ model Workspace {
   userId           String          @map("user_id") @db.Uuid
   subscribedCaseId String          @unique @map("subscribed_case_id") @db.Uuid
   status           String          @default("PENDING")
+  assignedTo       String[]        @default([]) @map("assigned_to") @db.Uuid
+  clientId         String?         @map("client_id") @db.Uuid
+  projectFolderId  String?         @unique @map("project_folder_id") @db.Uuid
   createdAt        DateTime        @default(now()) @map("created_at")
   updatedAt        DateTime        @updatedAt @map("updated_at")
   user             User            @relation("user_workspaces", fields: [userId], references: [id], onDelete: Cascade)
+  client           client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  projectFolder    FileSystemNode? @relation("workspace_project_folder", fields: [projectFolderId], references: [id], onDelete: SetNull)
   subscribedCase   SubscribedCases @relation(fields: [subscribedCaseId], references: [id], onDelete: Cascade)
   tasks            WorkspaceTask[]
 
   @@index([userId])
+  @@index([clientId])
+  @@index([projectFolderId])
   @@index([status])
   @@map("workspaces")
 }
@@ -455,20 +465,26 @@ model WorkspaceTask {
 }
 
 model SubscriptionPlan {
-  id              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title           String
-  description     String?
-  features        String[]
-  discountedPrice Float              @map("discountedPrice")
-  discounted      Float              @map("discounted")
-  price           Float              @map("price")
-  duration        Int?               @map("duration")
-  isActive        Boolean            @default(true) @map("isActive")
-  createdAt       DateTime           @default(now()) @map("createdAt")
-  updatedAt       DateTime           @updatedAt @map("updatedAt")
-  leads           Lead[]
-  payments        Payment[]
-  subscriptions   UserSubscription[]
+  id                            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title                         String
+  description                   String?
+  features                      String[]
+  aiTokenLimit                  Int?               @map("ai_token_limit")
+  aiTokenDailyLimit             Int?               @map("ai_token_daily_limit")
+  aiTokenMonthlyLimit           Int?               @map("ai_token_monthly_limit")
+  documentDraftingMonthlyLimit  Int?               @map("document_drafting_monthly_limit")
+  workspaceFolderFileLimit      Int?               @map("workspace_folder_file_limit")
+  workspaceLimit                Int?               @map("workspace_limit")
+  discountedPrice               Float              @map("discountedPrice")
+  discounted                    Float              @map("discounted")
+  price                         Float              @map("price")
+  duration                      Int?               @map("duration")
+  isActive                      Boolean            @default(true) @map("isActive")
+  createdAt                     DateTime           @default(now()) @map("createdAt")
+  updatedAt                     DateTime           @updatedAt @map("updatedAt")
+  leads                         Lead[]
+  payments                      Payment[]
+  subscriptions                 UserSubscription[]
 
   @@map("subscription_plans")
 }
@@ -527,14 +543,14 @@ model UserSubscription {
   id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId             String             @map("user_id") @db.Uuid
   subscriptionPlanId String             @map("subscription_plan_id") @db.Uuid
-  paymentId          String             @map("payment_id") @db.Uuid
+  paymentId          String?            @map("payment_id") @db.Uuid
   status             SubscriptionStatus @default(ACTIVE)
   startDate          DateTime           @default(now()) @map("start_date")
   endDate            DateTime           @map("end_date")
   autoRenew          Boolean            @default(false) @map("auto_renew")
   createdAt          DateTime           @default(now()) @map("created_at")
   updatedAt          DateTime           @updatedAt @map("updated_at")
-  payment            Payment            @relation("payment_subscriptions", fields: [paymentId], references: [id])
+  payment            Payment?           @relation("payment_subscriptions", fields: [paymentId], references: [id])
   subscriptionPlan   SubscriptionPlan   @relation(fields: [subscriptionPlanId], references: [id])
   user               User               @relation("user_subscriptions", fields: [userId], references: [id], onDelete: Cascade)
 
@@ -764,17 +780,23 @@ enum ChatMessageRole {
 }
 
 model ChatConversation {
-  id         String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId     String                     @map("user_id") @db.Uuid
-  title      String                     @default("New conversation")
-  isArchived Boolean                    @default(false) @map("is_archived")
-  createdAt  DateTime                   @default(now()) @map("created_at")
-  updatedAt  DateTime                   @updatedAt @map("updated_at")
-  user       User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages   ChatMessage[]
-  documents  ChatConversationDocument[]
+  id           String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String                     @map("user_id") @db.Uuid
+  title        String                     @default("New conversation")
+  source       String                     @default("AI_ASSISTANT")
+  workspaceId  String?                    @map("workspace_id") @db.Uuid
+  fileId       String?                    @map("file_id") @db.Uuid
+  mode         String?
+  threadKind   String                     @default("CUSTOM") @map("thread_kind")
+  isArchived   Boolean                    @default(false) @map("is_archived")
+  createdAt    DateTime                   @default(now()) @map("created_at")
+  updatedAt    DateTime                   @updatedAt @map("updated_at")
+  user         User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages     ChatMessage[]
+  documents    ChatConversationDocument[]
 
-  @@index([userId, updatedAt(sort: Desc)])
+  @@index([userId, source, updatedAt(sort: Desc)])
+  @@index([userId, source, workspaceId, fileId])
   @@map("chat_conversations")
 }
 
@@ -821,6 +843,25 @@ model ChatMessageDocument {
   @@index([messageId, createdAt], map: "idx_chat_message_documents_message_created")
   @@index([nodeId], map: "idx_chat_message_documents_node_id")
   @@map("chat_message_documents")
+}
+
+model AiUsageEvent {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  subscriptionId String?  @map("subscription_id") @db.Uuid
+  feature        String
+  model          String
+  inputTokens    Int      @default(0) @map("input_tokens")
+  outputTokens   Int      @default(0) @map("output_tokens")
+  totalTokens    Int      @default(0) @map("total_tokens")
+  metadata       Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([subscriptionId, createdAt])
+  @@index([feature, createdAt])
+  @@map("ai_usage_events")
 }
 
 model BlogPost {
